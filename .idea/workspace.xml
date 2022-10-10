@@ -1,0 +1,877 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="4236bf81-e84d-49c9-8d48-95242c7c2693" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/v2/includes/sidebar.php" beforeDir="false" afterPath="$PROJECT_DIR$/v2/includes/sidebar.php" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/v2/todo/node_modules/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings" doNotAsk="true" synchronizationState="SYNCHRONIZE">
+    <pharConfigPath>$PROJECT_DIR$/includes/composer.json</pharConfigPath>
+  </component>
+  <component name="DatabaseView">
+    <option name="SHOW_INTERMEDIATE" value="true" />
+    <option name="GROUP_DATA_SOURCES" value="true" />
+    <option name="GROUP_SCHEMA" value="true" />
+    <option name="GROUP_CONTENTS" value="false" />
+    <option name="SORT_POSITIONED" value="false" />
+    <option name="SHOW_EMPTY_GROUPS" value="false" />
+    <option name="AUTO_SCROLL_FROM_SOURCE" value="false" />
+    <option name="HIDDEN_KINDS">
+      <set />
+    </option>
+    <expand>
+      <path>
+        <item name="Database" type="3277223f:DatabaseStructure$DbRootGroup" />
+        <item name="sahamid@localhost" type="feb32156:DbDataSourceImpl" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="FavoritesManager">
+    <favorites_list name="sahamid" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/shop/parchi/inward/listInwardBazarParchi.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="4454">
+              <caret line="262" column="55" selection-start-line="262" selection-start-column="51" selection-end-line="262" selection-end-column="55" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/shop/parchi/inward/api/listInwardBazarParchiApi.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3553">
+              <caret line="209" column="46" selection-start-line="209" selection-start-column="46" selection-end-line="209" selection-end-column="46" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/v2/show.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="821">
+              <caret line="53" column="38" selection-start-line="53" selection-start-column="38" selection-end-line="53" selection-end-column="38" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/Downloads/show.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="272">
+              <caret line="16" selection-end-line="16" />
+              <folding>
+                <element signature="n#style#0;n#th#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#a#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#a#1;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#a#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#a#1;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#a#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#a#1;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#h1#0;n#!!top" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/v2/Document_Manager.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="221">
+              <caret line="62" column="36" lean-forward="true" selection-start-line="62" selection-start-column="36" selection-end-line="62" selection-end-column="36" />
+              <folding>
+                <element signature="e#2044#2111#0#HTML" expanded="true" />
+                <element signature="e#2209#2275#0#HTML" expanded="true" />
+                <element signature="e#2450#2471#0#HTML" expanded="true" />
+                <element signature="e#3528#3549#0#HTML" expanded="true" />
+                <element signature="e#3592#3615#0#HTML" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/v2/includes/sidebar.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="280">
+              <caret line="18" column="35" selection-start-line="18" selection-start-column="35" selection-end-line="18" selection-end-column="35" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>if</find>
+      <find>special</find>
+      <find>ill</find>
+      <find>header</find>
+      <find>insert into</find>
+      <find>update</find>
+      <find>htmlspecialchars_</find>
+      <find>insert</find>
+      <find>echo $</find>
+      <find>echo</find>
+      <find>vendor</find>
+      <find>$SQL .= &quot; AND bazar_parchi.created_at &gt;= '&quot;.$formattedFrom.&quot;'&quot;;</find>
+      <find>$SQL .= &quot; AND bazar_parchi.created_at &lt;= '&quot;.$formattedTo.&quot; 23:59:59'&quot;;</find>
+      <find>api/</find>
+      <find>bazar_parchi.created_at</find>
+      <find>from</find>
+      <find>trim</find>
+      <find>supplier</find>
+      <find>statemen</find>
+      <find>state</find>
+      <find>date</find>
+      <find>suppbal</find>
+      <find>trandate</find>
+      <find>total</find>
+      <find>mv-216</find>
+      <find>mpobalance</find>
+      <find>saham</find>
+      <find>.php</find>
+      <find>saved</find>
+      <find>documen</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>br</replace>
+      <replace>'AccessLevel'</replace>
+      <replace>date(&quot;F j, Y, g:i a&quot;,strtotime($row['updatedat']))</replace>
+      <replace>partycode</replace>
+      <replace>addnem</replace>
+      <replace>partyType</replace>
+      <replace>res</replace>
+      <replace>14px</replace>
+      <replace>updateBill</replace>
+      <replace>comment</replace>
+      <replace>AND shopsale.salesman</replace>
+      <replace>cdr</replace>
+      <replace>outstandingdashboard.php</replace>
+      <replace>data-client</replace>
+      <replace>clientID</replace>
+      <replace>$users</replace>
+      <replace>#efefef</replace>
+      <replace>recoverypermissions</replace>
+      <replace>recoverypermissions.php</replace>
+      <replace>salescase_permissions</replace>
+      <replace>recovery_permissions</replace>
+      <replace>nuser</replace>
+      <replace>tabcode</replace>
+      <replace>$PeriodNo = GetPeriod(date('Y-m-d'), $db);</replace>
+      <replace>../../../quotation/</replace>
+      <replace>$SQL .= &quot; AND bazar_parchi.created_at &gt;= '&quot;.$formattedFrom.&quot;'&quot;;</replace>
+      <replace>$SQL .= &quot; AND bazar_parchi.trandate &gt;= '&quot;.$formattedFrom.&quot;'&quot;;</replace>
+      <replace>$SQL .= &quot; AND bazar_parchi.trandate &lt; '&quot;.$formattedFrom.&quot;'&quot;;</replace>
+      <replace>bazar_parchi.created_at</replace>
+      <replace>supptrans.trandate</replace>
+    </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/v2/api/uploadCdrFileVendors.php" />
+        <option value="$PROJECT_DIR$/v2/api/uploadChequeFileVendors.php" />
+        <option value="$USER_HOME$/Downloads/supptrans.sql" />
+        <option value="$PROJECT_DIR$/v2/uploadedCheques.php" />
+        <option value="$PROJECT_DIR$/v2/api/uploadCRVFileVendors.php" />
+        <option value="$PROJECT_DIR$/v2/api/uploadCRVFile.php" />
+        <option value="$PROJECT_DIR$/CustomerStatementSalesPerson.php" />
+        <option value="$PROJECT_DIR$/dclist.php" />
+        <option value="$PROJECT_DIR$/reports/balance/suppstatement/SupplierStatement.php" />
+        <option value="$PROJECT_DIR$/reports/balance/suppstatement/SuppStatementFilter.php" />
+        <option value="$PROJECT_DIR$/reports/balance/suppstatement/SuppStatementFilterRev.php" />
+        <option value="$PROJECT_DIR$/CustomerStatementRev.php" />
+        <option value="$USER_HOME$/Downloads/reversedallocationhistory.sql" />
+        <option value="$PROJECT_DIR$/reports/balance/suppstatement/SupplierStatementRev.php" />
+        <option value="$PROJECT_DIR$/includes/DefineCustAllocsClass.php" />
+        <option value="$PROJECT_DIR$/includes/DefineSuppAllocsClass.php" />
+        <option value="$PROJECT_DIR$/v2/reversedCheques.php" />
+        <option value="$USER_HOME$/Downloads/reversedallocationhistorycomments.sql" />
+        <option value="$PROJECT_DIR$/v2/api/addRevisionHistoryCommentsVendor.php" />
+        <option value="$PROJECT_DIR$/v2/lastcommentvendor.php" />
+        <option value="$PROJECT_DIR$/Payments.php" />
+        <option value="$PROJECT_DIR$/SupplierAllocations.php" />
+        <option value="$PROJECT_DIR$/CustomerAllocations.php" />
+        <option value="$PROJECT_DIR$/v2/reversedChequesVendors.php" />
+        <option value="$PROJECT_DIR$/corrections/chequeCorrectionVendor.php" />
+        <option value="$PROJECT_DIR$/shop/parchi/inward/api/finalizeInwardBazarParchi.php" />
+        <option value="$PROJECT_DIR$/InterStoreStockRequest.php" />
+        <option value="$PROJECT_DIR$/InternalStockRequestAuthorisation.php" />
+        <option value="$PROJECT_DIR$/InterStoreStockRequestAuthorisation.php" />
+        <option value="$PROJECT_DIR$/InterStoreStockRequestFulfill.php" />
+        <option value="$PROJECT_DIR$/v2/reportLinks.php" />
+        <option value="$PROJECT_DIR$/SelectProduct.php" />
+        <option value="$PROJECT_DIR$/dba.php" />
+        <option value="$PROJECT_DIR$/includes/PDFQuotationPageHeader.inc" />
+        <option value="$PROJECT_DIR$/Customers.php" />
+        <option value="$PROJECT_DIR$/v2/scmreport.php" />
+        <option value="$PROJECT_DIR$/v2/uploadedChequesVendors.php" />
+        <option value="$PROJECT_DIR$/shop/parchi/inward/api/fileteredListInwardBazarParchiApi.php" />
+        <option value="$PROJECT_DIR$/shop/parchi/inward/api/filteredListInwardBazarParchiApi.php" />
+        <option value="$PROJECT_DIR$/shop/parchi/inward/filteredListInwardBazarParchi.php" />
+        <option value="$PROJECT_DIR$/migrateSQL.php" />
+        <option value="$PROJECT_DIR$/reports/balance/suppbalance/SuppBalanceSheetAdjusted.php" />
+        <option value="$PROJECT_DIR$/reports/balance/suppbalance/SuppBalanceSheetAPIAdjusted.php" />
+        <option value="$PROJECT_DIR$/reports/balance/suppstatement/SupplierStatementAdjusted.php" />
+        <option value="$PROJECT_DIR$/CustomerStatement.php" />
+        <option value="$PROJECT_DIR$/reports/n" />
+        <option value="$PROJECT_DIR$/reports/mpiweeklyprojections.php" />
+        <option value="$USER_HOME$/Documents/response.json" />
+        <option value="$PROJECT_DIR$/shop/parchi/inward/api/listInwardBazarParchiApi.php" />
+        <option value="$PROJECT_DIR$/v2/Document_Manager.php" />
+        <option value="$PROJECT_DIR$/v2/includes/sidebar.php" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="798" />
+    <option name="width" value="981" />
+    <option name="height" value="1032" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="sahamid" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sahamid" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="sahamid" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sahamid" type="462c0819:PsiDirectoryNode" />
+              <item name="shop" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="sahamid" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sahamid" type="462c0819:PsiDirectoryNode" />
+              <item name="shop" type="462c0819:PsiDirectoryNode" />
+              <item name="parchi" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="sahamid" type="b2602c69:ProjectViewProjectNode" />
+              <item name="sahamid" type="462c0819:PsiDirectoryNode" />
+              <item name="shop" type="462c0819:PsiDirectoryNode" />
+              <item name="parchi" type="462c0819:PsiDirectoryNode" />
+              <item name="inward" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DatabaseDriversLRU" value="mysql" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="database.console.LAST_STATE" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\xampp\htdocs\phafinalreport" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4236bf81-e84d-49c9-8d48-95242c7c2693" name="Default Changelist" comment="" />
+      <created>1558740672422</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1558740672422</updated>
+      <workItem from="1558740673750" duration="3622000" />
+      <workItem from="1558788586362" duration="87209000" />
+      <workItem from="1560670852434" duration="35435000" />
+      <workItem from="1560836981933" duration="73021000" />
+      <workItem from="1561467666416" duration="31068000" />
+      <workItem from="1561809170805" duration="1000" />
+      <workItem from="1561910959432" duration="5775000" />
+      <workItem from="1561995016814" duration="7714000" />
+      <workItem from="1562057178190" duration="21520000" />
+      <workItem from="1562223771603" duration="4658000" />
+      <workItem from="1562259249424" duration="10937000" />
+      <workItem from="1562731961987" duration="52597000" />
+      <workItem from="1562839910380" duration="7170000" />
+      <workItem from="1563202738485" duration="45440000" />
+      <workItem from="1564317738005" duration="28520000" />
+      <workItem from="1564814692447" duration="23671000" />
+      <workItem from="1565224557165" duration="3314000" />
+      <workItem from="1565320609291" duration="11664000" />
+      <workItem from="1566134028521" duration="63000" />
+      <workItem from="1566372337640" duration="5161000" />
+      <workItem from="1566488178489" duration="11230000" />
+      <workItem from="1566972463572" duration="50312000" />
+      <workItem from="1567405276147" duration="18328000" />
+      <workItem from="1567688997930" duration="12460000" />
+      <workItem from="1567931199297" duration="3543000" />
+      <workItem from="1568188012232" duration="6203000" />
+      <workItem from="1568543752929" duration="2858000" />
+      <workItem from="1568580007578" duration="641000" />
+      <workItem from="1568643098747" duration="10169000" />
+      <workItem from="1568900391374" duration="28073000" />
+      <workItem from="1569312387388" duration="21777000" />
+      <workItem from="1569513947698" duration="20327000" />
+      <workItem from="1569830245205" duration="28141000" />
+      <workItem from="1570014264063" duration="39746000" />
+      <workItem from="1570620209867" duration="966000" />
+      <workItem from="1570623348745" duration="2583000" />
+      <workItem from="1571756183420" duration="16614000" />
+      <workItem from="1572242858970" duration="84090000" />
+      <workItem from="1573545009118" duration="16252000" />
+      <workItem from="1574170298826" duration="18048000" />
+      <workItem from="1574495275292" duration="44253000" />
+      <workItem from="1576503785377" duration="7865000" />
+      <workItem from="1577370135499" duration="8746000" />
+      <workItem from="1577513529161" duration="10144000" />
+      <workItem from="1577830041880" duration="1789000" />
+      <workItem from="1578317081804" duration="11907000" />
+      <workItem from="1579044786389" duration="15391000" />
+      <workItem from="1579765022488" duration="89281000" />
+      <workItem from="1580803329378" duration="16444000" />
+      <workItem from="1580985004692" duration="5004000" />
+      <workItem from="1581084498386" duration="7871000" />
+      <workItem from="1582012645993" duration="9332000" />
+      <workItem from="1582227662963" duration="1707000" />
+      <workItem from="1582617860108" duration="1820000" />
+      <workItem from="1582698847974" duration="4996000" />
+      <workItem from="1582807766412" duration="2468000" />
+      <workItem from="1583811250294" duration="6115000" />
+      <workItem from="1583983782190" duration="12870000" />
+      <workItem from="1584512516643" duration="4780000" />
+      <workItem from="1585383337209" duration="898000" />
+      <workItem from="1586073685079" duration="26304000" />
+      <workItem from="1586492386124" duration="7023000" />
+      <workItem from="1586780243687" duration="900000" />
+      <workItem from="1587024741029" duration="15591000" />
+      <workItem from="1587189275473" duration="5571000" />
+      <workItem from="1587282741227" duration="13187000" />
+      <workItem from="1587335593978" duration="890000" />
+      <workItem from="1587385140520" duration="593000" />
+      <workItem from="1587542789055" duration="2503000" />
+      <workItem from="1589263532788" duration="51226000" />
+      <workItem from="1589394124044" duration="2590000" />
+      <workItem from="1589430624411" duration="17426000" />
+      <workItem from="1589707046940" duration="1629000" />
+      <workItem from="1589992907273" duration="26213000" />
+      <workItem from="1590763204292" duration="784000" />
+      <workItem from="1590828804094" duration="24780000" />
+      <workItem from="1591181468857" duration="25803000" />
+      <workItem from="1591706526970" duration="632000" />
+      <workItem from="1591799398260" duration="2220000" />
+      <workItem from="1592685513472" duration="4165000" />
+      <workItem from="1620449733124" duration="697000" />
+      <workItem from="1620465281648" duration="2132000" />
+      <workItem from="1620664688975" duration="5692000" />
+      <workItem from="1620860782786" duration="20092000" />
+      <workItem from="1621146344312" duration="18804000" />
+      <workItem from="1621261671630" duration="2416000" />
+      <workItem from="1621421679235" duration="10575000" />
+      <workItem from="1621522191770" duration="3390000" />
+      <workItem from="1621692582703" duration="4851000" />
+      <workItem from="1622045134930" duration="348000" />
+      <workItem from="1622046130313" duration="2488000" />
+      <workItem from="1622384921588" duration="5317000" />
+      <workItem from="1622643148925" duration="510000" />
+      <workItem from="1622920263865" duration="598000" />
+      <workItem from="1623140375582" duration="1357000" />
+      <workItem from="1623326349617" duration="4617000" />
+      <workItem from="1624640541365" duration="22396000" />
+      <workItem from="1655211542844" duration="2388000" />
+    </task>
+    <task id="LOCAL-00001" summary="shopinvoicelink">
+      <created>1587545340035</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1587545340035</updated>
+    </task>
+    <task id="LOCAL-00002" summary="shopinvoicelink">
+      <created>1587545486829</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1587545486829</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="1465040000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-7" y="-7" width="1295" height="695" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4991119" weight="0.53927124" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.24939272" />
+      <window_info id="Favorites" order="2" sideWeight="0.5008881" side_tool="true" weight="0.2534413" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.3285968" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Database Changes" order="8" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="9" />
+      <window_info anchor="bottom" id="Terminal" order="10" weight="0.3285968" />
+      <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" weight="0.3285968" />
+      <window_info anchor="bottom" id="Database Console" order="12" weight="0.3285968" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" weight="0.32955465" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="shopinvoicelink" />
+    <option name="LAST_COMMIT_MESSAGE" value="shopinvoicelink" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/v2/tasksCalender.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="224">
+          <caret line="106" column="42" lean-forward="true" selection-start-line="106" selection-start-column="42" selection-end-line="106" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/InternalStockRequestAuthorisation.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="22" column="9" lean-forward="true" selection-start-line="22" selection-start-column="9" selection-end-line="22" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/MPIWWiseSalesReports.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret lean-forward="true" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/MPIWItemsList.php">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/paymentsDueCRV.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2856">
+          <caret line="168" column="38" selection-start-line="168" selection-start-column="16" selection-end-line="168" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppbalance/SuppBalanceSheet.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2720">
+          <caret line="160" column="20" selection-start-line="160" selection-start-column="20" selection-end-line="160" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/pending/pendingorders.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="406">
+          <caret line="336" column="36" lean-forward="true" selection-start-line="336" selection-start-column="8" selection-end-line="336" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/custbalance/CustBalanceSheet.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="73">
+          <caret line="233" column="63" selection-start-line="233" selection-start-column="58" selection-end-line="233" selection-end-column="63" />
+          <folding>
+            <element signature="n#style#0;n#tr#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#h3#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/topItemsQuotation.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3122">
+          <folding>
+            <element signature="n#style#0;n#input#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/reversedCheques.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2623">
+          <caret line="1" lean-forward="true" selection-start-line="1" selection-end-line="1" />
+          <folding>
+            <element signature="n#style#0;n#h3#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/salesPersonInvoices.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="97" column="53" lean-forward="true" selection-start-line="97" selection-start-column="53" selection-end-line="97" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/WHTcumulative.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3399">
+          <folding>
+            <element signature="n#style#0;n#tr#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/updateCustomerPaymentTerms.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3598">
+          <folding>
+            <element signature="n#style#0;n#input#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/paymentsExpected.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="113" column="8" lean-forward="true" selection-start-line="113" selection-start-column="8" selection-end-line="113" selection-end-column="8" />
+          <folding>
+            <element signature="n#style#0;n#input#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/Compressed/themeforest-0RNlPLvL-architect-reactjs-bootstrap-4-admin-ui-dashboard-theme/architectui-html-pro-theme-package/architectui-html-pro-theme/architectui-html-pro/forms-layouts.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-25599">
+          <caret line="1280" selection-start-line="1280" selection-end-line="1280" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/Compressed/themeforest-0RNlPLvL-architect-reactjs-bootstrap-4-admin-ui-dashboard-theme/architectui-html-pro-theme-package/architectui-html-pro-theme/architectui-html-pro/pages-login.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-170" />
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/Compressed/themeforest-0RNlPLvL-architect-reactjs-bootstrap-4-admin-ui-dashboard-theme/architectui-html-pro-theme-package/architectui-html-pro-theme/architectui-html-pro/assets/scripts/main.8d288f825d8dffbbe55e.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-64041">
+          <caret line="182" column="97427" selection-start-line="182" selection-start-column="97421" selection-end-line="182" selection-end-column="97427" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/MPIWItemsWiseList.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3468">
+          <caret line="204" column="32" selection-start-line="204" selection-start-column="16" selection-end-line="204" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppbalance/SuppBalanceSheetAPI.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="14" column="4" selection-start-line="14" selection-start-column="4" selection-end-line="14" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shop/parchi/inward/editInwardParchi.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17051">
+          <caret line="1008" column="89" selection-start-line="1008" selection-start-column="89" selection-end-line="1008" selection-end-column="89" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/inventory/api/mpiRecentPurchase.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="54" lean-forward="true" selection-start-line="6" selection-start-column="54" selection-end-line="6" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/SelectProduct.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="19" selection-start-line="16" selection-start-column="19" selection-end-line="16" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/includes/PDFQuotationPageHeader.inc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" column="26" selection-start-line="5" selection-start-column="26" selection-end-line="5" selection-end-column="26" />
+          <folding>
+            <element signature="n#style#0;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#1;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/dcattachments.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="10829">
+          <caret line="637" column="7" selection-start-line="637" selection-start-column="7" selection-end-line="637" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/custbalance/MPICustBalanceSheet.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="12" column="5" selection-start-line="9" selection-start-column="4" selection-end-line="12" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PDFQuotationExternalQuick.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="399">
+          <caret line="120" column="19" lean-forward="true" selection-start-line="120" selection-start-column="19" selection-end-line="120" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/dba.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="481">
+          <caret line="43" selection-start-line="41" selection-end-line="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/scmreport.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7701">
+          <caret line="453" column="16" selection-start-line="453" selection-start-column="12" selection-end-line="453" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/uploadedChequesVendors.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="442">
+          <caret line="26" column="43" selection-start-line="26" selection-start-column="43" selection-end-line="26" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Customers.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="481">
+          <caret line="196" column="71" selection-start-line="196" selection-start-column="71" selection-end-line="196" selection-end-column="71" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shop/parchi/inward/api/fileteredListInwardBazarParchiApi.php" />
+    <entry file="file://$PROJECT_DIR$/shop/parchi/inward/api/filteredListInwardBazarParchiApi.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="374">
+          <caret line="22" lean-forward="true" selection-start-line="31" selection-start-column="18" selection-end-line="32" selection-end-column="22" />
+          <folding>
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppstatement/SupplierStatement.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="396">
+          <caret line="395" selection-start-line="395" selection-end-line="395" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/migrateSQL.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="344">
+          <caret line="91" column="86" selection-start-line="91" selection-end-line="92" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shop/parchi/inward/filteredListInwardBazarParchi.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8">
+          <caret line="238" selection-start-line="238" selection-end-line="238" />
+          <folding>
+            <element signature="n#style#0;n#a#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#1;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/reportLinks.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="21" column="23" selection-start-line="21" selection-start-column="15" selection-end-line="21" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppbalance/TotalSuppBalanceAPIAdjusted.php">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppbalance/SuppBalanceSheetAPIAdjusted.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="19" column="51" lean-forward="true" selection-start-line="19" selection-start-column="51" selection-end-line="19" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppbalance/SuppBalanceSheetAdjusted.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2873">
+          <caret line="169" column="19" lean-forward="true" selection-start-line="169" selection-start-column="19" selection-end-line="169" selection-end-column="19" />
+          <folding>
+            <element signature="n#style#0;n#h3#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppstatement/SupplierStatementAdjusted.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="11">
+          <caret line="39" column="49" selection-start-line="39" selection-start-column="49" selection-end-line="39" selection-end-column="49" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CustomerStatement.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="527" column="68" selection-start-line="527" selection-start-column="68" selection-end-line="527" selection-end-column="68" />
+          <folding>
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/n">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="55136" selection-start-column="55130" selection-end-column="55136" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/balance/suppstatement/SuppStatementFilter.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="523">
+          <caret line="150" column="20" selection-start-line="150" selection-start-column="20" selection-end-line="150" selection-end-column="20" />
+          <folding>
+            <element signature="n#style#0;n#span#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reports/mpiweeklyprojections.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="125" column="43" selection-start-line="125" selection-start-column="43" selection-end-line="125" selection-end-column="43" />
+          <folding>
+            <element signature="n#style#0;n#tr#0;n#thead#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Documents/response.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shop/parchi/inward/listInwardBazarParchi.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4454">
+          <caret line="262" column="55" selection-start-line="262" selection-start-column="51" selection-end-line="262" selection-end-column="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/shop/parchi/inward/api/listInwardBazarParchiApi.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3553">
+          <caret line="209" column="46" selection-start-line="209" selection-start-column="46" selection-end-line="209" selection-end-column="46" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/show.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="821">
+          <caret line="53" column="38" selection-start-line="53" selection-start-column="38" selection-end-line="53" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/show.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" selection-end-line="16" />
+          <folding>
+            <element signature="n#style#0;n#th#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#1;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#1;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#1;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#h1#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/Document_Manager.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="62" column="36" lean-forward="true" selection-start-line="62" selection-start-column="36" selection-end-line="62" selection-end-column="36" />
+          <folding>
+            <element signature="e#2044#2111#0#HTML" expanded="true" />
+            <element signature="e#2209#2275#0#HTML" expanded="true" />
+            <element signature="e#2450#2471#0#HTML" expanded="true" />
+            <element signature="e#3528#3549#0#HTML" expanded="true" />
+            <element signature="e#3592#3615#0#HTML" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v2/includes/sidebar.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="280">
+          <caret line="18" column="35" selection-start-line="18" selection-start-column="35" selection-end-line="18" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

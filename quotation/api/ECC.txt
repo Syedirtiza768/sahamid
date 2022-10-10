@@ -1,0 +1,10 @@
+Changes to be concidered to secure microservices api calls
+
+Add New api_token field under session during login
+
+API Token can be a combination of the
+	Base64(user_id) 
+	First 5 characters of User Password Hash 
+	UNIX Time Stamp
+
+Match the session['api_token'] with the api token passed in the header of microservices api calls prior to making any database changes.

@@ -1,0 +1,7 @@
+1010 - 0 for period 5 to 5
+1010, 5, Brought Forward Balance,,,15127
+1010,5, Receipt - GL,249,02/07/2015,39000,,PettyCash - 111 SHAHUD ALI - ASSIGNCASH - regular assignment + extra for some payments - ,
+1010,5, Cost Update,1,03/07/2015,30,,1091NUTGLD8211 cost was 25 changed to 26 x Quantity on hand of 30,
+1010,5, Cost Update,2,03/07/2015,,30,1091NUTGLD8211 cost was 26 changed to 25 x Quantity on hand of 30,
+1010, 5, Period Total,,,39000
+1010,5, Balance C/Fwd,,,54127

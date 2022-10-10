@@ -1,0 +1,143 @@
+//Calculating invoice value and period number
+
+$PeriodNo = GetPeriod(date($_SESSION['DefaultDateFormat']), $db);
+$sqlinvoicevalue="SELECT invoice.salescaseref, invoicedetails.invoiceno,
+ SUM(invoicedetails.unitprice* (1 - invoicedetails.discountpercent)*invoicedetails.quantity*invoiceoptions.quantity )
+ as value from invoicedetails INNER JOIN invoiceoptions on
+ (invoicedetails.invoiceno = invoiceoptions.invoiceno AND 
+ invoicedetails.invoicelineno = invoiceoptions.invoicelineno) 
+ INNER JOIN invoice on invoice.invoiceno = invoicedetails.invoiceno 
+ WHERE invoicedetails.invoiceoptionno = 0 and invoiceoptions.invoiceoptionno = 0 and invoice.invoiceno='".$_SESSION['RequestNo'] ."'";
+
+ $resultsqlinvoicevalue=DB_query($sqlinvoicevalue,$db);
+ $rowinvoicevalue=DB_fetch_array($resultsqlinvoicevalue);
+ $rowinvoiceval=$rowinvoicevalue['value'];
+ $SQL="SELECT GST,services FROM invoice WHERE invoiceno='". $_SESSION['RequestNo'] . "'";
+ $result=DB_query($SQL,$db);
+ $row=DB_fetch_array($result);
+// print_r($row);
+ if ($row['GST']=='exclusive' AND $row['services']==1) 
+ {
+	 
+ $rowinvoiceval=$rowinvoicevalue['value'];
+	 $rowinvoiceval=$rowinvoiceval*1.16;
+	 $tax=$rowinvoiceval/1.16*0.16;
+ }
+  if ($row['GST']=='exclusive' AND $row['services']==0) 
+ {
+	 
+ $rowinvoiceval=$rowinvoicevalue['value'];
+	 $rowinvoiceval=$rowinvoiceval*1.17;
+	 $tax=$rowinvoiceval/1.17*0.17;
+
+ }
+ if ($row['GST']=='inclusive' AND $row['services']==1) 
+ {
+	 
+ $rowinvoiceval=$rowinvoicevalue['value'];
+	 $row=$rowinvoiceval/1.16;
+	 $tax=$row*0.16;
+ }
+  if ($row['GST']=='inclusive' AND $row['services']==0) 
+ {
+	 
+ $rowinvoiceval=$rowinvoicevalue['value'];
+	 $row=$rowinvoiceval/1.17;
+	 $tax=$row*0.17;
+
+ }
+//-------------------------------------------------------
+
+
+// Inserting debtortrans
+echo $SQL = "INSERT INTO debtortrans (transno,
+									type,
+									debtorno,
+									branchcode,
+									trandate,
+									inputdate,
+									prd,
+									reference,
+									tpe,
+									order_,
+									ovamount,
+									WHTamt,
+									GSTamt,
+									ovgst,
+									ovfreight,
+									rate,
+									invtext,
+									shipvia,
+									consignment,
+									packages,
+									salesperson )
+								VALUES (
+									'". $_SESSION['RequestNo'] . "',
+									10,
+									'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
+									'" . $_SESSION['Items'.$identifier]->Branch . "',
+									'" . date('Y-m-d H-i-s') . "',
+									'" . date('Y-m-d H-i-s') . "',
+									'" . $PeriodNo . "',
+									'',
+									'" . $_SESSION['Items'.$identifier]->DefaultSalesType . "',
+									'" . $_SESSION['ProcessingOrder'] . "',
+									'" . $rowinvoiceval. "',
+									'" . $rowinvoiceval*4.5/100 . "',
+									'" . $tax*20/100 . "',
+									
+									'',
+									'',
+									'1',
+									'',
+									'',
+									'',
+									'',
+									'" . $_SESSION['Items'.$identifier]->SalesPerson . "' )";
+
+	$ErrMsg =_('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The debtor transaction record could not be inserted because');
+	$DbgMsg = _('The following SQL to insert the debtor transaction record was used');
+ 	$Result = DB_query($SQL,$db,$ErrMsg,$DbgMsg,true);
+
+//Accounts Sales
+$SQL = "INSERT INTO gltrans (
+								type,
+								typeno,
+								trandate,
+								periodno,
+								account,
+								narrative,
+								amount
+							) VALUES (
+								10,
+								'". $_SESSION['RequestNo'] . "',
+								'" . date('Y-m-d H-i-s') . "',
+								'" . $PeriodNo . "',
+								1,
+								'Invoice No " . $_SESSION['RequestNo'] . "',
+								'" . -1*$rowinvoiceval . "'
+							)";
+				if( !$Result = DB_query($SQL,$db) ) {
+					$Error = _('Could not update exchange difference in General Ledger');
+				}
+// Accounts Recievable
+		  			$SQL = "INSERT INTO gltrans (
+								type,
+								typeno,
+								trandate,
+								periodno,
+								account,
+								narrative,
+								amount
+							) VALUES (
+								10,
+								'". $_SESSION['RequestNo'] . "',
+								'" . date('Y-m-d H-i-s') . "',
+								'" . $PeriodNo . "',
+								1100,
+								'Invoice No " . $_SESSION['RequestNo'] . "',
+								'" . $rowinvoiceval. "'
+							)";
+				if( !$Result = DB_query($SQL,$db) ) {
+					$Error = _('Could not update exchange difference in General Ledger');
+				}

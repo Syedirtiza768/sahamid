@@ -1,0 +1,14 @@
+#selectedUser{line-height:40px; margin-top:5px; height:40px; font-size:15px; margin-left:10px}
+.fit{width:1%; padding-left:10px; padding-right:10px}
+.no-wrap{white-space:nowrap;}
+#userPermissions thead tr{background-color:#424242; color:white}
+#userPermissions_filter input{border:1px solid #424242; border-radius:7px; padding:5px;}
+#userPermissions_length{display:inline-block;}
+.no-margin{margin:0 !important}
+#assignNewPermission{margin-left:10px}
+.newPermissionContainer{flex-direction:column; width:100%; align-items:center; justify-content:center; padding:30px; background-color:white; margin-top:10px; margin-bottom:20px; transition: all 0.6s ease-in; display:none}
+.closeButtonContainer{display:flex; width: 100%; justify-content: flex-end;}
+ #selectedPermission{width:300px, line-height:40px; margin-top:5px; height:40px; font-size:15px;}
+ .assignSelectedPermission{width:300px; margin-top:10px}
+ .containerVisible{transform: rotateX(0deg); display:flex !important; }
+ .dataTables_empty{text-align:center; padding:40px}

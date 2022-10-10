@@ -1,0 +1,32 @@
+{
+  "FormatId": "TagValues",
+  "ApiVersion": 1,
+  "CollectionId": 1,
+  "TagData": [
+    {
+      "Time": "2019-11-19T22:32:42.253+05:00",
+      "Values": {
+        "M2_Current_A": 3.765624761581421,
+        "M2_Current_B": 3.613736867904663,
+        "M2_Current_C": 3.852611541748047,
+        "M2_Current_N": 0.8057568669319153,
+        "M2_Current_Avg": 3.734375,
+        "M2_Voltage_A_B": 408.1600036621094,
+        "M2_Voltage_B_C": 410.50872802734375,
+        "M2_Voltage_C_A": 404.0467529296875,
+        "M2_Voltage_L_L_Avg": 406.771240234375,
+        "M2_Voltage_A_N": 234.8877716064453,
+        "M2_Voltage_B_N": 236.31687927246094,
+        "M2_Voltage_C_N": 235.8188018798828,
+        "M2_Voltage_L_N_Avg": 235.99998474121094,
+        "M2_Active_Power_A": 0.8221874833106995,
+        "M2_Active_Power_B": 0.8066417574882507,
+        "M2_Active_Power_C": 0.8688899278640747,
+        "M2_Active_Power_Total": 2.4902760982513428,
+        "M2_PF": 0.9426695108413696,
+        "M2_Frequency": 50.249996185302734,
+        "M2_Wapda_KWH": 2816
+      }
+    }
+  ]
+}

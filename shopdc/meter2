@@ -1,0 +1,31 @@
+{
+  "FormatId": "TagValues",
+  "ApiVersion": 1,
+  "CollectionId": 0,
+  "TagData": [
+    {
+      "Time": "2019-11-18T13:10:08.035+05:00",
+      "Values": {
+        "M1_Current_A": 9.183409485952689e-41,
+        "M1_Current_B": 0,
+        "M1_Current_C": 0,
+        "M1_Current_N": 0,
+        "M1_Current_Avg": 0,
+        "M1_Voltage_A_B": 396,
+        "M1_Voltage_B_C": 399.91729736328125,
+        "M1_Voltage_C_A": 395.39581298828125,
+        "M1_Voltage_L_L_Avg": 396.8269348144531,
+        "M1_Voltage_A_N": 228.69000244140625,
+        "M1_Voltage_B_N": 230.31362915039062,
+        "M1_Voltage_C_N": 229.75233459472656,
+        "M1_Voltage_L_N_Avg": 229.99998474121094,
+        "M1_Active_Power_A": 8.44884883095362e-41,
+        "M1_Active_Power_B": 0,
+        "M1_Active_Power_C": 0,
+        "M1_Active_Power_Total": 0,
+        "M1_Frequency": 49.999996185302734,
+        "M1_Wapda_KWH": 76
+      }
+    }
+  ]
+}

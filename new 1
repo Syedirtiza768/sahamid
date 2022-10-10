@@ -1,0 +1,44 @@
+UPDATE branditemanalysisadmin SET QuotationCount=( SELECT COUNT(salesorders.orderno) as count
+ FROM salesorders inner join salesorderdetails on salesorders.orderno=salesorderdetails.orderno
+ WHERE SUBSTRING(stkcode, 1, 3) = 108 AND branditemanalysisadmin.stockid=salesorderdetails.stkcode
+ AND salesorders.orddate BETWEEN "2017-05-01" AND "2017-08-31" GROUP BY branditemanalysisadmin.stockid
+ HAVING count>0 ),OCCount=( SELECT COUNT(ocs.orderno) as count FROM ocs inner join ocdetails
+ on ocs.orderno=ocdetails.orderno WHERE SUBSTRING(stkcode, 1, 3) = 108 
+ AND branditemanalysisadmin.stockid=ocdetails.stkcode 
+ AND salesorders.orddate BETWEEN "2017-05-01" 
+ AND "2017-08-31" GROUP BY branditemanalysisadmin.stockid HAVING count>0 ),
+ DCCount=( SELECT COUNT(dcs.orderno) as count
+ FROM dcs inner join dcdetails on dcs.orderno=dcdetails.orderno 
+ WHERE SUBSTRING(stkcode, 1, 3) = 108
+ AND 
+ branditemanalysisadmin.stockid=dcdetails.stkcode AND salesorders.orddate
+ BETWEEN "2017-05-01" AND "2017-08-31" GROUP BY branditemanalysisadmin.stockid HAVING count>0 ),
+ AvgDiscountQ=( SELECT AVG(discountpercent) as avgdiscounto FROM `salesorderdetails` 
+ WHERE branditemanalysisadmin.stockid=salesorderdetails.stkcode AND salesorderdetails.orderno IN
+ ( SELECT orderno FROM salesorders WHERE salesorders.orddate BETWEEN "2017-05-01" AND "2017-08-31" )
+ GROUP BY salesorderdetails.stkcode ) ,AvgDiscountO=( SELECT AVG(discountpercent) as avgdiscounto
+ FROM `ocdetails` WHERE branditemanalysisadmin.stockid=ocdetails.stkcode AND ocdetails.orderno IN
+ ( SELECT orderno FROM ocs WHERE ocs.orddate BETWEEN "2017-05-01" AND "2017-08-31" ) 
+ GROUP BY ocdetails.stkcode ),AvgDiscountD=( SELECT AVG(discountpercent) 
+ as avgdiscountd FROM `dcdetails` WHERE branditemanalysisadmin.stockid=dcdetails.stkcode
+ AND dcdetails.orderno IN ( SELECT orderno FROM dcs WHERE dcs.orddate BETWEEN "2017-05-01"
+ AND "2017-08-31" ) GROUP BY dcdetails.stkcode ),AvgPriceQ=(SELECT AVG(unitprice*(1-discountpercent))
+ as price FROM `salesorderdetails` WHERE branditemanalysisadmin.stockid=salesorderdetails.stkcode 
+ AND salesorderdetails.orderno IN ( SELECT orderno FROM salesorders WHERE salesorders.orddate 
+ BETWEEN "2017-05-01" AND "2017-08-31" ) GROUP BY stkcode ),
+ AvgPriceO=(SELECT AVG(unitprice*(1-discountpercent)) as price FROM `ocdetails`
+ WHERE branditemanalysisadmin.stockid=ocdetails.stkcode AND ocdetails.orderno
+ IN ( SELECT orderno FROM ocs WHERE ocs.orddate BETWEEN "2017-05-01" 
+ AND "2017-08-31" ) GROUP BY stkcode ),
+ AvgPriceD=(SELECT AVG(unitprice*(1-discountpercent)) as price FROM `dcdetails` 
+ WHERE branditemanalysisadmin.stockid=dcdetails.stkcode AND dcdetails.orderno 
+ IN ( SELECT orderno FROM dcs WHERE dcs.orddate BETWEEN "2017-05-01" AND "2017-08-31" ) 
+ GROUP BY stkcode ), QtyQuotation=( SELECT SUM(salesorderdetails.quantity*salesorderoptions.quantity) 
+ as quantity FROM `salesorderdetails` inner join salesorderoptions 
+ on (salesorderdetails.orderno = salesorderoptions.orderno 
+ AND salesorderdetails.orderlineno = salesorderoptions.lineno
+ AND salesorderdetails.lineoptionno = salesorderoptions.optionno 
+ AND salesorderoptions.optionno = 0 ) WHERE SUBSTRING(stkcode, 1, 3) = 108
+ AND salesorderdetails.orderno IN ( SELECT orderno FROM salesorders 
+ WHERE salesorders.orddate BETWEEN "2017-05-01" AND "2017-08-31" ) AND
+ branditemanalysisadmin.stockid=salesorderdetails.stkcode GROUP BY stkcode HAVING quantity>0 

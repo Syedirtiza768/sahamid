@@ -1,0 +1,10 @@
+#main,
+#footer {
+	display: none;
+}
+#footer {
+	height: 40px;
+}
+body{
+	font-family: 'Josefin Sans', sans-serif;
+}

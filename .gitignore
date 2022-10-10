@@ -1,0 +1,11 @@
+salescase/audiocomments/*.wav
+tempPDF/*.pdf
+tempPDF/dc/*.pdf
+tempPDF/oc/*.pdf
+shop/parchi/inward/audiocomments/*.wav
+shop/parchi/inward/files/
+companies/uploads/*.pdf
+companies/sahamid/*.pdf
+companies/sahamid/EDI_Incoming_Orders/*.pdf
+qrcodes/
+temp1/

@@ -1,0 +1,88 @@
+#loginbox {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 150px;
+    position: relative;
+    width: 380px;
+}
+
+#boxhead {
+	background-image: url("../images/boxtext.png");
+	background-position: 0 0;
+	height: 140px;
+	text-align: center;
+}
+
+#login_form {
+	border-collapse: collapse;
+}
+
+#form_userid, #form_pass, #form_passconfirm {
+    height: 50px;
+}
+
+#form_submit {
+    height: 60px;
+}
+
+.form_label {
+	background-image: url("../images/back.png");
+	background-position: left -140px;
+	color: #666666;
+	padding-left: 20px;
+	width: 90px;
+	font-size: 1em;
+}
+
+.form_element {
+	background-image: url("../images/back.png");
+	background-position: right -140px;
+	padding-left: 10px;
+	width: 280px;
+}
+
+#button {
+    background-image: url("../images/back.png");
+    background-position: right -240px;
+    padding-left: 35px;
+    width: 280px;
+}
+
+#button input {
+    cursor: pointer;
+    padding: 10px 0;
+    text-align: center;
+	font-size: .90em;
+    width: 150px;
+    color:#666666;
+}
+
+#bottom {
+	background-image: url("../images/bottom.png");
+	background-position: center bottom;
+	color: #FFFFFF;
+	font-size: 0.7em;
+	font-weight: normal;
+	width: 380px;
+	background-repeat: no-repeat;
+}
+
+#bottom td{
+    height: 30px;
+    padding: 3px 20px 0;
+    vertical-align: top;
+}
+
+#bottom #left{
+	text-align: left;
+}
+
+#bottom #right{
+	text-align:right;
+}
+
+input {
+    font-size: 1em;
+	width: 235px;
+}
+

@@ -1,0 +1,46 @@
+SELECT dcdetails.orderno,stockmaster.stockid,stockmaster.mnfCode,stockmaster.mnfpno,
+stockmaster.description,manufacturers.manufacturers_name,(dcdetails.quantity*dcoptions.quantity) as qty ,
+stockmaster.materialcost as listprice, dcdetails.discountpercent,
+(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
+ ) as subtotal,  
+debtorsmaster.name,
+salescase.salesman,dcs.orddate
+ from dcdetails INNER JOIN dcoptions on
+ (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno) 
+ INNER JOIN dcs on dcs.orderno = dcdetails.orderno
+ INNER JOIN salescase on salescase.salescaseref=dcs.salescaseref
+ INNER JOIN stockmaster on stockmaster.stockid=dcdetails.stkcode
+ INNER JOIN manufacturers on manufacturers.manufacturers_id=stockmaster.brand
+ INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+ WHERE dcdetails.lineoptionno = 0 
+ 
+ and dcoptions.optionno = 0 
+ AND dcs.orddate BETWEEN "2017-02-01" AND "2017-08-09"
+ AND salescase.salesman LIKE "%%"
+ AND debtorsmaster.name LIKE "%%"
+ 
+ ORDER BY dcdetails.orderno
+ 
+ 
+ ---------------------------------------------------------------------------------\\
+ 
+ SELECT igpitems.dispatchid,stockmaster.stockid, stockmaster.mnfCode, 
+ stockmaster.mnfpno, manufacturers.manufacturers_name, igpitems.quantity,
+ stockmaster.materialcost, igpitems.quantity*stockmaster.materialcost,
+ igp.loccode,igp.storemanager,igp.receivedfrom,igp.narrative,
+ igp.despatchdate from igpitems 
+ INNER JOIN igp on igp.dispatchid = igpitems.dispatchid
+ INNER JOIN stockmaster on stockmaster.stockid=igpitems.stockid
+ INNER JOIN manufacturers on manufacturers.manufacturers_id=stockmaster.brand
+ AND igp.despatchdate BETWEEN "2017-02-01" AND "2017-08-09"
+ 
+ ORDER BY igpitems.dispatchid
+ ---------------------------------------------------------------------------------------------
+SELECT posdispatchitems.dispatchid,stockmaster.stockid, stockmaster.mnfCode, stockmaster.mnfpno,
+ manufacturers.manufacturers_name, posdispatchitems.quantity, stockmaster.materialcost 
+ as listprice, posdispatchitems.quantity*stockmaster.materialcost as 
+ subtotal,posdispatch.loccode,posdispatch.storemanager,posdispatch.deliveredto
+ from posdispatchitems INNER JOIN posdispatch on posdispatch.dispatchid = posdispatchitems.dispatchid 
+ INNER JOIN stockmaster on stockmaster.stockid= posdispatchitems.stockid INNER JOIN manufacturers 
+ on manufacturers.manufacturers_id=stockmaster.brand AND posdispatch.despatchdate BETWEEN "2017-02-01" AND "2017-08-09" ORDER BY posdispatchitems.dispatchid
+ 

@@ -1,0 +1,52 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>BMI Calculator</title>
+
+<link href="style.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript">
+<!--
+function calculateBmi() {
+var weight = document.bmiForm.weight.value;
+var height = document.bmiForm.height.value;
+var heightcm = height*2.54;
+if(weight > 0 && heightcm > 0){	
+var finalBmi = weight/(heightcm/100*heightcm/100);
+document.bmiForm.bmi.value = finalBmi
+if(finalBmi < 18.5){
+document.bmiForm.meaning.value = "That you are too thin."
+}
+if(finalBmi > 18.5 && finalBmi < 25){
+document.bmiForm.meaning.value = "That you are healthy."
+}
+if(finalBmi > 25){
+document.bmiForm.meaning.value = "That you have overweight."
+}
+}
+else{
+var par = document.getElementById("errorMessage");	
+par.innerHTML = "Enter values Correctly";
+}
+}
+//-->
+</script>
+</head>
+
+
+
+<body>
+<form name="bmiForm">
+Your Weight(kg): <input type="text" id = "weight" name="weight" size="10"><br />
+Your Height(inches): <input type="text" id="height" name="height" size="10"><br />
+<input type="button" value="Calculate BMI" onClick="calculateBmi()"><br />
+Your BMI: <input type="text" id="bmi" name="bmi" size="10"><br />
+This Means: <input type="text" id="meaning" name="meaning" size="25"><br />
+<input type="reset" value="Reset" />
+</form>
+<p id="errorMessage"> ******** </p>
+
+
+</body>
+</html>

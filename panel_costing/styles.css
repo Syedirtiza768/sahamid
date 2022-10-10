@@ -1,0 +1,259 @@
+body {
+  background: #eee
+}
+
+#regForm {
+  background-color: #ffffff;
+  margin: 0px auto;
+  font-family: Raleway;
+  padding: 40px;
+  border-radius: 10px
+}
+
+#register{
+
+color: black;
+font-family: Raleway;
+  border: 5px solid #000000;
+  border-radius: 10px;
+  width: 50%;
+  margin-left: 24%;
+  margin-right: 40%;
+  text-align: center;
+}
+
+h1 {
+  text-align: center
+}
+
+.select{
+  padding: 10px;
+  width: 100%;
+  font-size: 17px;
+  font-size: 17px;
+  border-radius: 10px;
+}
+
+.f_door{
+  padding: 10px;
+  width: 100%;
+  color: black;
+  background-color: rgb(187, 187, 187);
+  font-size: 17px;
+  font-family: Raleway;
+  border: 1px solid #aaaaaa;
+  border-radius: 10px;
+  -webkit-appearance: none;
+}
+
+input {
+  padding: 10px;
+  width: 100%;
+  font-size: 17px;
+  font-family: Raleway;
+  border: 1px solid #aaaaaa;
+  border-radius: 10px;
+  -webkit-appearance: none;
+}
+
+
+
+.tab input:focus{
+
+border:1px solid #6a1b9a !important;
+outline: none;
+}
+
+input.invalid {
+
+  border:1px solid #e03a0666;
+}
+
+.tab {
+  display: none
+}
+
+
+
+button {
+  background-color: rgb(187, 187, 187) ;
+  color:black;
+  border: none;
+  padding: 10px 20px;
+  font-size: 17px;
+  font-family: Raleway;
+  cursor: pointer
+}
+
+#addButton {
+  background-color: rgb(187, 187, 187) !important;
+  color:black;
+  border: none !important;
+  padding: 12px 10px !important;
+  font-size: 15px !important;
+  cursor: pointer
+}
+
+#deleteButton {
+  background-color: rgb(175, 41, 41) !important;
+  border: none !important;
+  padding: 12px 10px !important;
+  font-size: 15px !important;
+  cursor: pointer;
+  float:right;
+  margin: -10px 1px;
+  border-radius: 6px;
+}
+
+
+
+button:hover {
+  opacity: 0.8
+}
+
+button:focus{
+
+outline: none !important;
+}
+
+#prevBtn {
+  background-color: rgb(187, 187, 187)
+}
+#prevBtn1 {
+  background-color: rgb(187, 187, 187)
+}
+
+
+.all-steps{
+  border-radius: 4%;
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.step {
+  height: 40px;
+  width: 40px;
+  background-color: rgb(187, 187, 187);
+  border: 1px solid black;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 15px;
+  color: black;
+  opacity: 0.5;
+}
+
+
+.step2 {
+  background-color:rgb(13, 211, 102);
+}
+
+.step.active {
+  opacity: 1
+}
+
+
+.step.finish {
+ color: #fff;
+ background: #6a1b9a;
+ opacity: 1;
+
+}
+
+
+
+.all-steps {
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 30px
+}
+
+.thanks-message {
+  display: none
+}
+
+#buttonAlert {
+  background-color: #c83232;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  border: none;
+  color: #000000;
+  cursor: pointer;
+  font-family: Arial;
+  font-size: 20px;
+  float: right;
+  padding: 7px 10px;
+  text-align: center;
+  text-decoration: none;
+  -webkit-animation: glowing 1500ms infinite;
+  -moz-animation: glowing 1500ms infinite;
+  -o-animation: glowing 1500ms infinite;
+  animation: glowing 1500ms infinite;
+}
+@-webkit-keyframes glowing {
+  0% { background-color: rgb(57, 216, 129); -webkit-box-shadow: 0 0 3px rgb(57, 216, 129); }
+  50% { background-color: rgb(0, 255, 115); -webkit-box-shadow: 0 0 40px rgb(0, 255, 115); }
+  100% { background-color: rgb(57, 216, 129); -webkit-box-shadow: 0 0 3px rgb(57, 216, 129); }
+}
+
+@-moz-keyframes glowing {
+  0% { background-color: rgb(57, 216, 129); -moz-box-shadow: 0 0 3px rgb(57, 216, 129); }
+  50% { background-color: rgb(0, 255, 115); -moz-box-shadow: 0 0 40px rgb(0, 255, 115); }
+  100% { background-color: rgb(57, 216, 129); -moz-box-shadow: 0 0 3px rgb(57, 216, 129); }
+}
+
+@-o-keyframes glowing {
+  0% { background-color: rgb(57, 216, 129); box-shadow: 0 0 3px rgb(57, 216, 129); }
+  50% { background-color: rgb(0, 255, 115); box-shadow: 0 0 40px rgb(0, 255, 115); }
+  100% { background-color: rgb(57, 216, 129); box-shadow: 0 0 3px rgb(57, 216, 129); }
+}
+
+@keyframes glowing {
+  0% { background-color: rgb(57, 216, 129); box-shadow: 0 0 3px rgb(57, 216, 129); }
+  50% { background-color: rgb(0, 255, 115); box-shadow: 0 0 40px rgb(0, 255, 115); }
+  100% { background-color: rgb(57, 216, 129); box-shadow: 0 0 3px rgb(57, 216, 129); }
+}
+
+.close {
+  vertical-align: middle;
+  margin-top: -35px;
+  margin-right: 15px;
+  border: 1px solid red;
+  color: inherit;
+  border-radius: 50%;
+  background: red;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  opacity: 0.6;
+}
+.close:focus,
+.close:hover {
+  opacity: 1;
+  background: rgba(246, 0, 0, 0.5);
+}
+.close:active {
+  background: rgba(128, 128, 128, 0.9);
+}
+/* tines of the X */
+.close::before,
+.close::after {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 20px;
+  width: 2px;
+  background-color: rgb(255, 255, 255);
+}
+.close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}

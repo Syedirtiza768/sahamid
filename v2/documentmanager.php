@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document Mangement System</title>
+  <link rel="stylesheet" href="DocumentManagment/style.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<meta name="viewport" content="initial-scale=1.0; maximum-scale=1.0; width=device-width;">
+</head>
+<style>
+#My_word_form{
+    display : none;
+  width: 300px;
+    padding: 14px;
+    background: none;
+}
+  
+#file_upload {
+ display : none;
+  width: 300px;
+    padding: 14px;
+    background: none;
+}
+    
+</style>
+
+<body>
+  
+  <div id="wrapper">
+        <h1 style='font-family: cursive; color: #000000; text-align: center;'> Document Manager</h1>
+      
+          <button style='font-family: cursive; color: #000000;' id='Add-File'>click here to add new file</button>
+          <div>
+            <form id="file_upload" enctype="multipart/form-data">
+              <input name="name" type="text" id="name" placeholder="Name"/><br>
+              <!-- <input name="s_desc" type="text" id="s_desc"  /><br> -->
+              <textarea id="s_desc" name="s_desc" placeholder="Short Description" maxlength="300"></textarea><br>
+              <input name="file" type="file" id="file"  /><br>
+              <input  id="btn-Upload" type="submit" value="upload" ></input>
+            </form>
+          </div>
+          <br>
+          <br>
+
+          <main>
+            <div class="table-title" id="table">
+           
+            </div>
+          </main>
+  </div>
+</script>
+  
+  <!-- Show input form button -->
+  <script>
+    $( document ).ready( function() {
+     $( "#Add-File" ).click( function() {
+      $( "#file_upload" ).toggle( 'slow' );
+      });
+    });
+  </script>
+
+
+<!-- save new pdf file of existing id -->
+  <script>
+  $(document).on('click', '.add_files', function () {
+  if($(this).attr('pdf') != ""){
+        alert("ooops! You have to delete existing pdf file first.")
+      }
+      else{
+        let form = $(this).attr('doc_id');
+      $( "#My_form"+form ).toggle( 'slow' );
+      $("#My_form"+form).submit(function(e) {
+        e.preventDefault();   
+        var formData = new FormData(this);
+          $.ajax({
+            url: 'DocumentManagment/upload_pdf_file.php',
+            type:'post',
+            data:formData,
+            processData:false,
+            cache:false,
+            contentType:false,
+            success:function(data){
+                    alert(data);
+                    load_data();
+                },
+                error: function(data){
+                    console.log("error");
+                    console.log(data);
+                    load_data();
+                },
+          });
+        });
+      }
+    });
+
+   
+  </script>
+
+  <!-- save new excel file for existing id -->
+  <script>
+    $(document).on('click', '.add_excel_file', function () {
+    if($(this).attr('excel') != ""){
+          alert("ooops! You have to delete existing excel file first.")
+        }
+        else{
+          let form = $(this).attr('doc_id');
+        $( "#My_excel_form"+form ).toggle( 'slow' );
+        $("#My_excel_form"+form).submit(function(e) {
+          e.preventDefault();   
+          var formData = new FormData(this);
+            $.ajax({
+              url: 'DocumentManagment/upload_excel_file.php',
+              type:'post',
+              data:formData,
+              processData:false,
+              cache:false,
+              contentType:false,
+              success:function(data){
+                      alert(data);
+                      load_data();
+                  },
+                  error: function(data){
+                      console.log("error");
+                      console.log(data);
+                      load_data();
+                  },
+            });
+          });
+        }
+      }); 
+    </script>
+
+    <!-- save new word file for existing id -->
+  <script>
+    $(document).on('click', '.add_word_file', function () {
+    if($(this).attr('word') != ""){
+          alert("ooops! You have to delete existing excel file first.")
+        }
+        else{
+          let form = $(this).attr('doc_id');
+        $( "#My_word_form"+form ).toggle( 'slow' );
+        $("#My_word_form"+form).submit(function(e) {
+          e.preventDefault();   
+          var formData = new FormData(this);
+           
+            $.ajax({
+              url: 'DocumentManagment/upload_word_file.php',
+              type:'post',
+              data:formData,
+              processData:false,
+              cache:false,
+              contentType:false,
+              success:function(data){
+                      alert(data);
+                      load_data();
+                  },
+                  error: function(data){
+                      console.log("error");
+                      console.log(data);
+                      load_data();
+                  },
+            });
+          });
+        }
+      }); 
+    </script>
+
+  <!-- Script to save the Record -->
+  <script type="text/javascript">
+      $("#file_upload").submit(function(e) {
+        e.preventDefault();   
+        var formData = new FormData(this);
+        $('#name').val('');
+        $('#s_desc').val('');
+          maxFileSize = 25*1024*1024;
+          if($("#file")[0].files[0].size > maxFileSize){
+            alert('Sorry! You can only upload file less then 25MB');
+          }
+          else{
+          $.ajax({
+            url: 'DocumentManagment/upload_data.php',
+            type:'post',
+            data:formData,
+            processData:false,
+            cache:false,
+            contentType:false,
+            success:function(data){
+                    alert(data);
+                    load_data();
+                },
+                error: function(data){
+                    console.log("error");
+                    console.log(data);
+                    load_data();
+                },
+          });
+        }
+        });
+        
+
+        function load_data() {
+        $.ajax({
+            url: 'DocumentManagment/show.php',
+            method: "GET",
+            success: function (res, status) {
+                if (status == "success") {
+                    $("#table").html(res);
+                    $('#myTable').DataTable();
+                }
+            }
+        });
+         
+      }
+  </script>
+
+<!-- Auto load table when refresh -->
+  <script>
+    $.ajax({
+        url: 'DocumentManagment/show.php',
+        method: "GET",
+        success: function (res, status) {
+            if (status == "success") {
+                $("#table").html(res); 
+                $('#myTable').DataTable();
+            }
+        }
+    })
+    
+  </script>
+
+  <!-- delete pdf file script -->
+    <script>
+    $(document).on('click', '.delete_pdf', function () {
+      if($(this).attr('pdf') == ""){
+        alert("There is no any pdf file to delete.");
+      }
+      else
+      {
+        result = confirm('Are you sure you want to delete this?');
+          if(result){
+            let id_value = $(this).attr('id');
+            let pdf_value = $(this).attr('pdf');
+            $.ajax({
+              url: 'DocumentManagment/delete_pdf.php',
+              method: "POST",
+              data: { id: id_value,
+                      pdf: pdf_value},
+              success:function(data){
+                          alert(data);
+                          load_data();
+                      },
+          })
+        }
+      }
+    });
+  </script>
+
+  <!-- delete excel file script -->
+  <script>
+    $(document).on('click', '.delete_excel', function () {
+      if($(this).attr('excel') == ""){
+        alert("There is no any excel file to delete.");
+      }
+      else
+      {
+        result = confirm('Are you sure you want to delete this?');
+          if(result){
+            let id_value = $(this).attr('id');
+            let excel_value = $(this).attr('excel');
+            $.ajax({
+              url: 'DocumentManagment/delete_excel.php',
+              method: "POST",
+              data: { id: id_value,
+                      excel: excel_value},
+              success:function(data){
+                          alert(data);
+                          load_data();
+                      },
+          })
+        }
+      }
+    });
+  </script>
+
+  <!-- delete excel file script -->
+  <script>
+    $(document).on('click', '.delete_word', function () {
+      if($(this).attr('word') == ""){
+        alert("There is no any excel file to delete.");
+      }
+      else
+      {
+        result = confirm('Are you sure you want to delete this?');
+          if(result){
+            let id_value = $(this).attr('id');
+            let excel_value = $(this).attr('word');
+            $.ajax({
+              url: 'DocumentManagment/delete_word.php',
+              method: "POST",
+              data: { id: id_value,
+                      word: excel_value},
+              success:function(data){
+                          alert(data);
+                          load_data();
+                      },
+          })
+        }
+      }
+    });
+  </script>
+  
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+  <script src="DocumentManagment/script.js"></script>
+</body>
+
+</html>

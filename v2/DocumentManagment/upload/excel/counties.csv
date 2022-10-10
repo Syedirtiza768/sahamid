@@ -1,0 +1,381 @@
+id,state,abbreviation,county
+1,Virginia,VA,Accomack County
+2,Virginia,VA,Albemarle County
+3,Virginia,VA,Alexandria City'
+4,Virginia,VA,Alleghany County
+5,Virginia,VA,Amelia County
+6,Virginia,VA,Amherst County
+7,Virginia,VA,Appomattox County
+8,Virginia,VA,Arlington County
+9,Virginia,VA,Augusta County
+10,Virginia,VA,Bath County
+11,Virginia,VA,Bedford County
+12,Virginia,VA,Bland County
+13,Virginia,VA,Botetourt County
+14,Virginia,VA,Bristol City
+15,Virginia,VA,Brunswick County
+16,Virginia,VA,Buchanan County
+17,Virginia,VA,Buckingham County
+18,Virginia,VA,Buena Vista
+19,Virginia,VA,Campbell County
+20,Virginia,VA,Caroline County
+21,Virginia,VA,Carroll County
+22,Virginia,VA,Charles City County
+23,Virginia,VA,Charlotte County
+24,Virginia,VA,Charlottesville
+25,Virginia,VA,Chesapeake
+26,Virginia,VA,Chesterfield County
+27,Virginia,VA,Clarke County
+28,Virginia,VA,Colonial Heights
+29,Virginia,VA,Covington City
+30,Virginia,VA,Craig County
+31,Virginia,VA,Culpeper County
+32,Virginia,VA,Cumberland County
+33,Virginia,VA,Danville City
+34,Virginia,VA,Dickenson County
+35,Virginia,VA,Dinwiddie County
+36,Virginia,VA,Emporia City
+37,Virginia,VA,Essex County
+38,Virginia,VA,Fairfax City
+39,Virginia,VA,Fairfax County
+40,Virginia,VA,Falls Chruch City
+41,Virginia,VA,Fauquier County
+42,Virginia,VA,Floyd County
+43,Virginia,VA,Fluvanna County
+44,Virginia,VA,Franklin City
+45,Virginia,VA,Franklin County
+46,Virginia,VA,Frederick County
+47,Virginia,VA,Fredericksburg City
+48,Virginia,VA,Galax City
+49,Virginia,VA,Giles County
+50,Virginia,VA,Gloucester County
+51,Virginia,VA,Goochland County
+52,Virginia,VA,Grayson County
+53,Virginia,VA,Greene County
+54,Virginia,VA,Greensville County
+55,Virginia,VA,Halifax County
+56,Virginia,VA,Hampton City
+57,Virginia,VA,Hanover County
+58,Virginia,VA,Harrisonburg City
+59,Virginia,VA,Henrico County
+60,Virginia,VA,Henry County
+61,Virginia,VA,Highland County
+62,Virginia,VA,Hopewell City
+63,Virginia,VA,Isle of Wight County
+64,Virginia,VA,James City County
+65,Virginia,VA,King and Queen County
+66,Virginia,VA,King George County
+67,Virginia,VA,King William County
+68,Virginia,VA,Lancaster County
+69,Virginia,VA,Lee County
+70,Virginia,VA,Lexington City
+71,Virginia,VA,Loudoun County
+72,Virginia,VA,Louisa County
+73,Virginia,VA,Lunenburg County
+74,Virginia,VA,Lynchburg City
+75,Virginia,VA,Madison County
+76,Virginia,VA,Manassas City
+77,Virginia,VA,Manassas Park City
+78,Virginia,VA,Martinsville City
+79,Virginia,VA,Mathews County
+80,Virginia,VA,Mecklenburg County
+81,Virginia,VA,Middlesex County
+82,Virginia,VA,Montgomery County
+83,Virginia,VA,Nelson County
+84,Virginia,VA,New Kent County
+85,Virginia,VA,Newport News
+86,Virginia,VA,Norfolk City
+87,Virginia,VA,Northampton County
+88,Virginia,VA,Northumberland County
+89,Virginia,VA,Norton City
+90,Virginia,VA,Nottoway County
+91,Virginia,VA,Orange County
+92,Virginia,VA,Page County
+93,Virginia,VA,Patrick County
+94,Virginia,VA,Petersburg City
+95,Virginia,VA,Pittsylvania County
+96,Virginia,VA,Poquoson City
+97,Virginia,VA,Portsmouth City
+98,Virginia,VA,Powhatan County
+99,Virginia,VA,Prince Edward County
+100,Virginia,VA,Prince George County
+101,Virginia,VA,Prince William County
+102,Virginia,VA,Pulaski County
+103,Virginia,VA,Radford City
+104,Virginia,VA,Rappahannock County
+105,Virginia,VA,Richmond City
+106,Virginia,VA,Richmond County
+107,Virginia,VA,Roanoke City
+108,Virginia,VA,Roanoke County
+109,Virginia,VA,Rockbridge County
+110,Virginia,VA,Rockingham County
+111,Virginia,VA,Russell County
+112,Virginia,VA,Salem City
+113,Virginia,VA,Scott County
+114,Virginia,VA,Shenandoah County
+115,Virginia,VA,Smyth County
+116,Virginia,VA,Southampton County
+117,Virginia,VA,Spotsylvania County
+118,Virginia,VA,Stafford County
+119,Virginia,VA,Staunton City
+120,Virginia,VA,Suffolk City
+121,Virginia,VA,Surry County
+122,Virginia,VA,Sussex County
+123,Virginia,VA,Tazewell County
+124,Virginia,VA,Virginia Beach City
+125,Virginia,VA,Warren County
+126,Virginia,VA,Washington County
+127,Virginia,VA,Waynesboro City
+128,Virginia,VA,Westmoreland County
+129,Virginia,VA,Williamsburg City
+130,Virginia,VA,Winchester City
+131,Virginia,VA,Wise County
+132,Virginia,VA,Wythe County
+133,Virginia,VA,York County
+134,West Virginia,WV,Barbour County
+135,West Virginia,WV,Berkeley County
+136,West Virginia,WV,Boone County
+137,West Virginia,WV,Braxton County
+138,West Virginia,WV,Brooke County
+139,West Virginia,WV,Cabell County
+140,West Virginia,WV,Calhoun County
+141,West Virginia,WV,Clay County
+142,West Virginia,WV,Doddridge County
+143,West Virginia,WV,Fayette County
+144,West Virginia,WV,Gilmer County
+145,West Virginia,WV,Grant County
+146,West Virginia,WV,Greenbrier County
+147,West Virginia,WV,Hampshire County
+148,West Virginia,WV,Hancock County
+149,West Virginia,WV,Hardy County
+150,West Virginia,WV,Harrison County
+151,West Virginia,WV,Jackson County
+152,West Virginia,WV,Jefferson County
+153,West Virginia,WV,Kanawha County
+154,West Virginia,WV,Lewis County
+155,West Virginia,WV,Lincoln County
+156,West Virginia,WV,Logan County
+157,West Virginia,WV,Marion County
+158,West Virginia,WV,Marshall County
+159,West Virginia,WV,Mason County
+160,West Virginia,WV,McDowell County
+161,West Virginia,WV,Mercer County
+162,West Virginia,WV,Mineral County
+163,West Virginia,WV,Mingo County
+164,West Virginia,WV,Monongalia County
+165,West Virginia,WV,Monroe County
+166,West Virginia,WV,Morgan County
+167,West Virginia,WV,Nicholas County
+168,West Virginia,WV,Ohio County
+169,West Virginia,WV,Pendleton County
+170,West Virginia,WV,Pleasants County
+171,West Virginia,WV,Pocahontas County
+172,West Virginia,WV,Preston County
+173,West Virginia,WV,Putnam County
+174,West Virginia,WV,Raleigh County
+175,West Virginia,WV,Randolph County
+176,West Virginia,WV,Ritchie County
+177,West Virginia,WV,Roane County
+178,West Virginia,WV,Summers County
+179,West Virginia,WV,Taylor County
+180,West Virginia,WV,Tucker County
+181,West Virginia,WV,Tyler County
+182,West Virginia,WV,Upshur County
+183,West Virginia,WV,Wayne County
+184,West Virginia,WV,Webster County
+185,West Virginia,WV,Wetzel County
+186,West Virginia,WV,Wirt County
+187,West Virginia,WV,Wood County
+188,West Virginia,WV,Wyoming County
+189,District of Columbia,DC,DCRA
+190,Maryland,MD,Allegany County
+191,Maryland,MD,Anne Arundel County
+192,Maryland,MD,Baltimore City
+193,Maryland,MD,Baltimore County
+194,Maryland,MD,Calvert County
+195,Maryland,MD,Caroline County
+196,Maryland,MD,Carroll County
+197,Maryland,MD,Cecil County
+198,Maryland,MD,Charles County
+199,Maryland,MD,Dorchester County
+200,Maryland,MD,Frederick County
+201,Maryland,MD,Garrett County
+202,Maryland,MD,Harford County
+203,Maryland,MD,Howard County
+204,Maryland,MD,Kent County
+205,Maryland,MD,Montgomery County
+206,Maryland,MD,Prince George's County
+207,Maryland,MD,Queen Anne's County
+208,Maryland,MD,Somerset County
+209,Maryland,MD,St. Mary's County
+210,Maryland,MD,Talbot County
+211,Maryland,MD,Washington County
+212,Maryland,MD,Wicomico County
+213,Maryland,MD,Worcester County
+214,Pennsylvania,PA,Adams County
+215,Pennsylvania,PA,Allegheny County
+216,Pennsylvania,PA,Armstrong County
+217,Pennsylvania,PA,Beaver County
+218,Pennsylvania,PA,Bedford County
+219,Pennsylvania,PA,Berks County
+220,Pennsylvania,PA,Blair County
+221,Pennsylvania,PA,Bradford County
+222,Pennsylvania,PA,Bucks County
+223,Pennsylvania,PA,Butler County
+224,Pennsylvania,PA,Cambria County
+225,Pennsylvania,PA,Cameron County
+226,Pennsylvania,PA,Carbon County
+227,Pennsylvania,PA,Centre County
+228,Pennsylvania,PA,Chester County
+229,Pennsylvania,PA,Clarion County
+230,Pennsylvania,PA,Clearfield County
+231,Pennsylvania,PA,Clinton County
+232,Pennsylvania,PA,Columbia County
+233,Pennsylvania,PA,Crawford County
+234,Pennsylvania,PA,Cumberland County
+235,Pennsylvania,PA,Dauphin County
+236,Pennsylvania,PA,Delaware County
+237,Pennsylvania,PA,Elk County
+238,Pennsylvania,PA,Erie County
+239,Pennsylvania,PA,Fayette County
+240,Pennsylvania,PA,Forest County
+241,Pennsylvania,PA,Franklin County
+242,Pennsylvania,PA,Fulton County
+243,Pennsylvania,PA,Greene County
+244,Pennsylvania,PA,Huntingdon County
+245,Pennsylvania,PA,Indiana County
+246,Pennsylvania,PA,Jefferson County
+247,Pennsylvania,PA,Juniata County
+248,Pennsylvania,PA,Lackawanna County
+249,Pennsylvania,PA,Lancaster County
+250,Pennsylvania,PA,Lawrence County
+251,Pennsylvania,PA,Lebanon County
+252,Pennsylvania,PA,Lehigh County
+253,Pennsylvania,PA,Luzerne County
+254,Pennsylvania,PA,Lycoming County
+255,Pennsylvania,PA,McKean County
+256,Pennsylvania,PA,Mercer County
+257,Pennsylvania,PA,Mifflin County
+258,Pennsylvania,PA,Monroe County
+259,Pennsylvania,PA,Montgomery County
+260,Pennsylvania,PA,Montour County
+261,Pennsylvania,PA,Northampton County
+262,Pennsylvania,PA,Northumberland County
+263,Pennsylvania,PA,Perry County
+264,Pennsylvania,PA,Philadelphia County
+265,Pennsylvania,PA,Pike County
+266,Pennsylvania,PA,Potter County
+267,Pennsylvania,PA,Schuylkill County
+268,Pennsylvania,PA,Snyder County
+269,Pennsylvania,PA,Somerset County
+270,Pennsylvania,PA,Sullivan County
+271,Pennsylvania,PA,Susquehanna County
+272,Pennsylvania,PA,Tioga County
+273,Pennsylvania,PA,Union County
+274,Pennsylvania,PA,Venango County
+275,Pennsylvania,PA,Warren County
+276,Pennsylvania,PA,Washington County
+277,Pennsylvania,PA,Wayne County
+278,Pennsylvania,PA,Westmoreland County
+279,Pennsylvania,PA,Wyoming County
+280,Pennsylvania,PA,York County
+281,North Carolina,NC,Alamance County
+282,North Carolina,NC,Alexander County
+283,North Carolina,NC,Alleghany County
+284,North Carolina,NC,Anson County
+285,North Carolina,NC,Ashe County
+286,North Carolina,NC,Avery County
+287,North Carolina,NC,Beaufort County
+288,North Carolina,NC,Bertie County
+289,North Carolina,NC,Bladen County
+290,North Carolina,NC,Brunswick County
+291,North Carolina,NC,Buncombe County
+292,North Carolina,NC,Burke County
+293,North Carolina,NC,Cabarrus County
+294,North Carolina,NC,Caldwell County
+295,North Carolina,NC,Camden County
+296,North Carolina,NC,Carteret County
+297,North Carolina,NC,Caswell County
+298,North Carolina,NC,Catawba County
+299,North Carolina,NC,Chatham County
+300,North Carolina,NC,Cherokee County
+301,North Carolina,NC,Chowan County
+302,North Carolina,NC,Clay County
+303,North Carolina,NC,Cleveland County
+304,North Carolina,NC,Columbus County
+305,North Carolina,NC,Craven County
+306,North Carolina,NC,Cumberland County
+307,North Carolina,NC,Currituck County
+308,North Carolina,NC,Dare County
+309,North Carolina,NC,Davidson County
+310,North Carolina,NC,Davie County
+311,North Carolina,NC,Duplin County
+312,North Carolina,NC,Durham County
+313,North Carolina,NC,Edgecombe County
+314,North Carolina,NC,Forsyth County
+315,North Carolina,NC,Franklin County
+316,North Carolina,NC,Gaston County
+317,North Carolina,NC,Gates County
+318,North Carolina,NC,Graham County
+319,North Carolina,NC,Granville County
+320,North Carolina,NC,Greene County
+321,North Carolina,NC,Guilford County
+322,North Carolina,NC,Halifax County
+323,North Carolina,NC,Harnett County
+324,North Carolina,NC,Haywood County
+325,North Carolina,NC,Henderson County
+326,North Carolina,NC,Hertford County
+327,North Carolina,NC,Hoke County
+328,North Carolina,NC,Hyde County
+329,North Carolina,NC,Iredell County
+330,North Carolina,NC,Jackson County
+331,North Carolina,NC,Johnston County
+332,North Carolina,NC,Jones County
+333,North Carolina,NC,Lee County
+334,North Carolina,NC,Lenoir County
+335,North Carolina,NC,Lincoln County
+336,North Carolina,NC,Macon County
+337,North Carolina,NC,Madison County
+338,North Carolina,NC,Martin County
+339,North Carolina,NC,McDowell County
+340,North Carolina,NC,Mecklenburg County
+341,North Carolina,NC,Mitchell County
+342,North Carolina,NC,Montgomery County
+343,North Carolina,NC,Moore County
+344,North Carolina,NC,Nash County
+345,North Carolina,NC,New Hanover County
+346,North Carolina,NC,Northampton County
+347,North Carolina,NC,Onslow County
+348,North Carolina,NC,Orange County
+349,North Carolina,NC,Pamlico County
+350,North Carolina,NC,Pasquotank County
+351,North Carolina,NC,Pender County
+352,North Carolina,NC,Perquimans County
+353,North Carolina,NC,Person County
+354,North Carolina,NC,Pitt County
+355,North Carolina,NC,Polk County
+356,North Carolina,NC,Randolph County
+357,North Carolina,NC,Richmond County
+358,North Carolina,NC,Robeson County
+359,North Carolina,NC,Rockingham County
+360,North Carolina,NC,Rowan County
+361,North Carolina,NC,Rutherford County
+362,North Carolina,NC,Sampson County
+363,North Carolina,NC,Scotland County
+364,North Carolina,NC,Stanly County
+365,North Carolina,NC,Stokes County
+366,North Carolina,NC,Surry County
+367,North Carolina,NC,Swain County
+368,North Carolina,NC,Transylvania County
+369,North Carolina,NC,Tyrrell County
+370,North Carolina,NC,Union County
+371,North Carolina,NC,Vance County
+372,North Carolina,NC,Wake County
+373,North Carolina,NC,Warren County
+374,North Carolina,NC,Washington County
+375,North Carolina,NC,Watauga County
+376,North Carolina,NC,Wayne County
+377,North Carolina,NC,Wilkes County
+378,North Carolina,NC,Wilson County
+379,North Carolina,NC,Yadkin County
+380,North Carolina,NC,Yancey County

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<info>
+	<infoitem key="UD_LiveData_params" value="1" />
+	<infoitem key="UD_LiveData_param0" value="recordID=1" />
+	<infoitem key="UD_Recordset1" value="name:BUfileNo;datatype:string,name:BUday;datatype:string,name:BUdate;datatype:string" />
+	<infoitem key="UD_Recordset2" value="name:OurCode;datatype:string,name:SupplierCode;datatype:string,name:Description;datatype:string,name:SupplierPrice;datatype:real,name:PriceChange;datatype:datetime,name:Quantity;datatype:string,name:Supplier;datatype:string" />
+	<infoitem key="UD_search" value="name:OurCode;datatype:string,name:Supplier;datatype:string" />
+	<infoitem key="UD_insert" value="name:OurCode;datatype:string,name:SupplierCode;datatype:string,name:Description;datatype:string,name:SupplierPrice;datatype:real,name:PriceChange;datatype:date,name:Quantity;datatype:string,name:Supplier;datatype:string" />
+	<infoitem key="UD_update" value="name:SupplierCode;datatype:string,name:Description;datatype:string,name:SupplierPrice;datatype:real,name:PriceChange;datatype:datetime,name:Quantity;datatype:string" />
+	<infoitem key="UD_search_supplier" value="name:OurCode;datatype:string,name:SupplierCode;datatype:string,name:Description;datatype:string,name:SupplierPrice;datatype:real,name:PriceChange;datatype:datetime,name:Quantity;datatype:string,name:Supplier;datatype:string" />
+	<infoitem key="UD_search_ourcode" value="name:OurCode;datatype:string" />
+	<infoitem key="UD_ourcode" value="name:OurCode;datatype:string" />
+	<infoitem key="UD_search3" value="name:OurCode;datatype:string" />
+	<infoitem key="UD_search1" value="name:Code;datatype:string" />
+</info>

@@ -1,0 +1,15 @@
+TRUNCATE invoiceoptions;
+
+TRUNCATE invoicelines;
+
+TRUNCATE invoicedetails;
+
+TRUNCATE invoice;
+
+TRUNCATE dcgroups;
+
+UPDATE dcdetails SET qtyinvoiced=0;
+
+UPDATE dcoptions SET qtyinvoiced=0;
+
+UPDATE dcs SET invoicegroupid=NULL;
