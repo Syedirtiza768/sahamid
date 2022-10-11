@@ -96,7 +96,7 @@
 				`enquirydate`,enquiryvalue, `lastquotationdate`,  `pofile`, salescase.`podate`,
 				`ocdocumentfile`, `ocdocumentdate`,debtorsmaster.dba, custbranch.defaultlocation,
 				salescase.priority, salescase.priority_updated_by FROM salescase 
-				INNER JOIN ocs ON  salescase.salescaseref =  ocs.salescaseref
+				LEFT OUTER JOIN ocs ON  salescase.salescaseref =  ocs.salescaseref
 				LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
 				LEFT OUTER JOIN custbranch ON (salescase.debtorno = custbranch.debtorno 
 												AND salescase.branchcode = custbranch.branchcode)
@@ -117,7 +117,7 @@
 				`enquirydate`,enquiryvalue, `lastquotationdate`,  `pofile`, salescase.`podate`,
 				`ocdocumentfile`, `ocdocumentdate`, debtorsmaster.dba, custbranch.defaultlocation,
 				salescase.priority, salescase.priority_updated_by FROM salescase
-				INNER JOIN ocs ON salescase.salescaseref =  ocs.salescaseref
+				LEFT OUTER JOIN ocs ON salescase.salescaseref =  ocs.salescaseref
 				INNER JOIN www_users ON www_users.realname = salescase.salesman
 				LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
 				LEFT OUTER JOIN custbranch ON (salescase.debtorno = custbranch.debtorno 
