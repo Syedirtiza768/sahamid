@@ -86,6 +86,7 @@ var datatableInit = function() {
 		    },
 			{ className: "fit center", "targets": [ 5 ] },
 			{ className: "fit center", "targets": [ 6 ] },
+			{ className: "fit center", "targets": [ 7 ] },
 		    
 		    { 
 		    	className: "fit center",
@@ -105,7 +106,7 @@ var datatableInit = function() {
 					
         			return html;
     			}, 
-		    	"targets": [ 7 ],
+		    	"targets": [ 8 ],
 		    }
 
 		],
