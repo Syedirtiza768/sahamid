@@ -130,7 +130,7 @@
             <form id="file_upload" enctype="multipart/form-data">
                 <input style=" background-color: rgb(235, 235, 235); " name="name" type="text" id="name" placeholder="Doc Name*" required /><br>
                 <!-- New doc number field -->
-                <input style=" background-color:rgb(235, 235, 235); " name="number" type="number" id="number" placeholder="Doc Number*" required /><br>
+                <input style=" background-color:rgb(235, 235, 235); " name="text" type="number" id="number" placeholder="Doc Number*" required /><br>
                 <!-- New category field -->
                 <select id="category" name="category" class="selectpicker" multiple data-selected-text-format="count > 2" title='Choose one...' data-width=174  px>
                 <?php
