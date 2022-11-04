@@ -1,0 +1,35 @@
+body{  
+    font-family: Calibri, Helvetica, sans-serif;  
+    background-color: white;  
+  }  
+  .container {  
+      padding: 50px;  
+      background-image: url('assets/images/cardboard.png');
+  }
+
+table, th, td {
+  border: 1px solid black;
+  margin: 30px 30px;
+  border-collapse:inherit;
+  text-align: center;
+}
+
+::-webkit-input-placeholder {
+  text-align: center;
+}
+
+
+td{
+background-color: white;
+}
+
+
+th{
+  width:140px;
+}
+
+hr {  
+  border: 3px solid black; 
+  border-radius: 5px; 
+  margin-bottom: 25px;  
+}  
