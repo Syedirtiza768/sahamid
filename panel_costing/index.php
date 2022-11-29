@@ -2,25 +2,32 @@
 require_once 'assets/config.php';
 ?>
 
-<!DOCTYPE html>  
-<html>  
-<head>  
-<meta name="viewport" content="width=device-width, initial-scale=1">  
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="links/jquery.js"></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-<link rel="stylesheet" href="styles.css">
+<script src="links/alert.js"></script>
+<link rel="stylesheet" href="stylish.css">
 
-</head>  
-<body> 
-  <div class="container">  
-  <center>  <h1><b>Panel Costing</b></h1> </center>  
-  <hr>  
-  
+</head>
+<body>
+  <div class="container">
+  <center>  <h1><b>Panel Costing</b></h1> </center>
+  <hr>
+
+  <input type="hidden" class="pc_id" >
+    <div style="margin-left: 75%;
+      position:fixed;
+      right: 10%;" >
+    <button  class="close" style="border:1px solid red; background-color:red; color:white" title="Close Tab" aria-label onclick="javascript:window.close()"></button>
+  </div>
   <label> <h3><b>Panel Size:</b></h3> </label><br>
   <label>Height:</label>
-  <input type="number" style="width:10%" name="pc_h" placeholder= "Height" id="pc_h" required> 
+  <input type="number" style="width:10%" name="pc_h" placeholder= "Height" id="pc_h" required>
   <label>&ensp;&ensp;Width:</label>
   <input type="number" style="width:10%" name="pc_w" placeholder= "Width" id="pc_w" required >
   <label>&ensp;&ensp;Depth:</label>
@@ -61,15 +68,7 @@ require_once 'assets/config.php';
     <option value="">Choose One</option>
     <option value="yes">Yes</option>
     <option value="no">No</option>
-  </select>
-
-  <label> <h3><b>&ensp;&ensp;Cover Plate:</b></h3> </label>
-  <select style="width:10%" name="cover_plate" id="cover_plate">
-    <option value="">Choose One</option>
-    <option value="yes">Yes</option>
-    <option value="no">No</option>
   </select> <br>
-  
 
   <label> <h3><b>Door # 01:</b></h3> </label><br>
   <label>Height:</label>
@@ -78,6 +77,12 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="door1_w" placeholder= "Width" id="door1_w" required >
   <label>&ensp;&ensp;Depth:</label>
   <input type="number" style="width:10%" name="door1_d" placeholder= "Depth" id="door1_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door1_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   <button id="addButton" class="fa fa-angle-down" onclick="$('#second_fd').show()">Add More</button><br>
 
   <div id="second_fd">
@@ -88,6 +93,12 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="door2_w" placeholder= "Width" id="door2_w" required >
   <label>&ensp;&ensp;Depth:</label>
   <input type="number" style="width:10%" name="door2_d" placeholder= "Depth" id="door2_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door2_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   <button id="addButton" class="fa fa-angle-down" onclick="$('#third_fd').show()">Add More</button><br>
   </div>
 
@@ -99,6 +110,12 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="door3_w" placeholder= "Width" id="door3_w" required >
   <label>&ensp;&ensp;Depth:</label>
   <input type="number" style="width:10%" name="door3_d" placeholder= "Depth" id="door3_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door3_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   <button id="addButton" class="fa fa-angle-down" onclick="$('#four_fd').show()">Add More</button><br>
   </div>
 
@@ -110,6 +127,12 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="door4_w" placeholder= "Width" id="door4_w" required >
   <label>&ensp;&ensp;Depth:</label>
   <input type="number" style="width:10%" name="door4_d" placeholder= "Depth" id="door4_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door4_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   <button id="addButton" class="fa fa-angle-down" onclick="$('#five_fd').show()">Add More</button><br>
   </div>
 
@@ -121,6 +144,12 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="door5_w" placeholder= "Width" id="door5_w" required >
   <label>&ensp;&ensp;Depth:</label>
   <input type="number" style="width:10%" name="door5_d" placeholder= "Depth" id="door5_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door5_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   <button id="addButton" class="fa fa-angle-down" onclick="$('#six_fd').show()">Add More</button><br>
   </div>
 
@@ -132,6 +161,12 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="door6_w" placeholder= "Width" id="door6_w" required >
   <label>&ensp;&ensp;Depth:</label>
   <input type="number" style="width:10%" name="door6_d" placeholder= "Depth" id="door6_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door6_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   <button id="addButton" class="fa fa-angle-down" onclick="$('#seven_fd').show()">Add More</button><br>
   </div>
 
@@ -143,6 +178,12 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="door7_w" placeholder= "Width" id="door7_w" required >
   <label>&ensp;&ensp;Depth:</label>
   <input type="number" style="width:10%" name="door7_d" placeholder= "Depth" id="door7_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door7_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   <button id="addButton" class="fa fa-angle-down" onclick="$('#eight_fd').show()">Add More</button><br>
   </div>
 
@@ -153,10 +194,24 @@ require_once 'assets/config.php';
   <label>&ensp;&ensp;Width:</label>
   <input type="number" style="width:10%" name="door8_w" placeholder= "Width" id="door8_w" required >
   <label>&ensp;&ensp;Depth:</label>
-  <input type="number" style="width:10%" name="door8_d" placeholder= "Depth" id="door8_d" required ><br>
+  <input type="number" style="width:10%" name="door8_d" placeholder= "Depth" id="door8_d" required >
+  <label>&ensp;&ensp;Cover Plate:</label>
+  <select style="width:10%" name="cover_plate" id="door8_cp">
+    <option value="">Choose One</option>
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
   </div><br>
 
-  
+  <label> <h3><b>Sheet Selection:</b></h3> </label>
+  <select style="width:25%" name="sheet_selection" id="sheet_selection">
+    <option value="">Choose One</option>
+    <option value="ms_sheet">MS Sheet</option>
+    <option value="ss_sheet">SS Sheet</option>
+    <option value="gi_sheet">GI Sheet</option>
+  </select> <br>
+
+
   <label> <h3><b>Bus Bar:</b></h3> </label> <br>
   <label>Dimensions:</label>
   <select style="width:10%" name="bb_dimension" id="bb_dimension">
@@ -181,7 +236,7 @@ require_once 'assets/config.php';
     <option value="150*10">150*10</option>
   </select>
   <label>&ensp;&ensp;Qty(Feet):</label>
-  <input type="number" style="width:10%" name="busbar_qty" placeholder= "Qty(Feet)" id="busbar_qty" required>
+  <input type="number" style="width:10%" name="busbar_qty" placeholder= "Qty(Feet)" id="busbar_qty"  required>
   <label>&ensp;&ensp;Weight:</label>
   <input type="number" style="width:10%; background:none; color:red" id="busbar_weight" placeholder= "Weight" readonly>
   <label>&ensp;&ensp;Sleeve Cost:</label>
@@ -283,16 +338,9 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_four" placeholder= "Sleeve Cost" readonly> <br>
   </div>
 <br>
-  <label> <h3><b>Sheet Selection:</b></h3> </label>
-  <select style="width:25%" name="cover_plate" id="cover_plate">
-    <option value="">Choose One</option>
-    <option value="ms_sheet">MS Sheet</option>
-    <option value="ss_sheet">SS Sheet</option>
-    <option value="gi_sheet">GI Sheet</option>
-  </select> <br>
 
   <label> <h3><b>Paint Cost:</b></h3> </label>
-  <select style="width:10%" name="paint_cost" id="paint_cost">
+  <select style="width:10%" name="paint_cost" id="paint_cost_model">
     <option value="">Choose One</option>
     <option value="7032">7032</option>
     <option value="7035">7035</option>
@@ -304,12 +352,12 @@ require_once 'assets/config.php';
 
   <label> <h3><b>&ensp;&ensp;Gas Kit:</b></h3> </label>
   <label>Quantity:</label>
-  <input type="number" style="width:10%" name="gk_qty" placeholder= "Quantity" id="gk_qty" required> 
+  <input type="number" style="width:10%" name="gk_qty" placeholder= "Quantity" id="gk_qty" required>
 
   <label> <h3><b>&ensp;&ensp;I-Bolt:</b></h3> </label>
   <label>Quantity:</label>
   <input type="number" style="width:10%" name="ibolt_qty" placeholder= "Quantity" id="ibolt_qty" required> <br>
-  
+
   <label> <h3><b>Hinges:</b></h3> </label> <br>
   <label>Model:</label>
   <select style="width:10%" name="hinges_model" id="hinges_model">
@@ -333,7 +381,7 @@ require_once 'assets/config.php';
     <option value="pl_150">PL-150</option>
   </select>
   <label>&ensp;&ensp;Quantity:</label>
-  <input type="number" style="width:10%" name="hinges_qty" placeholder= "Quantity" id="hinges_qty" required> <br>
+  <input type="number" style="width:10%" name="hinges_qty" placeholder= "Quantity" id="lock_qty" required> <br>
 
   <label> <h3><b>Cable Duct:</b></h3> </label> <br>
   <label>Model:</label>
@@ -358,25 +406,25 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%" name="labour" placeholder= "Quantity" id="labour" required>
 
   <label> <h3><b>&ensp;&ensp;MISC.EXP:</b></h3> </label>
-  <input type="number" style="width:10%" name="misc_exp" placeholder= "Quantity" id="misc_exp" required> 
-  
-  
+  <input type="number" style="width:10%" name="misc_exp" placeholder= "Quantity" id="misc_exp" required>
+
+
   <label> <h3><b>&ensp;&ensp;Rent:</b></h3> </label>
   <input type="number" style="width:10%" name="rent" placeholder= "Rent" id="rent" required> <br>
 
   <label> <h3><b>14 SWG Increase By % :</b></h3> </label>
-  <input type="number" style="width:10%" name="rent" placeholder= "14 SWG %" id="Increase_percent_14" required> <br> 
+  <input type="number" style="width:10%" name="rent" placeholder= "14 SWG %" id="Increase_percent_14" required> <br>
 
   <label> <h3><b>16 SWG Increase By % :</b></h3> </label>
-  <input type="number" style="width:10%" name="rent" placeholder= "16 SWG %" id="Increase_percent_16" required> <br> 
+  <input type="number" style="width:10%" name="rent" placeholder= "16 SWG %" id="Increase_percent_16" required> <br>
 
   <label> <h3><b>18 SWG Increase By % :</b></h3> </label>
   <input type="number" style="width:10%" name="rent" placeholder= "18 SWG %" id="Increase_percent_18" required> <br> <br><br>
 
-  <button id="calculateButton">Calculate All Panel Costing</button> <br><br>
+  <button id="calculateButton" class="button" type="submit" value="Submit">Calculate All Panel Costing</button> <br><br>
 
   <label> <h3><b>Sheet Use:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Sheet Use" id="sheet_use" readonly> <br> 
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Sheet Use" id="sheet_use" readonly> <br>
 
   <label> <h3><b>14 SWG Sheet:</b></h3> </label><br>
   <label>Sheet Weight</label>
@@ -397,25 +445,25 @@ require_once 'assets/config.php';
   <input type="number" style="width:10%; background:none; color:red"  placeholder= "Sheet Cost" id="sheet_cost_18" readonly> <br>
 
   <label> <h3><b>Paint Cost:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Paint Cost" id="paint_cost" readonly> 
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Paint Cost" id="paint_cost" readonly>
 
   <label> <h3><b>&ensp;&ensp;Hinges Cost:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Hinges Cost" id="hinges_cost" readonly> 
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Hinges Cost" id="hinges_cost" readonly>
 
   <label> <h3><b>&ensp;&ensp;Lock Cost:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Lock Cost" id="lock_cost" readonly> 
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Lock Cost" id="lock_cost" readonly>
 
   <label> <h3><b>&ensp;&ensp;Acrylic Cost:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Acrylic Cost" id="acrylic_cost" readonly> <br> 
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Acrylic Cost" id="acrylic_cost" readonly> <br>
 
   <label> <h3><b>Gas Kit Cost:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Gas Kit Cost" id="gk_cost" readonly>  
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Gas Kit Cost" id="gk_cost" readonly>
 
   <label> <h3><b>&ensp;&ensp;I Bolt Cost:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "I Bolt Cost" id="ibolt_cost" readonly>  
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "I Bolt Cost" id="ibolt_cost" readonly>
 
   <label> <h3><b>&ensp;&ensp;Cable Duct Cost:</b></h3> </label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Cable Duct Cost" id="cd_cost" readonly> <br> 
+  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Cable Duct Cost" id="cd_cost" readonly> <br>
 
   <label> <h3><b>Bus Bar:</b></h3> </label><br>
   <label>Weight/kg</label>
@@ -427,23 +475,24 @@ require_once 'assets/config.php';
 
   <label> <h3><b>14 SWG Sheet:</b></h3> </label><br>
   <label>Total Cost</label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Total Cost" id="swg_14_total" readonly>
+  <input type="number" style="width:14%; background:none; color:red"  placeholder= "Total Cost" id="swg_14_total" readonly>
   <label>&ensp;&ensp;Final Cost</label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Total Cost" id="swg_14_final_total" readonly> <br>
+  <input type="number" style="width:14%; background:none; color:red"  placeholder= "Total Cost" id="swg_14_final_total" readonly> <br>
 
   <label> <h3><b>16 SWG Sheet:</b></h3> </label><br>
   <label>Total Cost</label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Total Cost" id="swg_16_total" readonly>
+  <input type="number" style="width:14%; background:none; color:red"  placeholder= "Total Cost" id="swg_16_total" readonly>
   <label>&ensp;&ensp;Final Cost</label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Total Cost" id="swg_16_final_total" readonly> <br>
+  <input type="number" style="width:14%; background:none; color:red"  placeholder= "Total Cost" id="swg_16_final_total" readonly> <br>
 
   <label> <h3><b>18 SWG Sheet:</b></h3> </label><br>
   <label>Total Cost</label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Total Cost" id="swg_18_total" readonly>
+  <input type="number" style="width:14%; background:none; color:red"  placeholder= "Total Cost" id="swg_18_total" readonly>
   <label>&ensp;&ensp;Final Cost</label>
-  <input type="number" style="width:10%; background:none; color:red"  placeholder= "Total Cost" id="swg_18_final_total" readonly> <br>
+  <input type="number" style="width:14%; background:none; color:red"  placeholder= "Total Cost" id="swg_18_final_total" readonly> <br><br>
 
+  <button id="save_exit" class="button" type="submit" value="Submit">Save And Exit</button> <br><br>
 </div>
-</body>  
-<script src="javascriptss.js"></script> 
-</html>  
+</body>
+<script src="javascript.js"></script>
+</html>

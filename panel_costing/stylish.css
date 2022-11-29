@@ -1,0 +1,284 @@
+body {
+  font-family: Calibri, Helvetica, sans-serif;
+  background-color: white;
+}
+
+.container {
+  padding: 50px;
+  background-image: url('assets/images/cardboard.png');
+}
+
+input[type=text],
+input[type=password],
+textarea {
+  width: 100%;
+  margin: 5px 0 22px 0;
+  display: inline-block;
+  border: 2px solid black;
+  border-radius: 10px;
+  background: white;
+}
+
+::-webkit-input-placeholder {
+  text-align: center;
+}
+
+input[type=text]:focus,
+input[type=number]:focus,
+input[type=password]:focus {
+  background-color: rgb(231, 231, 231);
+  color: black;
+  outline: none;
+}
+
+select {
+  width: 100%;
+  padding: 5px;
+  margin: 5px 0 15px 0;
+  display: inline-block;
+  border: 1px solid black;
+  border-radius: 3px;
+  background: white;
+}
+
+input[type=number] {
+  width: 10%;
+  padding: 5px;
+  margin: 5px 0 15px 0;
+  display: inline-block;
+  border: 1px solid black;
+  border-radius: 3px;
+}
+
+
+div {
+  padding: 10px 0;
+}
+
+hr {
+  border: 3px solid black;
+  border-radius: 5px;
+  margin-bottom: 25px;
+}
+
+.registerbtn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  opacity: 0.9;
+}
+
+.registerbtn:hover {
+  opacity: 1;
+}
+
+.custom-search {
+  position: relative;
+  width: 300px;
+}
+
+.custom-search-input {
+  width: 30%;
+  padding: 5px;
+  margin: 5px 0 15px 0;
+  display: inline-block;
+  border: 2px solid black;
+  border-radius: 10px;
+  background: white;
+}
+
+.eye {
+  margin-left: -38px;
+  top: 6px;
+  bottom: 3px;
+  border: 0;
+  background: #ffffff;
+  color: #000;
+  outline: none;
+  padding: 3px 8px;
+  border-radius: 45px;
+  z-index: 2;
+}
+
+body.modal-open {
+  position: absolute !important;
+}
+
+#addButton {
+  background: green;
+  color: white;
+  padding: 8px 5px !important;
+  font-size: 11px !important;
+  cursor: pointer;
+  float: right;
+  font-size: 15px;
+  border: 1px solid black;
+  border-radius: 10px;
+  float: inherit;
+  margin-left: 20px;
+}
+
+#addbusButton {
+  background: green;
+  color: black;
+  padding: 8px 5px !important;
+  font-size: 11px !important;
+  cursor: pointer;
+  float: right;
+  font-size: 15px;
+  border: 1px solid black;
+  border-radius: 10px;
+  float: inherit;
+  margin-left: 20px;
+}
+
+#calculateButton {
+  background: none;
+  color: black;
+  width: 100%;
+  padding: 5px 38% !important;
+  font-size: 20px !important;
+  cursor: pointer;
+  font-size: 100px;
+  border: 1px solid black;
+  border-radius: 10px;
+  float: inherit;
+}
+
+#save_exit {
+  background: green;
+  color: white;
+  width: 100%;
+  padding: 5px 38% !important;
+  font-size: 20px !important;
+  cursor: pointer;
+  font-size: 100px;
+  border: 1px solid black;
+  border-radius: 10px;
+  float: inherit;
+}
+
+#submit:focus {
+  outline: none;
+  outline-offset: none;
+}
+
+.button {
+  display: inline-block;
+  outline: none;
+  padding: 10px 20px;
+  background: #444;
+  border-radius: 4px;
+  color: #fff;
+  border: 0;
+  position: relative;
+  transition: padding-right 0.3s ease;
+  box-shadow: 0 1px 0 #6e6e6e inset, 0px 1px 0 #3b3b3b;
+}
+
+.button.spinning {
+  padding-right: 40px;
+}
+
+.button.spinning:after {
+  content: "";
+  right: 6px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  position: absolute;
+  border-radius: 50%;
+  -webkit-animation: rotate360 0.5s infinite linear, exist 0.1s forwards ease;
+  animation: rotate360 0.5s infinite linear, exist 0.1s forwards ease;
+}
+
+.button.spinning:before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  border-radius: 50%;
+  right: 6px;
+  top: 40%;
+  position: absolute;
+  border: 2px solid #000000;
+  border-right: 3px solid #f63100;
+  -webkit-animation: rotate360 0.5s infinite linear, exist 0.1s forwards ease;
+  animation: rotate360 0.5s infinite linear, exist 0.1s forwards ease;
+}
+
+@-webkit-keyframes rotate360 {
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotate360 {
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@-webkit-keyframes exist {
+  100% {
+    width: 25px;
+    height: 25px;
+    margin: -8px 5px 0 0;
+  }
+}
+
+@keyframes exist {
+  100% {
+    width: 25px;
+    height: 25px;
+    margin: -8px 5px 0 0;
+  }
+}
+
+.close {
+  vertical-align: middle;
+  margin-top: -35px;
+  margin-right: 15px;
+  border: 1px solid red;
+  color: inherit;
+  background: red;
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  opacity: 5.0;
+}
+
+.close:focus,
+.close:hover {
+  opacity: 1;
+  background: rgba(246, 0, 0, 0.5);
+}
+
+.close:active {
+  background: rgba(128, 128, 128, 0.9);
+}
+
+/* tines of the X */
+.close::before,
+.close::after {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 20px;
+  width: 2px;
+  background-color: rgb(255, 255, 255);
+}
+
+.close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
