@@ -708,7 +708,24 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <label>
         <h3><b>18 SWG Increase By % :</b></h3>
       </label>
-      <input type="number" style="width:10%" value="<?php echo $panelCost['18swg_percent']; ?>" placeholder="18 SWG %" id="Increase_percent_18" required> <br> <br><br>
+      <input type="number" style="width:10%" value="<?php echo $panelCost['18swg_percent']; ?>" placeholder="18 SWG %" id="Increase_percent_18" required> <br>
+      
+      <label> <h3><b>Sheet Value To Show In Cash demand:</b></h3> </label>
+      <select style="width:25%" name="sheet_sheet" id="sheet_sheet_cd">
+      <?php if ($panelCost['sheet_sheet_cd'] == '') {?>
+        <option value="">Choose One</option>
+        <option value="ms_sheet">MS Sheet</option>
+        <option value="ss_sheet">SS Sheet</option>
+        <option value="gi_sheet">GI Sheet</option>
+        <?php } else {?>
+          <option value="<?php echo $panelCost['sheet_sheet_cd']; ?>" selected><?php echo $panelCost['sheet_sheet_cd']; ?></option>
+          <option value="ms_sheet">MS Sheet</option>
+          <option value="ss_sheet">SS Sheet</option>
+          <option value="gi_sheet">GI Sheet</option>
+        <?php }?>
+
+        
+      </select> <br> <br><br>
 
       <button id="calculateButton" class="button" type="submit" value="Submit">Calculate All Panel Costing</button> <br><br>
 
@@ -814,6 +831,6 @@ while ($panelCost = mysqli_fetch_array($result)) {
 
     </div>
 </body>
-<script src="javascript.js"></script>
+<script src="javascripts.js"></script>
 
 </html>

@@ -11,6 +11,7 @@ NProgress.start();
 $(document).ready(function(){
 	$('[data-toggle="popover"]').popover();
 	$('#chooseLine').hide();
+	$('#chooseOption').hide();
 	var order = $('#orderno').val();
 	var rootpath = $('#rootpath').val();
 	var salesref = $('#salesref').val();
@@ -135,6 +136,7 @@ $(document).ready(function(){
 				
 				$count=[];
 				$i=0;
+				var line_count =0;
 				for (var index in lines) {
 
 					NProgress.inc();
@@ -147,10 +149,16 @@ $(document).ready(function(){
 					var creq   = lines[index].clientrequirements;
 					var arr=[lineid,creq]
 					$count[$i] =arr;
-					addlineCallback(lineid, creq);
-
 					var options = lines[index].options;
-
+					// var option = arr;
+					// var i = 0;
+					// line_count= line_count+1;
+					// for(var optionIndex in options){
+					// 	var opno = options[optionIndex].optionindex;
+					// 	option[i] =opno;
+					// 	i++;
+					// }
+					addlineCallback(lineid, creq);
 					for(var optionIndex in options){
 
 						NProgress.inc();
@@ -395,9 +403,11 @@ function addline(){
 	});
 }
 
-function addlineCallback(line, requirements){
-
+function addlineCallback(line, requirements ){
+// function addlineCallback(line, requirements, option, line_count){
 	var vline = vlineno += 1;
+	// var optionno = option;
+	// var line_count= line_count;
 	options[line] = 0;
 	voptions[line] = 0;
 	console.log(line.length)
@@ -414,6 +424,8 @@ function addlineCallback(line, requirements){
 	html += '</div>';
 	html += '<div id="l'+line+'oa" class="pull-right">';
 	html += '<button type="button" class="btn btn-primary" onclick="addoption('+line+')" name="button">Add New Option</button>';
+	// onclick="optionsCount('+optionno.length+', '+line_count+')"
+	// html += '<div id='+line_count+' class="pull-right"></div>';
 	html += '</div>';
 	html += '</div>';
 	html += '</section>';
@@ -452,8 +464,8 @@ function addNewLine(line){
 				var data = response.data;
 				var line = data.line_id;
 				var req  = "";
+				var opt = ["12345"];
 				addlineCallback(line,req);
-
 				var order = $('#orderno').val();
 				var rootpath = $('#rootpath').val();
 				var salesref = $('#salesref').val();
@@ -573,7 +585,6 @@ function newLine(id){
 	}
 	else{
 		var split= id.split(',');
-		console.log(split);
 		if(split[2] == null){ addline(); }
 		else{
 			addNewLine(split[0]);
@@ -583,7 +594,6 @@ function newLine(id){
 }
 
 function divVar(count){
-	console.log(count);
 	var length= count.length;
 	var html = '<h4><select name="line" id="line" onchange="newLine(this.value)">';
 	html += '<option >Choose one</option>'
@@ -595,6 +605,22 @@ function divVar(count){
 	html += '<option value="n">Create New Line</option>';
 	html += '</select></h4>';
 	$('#chooseLine').append(html);
+}
+
+function optionsCount(optionno , line_count){
+	var length = optionno.length;
+	alert(line_count);
+	console.log(optionno);
+	var html = '<h4><select name="line" id="option" onchange="addoption(this.value)">';
+	html += '<option >Choose one</option>'
+	var j=1;
+	for(i=0; i<length; i++){
+		html += '<option value="'+length[i]+'">Line '+j+'</option>';
+		j++;
+	}
+	html += '<option value="n">Create New Option</option>';
+	html += '</select></h4>';
+	$('#line_count').append(html);
 }
 
 function addoption(line){
@@ -634,9 +660,7 @@ function addoption(line){
 }
 
 function addoptionCallback(line,option, description,stockstatus, quantity,uom, price){
-
 	var voption = voptions[line] += 1;
-
 	items[line+","+option] = 0;
 
 	var html = '<section id="l'+line+'o'+option+'" class="panel panel-featured panel-featured-primary">';

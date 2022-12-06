@@ -1808,6 +1808,30 @@ document.getElementById('Increase_percent_18').onchange = function () {
   }
 };
 
+document.getElementById('sheet_sheet_cd').onchange = function () {
+  var sheet_sheet_cd = $("#sheet_sheet_cd").val();
+  var pc_id = $(".pc_id").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/sheet_sheet_cd.php",
+      method: "POST",
+      data: {
+        pc_id: pc_id,
+        sheet_sheet_cd:sheet_sheet_cd
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#sheet_sheet_cd").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  }
+  else {
+    Swal.fire("It seems you have't calculated or stored all of values");
+  }
+};
+
+
 $(document).on("click", "#calculateButton", function () {
   var pc_h = $("#pc_h").val();
   var pc_id = $(".pc_id").val();
@@ -2112,7 +2136,10 @@ $(document).on("click", "#calculateButton", function () {
   }
 });
 
+
 $(document).on("click", "#save_exit", function () {
+  var sheet_sheet_cd = $("#sheet_sheet_cd").val();
+  if(sheet_sheet_cd != ""){
   if (confirm("Once you saved you won't be able to make changes any more?") == true) {
     var pc_h = $("#swg_14_final_total").val();
     var pc_id = $(".pc_id").val();
@@ -2134,5 +2161,9 @@ $(document).on("click", "#save_exit", function () {
       Swal.fire("It seems you have't calculated or stored all of values");
     }
   }
-  else { }
+  else{}
+}
+else{
+  Swal.fire("Please select which sheet value to display in cash demand page");
+}
 });

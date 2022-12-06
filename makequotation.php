@@ -534,6 +534,7 @@
 								data-toggle="popover" title="Choose Line Bellow To Copy:">Add New Line</button>
 								<div id="chooseLine"></div>
 								
+								
 							</div>
 							<div id="description" class="tab-pane">
 								<div id="linesdescriptioncontainer"></div>
@@ -836,7 +837,7 @@
 
 		<script src="quotation/assets/javascripts/theme.js"></script>
 		<script type="text/javascript" src="includes/textboxio/textboxio.js"></script>
-		<script src="quotation/assets/quotation.js?version=<?php echo generateRandom() ?>"></script>
+		<script src="quotation/assets/quotations.js?version=<?php echo generateRandom() ?>"></script>
   		
 	</body>
 </html>
