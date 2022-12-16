@@ -34,7 +34,6 @@ $(document).ready(function () {
 				window.creditLimit = parseInt(data.creditlimit);
 				var status = response.status;
 				var lines = data.lines;
-
 				$('#clientnamebasic').html(data.name);
 				$('#clientlocationbasic').html(data.locationname);
 				$('#salesman').html(data.salesmann);
@@ -80,7 +79,6 @@ $(document).ready(function () {
 				$("#order-details").find(".GSTadd").val(data.GSTadd);
 				$("#order-details").find(".services").prop('checked', (data.services == 1));
 				//let printexchangeflag=$("#order-details").find(".printexchange").attr("value");
-				console.log(data.printexchange);
 				$("#order-details").find(".printexchange1").prop('checked', (data.printexchange == 0));
 				$("#order-details").find(".printexchange2").prop('checked', (data.printexchange == 1));
 				$("#order-details").find(".printexchange3").prop('checked', (data.printexchange == 2));
@@ -160,9 +158,19 @@ $(document).ready(function () {
 						var quanty = options[optionIndex].quantity;
 						var uom = options[optionIndex].uom;
 						var price = options[optionIndex].price;
-						optionum[i] = [lineno,optionno,quanty];
+						lineno="'"+lineno+"'";
+						optionno="'"+optionno+"'";
+						quanty="'"+quanty+"'";
+						stkstatus="'"+stkstatus+"'";
+						uom="'"+uom+"'";
+						price="'"+price+"'";
+						opttext="'"+opttext+"'";
+						opttext =  "'"+opttext.replace(/,/g, ' ')+"'";
+						opttext =  "'"+opttext.replace(/'/g, '')+"'";
+						optionum[i] = [lineno,optionno,quanty,stkstatus,uom,price,opttext];
 						i++;
 					}
+
 					addlineCallback(lineid, creq, optionum);
 					for (var optionIndex in options) {
 
@@ -179,6 +187,7 @@ $(document).ready(function () {
 						var quanty = options[optionIndex].quantity;
 						var uom = options[optionIndex].uom;
 						var price = options[optionIndex].price;
+						
 
 						var arr1 = [...arr, lineid, optionno, opttext, stkstatus, quanty, uom, price]
 						$count[$i] = arr1;
@@ -210,7 +219,7 @@ $(document).ready(function () {
 							else
 								var disupdated = "(updated)";
 
-							console.log(urate);
+							// console.log(urate);
 							var qohal = items[itemIndex].qohatloc;
 							if (urate > 0)
 								var dis = (1 - urate / sprice);
@@ -307,8 +316,9 @@ function checkDirtyAndUpdate() {
 
 			var dEditor = dirtyEditors[index].pop();
 			dirtyEditors[index].push(dEditor);
-
+			console.log(index);
 			var text = dEditor.editor.content.get();
+			console.log(text);
 
 			var msg = dEditor.msg;
 			var editor = dEditor.editor;
@@ -377,6 +387,7 @@ $('#closesearchoverlay').click(function () {
 });
 
 function addline() {
+	var optionum= [];
 	var order = $('#orderno').val();
 	var rootpath = $('#rootpath').val();
 	var salesref = $('#salesref').val();
@@ -444,12 +455,12 @@ function addlineNewCallback(line, requirements) {
 }
 
 
-function addlineCallback(line, requirements, option) {
+function addlineCallback(line, requirements, option) 
+{
 	var vline = vlineno += 1;
 	var optionno = option;
 	options[line] = 0;
 	voptions[line] = 0;
-	console.log(line.length)
 	html += '<header class="panel-heading">';
 	var html = '<section id="l' + line + '" class="panel panel-featured">';
 	html += '<div class="panel-actions">';
@@ -462,9 +473,14 @@ function addlineCallback(line, requirements, option) {
 	html += '<div id="l' + line + 'oc">';
 	html += '</div>';
 	html += '<div id="l' + line + 'oa" class="pull-right">';
-	console.log(optionno);
-	html += '<button type="button" class="btn btn-primary" onclick="optionsCount(' + optionno + ')" name="button">Add New Option</button>';
-	html += '<div id="option' + optionno + 'list" class="pull-right"></div>';
+	console.log( optionno.length);
+	if(optionno.length==0 || optionno.length==1){
+		html += '<button type="button" class="btn btn-primary" onclick="addoption('+ line+ ');" name="button">Add New Option</button>';
+	}
+	else{
+		html += '<button type="button" class="btn btn-primary" onclick="optionsCount('+   optionno + ')" name="button">Add New Option</button>';
+		html += '<div id="option' + option[0][0].replace(/['"]+/g, '') + 'list" class="pull-right"></div>';
+	}
 	html += '</div>';
 	html += '</div>';
 	html += '</section>';
@@ -482,6 +498,9 @@ function addlineCallback(line, requirements, option) {
 	$('#linescontainer').append(html);
 }
 
+
+
+
 function addNewLine(line) {
 	var lineNo = line;
 	var manu_name = manu_name;
@@ -497,31 +516,143 @@ function addNewLine(line) {
 		dataType: "json",
 		success: function (response) {
 			var status = response.status;
-
 			if (status == "success") {
 				var data = response.data;
 				var line = data.line_id;
 				var req = "";
-				addlineNewCallback(line, req);
-				var order = $('#orderno').val();
-				var rootpath = $('#rootpath').val();
-				var salesref = $('#salesref').val();
 				$.ajax({
 					type: 'POST',
-					url: rootpath + "/quotation/api/createNewOption.php",
-					data: { orderno: order, salescaseref: salesref, lineno: line },
+					url: rootpath + "/quotation/api/retrieveQuotation.php",
+					data: { orderno: order },
 					dataType: "json",
 					success: function (response) {
-						var data = response.data;
-						var line = data.line_id;
-						var option = data.option_id;
-						var req = "";
-						$(".line").val(line);
-						$(".option").val(option);
-						addoptionCallback(line, option, req, "", quantity, "", 0);
-						additempre(lineNo);
+						var status = response.status;
+						if (status == "success") {
+							var data = response.data;
+							var lines = data.lines;
+							$i = 0;
+							for (var index in lines) {
+								if (lines[index].lineindex == lineNo) {
+									console.log(lines[index]);
+
+									NProgress.inc();
+
+									var lineid = lines[index].lineindex;
+									var creq = lines[index].clientrequirements;
+									var options = lines[index].options;
+
+									addlineNewCallback(line, req);
+									// addlineCallback(lineid, creq, optionum);
+									for (var optionIndex in options) {
+										NProgress.inc();
+										if (optionIndex != "") {
+											console.log(options[optionIndex]);
+											var order = $('#orderno').val();
+											var rootpath = $('#rootpath').val();
+											var salesref = $('#salesref').val();
+											console.log(options[optionIndex].items);
+											$.ajax({
+												type: 'POST',
+												url: rootpath + "/quotation/api/createNewOption.php",
+												data: { orderno: order, salescaseref: salesref, lineno: line },
+												dataType: "json",
+												async: false,
+												success: function (response) {
+													var data = response.data;
+													var line = data.line_id;
+													var option = data.option_id;
+													$(".line").val(line);
+													$(".option").val(option);
+													$(".optionnew").val(option);
+													var opttext = options[optionIndex].optiontext;
+													var stkstatus = options[optionIndex].stockstatus;
+													var quanty = options[optionIndex].quantity;
+													var uom = options[optionIndex].uom;
+													var price = options[optionIndex].price;
+
+													addNewoptionCallback(line, option, opttext, stkstatus, quanty, uom, price);
+
+													$(".option_quantity").val(quanty);
+													var items = options[optionIndex].items;
+													var pricetot = 0;
+
+													for (var itemIndex in items) {
+
+														NProgress.inc();
+														
+														if (!items.hasOwnProperty(itemIndex)) {
+															continue;
+														}
+
+														var indx = items[itemIndex].salesorderdetailsindex;
+														var ln = items[itemIndex].orderlineno;
+														var on = items[itemIndex].lineoptionno;
+														var stkc = items[itemIndex].stkcode;
+														var bname = items[itemIndex].manu_name;
+														var des = items[itemIndex].description;
+														var qty = items[itemIndex].quantity;
+														var sprice = items[itemIndex].standardcost;
+														var upr = items[itemIndex].unitprice;
+														var urate = items[itemIndex].unitrate;
+														if (upr == sprice)
+															var disupdated = "";
+														else
+															var disupdated = "(updated)";
+
+														// console.log(urate);
+														var qohal = items[itemIndex].qohatloc;
+														if (urate > 0)
+															var dis = (1 - urate / sprice);
+														else
+															var dis = items[itemIndex].discountpercent;
+
+														var ud = items[itemIndex].lastcostupdate;
+														var ub = items[itemIndex].lastupdatedby;
+														var modal = items[itemIndex].mnfcode;
+														var part = items[itemIndex].mnfpno;
+
+														var update = ub + "(" + ud + ")";
+														var uprice = 0;
+
+
+
+														dis = dis * 100;
+
+														if (dis != 0) {
+															uprice = Math.round((sprice * 100) - (((sprice / 100) * dis) * 100)) / 100;
+															//uprice = Math.round((uprice*100)-(((uprice/100)*dis)*100))/100;
+														}
+														else
+															uprice = sprice;
+
+														var tot = qty * uprice;
+
+														pricetot += tot;
+														var line = $(".line").val();
+														var option = $(".optionnew").val();
+														insertNewitemManually(stkc, bname, line, option, qty, uprice, dis, tot);
+														// additemCallback(indx, ln, on, stkc, bname, des, qty, sprice, uprice, tot, qohal, dis, update, modal, part, disupdated);
+
+													}
+
+													// pricetot = Math.round(pricetot * 100) / 100;
+													// subtotal = Math.round(pricetot * quanty * 100) / 100;
+
+													// $("#optiondesc" + lineno + "-" + optionno + "").find(".pricecont").html(pricetot);
+													// $("#optiondesc" + lineno + "-" + optionno + "").find(".tpricecont").html(subtotal);
+													// $("#lt" + lineno + "ot" + optionno + "").html(subtotal);
+
+													// updateQuotationValue();
+												}
+											});
+										}
+									}
+								}
+							}
+						}
 
 					}
+
 				});
 
 
@@ -539,7 +670,6 @@ function addNewLine(line) {
 		}
 	});
 
-
 }
 
 
@@ -555,6 +685,7 @@ function additemcb(lineno) {
 		success: function (response) {
 			var res = $.parseJSON(response);
 			var length = res.length;
+			console.log(res);
 			for (var i = 0; i < length; i++) {
 
 				var indx = res[i]['salesorderdetailsindex'];
@@ -600,7 +731,7 @@ function additemcb(lineno) {
 				var tot = qty * uprice;
 				if(optionno == on){
 
-					insertitemManually(stkc, bname, line, option, qty, uprice, dis, tot);
+					insertNewitemManually(stkc, bname, line, option, qty, uprice, dis, tot);
 				}
 				// pricetot += tot;
 
@@ -629,6 +760,7 @@ function additempre(lineno){
 		data: {lineno: lineno},
 		success: function(response) {
 			var res = $.parseJSON(response);
+			console.log(res);
 			var length = res.length;
 			for(var i=0; i<length; i++){
 			
@@ -721,43 +853,48 @@ function divVar(count) {
 }
 
 function optionsCount(...optionno) {
-	length = optionno.length;
-	console.log(optionno);
-	line= optionno[0];
-	
-	var html = '<h4><select name="line" id="option" onchange="addNewOption(this.value, line)">';
+	var chunkSize = 7;
+	var chunk = [];
+	var a=0;
+for (let i = 0; i < optionno.length; i += chunkSize) {
+    chunk[a] = optionno.slice(i, i + chunkSize);
+    a++;
+}
+length = chunk.length;
+	$(".line_number").val(optionno[0]);
+	var html = '<h4><select id="option" onchange="addNewOption(this.value)">';
 	html += '<option>Choose one</option>'
 	var j = 1;
 	var i = 0;
-	var z=0;
-	
-	if(optionno[2]== "0"){
+	if(optionno[2] == "0"){
 		html += '<option value="n">Create New Option</option>';
 	}
 	else{
-		var inc=1;
-	for (i = 1; i < length-j; i+=2) {
-		html += '<option value="'+optionno[i+inc]+',' + optionno[i+z] + '">Option ' + j + '</option>';
-		inc = inc +1
+	for (i = 0; i < length; i++) {
+		html += '<option value="'+chunk[i] + '">Option ' + j + '</option>';
 		j++;
-		z++;
 	}
-	html += '<option value="0,n">Create New Option</option>';
+	html += '<option value="n">Create New Option</option>';
 }
-	$(document.getElementById("option" + optionno + "list")).append(html);
+	$(document.getElementById("option" + optionno[0] + "list")).append(html);
 }
 
-function addNewOption(option, line) {
-	 var split = option.split(',');
-	 option = split[1];
-	$(".option_quantity").val(split[0]);
+function addNewOption(...option) {
+	console.log(option);
+	var line_number = $(".line_number").val();
+	 var split = option[0].split(',');
+	 console.log(split);
+	$(".option_quantity").val(split[2]);
 	if(option == "n"){
-		addoption(line);
+		addoption(line_number);
 	}
 	else{
-		optionno= option;
-		lineno = line;
-		var quantity = $(".option_quantity").val();
+		optionno= split[1];
+		lineno = split[0];
+		desc = split[6];
+		stkc_status = split[3];
+		uom = split[4];
+		var quantity = split[2];
 		$(".option_required").val(optionno);
 	var order = $('#orderno').val();
 	var rootpath = $('#rootpath').val();
@@ -766,7 +903,7 @@ function addNewOption(option, line) {
 	$.ajax({
 		type: 'POST',
 		url: rootpath + "/quotation/api/createNewOption.php",
-		data: { orderno: order, salescaseref: salesref, lineno: line },
+		data: { orderno: order, salescaseref: salesref, lineno: lineno },
 		dataType: "json",
 		success: function (response) {
 			var data = response.data;
@@ -774,13 +911,278 @@ function addNewOption(option, line) {
 			var option = data.option_id;;
 			$(".line").val(line);
 			$(".option").val(option);
-			var req = "";
-			addoptionCallback(line, option, req, "", quantity , "", 0);
-			additemcb(line);
+			addNewoptionCallback(line, option, desc, stkc_status, quantity , uom, 0);
+			additemcb(lineno);
 
 		}
 	});
 }
+
+}
+
+function addNewoptionCallback(line, option, description, stockstatus, quantity, uom, price) {
+	var voption = voptions[line] += 1;
+	items[line + "," + option] = 0;
+
+	var html = '<section id="l' + line + 'o' + option + '" class="panel panel-featured panel-featured-primary">';
+	html += '<header class="panel-heading">';
+	html += '<div class="panel-actions">';
+	html += '<strong style="font-size:1.6rem">Total: ( <span id="lt' + line + 'ot' + option + '" class="lineoptiontotal"></span> )</strong>';
+	html += '<a onclick="optiontoggle(' + line + ',' + option + ')" class="panel-action panel-action-toggle" ></a>';
+	html += '<a onclick="removeoption(' + line + ',' + option + ',' + voption + ')" class="panel-action panel-action-dismiss" data-panel-dismiss=""></a>';
+	html += '</div>';
+	html += '<h2 class="panel-title optionheading">Option ' + voption + '</h2>';
+	html += '</header>';
+	html += '<div id="l' + line + 'o' + option + 'body" class="panel-body">';
+	html += '<div id="l' + line + 'o' + option + 'ic">';
+	html += '</div>';
+	html += '<div id="l' + line + 'o' + option + 'ia" class="pull-right" style="width:100%">';
+	html += '<button type="button" class="btn btn-primary pull-right" onclick="addnewitem(' + line + ',' + option + ')" name="button">Add New Item</button>';
+	html += '<button type="button" class="btn btn-primary pull-left" onclick="insertRegretItem(' + line + ',' + option + ')" name="button" style="margin-right:10px">Add Regret Item</button>';
+	html += '<button type="button" class="btn btn-primary pull-left" onclick="insertWillQuoteLater(' + line + ',' + option + ')" name="button">Will Quote Later</button>';
+	html += '</div>';
+	html += '</div>';
+	html += '</section>';
+
+	var descHTML = '<section id="optiondesc' + line + '-' + option + '" style="text-align:center; margin: 0 auto;">';
+	descHTML += '<h4 style="color:blue">Option No. ' + voption + ' SAH Description <button class="copyto btn btn-success">Copy To</button></h4>';
+	descHTML += '<table border="1px" cellpadding="2" width="100%" style="background:#e2f5ff">';
+	descHTML += '<thead style="text-align:center; background: #5a5a5a; color:white;">';
+	descHTML += '<tr>';
+	descHTML += '<th>';
+	descHTML += 'Model #';
+	descHTML += '</th>';
+	descHTML += '<th>';
+	descHTML += 'Part #';
+	descHTML += '</th>';
+	descHTML += '<th>';
+	descHTML += 'Brand';
+	descHTML += '</th>';
+	descHTML += '<th>';
+	descHTML += 'Description';
+	descHTML += '</th>';
+	descHTML += '<th>';
+	descHTML += 'QOH';
+	descHTML += '</th>';
+	descHTML += '<th>';
+	descHTML += 'Quantity';
+	descHTML += '</th>';
+	descHTML += '<th>';
+	descHTML += 'Unit Price';
+	descHTML += '</th>';
+	descHTML += '<th>';
+	descHTML += 'Discount';
+	descHTML += '</th>';
+	descHTML += '</tr>';
+	descHTML += '</thead>';
+	descHTML += '<tbody id="opdc' + line + '-' + option + '">';
+	descHTML += '</tbody>';
+	descHTML += '</table>';
+	descHTML += '<textarea  style="width: 100%; height: 100%;" id = "l' + line + 'o' + option + 'desc" cols="90" rows="10"></textarea>';
+	descHTML += '<div style="background:#ddd; padding:5px;">';
+	descHTML += '<table class="det" width="100%" cellpadding="2">';
+	descHTML += '<tbody>';
+	descHTML += '<tr>';
+	descHTML += '<td>';
+	descHTML += 'Stock status';
+	descHTML += '</td>';
+	descHTML += '<td>';
+	descHTML += '<input class="descinfo'+option+'" stockstatus" name="stockstatus" value="' + stockstatus + '">';
+	descHTML += '</td>';
+	descHTML += '<td>';
+	descHTML += 'UOM';
+	descHTML += '</td>';
+	descHTML += '<td>';
+	descHTML += '<input class="descinfo'+option+'" uomoption" name="uom" value="' + uom + '" data-line="' + line + '" data-option="' + option + '">';
+	descHTML += '</td>';
+	descHTML += '<td>';
+	descHTML += '<b>Quantity: </b>';
+	descHTML += '</td>';
+	descHTML += '<td>';
+	descHTML += '<input type="number" class="descinfo'+option+'" quantity" name="quantity" value="' + quantity + '">';
+	descHTML += '</td>';
+	descHTML += '<td>';
+	descHTML += '<b>Price:</b>';
+	descHTML += '</td>';
+	descHTML += '<td class="pricecont">';
+	descHTML += '';
+	descHTML += '</td>';
+
+	if ($("#quickQuotation").val() == "1") {
+
+		descHTML += '<td>';
+		descHTML += '<b>OpPrice:</b>';
+		descHTML += '</td>';
+		descHTML += '<td class="opPrice">';
+		descHTML += '<input type="number" name="price" class="oppprice optionPrice" value="' + price + '" data-line="' + line + '" data-option="' + option + '" />';
+		descHTML += '</td>';
+
+	}
+
+	descHTML += '<td>';
+	descHTML += '<b>Sub Total:</b>';
+	descHTML += '</td>';
+	descHTML += '<td class="tpricecont">';
+	descHTML += '';
+	descHTML += '</td>';
+	descHTML += '</tr>';
+	descHTML += '</tbody>';
+	descHTML += '</table>';
+	descHTML += '</div>';
+	descHTML += '<div id="optionline' + line + 'desccontainer" style="text-align:center; margin: 0 auto;"></div>';
+	descHTML += '</section>';
+
+	$('#optionline' + line + 'desccontainer').append(descHTML);
+
+	inittextboxio(line, option, description);
+
+	$('#l' + line + 'oc').append(html);
+	if(description!="")
+	{
+		var order = $('#orderno').val();
+	var rootpath = $('#rootpath').val();
+	var salesref = $('#salesref').val();
+	var text = description
+	var line = line;
+	var option = option;
+	type = "desc";
+	$.ajax({
+						type: 'POST',
+						url: rootpath + "/quotation/api/saveNewDescription.php",
+						data: { orderno: order, lineno: line, description: text, type: type,  option: option },
+						dataType: "json",
+						success: function (response) {
+							var status = response.status;
+	
+							if (status == "success") {
+	
+								var data = response.data;
+								// saveDescriptionCallback(data.index);
+	
+							}
+	
+						},
+						error: function () {
+							alert("Save Error");
+						}
+					});
+}
+
+
+	var order = $('#orderno').val();
+	var rootpath = $('#rootpath').val();
+	var salesref = $('#salesref').val();
+
+//fot stockstatus value save
+var name = "quantity";
+var value = quantity;
+
+	var option = option;
+	$.ajax({
+		type: 'POST',
+		url: rootpath + "/quotation/api/updateOption.php",
+		data: { orderno: order, salescaseref: salesref, name: name, value: value, option: option },
+		dataType: "json",
+		success: function (response) {
+
+			var status = response.status;
+
+			if (status == "success") {
+
+				$(".descinfo"+option+"").css("border", "2px green solid");
+
+			} else {
+
+				$(".descinfo"+option+"").css("border", "2px red solid");
+
+			}
+		},
+
+});
+
+//fot UOM value save
+
+	var name = "stockstatus";
+	var value = stockstatus;
+	var option = option;
+$.ajax({
+	type: 'POST',
+	url: rootpath + "/quotation/api/updateOption.php",
+	data: { orderno: order, salescaseref: salesref, name: name, value: value, option: option },
+	dataType: "json",
+	success: function (response) {
+
+		var status = response.status;
+
+		if (status == "success") {
+
+			$(".descinfo"+option+"").css("border", "2px green solid");
+			// updateoptionquantity(ref, name, value);
+
+		} else {
+
+			$(".descinfo"+option+"").css("border", "2px red solid");
+
+		}
+	},
+
+});
+
+//fot UOM value save
+
+var name = "uom";
+var value = uom;
+var option = option;
+$.ajax({
+type: 'POST',
+url: rootpath + "/quotation/api/updateOption.php",
+data: { orderno: order, salescaseref: salesref, name: name, value: value, option: option },
+dataType: "json",
+success: function (response) {
+
+	var status = response.status;
+
+	if (status == "success") {
+
+		$(".descinfo"+option+"").css("border", "2px green solid");
+		// updateoptionquantity(ref, name, value);
+
+	} else {
+
+		$(".descinfo"+option+"").css("border", "2px red solid");
+
+	}
+},
+
+});
+
+//fot Quantity value save
+
+var name = "quantity";
+var value = quantity;
+var option = option;
+$.ajax({
+type: 'POST',
+url: rootpath + "/quotation/api/updateOption.php",
+data: { orderno: order, salescaseref: salesref, name: name, value: value, option: option },
+dataType: "json",
+success: function (response) {
+
+	var status = response.status;
+
+	if (status == "success") {
+
+		$(".descinfo"+option+"").css("border", "2px green solid");
+		// updateoptionquantity(ref, name, value);
+
+	} else {
+
+		$(".descinfo"+option+"").css("border", "2px red solid");
+
+	}
+},
+
+});
 
 }
 
@@ -887,7 +1289,7 @@ function addoptionCallback(line, option, description, stockstatus, quantity, uom
 	descHTML += 'Stock status';
 	descHTML += '</td>';
 	descHTML += '<td>';
-	descHTML += '<input class="descinfo stockstatus" name="stockstatus" value="' + stockstatus + '">';
+	descHTML += '<input class="descinfo" stockstatus" name="stockstatus" value="' + stockstatus + '">';
 	descHTML += '</td>';
 	descHTML += '<td>';
 	descHTML += 'UOM';
@@ -937,7 +1339,6 @@ function addoptionCallback(line, option, description, stockstatus, quantity, uom
 	inittextboxio(line, option, description);
 
 	$('#l' + line + 'oc').append(html);
-
 }
 
 function addnewitem(line, option) {
@@ -981,6 +1382,135 @@ function addnewitem(line, option) {
 	$("#searchoverlay").css('display', 'block');
 
 	NProgress.done();
+
+}
+
+function additemNewCallback(indx, line, option, stkc, bname, description, quantity, sprice, uprice, tot, qoh, dis, update, modal, part, disupdated) {
+
+	var item = items[line + "," + option] += 1;
+
+	var html = '<section id="l' + line + 'o' + option + 'i' + indx + '" class="panel panel-featured panel-featured-info">';
+
+	html += '<header class="panel-heading">';
+	html += '<div class="panel-actions">';
+	html += '<form method="post" target="_blank" action="reorder/reorderRequest.php"><input type="hidden" name="FormID" value="' + $("#FormID").val() + '"/><input type="hidden" name="salescaseref" value="' + $("#salesref").val() + '"/><input type="hidden" name="stockid" value="' + stkc + '"/><button type="submit" class="btn btn-info abf">ReOrder Item</button></form>';
+	html += '<a onclick="removeitem(' + line + ',' + option + ',' + indx + ',\'' + description + '\')" class="panel-action panel-action-dismiss" data-panel-dismiss=""></a>';
+	html += '</div>';
+	html += '<h2 class="panel-title" style="cursor:pointer" onclick="window.open(\'quotationhistory.php?stockid=' + stkc + '\',\'Ratting\',\'width=550,height=170,0,status=0,scrollbars=1\');">' + stkc + '</h2>';
+	html += '</header>';
+	html += '<div class="panel-body">';
+	html += '<div class="col-md-6">';
+	html += '<div class="col-md-2">';
+	html += 'Model#:';
+	html += '</div>';
+	html += '<div class="col-md-9">';
+	html += modal;
+	html += '</div>';
+	html += '<div class="col-md-2">';
+	html += 'Part#:';
+	html += '</div>';
+	html += '<div class="col-md-9">';
+	html += part;
+	html += '</div>'
+	html += '<div class="col-md-2">';
+	html += 'Brand:';
+	html += '</div>';
+	html += '<div class="col-md-9 brandyo">';
+	html += bname;
+	html += '</div>';
+	html += '<br>';
+	html += '<div class="col-md-2">';
+	html += 'Description:';
+	html += '</div>';
+	html += '<div class="col-md-9 desc">';
+	html += description;
+	html += '</div>';
+	html += '<div class="col-md-2">';
+	html += 'Updated:';
+	html += '</div>';
+	html += '<div class="col-md-9">';
+	html += update;
+	html += '</div>';
+	html += '</div>';
+	html += '<div id="item' + indx + '" class="col-md-6">';
+	html += '<div class="col-md-2">';
+	html += 'QOH:';
+	html += '</div>';
+	html += '<div class="col-md-4">';
+	html += '<input type="number" value="' + qoh + '" disabled>';
+	html += '</div>';
+	html += '<div class="col-md-2">';
+	html += 'Price:';
+	html += '</div>';
+	html += '<div class="col-md-4">';
+	html += '<input class="sprice" type="number" name="" value="' + sprice + '" disabled>';
+	html += '</div>';
+	html += '<br>';
+	html += '<br>';
+	html += '<div class="col-md-2">';
+	disupdated = disupdated ? disupdated : "";
+	html += 'Discount%:<span style="color: darkred; font-weight: bolder">' + disupdated + '</span>';
+	html += '</div>';
+	html += '<div class="col-md-4">';
+	html += '<input class="discount" type="number" value="' + dis + '">';
+	html += '</div>';
+	html += '<div class="col-md-2">';
+	html += 'UnitRate:';
+	html += '</div>';
+	html += '<div class="col-md-4">';
+	html += '<input class="uprice" type="number" value="' + uprice + '">';
+	html += '</div>';
+	html += '<br>';
+	html += '<br>';
+	html += '<div class="col-md-2">';
+	html += 'Quantity:';
+	html += '</div>';
+	html += '<div class="col-md-4">';
+	html += '<input class="quantity" type="number" value="' + quantity + '">';
+	html += '</div>';
+	html += '<div class="col-md-2">';
+	html += 'Total:';
+	html += '</div>';
+	html += '<div class="col-md-4">';
+	html += '<input class="total" type="number" value="' + tot + '" disabled>';
+	html += '</div>';
+	html += '</div>';
+	html += '</div>';
+	html += '</section>';
+	// Maddy
+	var descItemHTML = "<tr id='opdcd" + indx + "'>";
+	descItemHTML += "<td>";
+	descItemHTML += modal;
+	descItemHTML += "</td>";
+	descItemHTML += "<td>";
+	descItemHTML += part;
+	descItemHTML += "</td>";
+	descItemHTML += "<td>";
+	descItemHTML += bname;
+	descItemHTML += "</td>";
+	descItemHTML += "<td>";
+	descItemHTML += description;
+	descItemHTML += "</td>";
+	descItemHTML += "<td class='qohhh'>";
+	descItemHTML += qoh;
+	descItemHTML += "</td>";
+	descItemHTML += "<td class='quantity'>";
+	descItemHTML += quantity;
+	descItemHTML += "</td>";
+	descItemHTML += "<td class='uprice'>";
+	descItemHTML += uprice;
+	descItemHTML += "</td>";
+	descItemHTML += "<td class='discount'>";
+	descItemHTML += Math.round(dis) + '%';
+	descItemHTML += "</td>";
+	descItemHTML += "</tr>";
+
+	$('#opdc' + line + '-' + option + '').append(descItemHTML);
+
+	$('#l' + line + 'o' + option + 'ic').append(html);
+
+	addToBrandsArray(bname);
+
 
 }
 
@@ -1446,7 +1976,7 @@ $(document.body).on('keyup', 'input.uprice', function () {
 	var uprice = $(this).parent().parent().find("div > input.uprice").val();
 	var sprice = $(this).parent().parent().find("div > input.sprice").val();
 	var quantity = $(this).parent().parent().find("div > input.quantity").val();
-
+	console.log(uprice);
 	if (uprice !== uprice || uprice <= 0) {
 		$(this).parent().parent().find("div > input.uprice").css("border", "red 2px dotted");
 	} else {
@@ -1614,13 +2144,12 @@ $(document.body).on('keyup', 'input.discount', function () {
 $(document.body).on('change', 'input.discount', function () {
 
 	var reff = $(this);
-
 	var discount = $(this).parent().parent().find("div > input.discount").val();
 	var uprice = $(this).parent().parent().find("div > input.uprice").val();
 	var sprice = $(this).parent().parent().find("div > input.sprice").val();
 	var quantity = $(this).parent().parent().find("div > input.quantity").val();
 
-	if (discount !== discount || discount >= 100) {
+	if (discount !== discount || discount >= 100) { 
 		$(this).css("border", "red 2px dotted");
 	} else {
 
@@ -1669,7 +2198,7 @@ function updateQuantity(item, quantity) {
 			var status = response.status;
 
 			if (status == "success") {
-
+				
 				$("#" + item + "").find("input.quantity").css("border", "2px green solid");
 				$("#" + item + "").find("input.quantity").val(response.data.value);
 				var id = item.split("item")[1];
@@ -1901,8 +2430,7 @@ function insertitem(itemindex, brand) {
 
 }
 
-function insertitemManually(itemindex, brand, line, option, qty, uprice, dis, tot) {
-
+function insertNewitemManually(itemindex, brand, line, option, qty, uprice, dis, tot) {
 	NProgress.start();
 	var order = $('#orderno').val();
 	var rootpath = $('#rootpath').val();
@@ -1927,12 +2455,89 @@ function insertitemManually(itemindex, brand, line, option, qty, uprice, dis, to
 			if (status == "success") {
 				var d = response.data;
 				
-				additemCallback(d.id, d.line, d.option, d.title, brand, d.desc, qty, d.price, uprice, tot, d.qoh, dis, d.update, d.model, d.part);
+				additemNewCallback(d.id, d.line, d.option, d.title, brand, d.desc, qty, d.price, uprice, tot, d.qoh, dis, d.update, d.model, d.part);
 				var val = "item";
 				var item = val + d.id;
-				updateQuantity(item, qty);
-				updatePrice(item, uprice, dis);
-				$(".descinfo").trigger("change");
+
+				// For quantity Update in database
+				$.ajax({
+					type: 'POST',
+					url: rootpath + "/quotation/api/updateQuantityItem.php",
+					data: { orderno: order, salescaseref: salesref, name: "quantity", value: qty, item: item },
+					dataType: "json",
+					success: function (response) {
+						var status = response.status;
+						if (status == "success") {
+							
+							$("#" + item + "").find("input.quantity").css("border", "2px green solid");
+							$("#" + item + "").find("input.quantity").val(response.data.value);
+							var id = item.split("item")[1];
+							$("#opdcd" + id + "").find(".quantity").html(response.data.value);
+							$("#" + item + "").find("input.quantity").prop("disabled", false);
+			
+						} else {
+			
+							$("#" + item + "").find("input.quantity").css("border", "2px red solid");
+							$("#" + item + "").find("input.quantity").prop("disabled", false);
+			
+						}
+					},
+					error: function () {
+			
+						$("#" + item + "").find("input.quantity").css("border", "2px red solid");
+						$("#" + item + "").find("input.quantity").prop("disabled", false);
+			
+					}
+			
+				});
+
+
+				// To update price from database.
+				$.ajax({
+					type: 'POST',
+					url: rootpath + "/quotation/api/updatePriceItem.php",
+					data: { orderno: order, salescaseref: salesref, name: "uprice", value: uprice, item: item, discount: dis },
+					dataType: "json",
+					success: function (response) {
+						var status = response.status;
+			
+						if (status == "success") {
+							
+							$("#" + item + "").find("input.uprice").css("border", "2px green solid");
+							$("#" + item + "").find("input.uprice").val(response.data.value);
+							$("#" + item + "").find("input.uprice").prop("disabled", false);
+			
+							$("#" + item + "").find("input.discount").css("border", "2px green solid");
+							$("#" + item + "").find("input.discount").val((response.data.discount) * 100);
+							$("#" + item + "").find("input.discount").prop("disabled", false);
+			
+							var id = item.split("item")[1];
+							$("#opdcd" + id + "").find(".uprice").html(response.data.value);
+							$("#opdcd" + id + "").find(".discount").html(((response.data.discount) * 100) + "%");
+			
+						} else {
+			
+							$("#" + item + "").find("input.uprice").css("border", "2px red solid");
+							$("#" + item + "").find("input.uprice").prop("disabled", false);
+			
+							$("#" + item + "").find("input.discount").css("border", "2px red solid");
+							$("#" + item + "").find("input.discount").prop("disabled", false);
+			
+						}
+			
+					},
+					error: function () {
+			
+						$("#" + item + "").find("input.uprice").css("border", "2px red solid");
+						$("#" + item + "").find("input.uprice").prop("disabled", false);
+			
+						$("#" + item + "").find("input.discount").css("border", "2px red solid");
+						$("#" + item + "").find("input.discount").prop("disabled", false);
+			
+					}
+				});
+				// alert(".descinfo"+option+"")
+				// $(".descinfo"+option+"").trigger("change");
 
 				var html = "<tr>";
 				html += "<td>";
@@ -1994,6 +2599,100 @@ function insertitemManually(itemindex, brand, line, option, qty, uprice, dis, to
 
 }
 
+
+function insertitemManually(itemindex, brand, line, option, qty, uprice, dis, tot) {
+
+	NProgress.start();
+	var order = $('#orderno').val();
+	var rootpath = $('#rootpath').val();
+	var salesref = $('#salesref').val();
+	var qty = qty;
+	var uprice = uprice;
+	var dis = dis;
+	var tot = tot;
+	var line = line;
+	var option = option;
+
+	$('button').prop('disabled', true);
+
+	$.ajax({
+		type: 'POST',
+		url: rootpath + "/quotation/api/addNewItem.php",
+		data: { orderno: order, salescaseref: salesref, line: line, option: option, item_id: itemindex },
+		dataType: "json",
+		success: function (response) {
+
+			var status = response.status;
+			if (status == "success") {
+				var d = response.data;
+				
+				additemCallback(d.id, d.line, d.option, d.title, brand, d.desc, qty, d.price, uprice, tot, d.qoh, dis, d.update, d.model, d.part);
+				var val = "item";
+				var item = val + d.id;
+				updateQuantity(item, qty);
+				updatePrice(item, uprice, dis);
+				// alert(".descinfo"+option+"")
+				// $(".descinfo"+option+"").trigger("change");
+
+				var html = "<tr>";
+				html += "<td>";
+				html += d.title;
+				html += "</td>";
+				html += "<td>";
+				html += brand;
+				html += "</td>";
+				html += "<td>";
+				html += d.desc;
+				html += "</td>";
+				html += "</tr>";
+
+				$("#cicis").append(html);
+
+				new PNotify({
+					title: 'Success',
+					text: '' + d.desc + '\n Added successfully .',
+					addclass: 'notification-success stack-topleft',
+					width: "300px",
+					delay: 1000,
+					type: 'success'
+				});
+
+			} else {
+
+				new PNotify({
+					title: 'Warning',
+					text: response.message,
+					addclass: 'notification-warning stack-topleft',
+					width: "300px",
+					delay: 1000,
+					type: 'warning'
+				});
+
+			}
+
+			$('button').prop('disabled', false);
+			NProgress.done();
+
+		},
+		error: function () {
+
+			new PNotify({
+				title: 'Error',
+				text: 'Item could not be added.',
+				addclass: 'notification-error stack-topleft',
+				width: "300px",
+				delay: 1000,
+				type: 'error'
+			});
+
+			$('button').prop('disabled', false);
+			NProgress.done();
+
+		}
+
+	});
+
+}
 
 $(document.body).on('keyup', '.order-detailss', function () {
 	$(this).css("border", "");
@@ -2072,7 +2771,9 @@ $(document.body).on('change', '.descinfo', function () {
 	var value = $(this).val();
 
 	var option = $(this).parent().parent().parent().parent().parent().parent().attr("id").split("-")[1];
-
+	console.log(name);
+	console.log(value);
+	console.log(option);
 	if (name == "services") {
 		value = ($(this).is(":checked")) ? 1 : 0;
 	}
@@ -2834,7 +3535,6 @@ $(document.body).on("change", ".uomoption", function () {
 
 	let name = $(this).attr("name");
 	let value = $(this).val();
-
 	let option = $(this).attr("data-option");
 
 	ref.css("border", "2px orange solid");
@@ -2914,3 +3614,186 @@ $("#updateQuoteRateValidityPrices").on("click", function () {
 	);
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// $(document).ready(function () {
+// 	var order = $('#orderno').val();
+// 	var rootpath = $('#rootpath').val();
+
+// $.ajax({
+// 	type: 'POST',
+// 	url: rootpath + "/quotation/api/retrieveQuotation.php",
+// 	data: { orderno: order },
+// 	dataType: "json",
+// 	success: function (response) {
+// 		var status = response.status;
+// 		console.log(response);
+// 		if (status == "success") {
+// 			var data = response.data;
+// 			var lines = data.lines;
+// 			$count = [];
+// 			$i = 0;
+// 			var line_count = 0;
+// 			for (var index in lines) {
+// 				console.log( lines[index].lineindex);
+
+// 				NProgress.inc();
+
+// 				if (!lines.hasOwnProperty(index)) {
+// 					continue;
+// 				}
+
+// 				var lineid = lines[index].lineindex;
+// 				var creq = lines[index].clientrequirements;
+// 				var arr = [lineid, creq]
+// 				$count[$i] = arr;
+// 				var options = lines[index].options;
+// 				var optionum = [];
+// 				var i = 0;
+// 				line_count = line_count + 1;
+// 				for (var optionIndex in options) {
+// 					var lineno = options[optionIndex].lineno;
+// 					var optionno = options[optionIndex].optionindex;
+// 					var opttext = options[optionIndex].optiontext;
+// 					var stkstatus = options[optionIndex].stockstatus;
+// 					var quanty = options[optionIndex].quantity;
+// 					var uom = options[optionIndex].uom;
+// 					var price = options[optionIndex].price;
+// 					lineno="'"+lineno+"'";
+// 					optionno="'"+optionno+"'";
+// 					quanty="'"+quanty+"'";
+// 					stkstatus="'"+stkstatus+"'";
+// 					uom="'"+uom+"'";
+// 					price="'"+price+"'";
+// 					opttext="'"+opttext+"'";
+// 					opttext =  "'"+opttext.replace(/,/g, ' ')+"'";
+// 					opttext =  "'"+opttext.replace(/'/g, '')+"'";
+// 					optionum[i] = [lineno,optionno,quanty,stkstatus,uom,price,opttext];
+// 					i++;
+// 				}
+
+// 				// addlineCallback(lineid, creq, optionum);
+// 				for (var optionIndex in options) {
+
+// 					NProgress.inc();
+
+// 					if (!options.hasOwnProperty(optionIndex)) {
+// 						continue;
+// 					}
+
+// 					var lineno = options[optionIndex].lineno;
+// 					var optionno = options[optionIndex].optionindex;
+// 					var opttext = options[optionIndex].optiontext;
+// 					var stkstatus = options[optionIndex].stockstatus;
+// 					var quanty = options[optionIndex].quantity;
+// 					var uom = options[optionIndex].uom;
+// 					var price = options[optionIndex].price;
+					
+
+// 					var arr1 = [...arr, lineid, optionno, opttext, stkstatus, quanty, uom, price]
+// 					$count[$i] = arr1;
+// 					// addoptionCallback(lineno, optionno, opttext, stkstatus, quanty, uom, price);
+// 					$(".option_quantity").val(quanty);
+// 					var items = options[optionIndex].items;
+// 					var pricetot = 0;
+
+// 					for (var itemIndex in items) {
+
+// 						NProgress.inc();
+
+// 						if (!items.hasOwnProperty(itemIndex)) {
+// 							continue;
+// 						}
+
+// 						var indx = items[itemIndex].salesorderdetailsindex;
+// 						var ln = items[itemIndex].orderlineno;
+// 						var on = items[itemIndex].lineoptionno;
+// 						var stkc = items[itemIndex].stkcode;
+// 						var bname = items[itemIndex].manu_name;
+// 						var des = items[itemIndex].description;
+// 						var qty = items[itemIndex].quantity;
+// 						var sprice = items[itemIndex].standardcost;
+// 						var upr = items[itemIndex].unitprice;
+// 						var urate = items[itemIndex].unitrate;
+// 						if (upr == sprice)
+// 							var disupdated = "";
+// 						else
+// 							var disupdated = "(updated)";
+
+// 						// console.log(urate);
+// 						var qohal = items[itemIndex].qohatloc;
+// 						if (urate > 0)
+// 							var dis = (1 - urate / sprice);
+// 						else
+// 							var dis = items[itemIndex].discountpercent;
+
+// 						var ud = items[itemIndex].lastcostupdate;
+// 						var ub = items[itemIndex].lastupdatedby;
+// 						var modal = items[itemIndex].mnfcode;
+// 						var part = items[itemIndex].mnfpno;
+
+// 						var update = ub + "(" + ud + ")";
+// 						var uprice = 0;
+
+
+
+// 						dis = dis * 100;
+
+// 						if (dis != 0) {
+// 							uprice = Math.round((sprice * 100) - (((sprice / 100) * dis) * 100)) / 100;
+// 							//uprice = Math.round((uprice*100)-(((uprice/100)*dis)*100))/100;
+// 						}
+// 						else
+// 							uprice = sprice;
+
+// 						var tot = qty * uprice;
+
+// 						pricetot += tot;
+
+// 						var arr2 = [...arr1, indx, ln, on, stkc, bname, 0, qty, sprice, uprice, tot, qohal, dis, update, modal, part, disupdated];
+// 						$count[$i] = arr2;
+// 						// additemCallback(indx, ln, on, stkc, bname, des, qty, sprice, uprice, tot, qohal, dis, update, modal, part, disupdated);
+
+// 					}
+
+// 					pricetot = Math.round(pricetot * 100) / 100;
+// 					subtotal = Math.round(pricetot * quanty * 100) / 100;
+
+// 					$("#optiondesc" + lineno + "-" + optionno + "").find(".pricecont").html(pricetot);
+// 					$("#optiondesc" + lineno + "-" + optionno + "").find(".tpricecont").html(subtotal);
+// 					$("#lt" + lineno + "ot" + optionno + "").html(subtotal);
+
+// 					// updateQuotationValue();
+
+// 				}
+// 				$i++
+// 			}
+
+// 		} 
+
+// 	}
+
+// });
+// });

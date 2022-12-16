@@ -527,9 +527,14 @@
 							<div id="items" class="tab-pane">
 								<div id="linescontainer"></div>
 								<input type="hidden" class="line">
+								<input type="hidden" class="line_number">
 								<input type="hidden" class="option">
+								<input type="hidden" class="optionnew">
 								<input type="hidden" class="option_required">
 								<input type="hidden" class="option_quantity">
+								<input type="hidden" class="opNo">
+								<input type="hidden" class="option_desc">
+								<input type="hidden" class="option_uom">
 								<!-- <button id="addline" type="button" name="button" onclick="addline()" class="btn btn-primary">Add New Line</button> -->
 								<button id="addline" href="#chooseLine" type="button" name="button" onclick="$('#chooseLine').show()" class="btn btn-primary" 
 								data-toggle="popover" title="Choose Line Bellow To Copy:">Add New Line</button>
