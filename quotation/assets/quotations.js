@@ -404,7 +404,7 @@ function addline() {
 				var data = response.data;
 				var line = data.line_id;
 				var req = "";
-				optionum[0] = [0,0,0];
+				optionum = [];
 				addlineCallback(line, req,optionum);
 			} else {
 
@@ -473,8 +473,8 @@ function addlineCallback(line, requirements, option)
 	html += '<div id="l' + line + 'oc">';
 	html += '</div>';
 	html += '<div id="l' + line + 'oa" class="pull-right">';
-	console.log( optionno.length);
-	if(optionno.length==0 || optionno.length==1){
+	console.log(optionno);
+	if(optionno.length==0){
 		html += '<button type="button" class="btn btn-primary" onclick="addoption('+ line+ ');" name="button">Add New Option</button>';
 	}
 	else{
@@ -853,6 +853,7 @@ function divVar(count) {
 }
 
 function optionsCount(...optionno) {
+	console.log(optionno);
 	var chunkSize = 7;
 	var chunk = [];
 	var a=0;
@@ -866,7 +867,7 @@ length = chunk.length;
 	html += '<option>Choose one</option>'
 	var j = 1;
 	var i = 0;
-	if(optionno[2] == "0"){
+	if(optionno[3] == "0"){
 		html += '<option value="n">Create New Option</option>';
 	}
 	else{
