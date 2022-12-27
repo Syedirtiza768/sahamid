@@ -1,5 +1,16 @@
 <?php
+$PathPrefix='../';
+
+include('../includes/session.inc');
+include('../includes/SQL_CommonFunctions.inc');
 require_once 'assets/config.php';
+if(!userHasPermission($db, 'mpi_return')) {
+
+
+    header("Location: /sahamid/v2/reportLinks.php");
+    exit;
+}
+
 ?>
 
 <!DOCTYPE html>
