@@ -552,6 +552,7 @@
                     <th>Sold CRV Qty</th>
                     <th>No. Of CSVs</th>
                     <th>Sold CSV Qty</th>
+                    <th>Total Qty Sold</th>
                     <th>Average Unit Per Sale</th>
                     <th>Last Purchase Price</th>
                     <th>Last Purchase Date</th>
@@ -580,6 +581,7 @@
                     <th>Sold CRV Qty</th>
                     <th>No. Of CSVs</th>
                     <th>Sold CSV Qty</th>
+                    <th>Total Qty Sold</th>
                     <th>Average Unit Per Sale</th>
                     <th>Last Purchase Price</th>
                     <th>Last Purchase Date</th>
@@ -607,7 +609,7 @@
 	$(document).ready(function(){
         var buttonCommon = {
             exportOptions: {
-                columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22]
+                columns: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23]
             }
 
         };
@@ -654,7 +656,8 @@
                 {"data":"sumQtyCRV"},
                 {"data":"shopsalecsvCount"},
                 {"data":"sumQtyCSV"},
-                {"data":"stockid"},
+                {"data":"sumQtyCSV"},
+                {"data":"sumQtyCSV"},
                 {"data":"lastPurchasePrice"},
                 {"data":"lastPurchaseDate"},
                 {"data":"materialcost"},
@@ -699,6 +702,15 @@
 
                 {
                     "render": function ( data, type, row ) {
+                        let avg=parseInt((row.sumQty+row.sumQtyCRV+row.sumQtyCSV));
+                        return avg;
+
+                    },
+                    className: 'text-center',
+                    "targets": 13
+                },
+                {
+                    "render": function ( data, type, row ) {
                         let avg=parseInt((row.sumQty+row.sumQtyCRV+row.sumQtyCSV)/(row.invoiceCount+row.shopsaleCount+row.shopsalecsvCount));
                         if (avg>0)
                             return avg;
@@ -706,15 +718,17 @@
                             return 0;
                     },
                     className: 'text-center',
-                    "targets": 13
+                    "targets": 14
                 },
-                {
+
+
+            {
                     "render": function ( data, type, row ) {
                         let html="<input value='"+data+"'>";
                         return parseInt((row.sumQty+row.sumQtyCRV+row.sumQtyCSV)/durationListSelect.val());
                     },
                     className: 'text-center',
-                    "targets": 17
+                    "targets": 18
                 },
             {
                 "render": function ( data, type, row ) {
@@ -724,7 +738,7 @@
                     return html;
                 },
                 className: 'text-center',
-                "targets": 20
+                "targets": 21
             },
 
             {
@@ -733,7 +747,7 @@
                         return parseInt((row.sumQty+row.sumQtyCRV+row.sumQtyCSV)/durationListSelect.val())*row.materialcost;
                     },
                     className: 'text-center',
-                    "targets": 21
+                    "targets": 22
                 },
                 {
                     "render": function ( data, type, row ) {
@@ -741,7 +755,7 @@
                         return parseInt(row.scmrecommended)*row.materialcost;
                     },
                     className: 'text-center',
-                    "targets": 22
+                    "targets": 23
                 }
 
 	        ]

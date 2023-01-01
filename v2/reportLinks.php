@@ -115,6 +115,7 @@
 		'Page Security Setting' => '../PageSecurity.php',
 		'Update Sales Targets' => '../v2/updateSalesTargets.php',
 		'ReOpen Salescase'	=> '../reopenSalescase.php',
+        'Panel Costing Rate'	=> '../pc_rate/index.php',
 		'Sales Peoples' => '../SalesPeople.php',
 		'Sales Areas' => '../Areas.php',
 		'Maintain Companies' => '../dba.php',

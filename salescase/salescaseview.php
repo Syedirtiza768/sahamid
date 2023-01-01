@@ -494,7 +494,12 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
 							?>
 							<h4 id="submitcontacts" class="btn btn-success" style="width: 100%">Submit</h4>
 						</div>
-						<h4 id="closesalescasebutton" style="padding: 10px; text-align: center; margin-bottom: 0px;" class="btn-danger">Close Salescase</h4>
+                        <?php
+                                if(userHasPermission($db, 'close_salescase')) {
+
+						        echo '<h4 id="closesalescasebutton" style="padding: 10px; text-align: center; margin-bottom: 0px;" class="btn-danger">Close Salescase</h4>';
+						        }
+                                ?>
 						<div id="closesalescasediv" class="displaynone" style="width: 100%; border: 2px #424242 solid; border-top: 0px; padding: 20px">
 							<?php
 
