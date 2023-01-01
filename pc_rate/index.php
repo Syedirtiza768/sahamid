@@ -7,8 +7,8 @@ require_once 'assets/config.php';
 if(!userHasPermission($db, 'pc_rate')) {
 
 
-    header("Location: /sahamid/v2/reportLinks.php");
-    exit;
+    header("Location: /sahamid");
+    return;
 }
 
 ?>

@@ -2,8 +2,13 @@
 	
 	include('includes/session.inc');
 	include('includes/SQL_CommonFunctions.inc');
+    if(!userHasPermission($db,"reopen_salescase")){
+        header("Location: /sahamid");
+        return;
+    }
 
-	if(isset($_POST['salescaseref'])){
+
+if(isset($_POST['salescaseref'])){
 
 		$salescaseref = trim($_POST['salescaseref']);
 
