@@ -364,7 +364,7 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
 				<a href="#ocbutton" class="btn btn-default buttons" role="button" id="ocbutton">OC <span id="ocCount" class="label btn-success"></span></a>
 				<a href="#dcbutton" class="btn btn-default buttons" role="button" id="dcbutton">DC <span id="dcCount" class="label btn-success"></span></a>
 				<?php
-                if(userHasPermission($db, 'pc_rate')) {
+                if(userHasPermission($db, 'panel_costing')) {
                     echo '<a href="#pcbutton" class="btn btn-default buttons" role="button" id="pcbutton">Panel Costing <span id="pcCount" class="label btn-success"></span></a>';
                 }
                 ?>
