@@ -1,4 +1,4 @@
-var dirtyEditors = [];
+var dirtyEditors = [];chooseLine
 var brandsArray = {};
 var table = null;
 var selectedLine = 0;
@@ -11,7 +11,7 @@ NProgress.start();
 $(document).ready(function () {
 	$('[data-toggle="popover"]').popover();
 	$('#chooseLine').hide();
-	$('#chooseOption').hide();
+	$('.optonhide').val(1);
 	var order = $('#orderno').val();
 	var rootpath = $('#rootpath').val();
 	var salesref = $('#salesref').val();
@@ -424,8 +424,8 @@ function addlineNewCallback(line, requirements) {
 	var vline = vlineno += 1;
 	options[line] = 0;
 	voptions[line] = 0;
-	html += '<header class="panel-heading">';
 	var html = '<section id="l' + line + '" class="panel panel-featured">';
+	html += '<header class="panel-heading">';
 	html += '<div class="panel-actions">';
 	html += '<a onclick="linetoggle(' + line + ')" class="panel-action panel-action-toggle" ></a>';
 	html += '<a onclick="removeline(' + line + ',' + vline + ')" class="panel-action panel-action-dismiss" data-panel-dismiss=""></a>';
@@ -461,8 +461,8 @@ function addlineCallback(line, requirements, option)
 	var optionno = option;
 	options[line] = 0;
 	voptions[line] = 0;
-	html += '<header class="panel-heading">';
 	var html = '<section id="l' + line + '" class="panel panel-featured">';
+	html += '<header class="panel-heading">';
 	html += '<div class="panel-actions">';
 	html += '<a onclick="linetoggle(' + line + ')" class="panel-action panel-action-toggle" ></a>';
 	html += '<a onclick="removeline(' + line + ',' + vline + ')" class="panel-action panel-action-dismiss" data-panel-dismiss=""></a>';
@@ -478,8 +478,10 @@ function addlineCallback(line, requirements, option)
 		html += '<button type="button" class="btn btn-primary" onclick="addoption('+ line+ ');" name="button">Add New Option</button>';
 	}
 	else{
-		html += '<button type="button" class="btn btn-primary" onclick="optionsCount('+   optionno + ')" name="button">Add New Option</button>';
-		html += '<div id="option' + option[0][0].replace(/['"]+/g, '') + 'list" class="pull-right"></div>';
+		html += '<button type="button" class="btn btn-primary" style="background-color:green; width:130px"onclick="optionsCount('+   optionno + ') " name="button">Copy Options</button>';
+		html +=' ';
+		html += '<button type="button" class="btn btn-primary" style="width:130px" onclick="addoption(' + line + ')" name="button">Add New Option</button>';
+		html += '<div class="chooseOption" id="chooseOption' + option[0][0].replace(/['"]+/g, '') + 'list" class="pull-right"></div>';
 	}
 	html += '</div>';
 	html += '</div>';
@@ -489,7 +491,7 @@ function addlineCallback(line, requirements, option)
 	descHTML += '<h3>Line No. ' + vline + ' Client Requirements </h3>';
 	descHTML += '<textarea  style="width: 100%; height: 100%;" id = "l' + line + 'o0desc" cols="90" rows="10"></textarea>';
 	descHTML += '<div id="optionline' + line + 'desccontainer" style="text-align:center; margin: 0 auto;"></div>';
-	descHTML += '</section>';
+	descHTML += '</section>'; 
 
 	$('#linesdescriptioncontainer').append(descHTML);
 
@@ -835,25 +837,29 @@ function newLine(id) {
 			addNewLine(split[0]);
 			// 	}
 		}
+		$('#chooseLine').hide();
 	}
 }
 
 function divVar(count) {
 	var length = count.length;
 	var html = '<h4><select name="line" id="line" onchange="newLine(this.value)">';
-	html += '<option >Choose one</option>'
+	html += '<option style="width:133px">Choose one</option>'
 	var j = 1;
 	for (i = 0; i < length; i++) {
 		html += '<option value="' + count[i] + '">Line ' + j + '</option>';
 		j++;
 	}
-	html += '<option value="n">Create New Line</option>';
 	html += '</select></h4>';
 	$('#chooseLine').append(html);
+	window.scrollTo(0, document.body.scrollHeight);
 }
 
 function optionsCount(...optionno) {
-	console.log(optionno);
+	var option = $('.optonhide').val();
+	if(option==1){
+		$('.chooseOption').show();
+		$('.optonhide').val(2);
 	var chunkSize = 7;
 	var chunk = [];
 	var a=0;
@@ -863,21 +869,20 @@ for (let i = 0; i < optionno.length; i += chunkSize) {
 }
 length = chunk.length;
 	$(".line_number").val(optionno[0]);
-	var html = '<h4><select id="option" onchange="addNewOption(this.value)">';
+	var html = '<h4><select id="option" style="width:130px;" onchange="addNewOption(this.value)">';
 	html += '<option>Choose one</option>'
 	var j = 1;
 	var i = 0;
-	if(optionno[3] == "0"){
-		html += '<option value="n">Create New Option</option>';
-	}
-	else{
 	for (i = 0; i < length; i++) {
 		html += '<option value="'+chunk[i] + '">Option ' + j + '</option>';
 		j++;
 	}
-	html += '<option value="n">Create New Option</option>';
+	$(document.getElementById("chooseOption" + optionno[0] + "list")).empty().append(html);
 }
-	$(document.getElementById("option" + optionno[0] + "list")).append(html);
+else{
+	$('.optonhide').val(1);
+	$('.chooseOption').hide();
+}
 }
 
 function addNewOption(...option) {
