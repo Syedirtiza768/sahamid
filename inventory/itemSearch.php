@@ -31,13 +31,69 @@
 	<link rel="stylesheet" href="../quotation/assets/vendor/sweetalert/sweetalert.css" />
 	<link rel="stylesheet" href="../quotation/assets/vendor/jquery-datatables/media/css/jquery.dataTables.css">
 	<link rel="stylesheet" href="../quotation/assets/vendor/jquery-datatables-bs3/assets/css/datatables.css">
-	<link rel="stylesheet" href="../quotation/assets/vendor/pnotify/pnotify.custom.css">
+	<!-- <link rel="stylesheet" href="../quotation/assets/vendor/pnotify/pnotify.custom.css"> -->
 	<link rel="stylesheet" href="../quotation/assets/stylesheets/theme.css" />
 	<link rel="stylesheet" href="../quotation/assets/stylesheets/skins/default.css" />
+
+		<!-- <link rel="stylesheet" href="api/selectSalescase.css" /> -->
+	
 
 	<script src="../quotation/assets/vendor/modernizr/modernizr.js"></script>
 	
 	<style>
+		.tooltip {
+	    position: relative;
+	    display: inline-block;
+	    border-bottom: 1px dotted black;
+	    visibility: visible !important;
+	    opacity: 1 !important;
+	}
+		.tooltip .tooltiptext {
+				visibility: hidden;
+				width: 400px;
+				background-color: black;
+				color: #7c7272;
+				text-align: center;
+				border-radius: 6px;
+				padding: 10px;
+				white-space: pre-wrap;
+				
+				/* Position the tooltip */
+				position: absolute;
+				z-index: 1;
+				top: -5px;
+				left: 105%;
+				}
+			.tooltip-left{
+					visibility: hidden;
+					width: 400px;
+					background-color: black;
+					color: #fff;
+					text-align: center;
+					border-radius: 6px;
+					padding: 10px;
+					white-space: pre-wrap;
+					
+					/* Position the tooltip */
+					position: absolute;
+					z-index: 1;
+					top: -5px;
+					right: 105%;
+				}
+			.tooltip:hover .tooltiptext {
+					visibility: visible;
+					background: #424242;
+				}
+
+				.tooltip:hover .tooltip-left {
+					visibility: visible;
+					background: #424242;
+				}
+
+				.tooltip a{
+					color: white;
+				}
+
 		th,td{
 			text-align: center;
 		}
@@ -174,9 +230,7 @@
 						<th class="fit">Action</th>
 					</tr>
 				</thead>
-				<tbody id="srb" style="color: black">
-					
-				</tbody>
+				
 				<tfoot>
 					<tr style="background:#424242; color:white">
 						<th>Item Code</th>
@@ -211,6 +265,81 @@
 		$(document).ready(function(){
 			//datatable colummn initialization
 			table = $('#searchresults').DataTable({
+			"columnDefs": [
+		    { 
+		    	className: "fit center", 
+		    	"render": function ( data, type, row ) {
+        			return data;
+    			},
+		    	"targets": [ 0 ] 
+		    },
+		    { 
+		    	className: "fit no-wrap", 
+		    	"render": function ( data, type, row ) {
+		    		let html = "<div class='tooltip'>"+data;
+		    		html += "<span class='tooltiptext'>";
+		    		html += "<table style='width:100%' class='table'>";
+					html += "<tr>";
+		    		html += "<th style='color:red'><b><i>Location</i></b></td>";
+		    		html += "<th style='color:red'><b><i>Quantity On Hand</i></b></td>";
+		    		html += "</tr>";
+		    		html += "<tr>";
+		    		html += "<td><b>Head Office</b></td>";
+		    		html += "<td>"+row['QOH'][0]+"</td>";
+		    		html += "</tr>";
+		    		html += "<tr>";
+		    		html += "<td><b>Model Town</b></td>";
+		    		html += "<td>"+row['QOH'][2]+"</td>";
+					html += "</tr>";
+					html += "<tr>";
+		    		html += "<td><b>Offset</b></td>";
+		    		html += "<td>"+row['QOH'][4]+"</td>";
+					html += "</tr>";
+					html += "<tr>";
+		    		html += "<td><b>Show Room</b></td>";
+		    		html += "<td>"+row['QOH'][5]+"</td>";
+					html += "</tr>";
+					html += "<tr>";
+		    		html += "<td><b>Work Shop</b></td>";
+		    		html += "<td>"+row['QOH'][8]+"</td>";
+					html += "</tr>";
+		    		html += "</table>";
+		    		html += "</span>";
+		    		html += "</div>";
+        			return html;
+    			}, 
+		    	"targets": [ 1 ] 
+		    },
+		    { 
+		    	className: "fit center", 
+		    	"render": function ( data, type, row ) {
+		    		return row['mnfpno'];
+    			}, 
+    			"targets": [ 2 ] 
+    		},
+			{ 
+		    	className: "fit center", 
+		    	"render": function ( data, type, row ) {
+		    		return row['mname'];
+    			}, 
+    			"targets": [ 3 ] 
+    		},
+			{ 
+		    	className: "fit center", 
+		    	"render": function ( data, type, row ) {
+		    		return row['description'];
+    			}, 
+    			"targets": [ 4 ] 
+    		},
+			{ 
+		    	className: "fit center", 
+		    	"render": function ( data, type, row ) {
+		    		return row['action'];
+    			}, 
+    			"targets": [ 5 ] 
+    		},
+
+		],
 				"columns": [
 		            { "data": "stockid" },
 		            { "data": "mnfcode" },
@@ -218,7 +347,8 @@
 		            { "data": "mname" },
 		            { "data": "description" },
 		            { "data": "action" },
-	        	]
+	        	],
+				"pageLength": 11
 			});
 			//footer search script
 			$('#searchresults tfoot th').each( function (i) {
@@ -257,7 +387,7 @@
 			    data: {StockCode: code, StockCat: cat, Description: desc, FormID: FormID,qty:qty},
 			    dataType: "json",
 			    success: function(response) { 
-
+					console.log(response);
 			    	var status = response.status;   	
 
 			    	table.clear().draw();	
