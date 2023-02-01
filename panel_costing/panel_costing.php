@@ -561,7 +561,612 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Weight:</label>
         <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr4_weight']; ?>" id="busbar_weight_four" placeholder="Weight" readonly>
         <label>&ensp;&ensp;Sleeve Cost:</label>
-        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr4_sleeve']; ?>" id="busbar_sleeve_four" placeholder="Sleeve Cost" readonly> <br>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr4_sleeve']; ?>" id="busbar_sleeve_four" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#five_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="five_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_five" id="bb_dimension_five">
+          <?php if ($panelCost['bbr5_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr5_dimension']; ?>"><?php echo $panelCost['bbr5_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr5_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_five" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr5_weight']; ?>" id="busbar_weight_five" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr5_sleeve']; ?>" id="busbar_sleeve_five" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#six_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="six_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_six" id="bb_dimension_six">
+          <?php if ($panelCost['bbr6_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr6_dimension']; ?>"><?php echo $panelCost['bbr6_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr6_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_six" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr6_weight']; ?>" id="busbar_weight_six" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr6_sleeve']; ?>" id="busbar_sleeve_six" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#seven_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="seven_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_seven" id="bb_dimension_seven">
+          <?php if ($panelCost['bbr7_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr7_dimension']; ?>"><?php echo $panelCost['bbr7_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr7_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_seven" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr7_weight']; ?>" id="busbar_weight_seven" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr7_sleeve']; ?>" id="busbar_sleeve_seven" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#eight_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="eight_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_eight" id="bb_dimension_eight">
+          <?php if ($panelCost['bbr8_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr8_dimension']; ?>"><?php echo $panelCost['bbr8_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr8_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_eight" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr8_weight']; ?>" id="busbar_weight_eight" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr8_sleeve']; ?>" id="busbar_sleeve_eight" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#nine_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="nine_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_nine" id="bb_dimension_nine">
+          <?php if ($panelCost['bbr9_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr9_dimension']; ?>"><?php echo $panelCost['bbr9_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr9_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_nine" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr9_weight']; ?>" id="busbar_weight_nine" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr9_sleeve']; ?>" id="busbar_sleeve_nine" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#ten_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="ten_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_ten" id="bb_dimension_ten">
+          <?php if ($panelCost['bbr10_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr10_dimension']; ?>"><?php echo $panelCost['bbr10_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr10_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_ten" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr10_weight']; ?>" id="busbar_weight_ten" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr10_sleeve']; ?>" id="busbar_sleeve_ten" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#eleven_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="eleven_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_eleven" id="bb_dimension_eleven">
+          <?php if ($panelCost['bbr11_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr11_dimension']; ?>"><?php echo $panelCost['bbr11_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr11_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_eleven" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr11_weight']; ?>" id="busbar_weight_eleven" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr11_sleeve']; ?>" id="busbar_sleeve_eleven" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#twelve_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="twelve_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_twelve" id="bb_dimension_twelve">
+          <?php if ($panelCost['bbr12_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr12_dimension']; ?>"><?php echo $panelCost['bbr12_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr12_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_twelve" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr12_weight']; ?>" id="busbar_weight_twelve" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr12_sleeve']; ?>" id="busbar_sleeve_twelve" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#thirteen_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="thirteen_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_thirteen" id="bb_dimension_thirteen">
+          <?php if ($panelCost['bbr13_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr13_dimension']; ?>"><?php echo $panelCost['bbr13_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr13_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_thirteen" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr13_weight']; ?>" id="busbar_weight_thirteen" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr13_sleeve']; ?>" id="busbar_sleeve_thirteen" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#fourteen_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="fourteen_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_fourteen" id="bb_dimension_fourteen">
+          <?php if ($panelCost['bbr14_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr14_dimension']; ?>"><?php echo $panelCost['bbr14_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr14_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_fourteen" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr14_weight']; ?>" id="busbar_weight_fourteen" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr14_sleeve']; ?>" id="busbar_sleeve_fourteen" placeholder="Sleeve Cost" readonly>
+        <button id="addButton" class="fa fa-angle-down" onclick="$('#fifteen_bus_bar').show()">Add More</button><br>
+      </div>
+
+      <div id="fifteen_bus_bar">
+        <label>Dimensions:</label>
+        <select style="width:10%" name="bb_dimension_fifteen" id="bb_dimension_fifteen">
+          <?php if ($panelCost['bbr15_dimension'] == '') {?>
+
+            <option value="">Choose One</option>
+            <option value="20*5">20*5</option>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } else {?>
+            <option value="<?php echo $panelCost['bbr15_dimension']; ?>"><?php echo $panelCost['bbr15_dimension']; ?></option>
+            <option value="20*5">20*5</option>
+          <option value="25*5">25*5</option>
+          <option value="25*10">25*10</option>
+          <option value="30*5">30*5</option>
+          <option value="30*10">30*10</option>
+          <option value="40*5">40*5</option>
+          <option value="40*10">40*10</option>
+          <option value="50*5">50*5</option>
+          <option value="50*10">50*10</option>
+          <option value="60*5">60*5</option>
+          <option value="60*10">60*10</option>
+          <option value="80*5">80*5</option>
+          <option value="80*10">80*10</option>
+          <option value="100*5">100*5</option>
+          <option value="100*10">100*10</option>
+          <option value="120*5">120*5</option>
+          <option value="120*10">120*10</option>
+          <option value="150*10">150*10</option>
+          <?php }?>
+        </select>
+        <label>&ensp;&ensp;Qty(Feet):</label>
+        <input type="number" style="width:10%" value="<?php echo $panelCost['bbr15_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_fifteen" required>
+        <label>&ensp;&ensp;Weight:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr15_weight']; ?>" id="busbar_weight_fifteen" placeholder="Weight" readonly>
+        <label>&ensp;&ensp;Sleeve Cost:</label>
+        <input type="number" style="width:10%; background:none; color:red" value="<?php echo $panelCost['bbr15_sleeve']; ?>" id="busbar_sleeve_fifteen" placeholder="Sleeve Cost" readonly>
       </div>
       <br>
 

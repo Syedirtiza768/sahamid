@@ -238,7 +238,7 @@ $sql = "SELECT SUM(stockrequestitems.quantity) AS dem
 				AND woitems.stockid='" . $StockID . "'";
 		$ErrMsg = _('The quantity on work orders for this product to be received into') . ' ' . $myrow['loccode'] . ' ' . _('cannot be retrieved because');
 		$QOOResult = DB_query($sql,$db,$ErrMsg, $DbgMsg);
-
+		
 		if (DB_num_rows($QOOResult)==1){
 			$QOORow = DB_fetch_row($QOOResult);
 			$QOO +=  $QOORow[0];
@@ -289,7 +289,7 @@ $sql = "SELECT SUM(stockrequestitems.quantity) AS dem
 				locale_number_format($InTransitQuantityIn+$InTransitQuantityOut, $DecimalPlaces),
 				locale_number_format($Available, $DecimalPlaces),
 				locale_number_format($QOO, $DecimalPlaces)
-				);
+			);
 
 		if ($Serialised ==1){ /*The line is a serialised item*/
 

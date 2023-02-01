@@ -10,6 +10,17 @@ $(document).ready(function () {
   $("#two_bus_bar").hide();
   $("#three_bus_bar").hide();
   $("#four_bus_bar").hide();
+  $("#five_bus_bar").hide();
+  $("#six_bus_bar").hide();
+  $("#seven_bus_bar").hide();
+  $("#eight_bus_bar").hide();
+  $("#nine_bus_bar").hide();
+  $("#ten_bus_bar").hide();
+  $("#eleven_bus_bar").hide();
+  $("#twelve_bus_bar").hide();
+  $("#thirteen_bus_bar").hide();
+  $("#fourteen_bus_bar").hide();
+  $("#fifteen_bus_bar").hide();
 
 });
 
@@ -988,52 +999,6 @@ document.getElementById('busbar_qty').onchange = function () {
   }
 };
 
-document.getElementById('busbar_weight').onchange = function () {
-  var pc_h = $("#pc_h").val();
-  var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_weight").val();
-  if (pc_h != "") {
-    $.ajax({
-      url: "cost/dimensions/busbar_weight.php",
-      method: "POST",
-      data: {
-        door8_d: door8_d,
-        pc_id: pc_id
-      },
-      success: function (data) {
-        setTimeout(function () {
-          $("#busbar_weight").css("border", "green 2px solid"); // change it back after ...
-        }, 1000);
-      },
-    });
-  } else {
-    Swal.fire("Please Enter Height Value First");
-  }
-};
-
-document.getElementById('busbar_sleeve').onchange = function () {
-  var pc_h = $("#pc_h").val();
-  var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_sleeve").val();
-  if (pc_h != "") {
-    $.ajax({
-      url: "cost/dimensions/busbar_sleeve.php",
-      method: "POST",
-      data: {
-        door8_d: door8_d,
-        pc_id: pc_id
-      },
-      success: function (data) {
-        setTimeout(function () {
-          $("#busbar_sleeve").css("border", "green 2px solid"); // change it back after ...
-        }, 1000);
-      },
-    });
-  } else {
-    Swal.fire("Please Enter Height Value First");
-  }
-};
-
 document.getElementById('bb_dimension_two').onchange = function () {
 
   var pc_h = $("#pc_h").val();
@@ -1118,52 +1083,6 @@ document.getElementById('busbar_qty_two').onchange = function () {
   }
 };
 
-document.getElementById('busbar_weight_two').onchange = function () {
-  var pc_h = $("#pc_h").val();
-  var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_weight_two").val();
-  if (pc_h != "") {
-    $.ajax({
-      url: "cost/dimensions/busbar_weight_two.php",
-      method: "POST",
-      data: {
-        door8_d: door8_d,
-        pc_id: pc_id
-      },
-      success: function (data) {
-        setTimeout(function () {
-          $("#busbar_weight_two").css("border", "green 2px solid"); // change it back after ...
-        }, 1000);
-      },
-    });
-  } else {
-    Swal.fire("Please Enter Height Value First");
-  }
-};
-
-document.getElementById('busbar_sleeve_two').onchange = function () {
-  var pc_h = $("#pc_h").val();
-  var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_sleeve_two").val();
-  if (pc_h != "") {
-    $.ajax({
-      url: "cost/dimensions/busbar_sleeve_two.php",
-      method: "POST",
-      data: {
-        door8_d: door8_d,
-        pc_id: pc_id
-      },
-      success: function (data) {
-        setTimeout(function () {
-          $("#busbar_sleeve_two").css("border", "green 2px solid"); // change it back after ...
-        }, 1000);
-      },
-    });
-  } else {
-    Swal.fire("Please Enter Height Value First");
-  }
-};
-
 document.getElementById('bb_dimension_three').onchange = function () {
 
   var pc_h = $("#pc_h").val();
@@ -1238,52 +1157,6 @@ document.getElementById('busbar_qty_three').onchange = function () {
       success: function (data) {
         setTimeout(function () {
           $("#busbar_qty_three").css("border", "green 2px solid"); // change it back after ...
-        }, 1000);
-      },
-    });
-  } else {
-    Swal.fire("Please Enter Height Value First");
-  }
-};
-
-document.getElementById('busbar_weight_three').onchange = function () {
-  var pc_h = $("#pc_h").val();
-  var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_weight_three").val();
-  if (pc_h != "") {
-    $.ajax({
-      url: "cost/dimensions/busbar_weight_three.php",
-      method: "POST",
-      data: {
-        door8_d: door8_d,
-        pc_id: pc_id
-      },
-      success: function (data) {
-        setTimeout(function () {
-          $("#busbar_weight_three").css("border", "green 2px solid"); // change it back after ...
-        }, 1000);
-      },
-    });
-  } else {
-    Swal.fire("Please Enter Height Value First");
-  }
-};
-
-document.getElementById('busbar_sleeve_three').onchange = function () {
-  var pc_h = $("#pc_h").val();
-  var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_sleeve_three").val();
-  if (pc_h != "") {
-    $.ajax({
-      url: "cost/dimensions/busbar_sleeve_three.php",
-      method: "POST",
-      data: {
-        door8_d: door8_d,
-        pc_id: pc_id
-      },
-      success: function (data) {
-        setTimeout(function () {
-          $("#busbar_sleeve_three").css("border", "green 2px solid"); // change it back after ...
         }, 1000);
       },
     });
@@ -1375,13 +1248,16 @@ document.getElementById('busbar_qty_four').onchange = function () {
   }
 };
 
-document.getElementById('busbar_weight_four').onchange = function () {
+
+
+document.getElementById('bb_dimension_five').onchange = function () {
+
   var pc_h = $("#pc_h").val();
   var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_weight_four").val();
+  var door8_d = $("#bb_dimension_five").val();
   if (pc_h != "") {
     $.ajax({
-      url: "cost/dimensions/busbar_weight_four.php",
+      url: "cost/dimensions/bb_dimension_five.php",
       method: "POST",
       data: {
         door8_d: door8_d,
@@ -1389,7 +1265,7 @@ document.getElementById('busbar_weight_four').onchange = function () {
       },
       success: function (data) {
         setTimeout(function () {
-          $("#busbar_weight_four").css("border", "green 2px solid"); // change it back after ...
+          $("#bb_dimension_five").css("border", "green 2px solid"); // change it back after ...
         }, 1000);
       },
     });
@@ -1398,13 +1274,73 @@ document.getElementById('busbar_weight_four').onchange = function () {
   }
 };
 
-document.getElementById('busbar_sleeve_four').onchange = function () {
+
+document.getElementById('busbar_qty_five').onchange = function () {
+
+  dimension = $("#bb_dimension_five").val();
+  qty = $("#busbar_qty_five").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_five").val(weight);
+  $("#busbar_sleeve_five").val(sleeve);
+
+
   var pc_h = $("#pc_h").val();
   var pc_id = $(".pc_id").val();
-  var door8_d = $("#busbar_sleeve_four").val();
+  var door8_d = $("#busbar_qty_five").val();
+  var weight = $("#busbar_weight_five").val();
+  var sleeve = $("#busbar_sleeve_five").val();
   if (pc_h != "") {
     $.ajax({
-      url: "cost/dimensions/busbar_sleeve_four.php",
+      url: "cost/dimensions/busbar_qty_five.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_five").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_six').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_six").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_six.php",
       method: "POST",
       data: {
         door8_d: door8_d,
@@ -1412,7 +1348,812 @@ document.getElementById('busbar_sleeve_four').onchange = function () {
       },
       success: function (data) {
         setTimeout(function () {
-          $("#busbar_sleeve_four").css("border", "green 2px solid"); // change it back after ...
+          $("#bb_dimension_six").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_six').onchange = function () {
+
+  dimension = $("#bb_dimension_six").val();
+  qty = $("#busbar_qty_six").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_six").val(weight);
+  $("#busbar_sleeve_six").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_six").val();
+  var weight = $("#busbar_weight_six").val();
+  var sleeve = $("#busbar_sleeve_six").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_six.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_six").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_seven').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_seven").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_seven.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_seven").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_seven').onchange = function () {
+
+  dimension = $("#bb_dimension_seven").val();
+  qty = $("#busbar_qty_seven").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_seven").val(weight);
+  $("#busbar_sleeve_seven").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_seven").val();
+  var weight = $("#busbar_weight_seven").val();
+  var sleeve = $("#busbar_sleeve_seven").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_seven.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_seven").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_eight').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_eight").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_eight.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_eight").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_eight').onchange = function () {
+
+  dimension = $("#bb_dimension_eight").val();
+  qty = $("#busbar_qty_eight").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_eight").val(weight);
+  $("#busbar_sleeve_eight").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_eight").val();
+  var weight = $("#busbar_weight_eight").val();
+  var sleeve = $("#busbar_sleeve_eight").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_eight.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_eight").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_nine').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_eight").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_nine.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_nine").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_nine').onchange = function () {
+
+  dimension = $("#bb_dimension_nine").val();
+  qty = $("#busbar_qty_nine").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_nine").val(weight);
+  $("#busbar_sleeve_nine").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_nine").val();
+  var weight = $("#busbar_weight_nine").val();
+  var sleeve = $("#busbar_sleeve_nine").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_nine.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_nine").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_ten').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_ten").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_ten.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_ten").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_ten').onchange = function () {
+
+  dimension = $("#bb_dimension_ten").val();
+  qty = $("#busbar_qty_ten").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_ten").val(weight);
+  $("#busbar_sleeve_ten").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_ten").val();
+  var weight = $("#busbar_weight_ten").val();
+  var sleeve = $("#busbar_sleeve_ten").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_ten.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_ten").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_eleven').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_eleven").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_eleven.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_eleven").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_eleven').onchange = function () {
+
+  dimension = $("#bb_dimension_eleven").val();
+  qty = $("#busbar_qty_eleven").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_eleven").val(weight);
+  $("#busbar_sleeve_eleven").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_eleven").val();
+  var weight = $("#busbar_weight_eleven").val();
+  var sleeve = $("#busbar_sleeve_eleven").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_eleven.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_eleven").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_twelve').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_twelve").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_twelve.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_twelve").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_twelve').onchange = function () {
+
+  dimension = $("#bb_dimension_twelve").val();
+  qty = $("#busbar_qty_twelve").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_twelve").val(weight);
+  $("#busbar_sleeve_twelve").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_twelve").val();
+  var weight = $("#busbar_weight_twelve").val();
+  var sleeve = $("#busbar_sleeve_twelve").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_twelve.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_twelve").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_thirteen').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_thirteen").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_thirteen.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_thirteen").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_thirteen').onchange = function () {
+
+  dimension = $("#bb_dimension_thirteen").val();
+  qty = $("#busbar_qty_thirteen").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_thirteen").val(weight);
+  $("#busbar_sleeve_thirteen").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_thirteen").val();
+  var weight = $("#busbar_weight_thirteen").val();
+  var sleeve = $("#busbar_sleeve_thirteen").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_thirteen.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_thirteen").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_fourteen').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_fourteen").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_fourteen.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_fourteen").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_fourteen').onchange = function () {
+
+  dimension = $("#bb_dimension_fourteen").val();
+  qty = $("#busbar_qty_fourteen").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_fourteen").val(weight);
+  $("#busbar_sleeve_fourteen").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_fourteen").val();
+  var weight = $("#busbar_weight_fourteen").val();
+  var sleeve = $("#busbar_sleeve_fourteen").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_fourteen.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_fourteen").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+document.getElementById('bb_dimension_fifteen').onchange = function () {
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#bb_dimension_fifteen").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/bb_dimension_fifteen.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#bb_dimension_fifteen").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  } else {
+    Swal.fire("Please Enter Height Value First");
+  }
+};
+
+
+document.getElementById('busbar_qty_fifteen').onchange = function () {
+
+  dimension = $("#bb_dimension_fifteen").val();
+  qty = $("#busbar_qty_fifteen").val();
+  var weight = 0;
+  var sleeve = 0;
+  if (dimension == "20*5") { weight = qty * 0.3; sleeve = qty * 43 * 1.5; }
+  else if (dimension == "25*5") { weight = qty * 0.4; sleeve = qty * 48 * 1.5; }
+  else if (dimension == "25*10") { weight = qty * 0.7; sleeve = qty * 55 * 1.5; }
+  else if (dimension == "30*5") { weight = qty * 0.45; sleeve = qty * 60 * 1.5; }
+  else if (dimension == "30*10") { weight = qty * 0.85; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*5") { weight = qty * 0.6; sleeve = qty * 65 * 1.5; }
+  else if (dimension == "40*10") { weight = qty * 1.1; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*5") { weight = qty * 0.7; sleeve = qty * 75 * 1.5; }
+  else if (dimension == "50*10") { weight = qty * 1.4; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*5") { weight = qty * 0.85; sleeve = qty * 85 * 1.5; }
+  else if (dimension == "60*10") { weight = qty * 1.7; sleeve = qty * 95 * 1.5; }
+  else if (dimension == "80*5") { weight = qty * 1.1; sleeve = qty * 110 * 1.5; }
+  else if (dimension == "80*10") { weight = qty * 2.2; sleeve = qty * 115 * 1.5; }
+  else if (dimension == "100*5") { weight = qty * 1.4; sleeve = qty * 125 * 1.5; }
+  else if (dimension == "100*10") { weight = qty * 2.8; sleeve = qty * 135 * 1.5; }
+  else if (dimension == "120*5") { weight = qty * 1.67; sleeve = qty * 145 * 1.5; }
+  else if (dimension == "120*10") { weight = qty * 3.3; sleeve = qty * 155 * 1.5; }
+  else if (dimension == "150*10") { weight = qty * 4.2; sleeve = qty * 185 * 1.5; }
+  else {
+    Swal.fire("Please select dimension first.")
+  }
+  $("#busbar_weight_fifteen").val(weight);
+  $("#busbar_sleeve_fifteen").val(sleeve);
+
+
+  var pc_h = $("#pc_h").val();
+  var pc_id = $(".pc_id").val();
+  var door8_d = $("#busbar_qty_fifteen").val();
+  var weight = $("#busbar_weight_fifteen").val();
+  var sleeve = $("#busbar_sleeve_fifteen").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/dimensions/busbar_qty_fifteen.php",
+      method: "POST",
+      data: {
+        door8_d: door8_d,
+        pc_id: pc_id,
+        weight: weight,
+        sleeve: sleeve
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#busbar_qty_fifteen").css("border", "green 2px solid"); // change it back after ...
         }, 1000);
       },
     });
@@ -1975,6 +2716,61 @@ $(document).on("click", "#calculateButton", function () {
     var busbar_weight_four = $("#busbar_weight_four").val();
     var busbar_sleeve_four = $("#busbar_sleeve_four").val();
 
+    var bb_dimension_five = $("#bb_dimension_five").val();
+    var busbar_qty_five = $("#busbar_qty_five").val();
+    var busbar_weight_five = $("#busbar_weight_five").val();
+    var busbar_sleeve_five = $("#busbar_sleeve_five").val();
+
+    var bb_dimension_six = $("#bb_dimension_six").val();
+    var busbar_qty_six = $("#busbar_qty_six").val();
+    var busbar_weight_six = $("#busbar_weight_six").val();
+    var busbar_sleeve_six = $("#busbar_sleeve_six").val();
+
+    var bb_dimension_seven = $("#bb_dimension_seven").val();
+    var busbar_qty_seven = $("#busbar_qty_seven").val();
+    var busbar_weight_seven = $("#busbar_weight_seven").val();
+    var busbar_sleeve_seven = $("#busbar_sleeve_seven").val();
+
+    var bb_dimension_eight = $("#bb_dimension_eight").val();
+    var busbar_qty_eight = $("#busbar_qty_eight").val();
+    var busbar_weight_eight = $("#busbar_weight_eight").val();
+    var busbar_sleeve_eight = $("#busbar_sleeve_eight").val();
+
+    var bb_dimension_nine = $("#bb_dimension_nine").val();
+    var busbar_qty_nine = $("#busbar_qty_nine").val();
+    var busbar_weight_nine = $("#busbar_weight_nine").val();
+    var busbar_sleeve_nine = $("#busbar_sleeve_nine").val();
+
+    var bb_dimension_ten = $("#bb_dimension_ten").val();
+    var busbar_qty_ten = $("#busbar_qty_ten").val();
+    var busbar_weight_ten = $("#busbar_weight_ten").val();
+    var busbar_sleeve_ten = $("#busbar_sleeve_ten").val();
+
+    var bb_dimension_eleven = $("#bb_dimension_eleven").val();
+    var busbar_qty_eleven = $("#busbar_qty_eleven").val();
+    var busbar_weight_eleven = $("#busbar_weight_eleven").val();
+    var busbar_sleeve_eleven = $("#busbar_sleeve_eleven").val();
+
+    var bb_dimension_twelve = $("#bb_dimension_twelve").val();
+    var busbar_qty_twelve = $("#busbar_qty_twelve").val();
+    var busbar_weight_twelve = $("#busbar_weight_twelve").val();
+    var busbar_sleeve_twelve = $("#busbar_sleeve_twelve").val();
+
+    var bb_dimension_thirteen = $("#bb_dimension_thirteen").val();
+    var busbar_qty_thirteen = $("#busbar_qty_thirteen").val();
+    var busbar_weight_thirteen = $("#busbar_weight_thirteen").val();
+    var busbar_sleeve_thirteen = $("#busbar_sleeve_thirteen").val();
+
+    var bb_dimension_fourteen = $("#bb_dimension_fourteen").val();
+    var busbar_qty_fourteen = $("#busbar_qty_fourteen").val();
+    var busbar_weight_fourteen = $("#busbar_weight_fourteen").val();
+    var busbar_sleeve_fourteen = $("#busbar_sleeve_fourteen").val();
+
+    var bb_dimension_fifteen = $("#bb_dimension_fifteen").val();
+    var busbar_qty_fifteen = $("#busbar_qty_fifteen").val();
+    var busbar_weight_fifteen = $("#busbar_weight_fifteen").val();
+    var busbar_sleeve_fifteen = $("#busbar_sleeve_fifteen").val();
+
     $.ajax({
       url: "cost/calculate/bus_bar.php",
       method: "POST",
@@ -1995,6 +2791,50 @@ $(document).on("click", "#calculateButton", function () {
         busbar_qty_four: busbar_qty_four,
         busbar_weight_four: busbar_weight_four,
         busbar_sleeve_four: busbar_sleeve_four,
+        bb_dimension_five: bb_dimension_five,
+        busbar_qty_five: busbar_qty_five,
+        busbar_weight_five: busbar_weight_five,
+        busbar_sleeve_five: busbar_sleeve_five,
+        bb_dimension_six: bb_dimension_six,
+        busbar_qty_six: busbar_qty_six,
+        busbar_weight_six: busbar_weight_six,
+        busbar_sleeve_six: busbar_sleeve_six,
+        bb_dimension_seven:  bb_dimension_seven,
+        busbar_qty_seven: busbar_qty_seven,
+        busbar_weight_seven: busbar_weight_seven,
+        busbar_sleeve_seven: busbar_sleeve_seven,
+        bb_dimension_eight: bb_dimension_eight,
+        busbar_qty_eight: busbar_qty_eight,
+        busbar_weight_eight: busbar_weight_eight,
+        busbar_sleeve_eight: busbar_sleeve_eight,
+        bb_dimension_nine: bb_dimension_nine,
+        busbar_qty_nine: busbar_qty_nine,
+        busbar_weight_nine: busbar_weight_nine,
+        busbar_sleeve_nine: busbar_sleeve_nine,
+        bb_dimension_ten: bb_dimension_ten,
+        busbar_qty_ten: busbar_qty_ten,
+        busbar_weight_ten: busbar_weight_ten,
+        busbar_sleeve_ten: busbar_sleeve_ten,
+        bb_dimension_eleven: bb_dimension_eleven,
+        busbar_qty_eleven: busbar_qty_eleven,
+        busbar_weight_eleven: busbar_weight_eleven,
+        busbar_sleeve_eleven: busbar_sleeve_eleven,
+        bb_dimension_twelve: bb_dimension_twelve,
+        busbar_qty_twelve:  busbar_qty_twelve,
+        busbar_weight_twelve: busbar_weight_twelve,
+        busbar_sleeve_twelve: busbar_sleeve_twelve,
+        bb_dimension_thirteen: bb_dimension_thirteen,
+        busbar_qty_thirteen: busbar_qty_thirteen,
+        busbar_weight_thirteen: busbar_weight_thirteen,
+        busbar_sleeve_thirteen: busbar_sleeve_thirteen,
+        bb_dimension_fourteen: bb_dimension_fourteen,
+        busbar_qty_fourteen: busbar_qty_fourteen,
+        busbar_weight_fourteen: busbar_weight_fourteen,
+        busbar_sleeve_fourteen: busbar_sleeve_fourteen,
+        bb_dimension_fifteen: bb_dimension_fifteen,
+        busbar_qty_fifteen: busbar_qty_fifteen,
+        busbar_weight_fifteen: busbar_weight_fifteen,
+        busbar_sleeve_fifteen: busbar_sleeve_fifteen,
         pc_id: pc_id
       },
       success: function (data) {

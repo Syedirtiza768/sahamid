@@ -335,7 +335,359 @@ require_once 'assets/config.php';
   <label>&ensp;&ensp;Weight:</label>
   <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_four" placeholder= "Weight" readonly>
   <label>&ensp;&ensp;Sleeve Cost:</label>
-  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_four" placeholder= "Sleeve Cost" readonly> <br>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_four" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#five_bus_bar').show()">Add More</button><br>  
+</div>
+
+  <div id="five_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_five" id="bb_dimension_five">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_five" placeholder= "Qty(Feet)" id="busbar_qty_five" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_five" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_five" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#six_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="six_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_six" id="bb_dimension_six">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_six" placeholder= "Qty(Feet)" id="busbar_qty_six" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_six" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_six" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#seven_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="seven_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_seven" id="bb_dimension_seven">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_seven" placeholder= "Qty(Feet)" id="busbar_qty_seven" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_seven" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_seven" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#eight_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="eight_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_eight" id="bb_dimension_eight">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_eight" placeholder= "Qty(Feet)" id="busbar_qty_eight" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_eight" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_eight" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#nine_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="nine_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_nine" id="bb_dimension_nine">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_nine" placeholder= "Qty(Feet)" id="busbar_qty_nine" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_nine" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_nine" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#ten_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="ten_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_ten" id="bb_dimension_ten">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_ten" placeholder= "Qty(Feet)" id="busbar_qty_ten" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_ten" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_ten" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#eleven_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="eleven_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_eleven" id="bb_dimension_eleven">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_eleven" placeholder= "Qty(Feet)" id="busbar_qty_eleven" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_eleven" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_eleven" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#twelve_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="twelve_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_twelve" id="bb_dimension_twelve">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_twelve" placeholder= "Qty(Feet)" id="busbar_qty_twelve" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_twelve" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_twelve" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#thirteen_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="thirteen_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_thirteen" id="bb_dimension_thirteen">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_thirteen" placeholder= "Qty(Feet)" id="busbar_qty_thirteen" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_thirteen" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_thirteen" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#fourteen_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="fourteen_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_fourteen" id="bb_dimension_fourteen">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_fourteen" placeholder= "Qty(Feet)" id="busbar_qty_fourteen" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_fourteen" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_fourteen" placeholder= "Sleeve Cost" readonly>
+  <button id="addButton" class="fa fa-angle-down" onclick="$('#fifteen_bus_bar').show()">Add More</button><br>
+</div>
+
+  <div id="fifteen_bus_bar">
+  <label>Dimensions:</label>
+  <select style="width:10%" name="bb_dimension_fifteen" id="bb_dimension_fifteen">
+    <option value="">Choose One</option>
+    <option value="20*5">20*5</option>
+    <option value="25*5">25*5</option>
+    <option value="25*10">25*10</option>
+    <option value="30*5">30*5</option>
+    <option value="30*10">30*10</option>
+    <option value="40*5">40*5</option>
+    <option value="40*10">40*10</option>
+    <option value="50*5">50*5</option>
+    <option value="50*10">50*10</option>
+    <option value="60*5">60*5</option>
+    <option value="60*10">60*10</option>
+    <option value="80*5">80*5</option>
+    <option value="80*10">80*10</option>
+    <option value="100*5">100*5</option>
+    <option value="100*10">100*10</option>
+    <option value="120*5">120*5</option>
+    <option value="120*10">120*10</option>
+    <option value="150*10">150*10</option>
+  </select>
+  <label>&ensp;&ensp;Qty(Feet):</label>
+  <input type="number" style="width:10%" name="busbar_qty_fifteen" placeholder= "Qty(Feet)" id="busbar_qty_fifteen" required>
+  <label>&ensp;&ensp;Weight:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_weight_fifteen" placeholder= "Weight" readonly>
+  <label>&ensp;&ensp;Sleeve Cost:</label>
+  <input type="number" style="width:10%; background:none; color:red" id="busbar_sleeve_fifteen" placeholder= "Sleeve Cost" readonly> <br>
   </div>
 <br>
 

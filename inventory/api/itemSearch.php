@@ -49,7 +49,22 @@
 
 		$row['action'] = "<a class='btn btn-success actinf' href='../SelectProduct.php?Select=".$row['stockid']."' target='_blank'>View</a> ";
 		$row['action'] .= "<a class='btn btn-info actinf' href='../StockStatus.php?StockID=".$row['stockid']."' target='_blank'>Status</a> ";
-		
+
+		// ====This is for testing purpose==== //
+
+		$sql = "SELECT locations.locationname,
+				locstock.quantity
+		FROM locstock INNER JOIN locations
+		ON locstock.loccode=locations.loccode
+		WHERE locstock.stockid = '" . $row['stockid'] . "'";
+		$locstockResult = mysqli_query($db, $sql);
+	$check = [];
+		while($data = mysqli_fetch_assoc($locstockResult)){
+			$check[] = $data['quantity'];
+		}
+	$row['QOH'] = $check;
+		// ====This is ending of for testing purpose==== //
+
 		if($row['conditionID']==1)
 			$row['stockid'] = '<span style="color:black !important">'.$row['stockid'].'</span>';
 		if($myrow['conditionID']==2)
@@ -58,19 +73,17 @@
 			$row['stockid'] = '<span style="color:brown !important">'.$row['stockid'].'</span>';
 		if($row['conditionID']==4)
 			$row['stockid'] = '<span style="color:orange !important">'.$row['stockid'].'</span>';
-		
 		$response[] = $row;
 		
 	}
 
 	utf8_encode_deep($response);
-
+	
 	$fres = [];
 	$fres['status'] = "success";
 	$fres['data'] = $response;
 
 	$eresponse = json_encode($fres);
-
 	echo $eresponse;
 
 	return;
