@@ -332,10 +332,6 @@
 									<option value="Ashfaq Ahmad">Ashfaq Ahmad</option>
                                     <option value="Mohsin Iqbal">Mohsin Iqbal</option>
                                     <option value="Yasir Mehfooz">Yasir Mehfooz</option>
-                                    <option value="Adnan Karim Baksh">Adnan Karim Baksh</option>
-                                    <option value="Mohsin Iqbal">Mohsin Iqbal</option>
-                                    <option value="Yasir Mehfooz">Yasir Mehfooz</option>
-                                    <option value="Adnan Karim Baksh">Adnan Karim Baksh</option>
                                     <option value="Mushahid Hussain">Mushahid Hussain</option>
 									<option value="Sultan Mahmood">Sultan Mahmood</option>
 									<option value="Mazhar Iqbal">Mazhar Iqbal</option>
