@@ -321,6 +321,7 @@
 		      				<div class="col-md-2" style="color: white; font-size: .7em; border-left: 1px solid white;">
 		      					SalesPerson Cart: 
 		      				</div>
+                            <!---->
 		      				<label class="col-md-4" style="color: white; padding-bottom: 15px">
 		      					<select name="" 
 		      					 	type="text" 
@@ -329,7 +330,10 @@
 		      					 	style="color: #424242; border:1px solid #424242; border-radius: 7px; width: 100%; padding:5px; font-size: .6em;"> 
 									<option value="">Select SalesPerson</option>
 									<option value="Ashfaq Ahmad">Ashfaq Ahmad</option>
-									<option value="Mushahid Hussain">Mushahid Hussain</option>
+                                    <option value="Mohsin Iqbal">Mohsin Iqbal</option>
+                                    <option value="Yasir Mehfooz">Yasir Mehfooz</option>
+                                    <option value="Adnan Karim Baksh">Adnan Karim Baksh</option>
+                                    <option value="Mushahid Hussain">Mushahid Hussain</option>
 									<option value="Sultan Mahmood">Sultan Mahmood</option>
 									<option value="Mazhar Iqbal">Mazhar Iqbal</option>
 									<option value="Jalal Nasir">Jalal Nasir</option>
