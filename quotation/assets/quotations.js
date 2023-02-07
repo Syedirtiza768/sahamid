@@ -135,7 +135,7 @@ $(document).ready(function () {
 				$i = 0;
 				var line_count = 0;
 				for (var index in lines) {
-
+					console.log(lines[index]);
 					NProgress.inc();
 
 					if (!lines.hasOwnProperty(index)) {
@@ -473,7 +473,6 @@ function addlineCallback(line, requirements, option)
 	html += '<div id="l' + line + 'oc">';
 	html += '</div>';
 	html += '<div id="l' + line + 'oa" class="pull-right">';
-	console.log(optionno);
 	if(optionno.length==0){
 		html += '<button type="button" class="btn btn-primary" onclick="addoption('+ line+ ');" name="button">Add New Option</button>';
 	}

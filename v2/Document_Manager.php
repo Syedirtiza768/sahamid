@@ -132,7 +132,7 @@
                 <!-- New doc number field -->
                 <input style=" background-color:rgb(235, 235, 235); " name="number" type="text" id="number" placeholder="Doc Number*" required /><br>
                 <!-- New category field -->
-                <select id="category" name="category" class="selectpicker" multiple data-selected-text-format="count > 2" title='Choose one...' data-width=174  px>
+                <select id="category" name="category" class="selectpicker" multiple data-selected-text-format="count > 2" title='Choose one...' data-width=174px>
                 <?php
                 $result = mysqli_query($conn,"SELECT * FROM category");
                     while($row = mysqli_fetch_array($result)) {

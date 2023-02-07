@@ -108,10 +108,14 @@
 		<tr>
 			<?php 
 				if(isset($_POST['customer']) && $_POST['customer'] != ""){
-					echo '<td>Customer: '.$_POST['customer'].'</td>';
+					echo '<td>Customer: '.$_POST['customer'].'</td></tr><tr>';
+				}
+				
+				if(isset($_POST['customertype']) && $_POST['customertype'] != ""){
+					echo '<td>Customer Type: '.$_POST['customertype'].'</td></tr><tr>';
 				}
 				if(isset($_POST['salesperson'])  && $_POST['salesperson'] != ""){
-					echo '<td>Sales Person: '.$_POST['salesperson'].'</td>';
+					echo '<td>Sales Person: '.$_POST['salesperson'].'</td></tr>';
 				}
 			?>
 		</tr>
@@ -151,7 +155,7 @@ $(document).ready(function() {
 		"processing": true,
 		"sAjaxDataProp":"",
 		 "lengthMenu": [[10, 25, 50,100, -1], [10, 25, 50,100, "All"]],
-		"ajax": "brandwisesalesdirectorajax.php?start='.$_POST["startdate"].'&end='.$_POST["enddate"].'&cus='.$_POST['customer'].'&slps='.$_POST['salesperson'].'",	
+		"ajax": "brandwisesalesdirectorajax.php?start='.$_POST["startdate"].'&end='.$_POST["enddate"].'&cus='.$_POST['customer'].'&customertype='.$_POST['customertype'].'&slps='.$_POST['salesperson'].'",	
 		      "dom": \'Blfrtip\',
         "buttons": [
             \'copyHtml5\',
@@ -191,7 +195,7 @@ $(document).ready(function() {
 		"processing": true,
 		"sAjaxDataProp":"",
 		 "lengthMenu": [[10, 25, 50,100], [10, 25, 50,100]],
-		"ajax": "brandwisesalesdirectorajax.php?start='.$_POST["startdate"].'&end='.$_POST["enddate"].'&cus='.$_POST['customer'].'&slps='.$_POST['salesperson'].'",	
+		"ajax": "brandwisesalesdirectorajax.php?start='.$_POST["startdate"].'&end='.$_POST["enddate"].'&cus='.$_POST['customer'].'&customertype='.$_POST['customertype'].'&slps='.$_POST['salesperson'].'",	
 		      "dom": \'Blfrtip\',
         "buttons": [
             \'copyHtml5\',
@@ -234,7 +238,7 @@ $(document).ready(function() {
 		"processing": true,
 		"sAjaxDataProp":"",
 		 "lengthMenu": [[10, 25, 50,100, -1], [10, 25, 50,100, "All"]],
-		"ajax": "brandwisesalesdirectorajax.php?start='.$_POST["startdate"].'&end='.$_POST["enddate"].'&cus='.$_POST['customer'].'&slps='.$_POST['salesperson'].'",	
+		"ajax": "brandwisesalesdirectorajax.php?start='.$_POST["startdate"].'&end='.$_POST["enddate"].'&cus='.$_POST['customer'].'&customertype='.$_POST['customertype'].'&slps='.$_POST['salesperson'].'",	
 		    "dom": \'Bfrtip\',
         buttons: [
          

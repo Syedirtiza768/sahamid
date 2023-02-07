@@ -1248,6 +1248,12 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
 								onclick="pdfInternal(' . $panel_costing . ')"
 									>Internal</a>';
 
+						echo '<a class="btn col-md-12" 
+								style="color: white; background: #61998e; top:5px"
+								id="costNo"
+								onclick="pcContinue('. $panel_costing .')"
+									>Edit Panel Cost</a>';
+
 						// 	}else {
 
 						// 		echo '<a class="btn col-md-6" 

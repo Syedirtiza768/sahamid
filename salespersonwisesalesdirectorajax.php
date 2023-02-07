@@ -6,11 +6,30 @@
 	}
 
 	$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+	ini_set('max_execution_time', 180); //120 seconds
 
 	$start = $_GET['start'];
 	$end = $_GET['end'];
 	$salesPerson = isset($_GET['slps']) ? $_GET['slps']:"";
 	$customer = isset($_GET['cus']) ? $_GET['cus']: "";
+	$customertype = isset($_GET['customertype']) ? $_GET['customertype']: "";
+
+	$salesPerson = explode(',',$salesPerson);
+	foreach ($salesPerson as $values) {
+	$salesPersons[] = 'salescase.salesman = "'.$values.'" OR';
+	$salesman[] = 'salesman.salesmanname = "'.$values.'" OR';
+	}
+	$salesPerson = implode(' ', $salesPersons);
+	$salesman = implode(' ', $salesman);
+	$salesPerson = substr($salesPerson, 0, -2);
+	$salesman = substr($salesman, 0, -2);
+
+	$customertype = explode(',',$customertype);
+	foreach ($customertype as $values) {
+		$customertypes[] = 'debtortype.typename = "'.$values.'" OR';
+		}
+		$customertype = implode(' ', $customertypes);
+		$customertype = substr($customertype, 0, -2);
 
 	$salespersonwisesales = [];
 
@@ -24,6 +43,7 @@
 	 INNER JOIN stockmaster on stockmaster.stockid=salesorderdetails.stkcode
 	 INNER JOIN manufacturers on manufacturers.manufacturers_id=stockmaster.brand
 	 INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+	 INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
 	 WHERE salesorderdetails.lineoptionno = 0 
 	 
 	 and salesorderoptions.optionno = 0 
@@ -34,7 +54,8 @@
 	 
 	 )
 	 AND salesorders.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND salescase.salesman LIKE "%'.$salesPerson.'%"
+	 AND '.$salesPerson.'
+	 AND '.$customertype.'
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY salescase.salesman
@@ -68,12 +89,14 @@
 	 INNER JOIN stockmaster on stockmaster.stockid=ocdetails.stkcode
 	 INNER JOIN manufacturers on manufacturers.manufacturers_id=stockmaster.brand
 	 INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+	 INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
 	 WHERE ocdetails.lineoptionno = 0 
 	 
 	 and ocoptions.optionno = 0 
 	 
 	 AND ocs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND salescase.salesman LIKE "%'.$salesPerson.'%"
+	 AND '.$salesPerson.'
+	 AND '.$customertype.'
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY salescase.salesman';
@@ -105,11 +128,13 @@
 	 INNER JOIN stockmaster on stockmaster.stockid=dcdetails.stkcode
 	 INNER JOIN manufacturers on manufacturers.manufacturers_id=stockmaster.brand
 	 INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+	 INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
 	 WHERE dcdetails.lineoptionno = 0 
 	 
 	 and dcoptions.optionno = 0 
 	 AND dcs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND salescase.salesman LIKE "%'.$salesPerson.'%"
+	 AND '.$salesPerson.'
+	 AND '.$customertype.'
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY salescase.salesman';
@@ -141,13 +166,15 @@
 	 INNER JOIN stockmaster on stockmaster.stockid=invoicedetails.stkcode
 	 INNER JOIN manufacturers on manufacturers.manufacturers_id=stockmaster.brand
 	 INNER JOIN debtorsmaster on debtorsmaster.debtorno=invoice.debtorno
+	 INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
 	 INNER JOIN custbranch ON (custbranch.debtorno=invoice.debtorno AND 
 		custbranch.branchcode=invoice.branchcode)
 	 INNER JOIN salesman ON salesman.salesmancode = custbranch.salesman
 	 WHERE invoice.returned = 0
 	 AND invoice.inprogress = 0
 	 AND invoice.invoicesdate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND salesman.salesmanname LIKE "%'.$salesPerson.'%"
+	 AND '.$salesman.'
+	 AND '.$customertype.'
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 GROUP BY salesman.salesmancode';
 
