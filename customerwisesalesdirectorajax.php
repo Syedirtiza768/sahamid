@@ -53,8 +53,8 @@ $customertype = explode(',',$customertype);
    )
    AND salesorders.orddate BETWEEN "'.$start.'" AND "'.$end.'"
    
-   AND '.$salesPerson.'
-   AND '.$customertype.'
+   AND ('.$salesPerson.')
+   AND ('.$customertype.')
    AND debtorsmaster.name LIKE "%'.$customer.'%"
    
    GROUP BY debtorsmaster.name
@@ -95,8 +95,8 @@ $customertype = explode(',',$customertype);
    and ocoptions.optionno = 0 
    
    AND ocs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-   AND '.$salesPerson.'
-   AND '.$customertype.'
+   AND ('.$salesPerson.')
+   AND ('.$customertype.')
    AND debtorsmaster.name LIKE "%'.$customer.'%"
    
    GROUP BY debtorsmaster.name';
@@ -133,8 +133,8 @@ $customertype = explode(',',$customertype);
    WHERE dcdetails.lineoptionno = 0 
    AND dcoptions.optionno = 0 
    AND dcs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-   AND '.$salesPerson.'
-   AND '.$customertype.'
+   AND ('.$salesPerson.')
+   AND ('.$customertype.')
    AND debtorsmaster.name LIKE "%'.$customer.'%"
    GROUP BY debtorsmaster.name';
 
@@ -172,8 +172,8 @@ $customertype = explode(',',$customertype);
    AND dcs.invoicegroupid IS NULL
    AND dcs.grbdate = "0000-00-00 00:00:00"
    AND dcs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-   AND '.$salesPerson.'
-   AND '.$customertype.'
+   AND ('.$salesPerson.')
+   AND ('.$customertype.')
    AND debtorsmaster.name LIKE "%'.$customer.'%"
    GROUP BY debtorsmaster.name';
 
@@ -212,8 +212,8 @@ $customertype = explode(',',$customertype);
 	 WHERE invoice.returned = 0
 	 AND invoice.inprogress = 0
 	 AND invoice.invoicesdate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesman.'
-   AND '.$customertype.'
+	 AND ('.$salesman.')
+   AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 GROUP BY debtorsmaster.name';
 

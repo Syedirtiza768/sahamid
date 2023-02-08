@@ -97,7 +97,6 @@ echo '<input type="hidden" name="Lang" id="Lang" value="' . $Lang . '" />';
 				<td>Partial Customer Type</td>
 				<td>
 					<select name="customertype[]" style="width:40px" class="selectpicker" multiple data-live-search="true">
-					<option value="">Choose All</option>
 						<?php
 						$result = mysqli_query($conn, "SELECT typename FROM debtortype");
 						while ($row = mysqli_fetch_array($result)) {
@@ -114,7 +113,6 @@ echo '<input type="hidden" name="Lang" id="Lang" value="' . $Lang . '" />';
 				<td>Partial Salesperson Name</td>
 				<td>
 					<select name="salesperson[]" style="width:40px" class="selectpicker" multiple data-live-search="true">
-					<option value="">Choose All</option>
 						<?php
 						$result = mysqli_query($conn, "SELECT salesmanname FROM salesman");
 						while ($row = mysqli_fetch_array($result)) {

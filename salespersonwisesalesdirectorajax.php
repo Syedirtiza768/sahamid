@@ -54,8 +54,8 @@
 	 
 	 )
 	 AND salesorders.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesPerson.'
-	 AND '.$customertype.'
+	 AND ('.$salesPerson.')
+	 AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY salescase.salesman
@@ -95,8 +95,8 @@
 	 and ocoptions.optionno = 0 
 	 
 	 AND ocs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesPerson.'
-	 AND '.$customertype.'
+	 AND ('.$salesPerson.')
+	 AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY salescase.salesman';
@@ -133,8 +133,8 @@
 	 
 	 and dcoptions.optionno = 0 
 	 AND dcs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesPerson.'
-	 AND '.$customertype.'
+	 AND ('.$salesPerson.')
+	 AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY salescase.salesman';
@@ -173,8 +173,8 @@
 	 WHERE invoice.returned = 0
 	 AND invoice.inprogress = 0
 	 AND invoice.invoicesdate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesman.'
-	 AND '.$customertype.'
+	 AND ('.$salesman.')
+	 AND (('.$customertype.'))
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 GROUP BY salesman.salesmancode';
 

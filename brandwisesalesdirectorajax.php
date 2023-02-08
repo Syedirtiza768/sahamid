@@ -7,7 +7,7 @@
 	}
 
 	$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
-	ini_set('max_execution_time', 180); //120 seconds
+	ini_set('max_execution_time', 580); //120 seconds
 	$start = $_GET['start'];
 	$end = $_GET['end'];
 	$salesPerson = isset($_GET['slps']) ? $_GET['slps']:"";
@@ -64,8 +64,8 @@
 	 
 	 )
 	 AND salesorders.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesPerson.'
-	 AND '.$customertype.'
+	 AND ('.$salesPerson.')
+	 AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY manufacturers.manufacturers_id';
@@ -104,8 +104,8 @@
 	 and ocoptions.optionno = 0 
 	 
 	 AND ocs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesPerson.'
-	 AND '.$customertype.'
+	 AND ('.$salesPerson.')
+	 AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY manufacturers.manufacturers_id';
@@ -143,8 +143,8 @@
 	 
 	 and dcoptions.optionno = 0 
 	 AND dcs.orddate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesPerson.'
-	 AND '.$customertype.'
+	 AND ('.$salesPerson.')
+	 AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY manufacturers.manufacturers_id';
@@ -189,8 +189,8 @@
 	 WHERE invoice.returned = 0
 	 AND invoice.inprogress = 0
 	 AND invoice.invoicesdate BETWEEN "'.$start.'" AND "'.$end.'"
-	 AND '.$salesman.'
-	 AND '.$customertype.'
+	 AND ('.$salesman.')
+	 AND ('.$customertype.')
 	 AND debtorsmaster.name LIKE "%'.$customer.'%"
 	 
 	 GROUP BY manufacturers.manufacturers_id';
