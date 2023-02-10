@@ -14,23 +14,32 @@
 	$customer = isset($_GET['cus']) ? $_GET['cus']: "";
 
 	$customertype = isset($_GET['customertype']) ? $_GET['customertype']: "";
-	$customertype = explode(',',$customertype);
-	foreach ($customertype as $values) {
-		$customertypes[] = 'debtortype.typename = "'.$values.'" OR';
-		}
-		$customertype = implode(' ', $customertypes);
-		$customertype = substr($customertype, 0, -2);
 
-	$salesPerson = explode(',',$salesPerson);
+	if($customertype == "All" || $customertype == "0"){
+		$customertype = 'debtortype.typename LIKE "%%"';
+	} else {
+		$customertype = explode(',', $customertype);
+		foreach ($customertype as $values) {
+		$customertypes[] = 'debtortype.typename = "' . $values . '" OR';
+	}
+	$customertype = implode(' ', $customertypes);
+	$customertype = substr($customertype, 0, -2);
+}
+	
+	if($salesPerson == "All" || $salesPerson == "0"){
+		$salesPerson = 'salescase.salesman LIKE "%%"';
+		$salesman = 'salesman.salesmanname LIKE "%%"';
+	} else {
+		$salesPerson = explode(',',$salesPerson);
 	foreach ($salesPerson as $values) {
-	$salesPersons[] = 'salescase.salesman = "'.$values.'" OR';
-	$salesman[] = 'salesman.salesmanname = "'.$values.'" OR';
+		$salesPersons[] = 'salescase.salesman = "' . $values . '" OR';
+		$salesman[] = 'salesman.salesmanname = "' . $values . '" OR';
 	}
 	$salesPerson = implode(' ', $salesPersons);
 	$salesman = implode(' ', $salesman);
 	$salesPerson = substr($salesPerson, 0, -2);
 	$salesman = substr($salesman, 0, -2);
-	$salesPerson = "substr($salesPerson, 0, -2)";
+	}
 
 	$opportunitypipeline = [];
 
@@ -65,58 +74,58 @@
 	}
 
 	//ocvaluereports (salescaseref,value)
-	$SQL = 'SELECT ocs.salescaseref,
-	SUM(ocdetails.unitprice* (1 - ocdetails.discountpercent)*ocdetails.quantity*ocoptions.quantity
-	 ) as value from ocdetails INNER JOIN ocoptions on
-	 (ocdetails.orderno = ocoptions.orderno AND ocdetails.orderlineno = ocoptions.lineno) 
-	 INNER JOIN ocs on ocs.orderno = ocdetails.orderno
-	 INNER JOIN salescase on salescase.salescaseref=ocs.salescaseref
+	// $SQL = 'SELECT ocs.salescaseref,
+	// SUM(ocdetails.unitprice* (1 - ocdetails.discountpercent)*ocdetails.quantity*ocoptions.quantity
+	//  ) as value from ocdetails INNER JOIN ocoptions on
+	//  (ocdetails.orderno = ocoptions.orderno AND ocdetails.orderlineno = ocoptions.lineno) 
+	//  INNER JOIN ocs on ocs.orderno = ocdetails.orderno
+	//  INNER JOIN salescase on salescase.salescaseref=ocs.salescaseref
 	 
-	 INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
-	 INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
-	 WHERE ocdetails.lineoptionno = 0 
+	//  INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+	//  INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
+	//  WHERE ocdetails.lineoptionno = 0 
 	 
-	 and ocoptions.optionno = 0 
+	//  and ocoptions.optionno = 0 
 	 
 	
 	 
-	 GROUP BY ocs.salescaseref';
+	//  GROUP BY ocs.salescaseref';
 
-	$result = mysqli_query($db,$SQL);
+	// $result = mysqli_query($db,$SQL);
 
-	$ocvaluereports = [];
+	// $ocvaluereports = [];
 
-	while($row = mysqli_fetch_assoc($result)){
+	// while($row = mysqli_fetch_assoc($result)){
 
-		$ocvaluereports[$row['salescaseref']] = $row['value'];
+	// 	$ocvaluereports[$row['salescaseref']] = $row['value'];
 
-	}
+	// }
 
-	//dcvaluereports (salescaseref,value)
-	$SQL = 'SELECT dcs.salescaseref,
-	SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
-	 ) as value from dcdetails INNER JOIN dcoptions on
-	 (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno) 
-	 INNER JOIN dcs on dcs.orderno = dcdetails.orderno
-	 INNER JOIN salescase on salescase.salescaseref=dcs.salescaseref
-	 INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
-	 INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
-	 WHERE dcdetails.lineoptionno = 0 
+	// //dcvaluereports (salescaseref,value)
+	// $SQL = 'SELECT dcs.salescaseref,
+	// SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
+	//  ) as value from dcdetails INNER JOIN dcoptions on
+	//  (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno) 
+	//  INNER JOIN dcs on dcs.orderno = dcdetails.orderno
+	//  INNER JOIN salescase on salescase.salescaseref=dcs.salescaseref
+	//  INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+	//  INNER JOIN debtortype on debtortype.typeid=debtorsmaster.typeid
+	//  WHERE dcdetails.lineoptionno = 0 
 	 
-	 and dcoptions.optionno = 0 
+	//  and dcoptions.optionno = 0 
 	 
 	 
-	 GROUP BY dcs.salescaseref';
+	//  GROUP BY dcs.salescaseref';
 
-	$result = mysqli_query($db,$SQL);
+	// $result = mysqli_query($db,$SQL);
 
-	$dcvaluereports = [];
+	// $dcvaluereports = [];
 
-	while($row = mysqli_fetch_assoc($result)){
+	// while($row = mysqli_fetch_assoc($result)){
 
-		$dcvaluereports[$row['salescaseref']] = $row['value'];
+	// 	$dcvaluereports[$row['salescaseref']] = $row['value'];
 
-	}
+	// }
 
 	//Sales Case
 	$SQL = 'SELECT salescase.salescaseindex,salescase.salescaseref, salescase.salescasedescription,
@@ -136,8 +145,6 @@
 
 		if(array_key_exists($row['salescaseref'], $quotationvaluereports) && 
 			$quotationvaluereports[$row['salescaseref']] > 0){
-			if(!array_key_exists($row['salescaseref'], $ocvaluereports)){
-				if(!array_key_exists($row['salescaseref'], $dcvaluereports)){
 
 					$opportunitypipeline[] = [
 
@@ -151,10 +158,6 @@
 						'7' => utf8_encode($quotationvaluereports[$row['salescaseref']])
 
 					];
-
-				}
-
-			}
 
 		}
 

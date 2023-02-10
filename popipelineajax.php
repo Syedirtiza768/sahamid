@@ -15,22 +15,33 @@
 	$customertype = isset($_GET['customertype']) ? $_GET['customertype']: "";
 
 
-	$customertype = explode(',',$customertype);
-	foreach ($customertype as $values) {
-		$customertypes[] = 'debtortype.typename = "'.$values.'" OR';
-		}
-		$customertype = implode(' ', $customertypes);
-		$customertype = substr($customertype, 0, -2);
-
-	$salesPerson = explode(',',$salesPerson);
+	if($customertype == "All" || $customertype == "0"){
+		$customertype = 'debtortype.typename LIKE "%%"';
+	} else {
+		$customertype = explode(',', $customertype);
+		foreach ($customertype as $values) {
+		$customertypes[] = 'debtortype.typename = "' . $values . '" OR';
+	}
+	$customertype = implode(' ', $customertypes);
+	$customertype = substr($customertype, 0, -2);
+}
+	
+	if($salesPerson == "All" || $salesPerson == "0"){
+		$salesPerson = 'salescase.salesman LIKE "%%"';
+		$salesman = 'salesman.salesmanname LIKE "%%"';
+	} else {
+		$salesPerson = explode(',',$salesPerson);
 	foreach ($salesPerson as $values) {
-	$salesPersons[] = 'salescase.salesman = "'.$values.'" OR';
-	$salesman[] = 'salesman.salesmanname = "'.$values.'" OR';
+		$salesPersons[] = 'salescase.salesman = "' . $values . '" OR';
+		$salesman[] = 'salesman.salesmanname = "' . $values . '" OR';
 	}
 	$salesPerson = implode(' ', $salesPersons);
 	$salesman = implode(' ', $salesman);
-$salesPerson = substr($salesPerson, 0, -2);
-$salesman = substr($salesman, 0, -2);
+	$salesPerson = substr($salesPerson, 0, -2);
+	$salesman = substr($salesman, 0, -2);
+	}
+
+
 
 	$opportunitypipeline = [];
 
@@ -135,8 +146,6 @@ $salesman = substr($salesman, 0, -2);
 	while($row = mysqli_fetch_assoc($result)){
 
 		if(array_key_exists($row['salescaseref'], $quotationvaluereports)){
-			if(array_key_exists($row['salescaseref'], $ocvaluereports)){
-				if(array_key_exists($row['salescaseref'], $dcvaluereports)){
 
 					$oc = round($ocvaluereports[$row['salescaseref']]);
 					$dc = round($dcvaluereports[$row['salescaseref']]);
@@ -159,10 +168,6 @@ $salesman = substr($salesman, 0, -2);
 						];
 
 					}
-
-				}
-
-			}
 
 		}
 

@@ -15,22 +15,32 @@
 	$customertype = isset($_GET['customertype']) ? $_GET['customertype']: "";
 
 
-	$salesPerson = explode(',',$salesPerson);
+	if($salesPerson == "All" || $salesPerson == "0"){
+		$salesPerson = 'salescase.salesman LIKE "%%"';
+		$salesman = 'salesman.salesmanname LIKE "%%"';
+	} else {
+		$salesPerson = explode(',',$salesPerson);
 	foreach ($salesPerson as $values) {
-	$salesPersons[] = 'salescase.salesman = "'.$values.'" OR';
-	$salesman[] = 'salesman.salesmanname = "'.$values.'" OR';
+		$salesPersons[] = 'salescase.salesman = "' . $values . '" OR';
+		$salesman[] = 'salesman.salesmanname = "' . $values . '" OR';
 	}
 	$salesPerson = implode(' ', $salesPersons);
 	$salesman = implode(' ', $salesman);
 	$salesPerson = substr($salesPerson, 0, -2);
 	$salesman = substr($salesman, 0, -2);
+	}
 
-	$customertype = explode(',',$customertype);
-	foreach ($customertype as $values) {
-		$customertypes[] = 'debtortype.typename = "'.$values.'" OR';
-		}
-		$customertype = implode(' ', $customertypes);
-		$customertype = substr($customertype, 0, -2);
+
+	if($customertype == "All" || $customertype == "0"){
+		$customertype = 'debtortype.typename LIKE "%%"';
+	} else {
+		$customertype = explode(',', $customertype);
+		foreach ($customertype as $values) {
+		$customertypes[] = 'debtortype.typename = "' . $values . '" OR';
+	}
+	$customertype = implode(' ', $customertypes);
+	$customertype = substr($customertype, 0, -2);
+}
 
 	//Manufacturer Names
 	$SQL = 'SELECT * FROM manufacturers';

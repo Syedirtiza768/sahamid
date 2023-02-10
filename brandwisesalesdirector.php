@@ -111,10 +111,10 @@
 					echo '<td>Customer: '.$_POST['customer'].'</td></tr><tr>';
 				}
 				
-				if(isset($_POST['customertype']) && $_POST['customertype'] != ""){
+				if(isset($_POST['customertype']) && $_POST['customertype'] != "0"){
 					echo '<td>Customer Type: '.$_POST['customertype'].'</td></tr><tr>';
 				}
-				if(isset($_POST['salesperson'])  && $_POST['salesperson'] != ""){
+				if(isset($_POST['salesperson'])  && $_POST['customertype'] != "0"){
 					echo '<td>Sales Person: '.$_POST['salesperson'].'</td></tr>';
 				}
 			?>
