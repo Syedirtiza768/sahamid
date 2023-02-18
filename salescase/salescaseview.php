@@ -722,7 +722,7 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
 					$eIpQuotationNo = $abcdef['eorderno'];
 
 					echo '<a id="discardquotation" class="btn btn-danger col-md-6" style="margin-bottom:10px"
-									href = "' . $RootPath . '/../makequotation.php?orderno=' . $ipQuotationNo .
+									href = "' . $RootPath . '/../makequotation.php?orderno=' . $eIpQuotationNo .
 						'&discard=true&salescaseref=' . $salescase['salescaseref'] .
 						'&selectedcustomer=' . $salescase['debtorno'] .
 						'&DebtorNo=' . $salescase['debtorno'] .

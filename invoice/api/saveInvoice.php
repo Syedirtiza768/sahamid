@@ -220,7 +220,7 @@
  	$resultsqlinvoicevalue=DB_query($sqlinvoicevalue,$db);
  	$rowinvoicevalue=DB_fetch_array($resultsqlinvoicevalue);
  	$rowinvoiceval=$rowinvoicevalue['value'];
- 	$SQL="SELECT gst,services FROM invoice WHERE invoiceno='". $orderno . "'";
+ 	$SQL="SELECT gst,services,invoicesdate FROM invoice WHERE invoiceno='". $orderno . "'";
  	$result=DB_query($SQL,$db);
  	$row=DB_fetch_array($result);
 	// print_r($row);
@@ -228,34 +228,71 @@
  	$recievable  = 0;
  	$sales 		 = 0;
 
-	if($row['gst'] == ''){
+	if($row['gst'] == '' AND strtotime($row['invoicesdate']) < strtotime('2023-02-14')){
 		$recievable = $rowinvoicevalue['value'];
 		$sales = $rowinvoicevalue['value'];
 		$tax=0;
 	}
- 	if ($row['gst']=='exclusive' AND $row['services']==1) {
+	elseif($row['gst'] == '' AND strtotime($row['invoicesdate']) >= strtotime('2023-02-14')){
+		$recievable = $rowinvoicevalue['value'];
+		$sales = $rowinvoicevalue['value'];
+		$tax=0;
+	}
+
+
+ 	if ($row['gst']=='exclusive' AND $row['services']==1 AND strtotime($row['invoicesdate']) < strtotime('2023-02-14')) {
  		$rowinvoiceval  = $rowinvoicevalue['value'];
 	 	$recievable 	= $rowinvoiceval*1.16;
 	 	$sales 			= $rowinvoicevalue['value'];
 	 	$tax 			= $recievable/1.16*0.16;
  	}
-  	if ($row['gst']=='exclusive' AND $row['services']==0) {	 
+ 	elseif ($row['gst']=='exclusive' AND $row['services']==1 AND strtotime($row['invoicesdate']) >= strtotime('2023-02-14')) {
+ 		$rowinvoiceval  = $rowinvoicevalue['value'];
+	 	$recievable 	= $rowinvoiceval*1.16;
+	 	$sales 			= $rowinvoicevalue['value'];
+	 	$tax 			= $recievable/1.16*0.16;
+ 	}
+
+
+  	if ($row['gst']=='exclusive' AND $row['services']==0 AND strtotime($row['invoicesdate']) < strtotime('2023-02-14')) {	 
  		$rowinvoiceval  = $rowinvoicevalue['value'];
  		$recievable 	= $rowinvoiceval*1.17;
 	 	$sales 			= $rowinvoicevalue['value'];
 	 	$tax 			= $recievable/1.17*0.17;
  	}
- 	if ($row['gst']=='inclusive' AND $row['services']==1) {
+  	elseif ($row['gst']=='exclusive' AND $row['services']==0 AND strtotime($row['invoicesdate']) >= strtotime('2023-02-14')) {	 
+ 		$rowinvoiceval  = $rowinvoicevalue['value'];
+ 		$recievable 	= $rowinvoiceval*1.18;
+	 	$sales 			= $rowinvoicevalue['value'];
+	 	$tax 			= $recievable/1.18*0.18;
+ 	}
+
+
+ 	if ($row['gst']=='inclusive' AND $row['services']==1 AND strtotime($row['invoicesdate']) < strtotime('2023-02-14')) {
  		$rowinvoiceval  = $rowinvoicevalue['value'];
  		$recievable  	= $rowinvoicevalue['value'];
 	 	$sales  		= $rowinvoiceval/1.16;
 	 	$tax 			= $sales*0.16;
  	}
-  	if ($row['gst']=='inclusive' AND $row['services']==0) {
+ 	elseif ($row['gst']=='inclusive' AND $row['services']==1 AND strtotime($row['invoicesdate']) >= strtotime('2023-02-14')) {
+ 		$rowinvoiceval  = $rowinvoicevalue['value'];
+ 		$recievable  	= $rowinvoicevalue['value'];
+	 	$sales  		= $rowinvoiceval/1.16;
+	 	$tax 			= $sales*0.16;
+ 	}
+
+
+  	if ($row['gst']=='inclusive' AND $row['services']==0 AND strtotime($row['invoicesdate']) < strtotime('2023-02-14')) {
  		$rowinvoiceval  = $rowinvoicevalue['value'];
  		$recievable  	= $rowinvoicevalue['value'];
 	 	$sales  		= $rowinvoiceval/1.17;
 	 	$tax 			= $sales*0.17;
+ 	}
+  	if ($row['gst']=='inclusive' AND $row['services']==0 AND strtotime($row['invoicesdate']) >= strtotime('2023-02-14')) {
+ 		$rowinvoiceval  = $rowinvoicevalue['value'];
+ 		$recievable  	= $rowinvoicevalue['value'];
+	 	$sales  		= $rowinvoiceval/1.18;
+	 	$tax 			= $sales*0.18;
  	}
 //-------------------------------------------------------
 

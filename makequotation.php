@@ -20,6 +20,7 @@
 
 	if(isset($_GET['orderno']))
 		$orderno = $_GET['orderno'];
+		$ordernos = $_GET['orderno'];
 
 	include('includes/FreightCalculation.inc');
 	include('includes/SQL_CommonFunctions.inc');
@@ -344,6 +345,7 @@
 	<input type="hidden" name="quickQuotation" id="quickQuotation" value="">
 	<input type="hidden" name="FormID" id="FormID" value="<?php echo $_SESSION['FormID']; ?>">
 	<input type="hidden" name="orderno" id="orderno" value="<?php echo $orderno; ?>">
+	<input type="hidden" name="orderno" id="ordernos" value="<?php echo $ordernos; ?>">
 	<input type="hidden" name="rootpath" id="rootpath" value="<?php echo $RootPath; ?>">
 	<input type="hidden" name="salesref" id="salesref" value="<?php echo $salescaseref; ?>">
     <span id="searchoverlay" class="light overlay">
@@ -749,6 +751,10 @@
 									        <option value="inclusive">Inclusive GST</option>
 									        <option value="exclusive">Exclusive GST</option>
 									  	</select>
+
+										  <button class="btn btn-warning" id="updateQuoteGST">
+									  		Update
+									  	</button>
 									</div>
 									<div class="col-md-3">
 										Witholding Tax

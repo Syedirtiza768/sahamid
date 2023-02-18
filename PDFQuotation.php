@@ -37,6 +37,7 @@ $sql = "SELECT salesorders.customerref,
 				salesorders.after,
 				salesorders.afterdays,
 				salesorders.GSTadd,
+				salesorders.quotedate,
 				salesorders.services,
 				salesorders.rate_clause,
 				salesorders.clause_rates,
@@ -299,7 +300,49 @@ AND orderlineno = " . $line . "";
 
 
     if ($TransferRowS['printexchange'] == 0) {
-        if ($TransferRow2['GSTadd'] == 'exclusive') {
+
+        if ($TransferRow2['GSTadd'] == 'update' ) {
+            $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value']), 2) . '</td></tr>';
+            if ($TransferRow2['services'] == 1) {
+                $html2 .= '<tr><td><b>16% GST</b></td><td>
+     ' . round($rowquotevalue['value'] * 0.16) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.16), 2) . '</td></tr>';
+
+
+                }
+
+            } else {
+                $html2 .= '<tr><td><b>18% GST</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 0.18), 2) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.18), 2) . '</td></tr>';
+
+
+                }
+
+
+            }
+
+        }
+
+
+        if ($TransferRow2['GSTadd'] == 'exclusive' && strtotime($TransferRow2['quotedate']) < strtotime('2023-02-14')) {
             $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
      ' . locale_number_format(round($rowquotevalue['value']), 2) . '</td></tr>';
             if ($TransferRow2['services'] == 1) {
@@ -338,7 +381,49 @@ AND orderlineno = " . $line . "";
             }
 
         }
-        if ($TransferRow2['GSTadd'] == 'inclusive') {
+
+        elseif ($TransferRow2['GSTadd'] == 'exclusive' && strtotime($TransferRow2['quotedate']) >= strtotime('2023-02-14')) {
+            $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value']), 2) . '</td></tr>';
+            if ($TransferRow2['services'] == 1) {
+                $html2 .= '<tr><td><b>16% GST</b></td><td>
+     ' . round($rowquotevalue['value'] * 0.16) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.16), 2) . '</td></tr>';
+
+
+                }
+
+            } else {
+                $html2 .= '<tr><td><b>18% GST</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 0.18), 2) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] * 1.18), 2) . '</td></tr>';
+
+
+                }
+
+
+            }
+
+        }
+
+
+        if ($TransferRow2['GSTadd'] == 'inclusive' && strtotime($TransferRow2['quotedate']) < strtotime('2023-02-14')) {
 
 
             if ($TransferRow2['services'] == 1) {
@@ -370,6 +455,48 @@ AND orderlineno = " . $line . "";
                 } else {
 
                     $html2 .= '<tr><td><b>Grand Total inclusive of 17% GST</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value']), 2) . ' </td></tr>';
+
+
+                }
+
+
+            }
+
+
+        }
+        elseif ($TransferRow2['GSTadd'] == 'inclusive' && strtotime($TransferRow2['quotedate']) >= strtotime('2023-02-14')) {
+
+
+            if ($TransferRow2['services'] == 1) {
+
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>SUBTOTAL inclusive of 16% GST</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'], 2) . ' </td></tr>';
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total inclusive of 16% GST</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value']), 2) . ' </td></tr>';
+
+
+                }
+
+            } else {
+
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>SUBTOTAL inclusive of 16% GST</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'], 2) . ' </td></tr>';
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+     ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+     ' . locale_number_format(round($rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total inclusive of 18% GST</b></td><td>
      ' . locale_number_format(round($rowquotevalue['value']), 2) . ' </td></tr>';
 
 
@@ -620,7 +747,48 @@ AND orderlineno = " . $line . "";
 
 
     if ($TransferRowS['printexchange'] == 1) {
-        if ($TransferRow2['GSTadd'] == 'exclusive') {
+
+        if ($TransferRow2['GSTadd'] == 'update' ) {
+            $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value']), 2) . getparityrate($currency, $values, $rowquotevalue['value']) . '</td></tr>';
+            if ($TransferRow2['services'] == 1) {
+                $html2 .= '<tr><td><b>16% GST</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 0.16), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 0.16) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . (locale_number_format(round($rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2)) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 1.16), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16) . '</td></tr>';
+
+
+                }
+
+            } else {
+                $html2 .= '<tr><td><b>18% GST</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 0.18), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 0.18) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 1.17), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18) . '</td></tr>';
+
+
+                }
+
+
+            }
+
+        }
+
+        if ($TransferRow2['GSTadd'] == 'exclusive' && strtotime($TransferRow2['quotedate']) < strtotime('2023-02-14')) {
             $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
  ' . locale_number_format(round($rowquotevalue['value']), 2) . getparityrate($currency, $values, $rowquotevalue['value']) . '</td></tr>';
             if ($TransferRow2['services'] == 1) {
@@ -659,7 +827,48 @@ AND orderlineno = " . $line . "";
             }
 
         }
-        if ($TransferRow2['GSTadd'] == 'inclusive') {
+        elseif ($TransferRow2['GSTadd'] == 'exclusive' && strtotime($TransferRow2['quotedate']) >= strtotime('2023-02-14')) {
+            $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value']), 2) . getparityrate($currency, $values, $rowquotevalue['value']) . '</td></tr>';
+            if ($TransferRow2['services'] == 1) {
+                $html2 .= '<tr><td><b>16% GST</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 0.16), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 0.16) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . (locale_number_format(round($rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2)) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 1.16), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16) . '</td></tr>';
+
+
+                }
+
+            } else {
+                $html2 .= '<tr><td><b>18% GST</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 0.18), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 0.18) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] * 1.17), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18) . '</td></tr>';
+
+
+                }
+
+
+            }
+
+        }
+
+
+        if ($TransferRow2['GSTadd'] == 'inclusive' && strtotime($TransferRow2['quotedate']) < strtotime('2023-02-14')) {
 
 
             if ($TransferRow2['services'] == 1) {
@@ -701,6 +910,49 @@ AND orderlineno = " . $line . "";
 
 
         }
+        elseif ($TransferRow2['GSTadd'] == 'inclusive' && strtotime($TransferRow2['quotedate']) >= strtotime('2023-02-14')) {
+
+
+            if ($TransferRow2['services'] == 1) {
+
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>SUBTOTAL inclusive of 16% GST</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'], 2) . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . getparityrate($currency, $values, $rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total inclusive of 16% GST</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value']), 2) . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+
+
+                }
+
+            } else {
+
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>SUBTOTAL inclusive of 16% GST</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'], 2) . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . locale_number_format($rowquotevalue['value'] * $TransferRow2['WHT'] / 100, 2) . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100), 2) . getparityrate($currency, $values, $rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total inclusive of 18% GST</b></td><td>
+ ' . locale_number_format(round($rowquotevalue['value']), 2) . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+
+
+                }
+
+
+            }
+
+
+        }
+
 
         if ($TransferRow2['GSTadd'] == '') {
 
@@ -948,7 +1200,47 @@ AND orderlineno = " . $line . "";
 
 
     if ($TransferRowS['printexchange'] == 2) {
-        if ($TransferRow2['GSTadd'] == 'exclusive') {
+        if ($TransferRow2['GSTadd'] == 'update') {
+            $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value']) . '</td></tr>';
+            if ($TransferRow2['services'] == 1) {
+                $html2 .= '<tr><td><b>16% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 0.16) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16) . '</td></tr>';
+
+
+                }
+
+            } else {
+                $html2 .= '<tr><td><b>18% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 0.18) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18) . '</td></tr>';
+
+
+                }
+
+
+            }
+
+        }
+
+        if ($TransferRow2['GSTadd'] == 'exclusive' && strtotime($TransferRow2['quotedate']) < strtotime('2023-02-14')) {
             $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
  ' . getparityrate($currency, $values, $rowquotevalue['value']) . '</td></tr>';
             if ($TransferRow2['services'] == 1) {
@@ -987,7 +1279,46 @@ AND orderlineno = " . $line . "";
             }
 
         }
-        if ($TransferRow2['GSTadd'] == 'inclusive') {
+        elseif ($TransferRow2['GSTadd'] == 'exclusive' && strtotime($TransferRow2['quotedate']) >= strtotime('2023-02-14')) {
+            $html2 .= '<tr><td><b>SUBTOTAL</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value']) . '</td></tr>';
+            if ($TransferRow2['services'] == 1) {
+                $html2 .= '<tr><td><b>16% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 0.16) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.16) . '</td></tr>';
+
+
+                }
+
+            } else {
+                $html2 .= '<tr><td><b>18% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 0.18) . '</td></tr>';
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18 + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18) . '</td></tr>';
+
+
+                }
+
+
+            }
+
+        }
+        if ($TransferRow2['GSTadd'] == 'inclusive' && strtotime($TransferRow2['quotedate']) < strtotime('2023-02-14')) {
 
 
             if ($TransferRow2['services'] == 1) {
@@ -1019,6 +1350,48 @@ AND orderlineno = " . $line . "";
                 } else {
 
                     $html2 .= '<tr><td><b>Grand Total inclusive of 17% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+
+
+                }
+
+
+            }
+
+
+        }
+        elseif ($TransferRow2['GSTadd'] == 'inclusive' && strtotime($TransferRow2['quotedate']) >= strtotime('2023-02-14')) {
+
+
+            if ($TransferRow2['services'] == 1) {
+
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>SUBTOTAL inclusive of 16% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total inclusive of 16% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+
+
+                }
+
+            } else {
+
+                if ($TransferRow2['WHT'] != 0) {
+                    $html2 .= '<tr><td><b>SUBTOTAL inclusive of 16% GST</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
+                    $html2 .= '<tr><td><b>' . $TransferRow2['WHT'] . '% Witholding Tax</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                    $html2 .= '<tr><td><b>Grand Total</b></td><td>
+ ' . getparityrate($currency, $values, $rowquotevalue['value'] + $rowquotevalue['value'] * $TransferRow2['WHT'] / 100) . '</td></tr>';
+                } else {
+
+                    $html2 .= '<tr><td><b>Grand Total inclusive of 18% GST</b></td><td>
  ' . getparityrate($currency, $values, $rowquotevalue['value']) . ' </td></tr>';
 
 

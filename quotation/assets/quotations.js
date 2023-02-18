@@ -3620,6 +3620,23 @@ $("#updateQuoteRateValidityPrices").on("click", function () {
 });
 
 
+$("#updateQuoteGST").on("click", function () {
+
+	let order = $('#ordernos').val();
+	let rootpath = $('#rootpath').val();
+	let salesref = $('#salesref').val();
+	$.post(rootpath + "/quotation/api/updateQuoteGST.php",
+		{
+			orderno: order,
+			salescaseref: salesref
+		}, function (res, status, something) {
+				alert("GST Updated Successfully")
+			}
+		
+	);
+});
+
+
 
 
 

@@ -612,6 +612,10 @@
 									        <option value="inclusive">Inclusive GST</option>
 									        <option value="exclusive">Exclusive GST</option>
 									  	</select>
+
+										  <button class="btn btn-warning" id="updateDCGST">
+									  		Update
+									  	</button>
 									</div>
 									<div class="col-md-3">
 										Comments:

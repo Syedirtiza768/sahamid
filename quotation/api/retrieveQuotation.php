@@ -238,7 +238,7 @@ mysqli_query($db, $SQL);*/
 	}
 	
 	//Lines
-	$SQL = "SELECT * FROM salesorderlinesip 
+	$SQL = "SELECT * FROM salesorderlinesip
 			WHERE  salesorderlinesip.orderno ='" . $orderno . "'";
 
 	$result = mysqli_query($db, $SQL);
@@ -249,9 +249,9 @@ mysqli_query($db, $SQL);*/
 
 		$lineindex = $row['lineindex'];
 		
-		$lines[$lineindex] = $row;
+		$lines["$lineindex"] = $row;
 
-		$lines[$lineindex]['options'] = (isset($options[$lineindex])) ? $options[$lineindex] : [];
+		$lines["$lineindex"]['options'] = (isset($options[$lineindex])) ? $options[$lineindex] : [];
 
 	}
     $SQL = "SELECT SUM(

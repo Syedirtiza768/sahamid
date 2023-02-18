@@ -550,6 +550,10 @@
 											<option value="inclusive">Inclusive</option>
 											<option value="exclusive">Exclusive</option>
 										</select>
+
+										<button class="btn btn-warning" id="updateInvoiceGST">
+									  		Update
+									  	</button>
 										<!-- <input class="order-detailss gst" type="text" style="width: 300px" maxlength="150" name="gst" value=""> -->
 									</div>
 

@@ -273,7 +273,7 @@
  	$resultsqlquotevalue=DB_query($sqlquotevalue,$db);
  	$rowquotevalue=DB_fetch_array($resultsqlquotevalue);
 
- 	if($invoiceDetails['gst'] != ''){
+ 	if($invoiceDetails['gst'] != '' && strtotime($invoiceDetails['invoicesdate']) < strtotime('2023-02-14')){
  		if($invoiceDetails['services']==1){
  			$rowquotevalue['tax']=$rowquotevalue['value']*0.16;
 		}else{
@@ -282,16 +282,40 @@
  	}else{
  		$rowquotevalue['tax'] = 0;
  	}
+ 	
+	
+	if($invoiceDetails['gst'] != '' && strtotime($invoiceDetails['invoicesdate']) >= strtotime('2023-02-14')){
+ 		if($invoiceDetails['services']==1){
+ 			$rowquotevalue['tax']=$rowquotevalue['value']*0.16;
+		}else{
+	 		$rowquotevalue['tax']=$rowquotevalue['value']*0.18;
+		}	
+ 	}else{
+ 		$rowquotevalue['tax'] = 0;
+ 	}
 
- 	if ($invoiceDetails['gst'] == 'inclusive' AND ($invoiceDetails['services']==1)){
+ 	if ($invoiceDetails['gst'] == 'inclusive' AND ($invoiceDetails['services']==1) && strtotime($invoiceDetails['invoicesdate']) < strtotime('2023-02-14')){
 
 		$rowquotevalue['value']= ($rowquotevalue['value']/1.16);
 		$rowquotevalue['tax'] = ($rowquotevalue['value']*0.16);
 
-	}else if ($invoiceDetails['gst'] == 'inclusive' AND ($invoiceDetails['services']==0)){
+	}else if ($invoiceDetails['gst'] == 'inclusive' AND ($invoiceDetails['services']==0) && strtotime($invoiceDetails['invoicesdate']) < strtotime('2023-02-14')){
 
 		$rowquotevalue['value']= ($rowquotevalue['value']/1.17);
 		$rowquotevalue['tax'] = ($rowquotevalue['value']*0.17);
+
+ 	}
+ 	
+	
+	if ($invoiceDetails['gst'] == 'inclusive' AND ($invoiceDetails['services']==1) && strtotime($invoiceDetails['invoicesdate']) >= strtotime('2023-02-14')){
+
+		$rowquotevalue['value']= ($rowquotevalue['value']/1.16);
+		$rowquotevalue['tax'] = ($rowquotevalue['value']*0.16);
+
+	}else if ($invoiceDetails['gst'] == 'inclusive' AND ($invoiceDetails['services']==0) && strtotime($invoiceDetails['invoicesdate']) >= strtotime('2023-02-14')){
+
+		$rowquotevalue['value']= ($rowquotevalue['value']/1.18);
+		$rowquotevalue['tax'] = ($rowquotevalue['value']*0.18);
 
  	}
 
@@ -302,10 +326,18 @@
  						<td>'.locale_number_format(round($rowquotevalue['value']),2).'</td>
  					</tr>';
 
- 	if($invoiceDetails['gst'] != ''){
+ 	if($invoiceDetails['gst'] != '' && strtotime($invoiceDetails['invoicesdate']) < strtotime('2023-02-14')){
 
 		$html .= '<tr>
 					<td><b>GST '.(($TransferRow2['services'] == 1) ? '16%':'17%').'</b></td>
+					<td>'.locale_number_format(round($rowquotevalue['tax']),2).'</td>
+				</tr>';
+	
+	}
+ 	if($invoiceDetails['gst'] != '' && strtotime($invoiceDetails['invoicesdate']) >= strtotime('2023-02-14')){
+
+		$html .= '<tr>
+					<td><b>GST '.(($TransferRow2['services'] == 1) ? '16%':'18%').'</b></td>
 					<td>'.locale_number_format(round($rowquotevalue['tax']),2).'</td>
 				</tr>';
 	

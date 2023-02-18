@@ -190,7 +190,7 @@
 
 	}
 
-	header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$newOrderNo.'&salescaseref='.$salescaseref.'&selectedcustomer='.$so['buyername'].'&DebtorNo='.$so['debtorno'].'&BranchCode='.$so['branchcode']);  
+	header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$orderno.'&salescaseref='.$salescaseref.'&selectedcustomer='.$so['buyername'].'&DebtorNo='.$so['debtorno'].'&BranchCode='.$so['branchcode']);  
 
 	return;
 	

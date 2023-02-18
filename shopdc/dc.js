@@ -1971,3 +1971,18 @@
 		}
 	}
 
+	$("#updateDCGST").on("click", function () {
+
+		let order = $('#orderno').val();
+		let rootpath = $('#rootpath').val();
+		let salesref = $('#salesref').val();
+				$.post(rootpath + "/shopdc/api/updateDCGST.php",
+			{
+				orderno: order,
+				salescaseref: salesref
+			}, function (res, status, something) {
+					alert("GST Updated Successfully");
+			}
+		);
+	});
+
