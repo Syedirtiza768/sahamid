@@ -778,7 +778,7 @@ AND orderlineno = " . $line . "";
                 } else {
 
                     $html2 .= '<tr><td><b>Grand Total</b></td><td>
- ' . locale_number_format(round($rowquotevalue['value'] * 1.17), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18) . '</td></tr>';
+ ' . locale_number_format(round($rowquotevalue['value'] * 1.18), 2) . getparityrate($currency, $values, $rowquotevalue['value'] * 1.18) . '</td></tr>';
 
 
                 }

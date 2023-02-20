@@ -3625,6 +3625,7 @@ $("#updateQuoteGST").on("click", function () {
 	let order = $('#ordernos').val();
 	let rootpath = $('#rootpath').val();
 	let salesref = $('#salesref').val();
+	alert(order)
 	$.post(rootpath + "/quotation/api/updateQuoteGST.php",
 		{
 			orderno: order,

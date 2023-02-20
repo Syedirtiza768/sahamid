@@ -66,7 +66,7 @@
 	$so = mysqli_fetch_assoc($result);
 
 	//Check In Progress Table for existing quotation with same eorderno
-	$SQL = "SELECT orderno,buyername,debtorno,branchcode FROM salesordersip WHERE existing=1 AND eorderno='".$orderno."'";
+	$SQL = "SELECT orderno,buyername,debtorno,branchcode,eorderno FROM salesordersip WHERE existing=1 AND eorderno='".$orderno."'";
 
 	$result = mysqli_query($db, $SQL);
 
@@ -74,14 +74,14 @@
 
 		$row = mysqli_fetch_assoc($result);
 
-		header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$row['orderno'].'&salescaseref='.$salescaseref.'&selectedcustomer='.$row['buyername'].'&DebtorNo='.$row['debtorno'].'&BranchCode='.$row['branchcode']);    
+		header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$row['orderno'].'&salescaseref='.$salescaseref.'&selectedcustomer='.$row['buyername'].'&DebtorNo='.$row['debtorno'].'&BranchCode='.$row['branchcode'].'&ordernos='.$orderno);    
 
 		return;
 
 	}
 
 	//Check InProgress
-	$SQL = "SELECT orderno,buyername,debtorno,branchcode FROM salesordersip WHERE salescaseref='".$salescaseref."'";
+	$SQL = "SELECT orderno,buyername,debtorno,branchcode,orderno FROM salesordersip WHERE salescaseref='".$salescaseref."'";
 
 	$result = mysqli_query($db, $SQL);
 
@@ -89,7 +89,7 @@
 
 		$row = mysqli_fetch_assoc($result);
 
-		header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$row['orderno'].'&salescaseref='.$salescaseref.'&selectedcustomer='.$row['buyername'].'&DebtorNo='.$row['debtorno'].'&BranchCode='.$row['branchcode']);    
+		header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$row['orderno'].'&salescaseref='.$salescaseref.'&selectedcustomer='.$row['buyername'].'&DebtorNo='.$row['debtorno'].'&BranchCode='.$row['branchcode'].'&ordernos='.$orderno);    
 
 		return;
 	}
@@ -190,7 +190,7 @@
 
 	}
 
-	header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$orderno.'&salescaseref='.$salescaseref.'&selectedcustomer='.$so['buyername'].'&DebtorNo='.$so['debtorno'].'&BranchCode='.$so['branchcode']);  
+	header('Location: '.$_GET['rootpath'].'/makequotation.php?orderno='.$orderno.'&salescaseref='.$salescaseref.'&selectedcustomer='.$so['buyername'].'&DebtorNo='.$so['debtorno'].'&BranchCode='.$so['branchcode'].'&ordernos='.$orderno);  
 
 	return;
 	

@@ -20,7 +20,7 @@
 
 	if(isset($_GET['orderno']))
 		$orderno = $_GET['orderno'];
-		$ordernos = $_GET['orderno'];
+		$ordernos = $_GET['ordernos'];
 
 	include('includes/FreightCalculation.inc');
 	include('includes/SQL_CommonFunctions.inc');
