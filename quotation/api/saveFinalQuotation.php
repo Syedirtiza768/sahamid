@@ -36,6 +36,7 @@
 
 	$salescaseref = $_POST['salescaseref'];
 	$orderno = $_POST['orderno'];
+	$GSTorder = $_POST['GSTorder'];
 	
 	if(isInValidSalesCase($salescaseref, $orderno)){
 
@@ -395,6 +396,21 @@ mysqli_query($db, $SQL);*/
 	}
 
 	$salescaseref = $details['salescaseref'];
+
+
+
+	$SQL = "SELECT GSTadd FROM salesorders 
+			WHERE  salesorders.orderno ='" . $GSTorder . "'";
+
+	$result = mysqli_query($db, $SQL);
+
+	while($row = mysqli_fetch_assoc($result)){
+	$GST = $row['GSTadd'];
+	}
+
+	if($GST == 'update'){
+		$details['GSTadd'] = 'update';
+	}
 
 	$SQL = "UPDATE `salesorders` SET 
 			`debtorno`='".str_replace("'","\'",$details['debtorno'])."',

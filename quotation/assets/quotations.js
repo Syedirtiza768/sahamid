@@ -2916,6 +2916,7 @@ $("#checkforwarnings").click(function (e) {
 	ref.prop("disabled", true);
 
 	var order = $('#orderno').val();
+	let orderno = $('#ordernos').val();
 	var rootpath = $('#rootpath').val();
 	var salesref = $('#salesref').val();
 
@@ -2929,11 +2930,11 @@ $("#checkforwarnings").click(function (e) {
 			$("#warningscontainer").html("");
 			if (r.status == "bypass") {
 
-				savequotation(ref, rootpath, salesref, order, r.formid);
+				savequotation(ref, rootpath, salesref, order, orderno, r.formid);
 
 			} else if (r.elines == 0 && r.eoptions == 0 && r.itemsuo == 0 && r.items == 0 && r.options == 0 && r.lines != 0 && r.itemswq > 0) {
 
-				savequotation(ref, rootpath, salesref, order, r.formid);
+				savequotation(ref, rootpath, salesref, order, orderno, r.formid);
 
 			} else {
 
@@ -3044,14 +3045,13 @@ $("#checkforwarnings").click(function (e) {
 
 });
 
-function savequotation(ref, rootpath, salesref, orderno, formid) {
-
+function savequotation(ref, rootpath, salesref, orderno, order, formid) {
 
 
 	$.ajax({
 		type: 'POST',
 		url: rootpath + "/quotation/api/saveFinalQuotation.php",
-		data: { salescaseref: salesref, orderno: orderno, FormID: formid },
+		data: { salescaseref: salesref, orderno: orderno, GSTorder: order, FormID: formid },
 		dataType: "json",
 		success: function (r) {
 
@@ -3625,7 +3625,6 @@ $("#updateQuoteGST").on("click", function () {
 	let order = $('#ordernos').val();
 	let rootpath = $('#rootpath').val();
 	let salesref = $('#salesref').val();
-	alert(order)
 	$.post(rootpath + "/quotation/api/updateQuoteGST.php",
 		{
 			orderno: order,

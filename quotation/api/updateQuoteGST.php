@@ -33,6 +33,11 @@
 	$salescaseref = $_POST['orderno'];
 	$orderno = 'update';
 
+	$SQL = "UPDATE salesordersip 
+			SET GSTadd = '$orderno'
+			WHERE orderno = '$salescaseref'";
+	mysqli_query($db, $SQL);
+
 	$SQL = "UPDATE salesorders 
 			SET GSTadd = '$orderno'
 			WHERE orderno = '$salescaseref'";

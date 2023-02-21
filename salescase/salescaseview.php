@@ -736,7 +736,7 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
 						'&selectedcustomer=' . $salescase['debtorno'] .
 						'&DebtorNo=' . $salescase['debtorno'] .
 						'&BranchCode=' . $salescase['branchcode'] .
-						'&ordernos='.$ipQuotationNo.
+						'&ordernos='.$eIpQuotationNo.
 						'">Continue Quotation InProgress (' . ($eIpQuotationNo ?: "New/Revision") . ')</a>';
 				}
 
