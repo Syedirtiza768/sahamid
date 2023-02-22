@@ -32,6 +32,7 @@ $SQL = "SELECT dcs.customerref,
 				dcs.afterdays,
 				dcs.services,
 				dcs.GSTAdd,
+				dcs.quotedate,
 				debtorsmaster.name,
 				debtorsmaster.currcode,
 				debtorsmaster.address1,
@@ -285,7 +286,7 @@ if(!isset($_GET['withoutPrice'])){
 							<td>'.locale_number_format(round($total),2).'</td>
 						</tr>';
 
-        if($exclusive){
+        if($dc['GSTAdd'] == 'exclusive' && strtotime($dc['quotedate']) < strtotime('2023-02-14')){
             if($services) {
                 $html .= '<tr>
 								<td><b>16% GST</b></td>
@@ -305,6 +306,57 @@ if(!isset($_GET['withoutPrice'])){
 							<tr>
 								<td><b>Grand Total</b></td>
 								<td>' . (locale_number_format(round(($total * 1.17)), 2)) . '</td>
+							</tr>';
+            }
+
+
+        }
+		elseif($dc['GSTAdd'] == 'exclusive' && strtotime($dc['quotedate']) >= strtotime('2023-02-14')){
+            if($services) {
+                $html .= '<tr>
+								<td><b>16% GST</b></td>
+								<td>' . locale_number_format($total * 0.16, 2) . '</td>
+							</tr>
+							<tr>
+								<td><b>Grand Total</b></td>
+								<td>' . (locale_number_format(round(($total * 1.16)), 2)) . '</td>
+							</tr>';
+            }
+            else
+            {
+                $html .= '<tr>
+								<td><b>18% GST</b></td>
+								<td>' . locale_number_format($total * 0.18, 2) . '</td>
+							</tr>
+							<tr>
+								<td><b>Grand Total</b></td>
+								<td>' . (locale_number_format(round(($total * 1.18)), 2)) . '</td>
+							</tr>';
+            }
+
+
+        }
+
+		elseif($dc['GSTAdd'] == 'update'){
+            if($services) {
+                $html .= '<tr>
+								<td><b>16% GST</b></td>
+								<td>' . locale_number_format($total * 0.16, 2) . '</td>
+							</tr>
+							<tr>
+								<td><b>Grand Total</b></td>
+								<td>' . (locale_number_format(round(($total * 1.16)), 2)) . '</td>
+							</tr>';
+            }
+            else
+            {
+                $html .= '<tr>
+								<td><b>18% GST</b></td>
+								<td>' . locale_number_format($total * 0.18, 2) . '</td>
+							</tr>
+							<tr>
+								<td><b>Grand Total</b></td>
+								<td>' . (locale_number_format(round(($total * 1.18)), 2)) . '</td>
 							</tr>';
             }
 
