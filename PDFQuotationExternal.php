@@ -519,8 +519,10 @@ AND orderlineno = " . $i . "";
 
 
     $htmlpayment .= '<b>Terms and Conditions: </b><br>Stock availability is subject to prior sales.<br>Company reserves the right to apply force majeur clause without any repercussion to the relationship between the customer and itself.<br>';
-
-    $htmlpayment .= getPriceChangeStatement($TransferRow2['rate_clause'], $TransferRow2['clause_rates'], $TransferRow2['rate_validity'], $TransferRow2['GSTadd'],$TransferRow2['freightclause'],$TransferRow2['validity']);
+    if($TransferRow2['GSTadd'] == 'update'){
+        $GSTadd = 'exclusive';
+    }
+    $htmlpayment .= getPriceChangeStatement($TransferRow2['rate_clause'], $TransferRow2['clause_rates'], $TransferRow2['rate_validity'], $GSTadd,$TransferRow2['freightclause'],$TransferRow2['validity']);
 
 
 
@@ -999,7 +1001,10 @@ AND orderlineno = " . $i . "";
     $htmlpayment .= '<b>Terms and Conditions: </b><br>
 Stock availability is subject to prior sales.<br>Company reserves the right to apply force majeur clause without any repercussion to the relationship between the customer and itself.<br>';
 
-    $htmlpayment .= getPriceChangeStatement($TransferRow2['rate_clause'], $TransferRow2['clause_rates'], $TransferRow2['rate_validity'], $TransferRow2['GSTadd'],$TransferRow2['freightclause'],$TransferRow2['validity']);
+if($TransferRow2['GSTadd'] == 'update'){
+    $GSTadd = 'exclusive';
+}
+    $htmlpayment .= getPriceChangeStatement($TransferRow2['rate_clause'], $TransferRow2['clause_rates'], $TransferRow2['rate_validity'], $GSTadd,$TransferRow2['freightclause'],$TransferRow2['validity']);
 
 
 
@@ -1475,7 +1480,10 @@ AND orderlineno = " . $i . "";
     $htmlpayment .= '<b>Terms and Conditions: </b><br>
 Stock availability is subject to prior sales<br>Company reserves the right to apply force majeur clause without any repercussion to the relationship between the customer and itself.<br>';
 
-    $htmlpayment .= getPriceChangeStatement($TransferRow2['rate_clause'], $TransferRow2['clause_rates'], $TransferRow2['rate_validity'], $TransferRow2['GSTadd'],$TransferRow2['freightclause'],$TransferRow2['validity']);
+if($TransferRow2['GSTadd'] == 'update'){
+    $GSTadd = 'exclusive';
+}
+    $htmlpayment .= getPriceChangeStatement($TransferRow2['rate_clause'], $TransferRow2['clause_rates'], $TransferRow2['rate_validity'], $GSTadd,$TransferRow2['freightclause'],$TransferRow2['validity']);
 
 
 
