@@ -610,16 +610,16 @@ if ($_POST['document'] == 'IGP')
 	$Result = DB_query($sql, $db, $ErrMsg, $DbgMsg);
 	echo '<br />
 	
-         <table cellpadding="5" cellspacing="4" class="selection">';
+         <table cellpadding="6" cellspacing="5" class="selection">';
 
 	$TableHeader = '<tr>
     					<th>' . _('Document ID') . '</th>
 						<th>' . _('Location') . '</th>
 						<th>' . _('Date') . '</th>
 						<th>' . _('Store Manager') . '</th>
-						<th>' . _('Received From') . '</th>';
-						
-					echo'</tr>';
+						<th>' . _('Received From') . '</th>
+						<th>' . _('Image') . '</th>
+					</tr>';
 	echo $TableHeader;
 	$j = 1;
 	$k=0; //row colour counter
@@ -637,43 +637,131 @@ if ($_POST['document'] == 'IGP')
 					echo '<tr class="EvenTableRows">';
 					$k=1;
 				}
+				echo'
+				<style>.wrapper { display: flex; justify-content: center;}    
+				.content { position: relative; width: max-content}
+				.content img { display: block; filter: blur(4px); width: 70px; hight:70px}
+				.content .fa-trash { position: absolute; color:rgb(52, 167, 232); font-size: 1.75em; cursor:pointer; size:50%; bottom:25px; right:10px; }
+				.content .fa-eye { position: absolute; color:rgb(52, 167, 232); font-size: 1.75em; cursor:pointer; bottom:25px; left:10px; }
+				</style>
+				
+				<link href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" rel="stylesheet"/>';
 			echo '<td><a href = "PDFIGP.php?RequestNo=' .$myrow['dispatchid']. '">
 			'.$myrow['dispatchid'].'</a>
 			</td>
 						<td>' .$myrow['locationname'] . '</td>
 						<td>' .$myrow['despatchdate']. '</td>
 						<td>' .$myrow['storemanager']. '</td>
-						<td>' .$myrow['receivedfrom']. '</td>
-    					<td>'; 
-	
+						<td>' .$myrow['receivedfrom']. '</td>';
+						$sql = "SELECT * from reprintdocimage where dispatchid = ".$myrow['dispatchid']."";
+						$Result1 = DB_query($sql, $db);
+						echo '<td><form method="post" action="" enctype="multipart/form-data" id="myform">
+							<input type="hidden" id="'.$myrow['dispatchid'].'" value="'.$myrow['dispatchid'].'" />
+							<input type="file" id="file'.$myrow['dispatchid'].'" name="file" /></br>
+							<input type="button" class="button" value="Upload" id="but_upload'.$myrow['dispatchid'].'">
+						</form>';
+						while ($myrow1=DB_fetch_array($Result1)) {
+						
+						
+						if($myrow1['filenames'] != ""){
+							$Name= "'".$myrow1['filenames']."'";
+							$id= $myrow['dispatchid'];
+							echo '<div class="wrapper">
+								<div class="content">
+									<img src="reprintDocuments/images/'.$myrow1['filenames'].'" >
+									<a onclick="remove('.$id.','.$Name.')"><i class="fas fa-trash"></i></a>
+									<a href="reprintDocuments/images/'.$myrow1['filenames'].'" target="_blank""><i class="fas fa-eye"></i></a> <br>
+								</div>
+							</div>';
+							
+						}
 
+						
+						}
+											
+					echo '</td></tr>';
+		
+					echo'<script>
+					function remove(id, name) {
+						if(confirm("Are you sure you want to delete?")){
+							var id = id;
+							var image = name;
+							var fd = new FormData();
+							fd.append("image",name);
+							fd.append("id",id);
+							$.ajax({
+								url: "reprintDocuments/deleteDocfileupload.php",
+								type: "post",
+								data: fd,
+								contentType: false,
+								processData: false,
+								success: function(response){
+								   if(response != 0){
+									  alert("Your file deleted successfuly.");
+									  window.location.reload();
+								   }else{
+									  alert("file not deleted");
+								   }
+								},
+							 });
+						}
+						
+					  }
 
-						
-						
-						
-						
-						
-						
-						
-						echo '</td>
-					</tr>';
+					
+					</script>';
+		
+					echo '<script>
+					
+						$("#but_upload'.$myrow['dispatchid'].'").click(function(){
+							var fd = new FormData();
+							var files = $("#file'.$myrow['dispatchid'].'")[0].files;
+							var filename = files[0].name;
+							var dispatchid = $("#'.$myrow['dispatchid'].'").val();
+							// Check file selected or not
+							if(files.length > 0 ){
+							   fd.append("file",files[0]);
+							   fd.append("dispatchid",dispatchid);
+							   $.ajax({
+								  url: "reprintDocuments/reprintDocfileupload.php",
+								  type: "post",
+								  data: fd,
+								  contentType: false,
+								  processData: false,
+								  success: function(response){
+									 if(response != 0){
+										alert("Your file updated successfuly.");
+										$("#image_from_url").attr("src", $("#image_url").val());
+										$("#imgs'.$myrow['dispatchid'].'").attr("src","reprintDocuments/images/"+filename); 
+										window.location.reload();
+									 }else{
+										alert("file not uploaded");
+									 }
+								  },
+							   });
+							}else{
+							   alert("Please select a file.");
+							}
+						});
+					</script>';
 		
 		
 		
 }	
 
+
 }
 if ($_POST['document'] == 'OGP')
 {
 		
-		$sql = "SELECT posdispatch.dispatchid,
-		posdispatch.loccode,
-		locations.locationname,
-		posdispatch.despatchdate,
-		posdispatch.storemanager,
-		posdispatch.deliveredto
-		from posdispatch inner join locations on posdispatch.loccode 
-		= locations.loccode
+			$sql = "SELECT posdispatch.dispatchid,
+			posdispatch.loccode,
+			locations.locationname,
+			posdispatch.despatchdate,
+			posdispatch.storemanager,
+			posdispatch.deliveredto
+			from posdispatch inner join locations on posdispatch.loccode 
+			= locations.loccode
 		where
 		posdispatch.loccode like '%".$_SESSION['StockLocation']."%'
 		and(
@@ -690,8 +778,12 @@ if ($_POST['document'] == 'OGP')
 	$ErrMsg =  _('The stock held at each location cannot be retrieved because');
 	$DbgMsg = _('The SQL that failed was');
 		$Result = DB_query($sql, $db, $ErrMsg, $DbgMsg);
+
+	
+
+
 	echo '<br />
-         <table cellpadding="5" cellspacing="4" class="selection">';
+         <table cellpadding="6" cellspacing="5" class="selection">';
 
 	$TableHeader = '<tr>
     					<th>' . _('Document ID') . '</th>
@@ -699,17 +791,22 @@ if ($_POST['document'] == 'OGP')
 						<th>' . _('Date') . '</th>
 						<th>' . _('Store Manager') . '</th>
 						<th>' . _('Delivered To') . '</th>
+						<th>' . _('Image') . '</th>
     					
 					</tr>';
 	echo $TableHeader;
 	$j = 1;
 	$k=0; //row colour counter
 
+
+	
+
 	while ($myrow=DB_fetch_array($Result)) {
 
 		$StockID = $myrow['stockid'];
 
 		$linesql = "";
+
 //	$DemandResult = DB_query($linesql,$db,$ErrMsg);
 		if ($k==1){
 					echo '<tr class="OddTableRows">';
@@ -718,20 +815,118 @@ if ($_POST['document'] == 'OGP')
 					echo '<tr class="EvenTableRows">';
 					$k=1;
 				}
+				echo'
+				<style>.wrapper { display: flex; justify-content: center;}    
+				.content { position: relative; width: max-content}
+				.content img { display: block; filter: blur(4px); width: 70px; hight:70px}
+				.content .fa-trash::before{background:transparent;}
+				.content .fa-trash { position: absolute; color:rgb(52, 167, 232); font-size: 1.75em; cursor:pointer; bottom:25px; right:10px; }
+				.content .fa-eye { position: absolute; color:rgb(52, 167, 232); font-size: 1.75em; cursor:pointer; bottom:25px; left:10px; }
+				</style>
+				
+				<link href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" rel="stylesheet"/>';
 			echo '<td><a href = "PDFOGP.php?RequestNo=' .$myrow['dispatchid']. '">
 			'.$myrow['dispatchid'].'</a>
 			</td>
 						<td>' .$myrow['locationname'] . '</td>
 						<td>' .$myrow['despatchdate']. '</td>
 						<td>' .$myrow['storemanager']. '</td>
-						<td>' .$myrow['deliveredto']. '</td>
-    					
-					</tr>';
+						<td>' .$myrow['deliveredto']. '</td>';
+						$sql = "SELECT * from reprintdocimage where dispatchid = ".$myrow['dispatchid']."";
+						$Result1 = DB_query($sql, $db);
+						echo '<td><form method="post" action="" enctype="multipart/form-data" id="myform">
+							<input type="hidden" id="'.$myrow['dispatchid'].'" value="'.$myrow['dispatchid'].'" />
+							<input type="file" id="file'.$myrow['dispatchid'].'" name="file" /></br>
+							<input type="button" class="button" value="Upload" id="but_upload'.$myrow['dispatchid'].'">
+						</form>';
+						while ($myrow1=DB_fetch_array($Result1)) {
+						
+						
+						if($myrow1['filenames'] != ""){
+							$Name= "'".$myrow1['filenames']."'";
+							$id= $myrow['dispatchid'];
+							echo '<div class="wrapper">
+								<div class="content">
+									<img src="reprintDocuments/images/'.$myrow1['filenames'].'" >
+									<a onclick="remove('.$id.','.$Name.')"><i class="fas fa-trash"></i></a>
+									<a href="reprintDocuments/images/'.$myrow1['filenames'].'" target="_blank""><i class="fas fa-eye"></i></a> <br>
+								</div>
+							</div>';
+							
+						}
+
+						
+						}
+											
+					echo '</td></tr>';
 		
+					echo'<script>
+					function remove(id, name) {
+						if(confirm("Are you sure you want to delete?")){
+							var id = id;
+							var image = name;
+							var fd = new FormData();
+							fd.append("image",name);
+							fd.append("id",id);
+							$.ajax({
+								url: "reprintDocuments/deleteDocfileupload.php",
+								type: "post",
+								data: fd,
+								contentType: false,
+								processData: false,
+								success: function(response){
+								   if(response != 0){
+									  alert("Your file deleted successfuly.");
+									  window.location.reload();
+								   }else{
+									  alert("file not deleted");
+								   }
+								},
+							 });
+						}
+						
+					  }
+
+					
+					</script>';
 		
-		
+					echo '<script>
+					
+						$("#but_upload'.$myrow['dispatchid'].'").click(function(){
+							var fd = new FormData();
+							var files = $("#file'.$myrow['dispatchid'].'")[0].files;
+							var filename = files[0].name;
+							var dispatchid = $("#'.$myrow['dispatchid'].'").val();
+							// Check file selected or not
+							if(files.length > 0 ){
+							   fd.append("file",files[0]);
+							   fd.append("dispatchid",dispatchid);
+							   $.ajax({
+								  url: "reprintDocuments/reprintDocfileupload.php",
+								  type: "post",
+								  data: fd,
+								  contentType: false,
+								  processData: false,
+								  success: function(response){
+									 if(response != 0){
+										alert("Your file updated successfuly.");
+										$("#image_from_url").attr("src", $("#image_url").val());
+										$("#imgs'.$myrow['dispatchid'].'").attr("src","reprintDocuments/images/"+filename); 
+										window.location.reload();
+									 }else{
+										alert("file not uploaded");
+									 }
+								  },
+							   });
+							}else{
+							   alert("Please select a file.");
+							}
+						});
+					</script>';
 }	
+// <td>' .$myrow['filename']. '</td>
 }
+
 if ($_POST['document'] == 'DC')
 {
 		
