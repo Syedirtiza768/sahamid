@@ -3637,6 +3637,23 @@ $("#updateQuoteGST").on("click", function () {
 });
 
 
+$('.GSTadd').on('change', function() {
+    var value= $(this).find(":selected").val();
+	let order = $('#ordernos').val();
+	let rootpath = $('#rootpath').val();
+	let salesref = $('#salesref').val();
+	$.post(rootpath + "/quotation/api/QuoteGSTValChange.php",
+		{
+			orderno: order,
+			salescaseref: salesref,
+			value: value
+		}, function (res, status, something) {
+			}
+		
+	);
+});
+
+
 
 
 
