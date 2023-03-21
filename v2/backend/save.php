@@ -13,6 +13,7 @@
         $pdfFileName = $_FILES['pdf_file']['name'];
         $wordFileName = $_FILES['word_file']['name'];
         $excelFileName = $_FILES['excel_file']['name'];
+        $pptFileName = $_FILES['ppt_file']['name'];
 
         $pdfLocation = "../upload/pdf/$pdfFileName";
         move_uploaded_file($_FILES['pdf_file']['tmp_name'], $pdfLocation);
@@ -22,6 +23,9 @@
 
         $excelLocation = "../upload/excel/$excelFileName";
         move_uploaded_file($_FILES['excel_file']['tmp_name'], $excelLocation);
+        
+        $pptLocation = "../upload/ppt/$pptFileName";
+        move_uploaded_file($_FILES['excel_file']['tmp_name'], $pptLocation);
 
 
         //query to delete pdf data from database by id
@@ -64,6 +68,19 @@
             $query = "UPDATE doc SET del_excel='$pre_excel' WHERE id=".$_POST['id']."";
             mysqli_query($conn, $query);
         }
+        
+        
+        //query to save deleted ppt file into database
+        $pre_recd= $row['del_ppt'];
+        $pre_ppt= $row['ppt'];
+        if(!empty($pre_recd)){
+            $query = "UPDATE doc SET del_ppt='$pre_recd,$pre_ppt' WHERE id=".$_POST['id']."";
+            mysqli_query($conn, $query);
+        }
+        else{
+            $query = "UPDATE doc SET del_ppt='$pre_ppt' WHERE id=".$_POST['id']."";
+            mysqli_query($conn, $query);
+        }
 
 
 		$sql = "UPDATE `doc` SET `d_name`='$name',
@@ -73,7 +90,8 @@
         `d_revision`='$revision',
         `pdf`='$pdfFileName',
         `word`='$wordFileName',
-        `excel`='$excelFileName' WHERE id=$id"; 
+        `excel`='$excelFileName' 
+        `ppt`='$pptFileName' WHERE id=$id"; 
 		if (mysqli_query($conn, $sql)) {
 			echo json_encode(array("statusCode"=>200));
 		} 

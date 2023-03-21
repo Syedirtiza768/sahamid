@@ -150,11 +150,13 @@
                 <input style=" background-color:rgb(235, 235, 235); " max="<?php echo date("Y-m-d"); ?>" name="date" type="date" id="date" placeholder="Document Date" required /><br>
                 <!-- <textarea id="s_desc" name="s_desc" placeholder="Short Description" maxlength="300"></textarea><br> -->
                 <label for="pdf">PDF*:</label>
-                <input name="pdf" type="file" id="pdf" accept="application/pdf" required/>
+                <input name="pdf" type="file" id="pdf" accept="application/pdf" />
                 <label for="word">Word*:</label>
-                <input name="word" type="file" id="word" accept="application/msword" required/>
+                <input name="word" type="file" id="word" accept="application/msword" />
                 <label for=" excel ">Excel*:</label>
-                <input name="excel" type="file" id="excel" accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required/><br>
+                <input name="excel" type="file" id="excel" accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <label for=" powerpoint ">PowerPoint*:</label>
+                <input name="ppt" type="file" id="ppt"  accept=".ppt, .pptx"/><br>
                 <input id="btn-Upload" style="width: 203px;
                 height: 26px;
                 border-radius: 40px;
@@ -167,7 +169,7 @@
         <br>
 
         <main>
-            <div  class="display nowrap" style="width:100%" id="table">
+            <div id="table">
             
             </div>
         </main>
@@ -207,15 +209,18 @@
 					 
                      
                         <label for="pdf">PDF*:</label>
-                        <input name="pdf_file" type="file" id="pdf_file"  class="form-control" accept="application/pdf" required/>
+                        <input name="pdf_file" type="file" id="pdf_file"  class="form-control" accept="application/pdf"/>
                      
                      
                         <label for="word">Word*:</label>
-                        <input name="word_file" type="file" id="word_file"  class="form-control" accept="application/msword" required/>
+                        <input name="word_file" type="file" id="word_file"  class="form-control" accept="application/msword"/>
                      
                      
                         <label for=" excel ">Excel*:</label>
-                        <input name="excel_file" type="file" id="excel_file" class="form-control" accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required/><br>				
+                        <input name="excel_file" type="file" id="excel_file" class="form-control" accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>				
+                        
+                        <label for=" excel ">PowerPoint*:</label>
+                        <input name="ppt_file" type="file" id="ppt_file" class="form-control" accept=".ppt, .pptx"/><br>				
  
 					<input type="button" class="btn btn-default" data-dismiss="modal" value="Cancel"></input>
 					<button type="submit" value="upload" class="btn btn-info" id="update">Update</button>
@@ -262,15 +267,10 @@ $(document).ready(function() {
             var d_number = $('#d_number').val();
             var d_date = $('#d_date').val();
             var d_revision = $('#d_revision').val();
-            var pdf_file = $("#pdf_file").prop('files')[0] ;
-            var word_file = $("#word_file").prop('files')[0] ;
-            var excel_file = $("#excel_file").prop('files')[0] ;
-            if(pdf_file == undefined||word_file == undefined||excel_file == undefined){
-                alert("Please select all files as well");
-                
-            }
-            
-            else{
+            var pdf_file = $("#pdf_file").prop('files')[0];
+            var word_file = $("#word_file").prop('files')[0];
+            var excel_file = $("#excel_file").prop('files')[0];
+            var ppt_file = $("#ppt_file").prop('files')[0];
             var form_data = new FormData(); 
             form_data.append('id', $('#id').val());
             form_data.append('d_number', $('#d_number').val());
@@ -279,6 +279,7 @@ $(document).ready(function() {
             form_data.append('pdf_file', pdf_file);
             form_data.append('word_file', word_file);
             form_data.append('excel_file', excel_file);
+            form_data.append('ppt_file', ppt_file);
     $.ajax({
         data: form_data,
         type: "post",
@@ -293,7 +294,7 @@ $(document).ready(function() {
             location.reload();
         }
     });
-}
+
 }
 else{
     location.reload();
@@ -316,6 +317,10 @@ else{
     <script>
         $("#file_upload").submit(function(e) {
             e.preventDefault();
+            var pdfSize = 0;
+            var wordSize = 0;
+            var excelSize = 0;
+            var pptSize = 0;
             var formData = new FormData(this);
             $('#name').val('');
             var my_cat = $('#category').val();
@@ -323,9 +328,23 @@ else{
             $('#revision').val('');
             formData.append('my_cat',my_cat); 
             maxFileSize = 25 * 1024 * 1024;
-            if ($("#pdf")[0].files[0].size > maxFileSize || $("#word")[0].files[0].size > maxFileSize || $("#excel")[0].files[0].size > maxFileSize) {
+            if($("#pdf")[0].files[0] != undefined){
+                pdfSize= $("#pdf")[0].files[0].size;
+            }
+            if($("#word")[0].files[0] != undefined){
+                wordSize = $("#word")[0].files[0].size;
+            }
+            if($("#excel")[0].files[0] != undefined){
+                excelSize=$("#excel")[0].files[0].size;
+            }
+            if($("#ppt")[0].files[0] != undefined){
+                pptSize = $("#ppt")[0].files[0].size;
+            }
+            
+            if (pdfSize > maxFileSize || wordSize > maxFileSize || excelSize > maxFileSize || pptSize > maxFileSize) {
                 alert('Sorry! You can only upload file less then 25MB');
             } else {
+                
                 $.ajax({
                     url: 'backend/upload_data.php',
                     type: 'post',
@@ -350,7 +369,7 @@ else{
 
         function load_data() {
             $.ajax({
-                url: 'show.php',
+                url: 'show_data.php',
                 method: "GET",
                 success: function(res, status) {
                     if (status == "success") {
@@ -384,7 +403,7 @@ else{
     <!-- Auto load table when refresh -->
     <script>
         $.ajax({
-            url: 'show.php',
+            url: 'show_data.php',
             method: "GET",
             success: function(res, status) {
                 if (status == "success") {
@@ -398,7 +417,7 @@ else{
         
         function load_data() {
             $.ajax({
-                url: 'show.php',
+                url: 'show_data.php',
                 method: "GET",
                 success: function(res, status) {
                     if (status == "success") {

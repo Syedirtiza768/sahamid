@@ -71,42 +71,42 @@ $result = $conn->query($query);
 $pdf__file_path = "./upload/pdf/";
 $excel__file_path = "./upload/excel/";
 $word__file_path = "./upload/word/";
+$ppt__file_path = "./upload/ppt/";
 
 
 
 //checking result that should be more than 0
 if (!empty($result)) {
     //html code for output
+    // <tfoot>
+		// <tr>
+    // <th>Sr.#</th>
+    // <th>Document Name</th>
+    // <th>Category</th>
+    // <th>PDF</th>
+    // <th>Excel</th>
+    // <th>Word</th>
+    // <th>PPT</th>
+		// </tr>
+	  //   </tfoot>
     $opt = '
 
 
-    <table id="myTable" class="table-fill" width="70%">
+    <table id="myTable" class="table-fill" style="width:100%; margin:auto">
       <thead>
         <tr>
-          <th class="text-left" style="width: 15px;">Sr.#</th>
+          <th class="text-left" style="width: 5px;">Sr.#</th>
           <th class="text-left" style="width: 150px;">Document Name</th>
           <th class="text-left" style="width: 100px;">Category</th>
           <th class="text-left">PDF</th>
           <th class="text-left">Excel</th>
-          <th class="text-left">Word</th>';
+          <th class="text-left">Word</th>
+          <th class="text-left">PPT</th>';
           if($editPerm==1){
           $opt.='<th class="text-left" style="width: 100px;">Action</th>';
           }
           $opt.=' </tr>
       </thead>
-
-      <tfoot>
-		<tr>
-    <th class="text-left" style="width: 15px;">Sr.#</th>
-    <th class="text-left" style="width: 150px;">Document Name</th>
-    <th class="text-left" style="width: 100px;">Category</th>
-    <th class="text-left">PDF</th>
-    <th class="text-left">Excel</th>
-    <th class="text-left">Word</th> 
-		</tr>
-	    </tfoot>
-
-
       <tbody>
 
     ';
@@ -135,6 +135,14 @@ if (!empty($result)) {
       }
       else{
         $word = "";
+      }
+      
+      if(!empty($row['ppt'])){
+        $ppt__file_path = $ppt__file_path.$row['ppt'];
+        $ppt = "<a href='".$ppt__file_path."';><img src='./img/ppt.png'></a>";
+      }
+      else{
+        $ppt = "";
       }
 
 
@@ -235,6 +243,33 @@ if (!empty($result)) {
         }
       }
     } 
+       
+    $opt .= " </td>
+
+          <td style='font-size:10px'>
+          <h6>Number:{$row['d_number']}</h6>
+          <h6>Date:{$row['d_date']}</h6>
+          $ppt
+          <br>
+          <h6><b>Deleted Versions:</b></h6>";
+          // to get deleted word-file paths
+          if(!empty($row['del_ppt'])){
+            $pre_del= $row['del_ppt'];
+            if(!empty($row['del_version'])){
+              $pre_recd= $row['del_version'];
+              $del_version = explode (",", $pre_recd);
+          if(!empty($row['del_date'])){
+                $pre_recd= $row['del_date'];
+                $del_date = explode (",", $pre_recd);
+            $str_arr = explode (",", $pre_del); 
+          for($i=0; $i<count($str_arr); $i++){
+            $deleted= "./upload/ppt/".$str_arr[$i];
+            $opt .= " <a style='color:red'>Number:$del_version[$i]</a>----<a style='color:red'>$del_date[$i]</a>
+            <a href='$deleted';><img width='30' height='25' src='./img/ppt_red.png'></a></br>";
+          }
+        }
+      }
+    } 
     $opt.="</td>";
       
     if($editPerm==1){
@@ -258,6 +293,7 @@ if (!empty($result)) {
         $pdf__file_path = "./upload/pdf/";
         $excel__file_path = "./upload/excel/";
         $word__file_path = "./upload/word/";  
+        $ppt__file_path = "./upload/ppt/";  
     }
     $opt .= '
     </tbody>
