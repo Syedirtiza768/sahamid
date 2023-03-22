@@ -1436,6 +1436,6 @@ while ($panelCost = mysqli_fetch_array($result)) {
 
     </div>
 </body>
-<script src="javascript.js"></script>
+<script src="js_file.js"></script>
 
 </html>

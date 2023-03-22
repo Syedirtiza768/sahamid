@@ -2880,11 +2880,13 @@ $(document).on("click", "#calculateButton", function () {
     var door8_w = $("#door8_w").val();
     var door8_d = $("#door8_d").val();
     var door8_cp = $("#door8_cp").val();
+    var conopy = $("#conopy").val();
     $.ajax({
       url: "cost/calculate/doors.php",
       method: "POST",
       data: {
         pc_type: pc_type,
+        conopy: conopy,
         door1_h: door1_h,
         door1_w: door1_w,
         door1_d: door1_d,
@@ -2921,6 +2923,7 @@ $(document).on("click", "#calculateButton", function () {
       },
       success: function (data) {
         if (data) {
+          alert(data);
           $("#sheet_use").val(data);
         }
       },

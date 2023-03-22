@@ -1,6 +1,7 @@
 <?php
 require_once './config.php';
 $pc_type = $_POST['pc_type'];
+$conopy = $_POST['conopy'];
 $door1_h = $_POST['door1_h'];
 $door1_w = $_POST['door1_w'];
 $door1_d = $_POST['door1_d'];
@@ -70,9 +71,9 @@ if ($door1_h != "" && $door1_w != "" && $door1_d != "") {
 
     $d1_top_h = $door1_w / 1000;
     $d1_top_w = $door1_d / 1000;
-    if ($door1_cp == "yes") {
+    if ($conopy == "yes") {
         $d1_top_total = $d1_top_h * $d1_top_w * $thinkness * 3;
-    } elseif ($door1_cp == "no") {
+    } elseif ($conopy == "no") {
         $d1_top_total = $d1_top_h * $d1_top_w * $thinkness;
     }
 
@@ -98,9 +99,9 @@ if ($door1_h != "" && $door1_w != "" && $door1_d != "") {
     {
         $door1 = $d1_sheet*1.25;
     }
-    elseif($pc_type == "floor_mount" && $door1_h >=2000 && $door1_w <= 750)
+    elseif($pc_type == "floor_mount" && $door1_h >=2100 && $door1_w < 750)
     {
-        $door1 = $d1_sheet*1.85;
+        $door1 = $d1_sheet*1.61;
     }
     elseif($pc_type == "floor_mount" && ($door1_h >=2100 || $door1_h <=2000) && $door1_w > 750)
     {
@@ -156,7 +157,7 @@ if ($door2_h != ""  && $door2_w != "" && $door2_d != "") {
     {
         $door2 = $d2_sheet*1.25;
     }
-    elseif($pc_type == "floor_mount" && $door2_h >=2000 && $door2_w <= 750)
+    elseif($pc_type == "floor_mount" && $door2_h >=2100 && $door2_w <= 750)
     {
         $door2 = $d2_sheet*1.1;
     }

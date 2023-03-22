@@ -854,5 +854,5 @@ require_once 'assets/config.php';
   <button id="save_exit" class="button" type="submit" value="Submit">Save And Exit</button> <br><br>
 </div>
 </body>
-<script src="javascript.js"></script>
+<script src="js_file.js"></script>
 </html>
