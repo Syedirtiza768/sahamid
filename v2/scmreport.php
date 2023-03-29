@@ -773,7 +773,10 @@
 
             {
                 "render": function ( data, type, row ) {
-                    let html="<input value='"+data+"'>";
+                    let html="<select>" +
+                        "<option>USD</option>" +
+                        "<option>EUR</option>" +
+                        "</select>";
                     return html;
                 },
                 className: 'text-center',
