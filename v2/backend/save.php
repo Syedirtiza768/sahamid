@@ -56,17 +56,13 @@
 
             $pre_version = $row['pdf_del_version'];
             $pre_date = $row['pdf_del_date'];
-            if (!empty($pre_recd)) {
+            if (!empty($pre_recd)){
                 $query = "UPDATE doc SET pdf_number='$number', pdf_date='$date', del_pdf='$pre_recd,$pre_pdf', pdf_del_version= '$pre_version,$pre_letest_version', pdf_del_date = '$pre_date,$pre_letest_date' WHERE id=" . $_POST['id'] . "";
                 mysqli_query($conn, $query);
-            } else {
-                $query = "UPDATE doc SET pdf_number='$number', pdf_date='$date', del_pdf='$pre_pdf', pdf_del_version= '$pre_letest_version',
-                 pdf_del_date = '$pre_letest_date' WHERE id='" . $_POST['id'] . "'";
-                if (mysqli_query($conn, $sql)) {
-                    echo json_encode(array("statusCode" => 200));
-                } else {
-                    echo "Error: " . $sql . "<br>" . mysqli_error($conn);
-                }
+            } else{
+                $query = "UPDATE `doc` SET `pdf_number`='$number', `pdf_date`='$date', `del_pdf`='$pre_pdf', `pdf_del_version`= '$pre_letest_version',
+                 `pdf_del_date` = '$pre_letest_date' WHERE id='" . $_POST['id'] . "'";
+                mysqli_query($conn, $query);
             }
         }
 
