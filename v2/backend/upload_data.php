@@ -37,9 +37,9 @@ include_once("../config1.php");
                     move_uploaded_file($_FILES['ppt']['tmp_name'], $pptLocation);
                 }
 
-                    $sql = "INSERT INTO doc(d_name,d_number,d_revision,category,d_date,pdf,word,excel,ppt,pdf_version,word_version,excel_version,ppt_version)
+                    $sql = "INSERT INTO doc(d_name,pdf_number,word_number,excel_number,ppt_number,d_revision,category,pdf_date,word_date,excel_date,ppt_date,pdf,word,excel,ppt,pdf_version,word_version,excel_version,ppt_version)
                         VALUES
-                        ('$d_name','$d_number','$revision','$d_category','$d_date','$pdfFileName','$wordFileName','$excelFileName','$pptFileName','$version','$version','$version','$version')";
+                        ('$d_name','$d_number','$d_number','$d_number','$d_number','$revision','$d_category','$d_date','$d_date','$d_date','$d_date','$pdfFileName','$wordFileName','$excelFileName','$pptFileName','$version','$version','$version','$version')";
                     if (mysqli_query($conn, $sql)) {
                         echo "Your file has been uploaded successfully";
                     }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 21, 2023 at 01:52 PM
+-- Generation Time: Mar 29, 2023 at 01:31 PM
 -- Server version: 10.1.34-MariaDB
 -- PHP Version: 7.2.8
 
@@ -32,7 +32,10 @@ DROP TABLE IF EXISTS `doc`;
 CREATE TABLE `doc` (
   `id` int(11) NOT NULL,
   `d_name` varchar(255) NOT NULL,
-  `d_number` varchar(11) NOT NULL,
+  `pdf_number` varchar(11) NOT NULL,
+  `word_number` varchar(255) DEFAULT NULL,
+  `excel_number` varchar(255) DEFAULT NULL,
+  `ppt_number` varchar(255) DEFAULT NULL,
   `d_revision` varchar(255) DEFAULT NULL,
   `pdf` varchar(255) DEFAULT NULL,
   `word` varchar(255) DEFAULT NULL,
@@ -47,9 +50,18 @@ CREATE TABLE `doc` (
   `del_word` varchar(255) DEFAULT NULL,
   `del_ppt` varchar(255) DEFAULT NULL,
   `category` varchar(255) NOT NULL,
-  `d_date` date DEFAULT NULL,
-  `del_version` varchar(255) DEFAULT NULL,
-  `del_date` varchar(255) DEFAULT NULL
+  `pdf_date` date DEFAULT NULL,
+  `word_date` date DEFAULT NULL,
+  `excel_date` date DEFAULT NULL,
+  `ppt_date` date DEFAULT NULL,
+  `pdf_del_version` varchar(255) DEFAULT NULL,
+  `pdf_del_date` varchar(255) DEFAULT NULL,
+  `word_del_version` varchar(255) DEFAULT NULL,
+  `word_del_date` varchar(255) DEFAULT NULL,
+  `excel_del_version` varchar(255) NOT NULL,
+  `excel_del_date` varchar(255) DEFAULT NULL,
+  `ppt_del_version` varchar(255) NOT NULL,
+  `ppt_del_date` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -70,7 +82,7 @@ ALTER TABLE `doc`
 -- AUTO_INCREMENT for table `doc`
 --
 ALTER TABLE `doc`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
