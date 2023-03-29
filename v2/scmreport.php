@@ -563,6 +563,10 @@
                     <th>Minimum Qty</th>
                     <th>Total Value ERP Rec.</th>
                     <th>Total Value SCM Rec.</th>
+                    <th>Currency</th>
+                    <th>Forex Price</th>
+                    <th>Override</th>
+                    <th>ListPriceAfterParity</th>
 
                 </tr>
 			</thead>
@@ -592,6 +596,10 @@
                     <th>Minimum Qty</th>
                     <th>Total Value ERP Rec.</th>
                     <th>Total Value SCM Rec.</th>
+                    <th>Currency</th>
+                    <th>Forex Price</th>
+                    <th>Override</th>
+                    <th>ListPriceAfterParity</th>
 
 
                 </tr>
