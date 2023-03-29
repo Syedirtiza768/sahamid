@@ -789,7 +789,7 @@
             },
             {
                 "render": function ( data, type, row ) {
-                    let html="<inpu>";
+                    let html="<input type='checkbox'>";
                     return html;
                 },
                 className: 'text-center',
