@@ -776,6 +776,8 @@
                     let html="<select>" +
                         "<option>USD</option>" +
                         "<option>EUR</option>" +
+                        "<option>AED</option>" +
+                        "<option>POUNDS</option>" +
                         "</select>";
                     return html;
                 },
