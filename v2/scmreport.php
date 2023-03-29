@@ -675,6 +675,11 @@
                 {"data":"minimumqty"},
                 {"data":"stockid"},
                 {"data":"stockid"},
+                {"data":"stockid"},
+                {"data":"stockid"},
+                {"data":"stockid"},
+                {"data":"stockid"},
+
 
 
             ],
@@ -764,9 +769,43 @@
                     },
                     className: 'text-center',
                     "targets": 23
-                }
+                },
 
-	        ]
+            {
+                "render": function ( data, type, row ) {
+                    let html="<input value='"+data+"'>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 24
+            },
+            {
+                "render": function ( data, type, row ) {
+                    let html="<input>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 25
+            },
+            {
+                "render": function ( data, type, row ) {
+                    let html="<inpu>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 26
+            },
+            {
+                "render": function ( data, type, row ) {
+                    let html="<input>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 27
+            },
+
+
+        ]
 	        
 		});
 
