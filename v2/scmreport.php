@@ -563,6 +563,10 @@
                     <th>Minimum Qty</th>
                     <th>Total Value ERP Rec.</th>
                     <th>Total Value SCM Rec.</th>
+                    <th>Currency</th>
+                    <th>Forex Price</th>
+                    <th>Override</th>
+                    <th>ListPriceAfterParity</th>
 
                 </tr>
 			</thead>
@@ -592,6 +596,10 @@
                     <th>Minimum Qty</th>
                     <th>Total Value ERP Rec.</th>
                     <th>Total Value SCM Rec.</th>
+                    <th>Currency</th>
+                    <th>Forex Price</th>
+                    <th>Override</th>
+                    <th>ListPriceAfterParity</th>
 
 
                 </tr>
@@ -667,6 +675,11 @@
                 {"data":"minimumqty"},
                 {"data":"stockid"},
                 {"data":"stockid"},
+                {"data":"stockid"},
+                {"data":"stockid"},
+                {"data":"stockid"},
+                {"data":"stockid"},
+
 
 
             ],
@@ -756,9 +769,48 @@
                     },
                     className: 'text-center',
                     "targets": 23
-                }
+                },
 
-	        ]
+            {
+                "render": function ( data, type, row ) {
+                    let html="<select>" +
+                        "<option>USD</option>" +
+                        "<option>EUR</option>" +
+                        "<option>AED</option>" +
+                        "<option>POUNDS</option>" +
+                        "</select>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 24
+            },
+            {
+                "render": function ( data, type, row ) {
+                    let html="<input>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 25
+            },
+            {
+                "render": function ( data, type, row ) {
+                    let html="<input type='checkbox'>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 26
+            },
+            {
+                "render": function ( data, type, row ) {
+                    let html="<input>";
+                    return html;
+                },
+                className: 'text-center',
+                "targets": 27
+            },
+
+
+        ]
 	        
 		});
 
