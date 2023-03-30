@@ -2,8 +2,8 @@
 session_start();
 require_once 'assets/config.php';
 if (!empty($_POST['costNo'])) {
-    $costNo = $_POST['costNo'];
-    $_SESSION["pcContinue"] = $_POST['costNo'];
+  $costNo = $_POST['costNo'];
+  $_SESSION["pcContinue"] = $_POST['costNo'];
 }
 ?>
 
@@ -24,36 +24,36 @@ if (!empty($_POST['costNo'])) {
 <body>
   <!-- Query to get previous saved value from database... -->
   <?php
-$SQL = 'SELECT * FROM panel_costing  WHERE id="' . $_SESSION['pcContinue'] . '"';
-$result = mysqli_query($conn, $SQL);
-while ($panelCost = mysqli_fetch_array($result)) {
-    ?>
+  $SQL = 'SELECT * FROM panel_costing  WHERE id="' . $_SESSION['pcContinue'] . '"';
+  $result = mysqli_query($conn, $SQL);
+  while ($panelCost = mysqli_fetch_array($result)) {
+  ?>
 
     <div class="container">
       <center>
         <h1><b>Panel Costing</b></h1>
       </center>
       <hr>
-        <div style="margin-left: 75%;
+      <div style="margin-left: 75%;
           position:fixed;
-          right: 10%;" >
-        <button  class="close" style="border:1px solid red; background-color:red; color:white" title="Close Tab" aria-label onclick="javascript:window.close()"></button>
+          right: 10%;">
+        <button class="close" style="border:1px solid red; background-color:red; color:white" title="Close Tab" aria-label onclick="javascript:window.close()"></button>
       </div>
       <input type="hidden" class="pc_id" value="<?php echo $panelCost['id']; ?>">
       <label>
         <h3><b>Panel Size:</b></h3>
       </label><br>
       <label>Height:</label>
-      <?php if (!empty($panelCost['pc_h'])) {?>
+      <?php if (!empty($panelCost['pc_h'])) { ?>
         <input type="number" style="width:10%" value="<?php echo $panelCost['pc_h']; ?>" placeholder="Height" id="pc_h" readonly>
-      <?php } else {?>
+      <?php } else { ?>
         <input type="number" style="width:10%" placeholder="Height" id="pc_h" required>
-      <?php }?>
+      <?php } ?>
       <label>&ensp;&ensp;Width:</label>
       <input type="number" style="width:10%" value="<?php echo $panelCost['pc_w']; ?>" placeholder="Width" id="pc_w" required>
       <label>&ensp;&ensp;Depth:</label>
       <select style="width:10%" name="pc_d" id="pc_d">
-        <?php if ($panelCost['pc_d'] == '') {?>
+        <?php if ($panelCost['pc_d'] == '') { ?>
           <option value="">Choose One</option>
           <option value="100">100</option>
           <option value="125">125</option>
@@ -76,7 +76,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
           <option value="1000">1000</option>
           <option value="1100">1100</option>
           <option value="1200">1200</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['pc_d']; ?>"><?php echo $panelCost['pc_d']; ?></option>
           <option value="100">100</option>
           <option value="125">125</option>
@@ -99,37 +99,37 @@ while ($panelCost = mysqli_fetch_array($result)) {
           <option value="1000">1000</option>
           <option value="1100">1100</option>
           <option value="1200">1200</option>
-        <?php }?>
+        <?php } ?>
       </select><br>
 
       <label>
         <h3><b>Panel Type:</b></h3>
       </label>
       <select style="width:10%" name="pc_type" id="pc_type">
-        <?php if ($panelCost['panel_type'] == '') {?>
+        <?php if ($panelCost['panel_type'] == '') { ?>
           <option value="">Choose One</option>
           <option value="floor_mount">Floor Mount</option>
           <option value="wall_mount">Wall Mount</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['panel_type']; ?>"><?php echo $panelCost['panel_type']; ?></option>
           <option value="floor_mount">Floor Mount</option>
           <option value="wall_mount">Wall Mount</option>
-        <?php }?>
+        <?php } ?>
       </select>
 
       <label>
         <h3><b>&ensp;&ensp;Conopy:</b></h3>
       </label>
       <select style="width:10%" name="conopy" id="conopy">
-        <?php if ($panelCost['conopy'] == '') {?>
+        <?php if ($panelCost['conopy'] == '') { ?>
           <option value="">Choose One</option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['conopy']; ?>"><?php echo $panelCost['conopy']; ?></option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
-        <?php }?>
+        <?php } ?>
       </select> <br>
 
       <label>
@@ -143,15 +143,15 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <input type="number" style="width:10%" value="<?php echo $panelCost['d1_d']; ?>" placeholder="Depth" id="door1_d" required>
       <label>&ensp;&ensp;Cover Plate:</label>
       <select style="width:10%" name="cover_plate" id="door1_cp">
-        <?php if ($panelCost['door1_cp'] == '') {?>
+        <?php if ($panelCost['door1_cp'] == '') { ?>
           <option value="">Choose One</option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['door1_cp']; ?>"><?php echo $panelCost['door1_cp']; ?></option>
           <option value="yes">Yes</option>
           <option value="no">No</option>
-        <?php }?>
+        <?php } ?>
       </select>
       <button id="addButton" class="fa fa-angle-down" onclick="$('#second_fd').show()">Add More</button><br>
 
@@ -166,16 +166,16 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Depth:</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['d2_d']; ?>" placeholder="Depth" id="door2_d" required>
         <label>&ensp;&ensp;Cover Plate:</label>
-      <select style="width:10%" name="cover_plate" id="door2_cp">
-        <?php if ($panelCost['door2_cp'] == '') {?>
-          <option value="">Choose One</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php } else {?>
-          <option value="<?php echo $panelCost['door2_cp']; ?>"><?php echo $panelCost['door2_cp']; ?></option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php }?>
+        <select style="width:10%" name="cover_plate" id="door2_cp">
+          <?php if ($panelCost['door2_cp'] == '') { ?>
+            <option value="">Choose One</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } else { ?>
+            <option value="<?php echo $panelCost['door2_cp']; ?>"><?php echo $panelCost['door2_cp']; ?></option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } ?>
         </select>
         <button id="addButton" class="fa fa-angle-down" onclick="$('#third_fd').show()">Add More</button><br>
       </div>
@@ -191,16 +191,16 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Depth:</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['d3_d']; ?>" placeholder="Depth" id="door3_d" required>
         <label>&ensp;&ensp;Cover Plate:</label>
-      <select style="width:10%" name="cover_plate" id="door3_cp">
-        <?php if ($panelCost['door3_cp'] == '') {?>
-          <option value="">Choose One</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php } else {?>
-          <option value="<?php echo $panelCost['door3_cp']; ?>"><?php echo $panelCost['door3_cp']; ?></option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php }?>
+        <select style="width:10%" name="cover_plate" id="door3_cp">
+          <?php if ($panelCost['door3_cp'] == '') { ?>
+            <option value="">Choose One</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } else { ?>
+            <option value="<?php echo $panelCost['door3_cp']; ?>"><?php echo $panelCost['door3_cp']; ?></option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } ?>
         </select>
         <button id="addButton" class="fa fa-angle-down" onclick="$('#four_fd').show()">Add More</button><br>
       </div>
@@ -216,16 +216,16 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Depth:</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['d4_d']; ?>" placeholder="Depth" id="door4_d" required>
         <label>&ensp;&ensp;Cover Plate:</label>
-      <select style="width:10%" name="cover_plate" id="door4_cp">
-        <?php if ($panelCost['door4_cp'] == '') {?>
-          <option value="">Choose One</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php } else {?>
-          <option value="<?php echo $panelCost['door4_cp']; ?>"><?php echo $panelCost['door4_cp']; ?></option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php }?>
+        <select style="width:10%" name="cover_plate" id="door4_cp">
+          <?php if ($panelCost['door4_cp'] == '') { ?>
+            <option value="">Choose One</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } else { ?>
+            <option value="<?php echo $panelCost['door4_cp']; ?>"><?php echo $panelCost['door4_cp']; ?></option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } ?>
         </select>
         <button id="addButton" class="fa fa-angle-down" onclick="$('#five_fd').show()">Add More</button><br>
       </div>
@@ -241,16 +241,16 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Depth:</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['d5_d']; ?>" placeholder="Depth" id="door5_d" required>
         <label>&ensp;&ensp;Cover Plate:</label>
-      <select style="width:10%" name="cover_plate" id="door5_cp">
-        <?php if ($panelCost['door5_cp'] == '') {?>
-          <option value="">Choose One</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php } else {?>
-          <option value="<?php echo $panelCost['door5_cp']; ?>"><?php echo $panelCost['door5_cp']; ?></option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php }?>
+        <select style="width:10%" name="cover_plate" id="door5_cp">
+          <?php if ($panelCost['door5_cp'] == '') { ?>
+            <option value="">Choose One</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } else { ?>
+            <option value="<?php echo $panelCost['door5_cp']; ?>"><?php echo $panelCost['door5_cp']; ?></option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } ?>
         </select>
         <button id="addButton" class="fa fa-angle-down" onclick="$('#six_fd').show()">Add More</button><br>
       </div>
@@ -266,16 +266,16 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Depth:</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['d6_d']; ?>" placeholder="Depth" id="door6_d" required>
         <label>&ensp;&ensp;Cover Plate:</label>
-      <select style="width:10%" name="cover_plate" id="door6_cp">
-        <?php if ($panelCost['door6_cp'] == '') {?>
-          <option value="">Choose One</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php } else {?>
-          <option value="<?php echo $panelCost['door6_cp']; ?>"><?php echo $panelCost['door6_cp']; ?></option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php }?>
+        <select style="width:10%" name="cover_plate" id="door6_cp">
+          <?php if ($panelCost['door6_cp'] == '') { ?>
+            <option value="">Choose One</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } else { ?>
+            <option value="<?php echo $panelCost['door6_cp']; ?>"><?php echo $panelCost['door6_cp']; ?></option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } ?>
         </select>
         <button id="addButton" class="fa fa-angle-down" onclick="$('#seven_fd').show()">Add More</button><br>
       </div>
@@ -291,16 +291,16 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Depth:</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['d7_d']; ?>" placeholder="Depth" id="door7_d" required>
         <label>&ensp;&ensp;Cover Plate:</label>
-      <select style="width:10%" name="cover_plate" id="door7_cp">
-        <?php if ($panelCost['door7_cp'] == '') {?>
-          <option value="">Choose One</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php } else {?>
-          <option value="<?php echo $panelCost['door7_cp']; ?>"><?php echo $panelCost['door7_cp']; ?></option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php }?>
+        <select style="width:10%" name="cover_plate" id="door7_cp">
+          <?php if ($panelCost['door7_cp'] == '') { ?>
+            <option value="">Choose One</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } else { ?>
+            <option value="<?php echo $panelCost['door7_cp']; ?>"><?php echo $panelCost['door7_cp']; ?></option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } ?>
         </select>
         <button id="addButton" class="fa fa-angle-down" onclick="$('#eight_fd').show()">Add More</button><br>
       </div>
@@ -316,16 +316,16 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <label>&ensp;&ensp;Depth:</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['d8_d']; ?>" placeholder="Depth" id="door8_d" required>
         <label>&ensp;&ensp;Cover Plate:</label>
-      <select style="width:10%" name="cover_plate" id="door8_cp">
-        <?php if ($panelCost['door8_cp'] == '') {?>
-          <option value="">Choose One</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php } else {?>
-          <option value="<?php echo $panelCost['door8_cp']; ?>"><?php echo $panelCost['door8_cp']; ?></option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        <?php }?>
+        <select style="width:10%" name="cover_plate" id="door8_cp">
+          <?php if ($panelCost['door8_cp'] == '') { ?>
+            <option value="">Choose One</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } else { ?>
+            <option value="<?php echo $panelCost['door8_cp']; ?>"><?php echo $panelCost['door8_cp']; ?></option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          <?php } ?>
         </select>
       </div><br>
 
@@ -333,17 +333,17 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <h3><b>Sheet Selection:</b></h3>
       </label>
       <select style="width:25%" name="sheet_selection" id="sheet_selection">
-        <?php if ($panelCost['sheet_selection'] == '') {?>
+        <?php if ($panelCost['sheet_selection'] == '') { ?>
           <option value="">Choose One</option>
           <option value="ms_sheet">MS Sheet</option>
           <option value="ss_sheet">SS Sheet</option>
           <option value="gi_sheet">GI Sheet</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['sheet_selection']; ?>"><?php echo $panelCost['sheet_selection']; ?></option>
           <option value="ms_sheet">MS Sheet</option>
           <option value="ss_sheet">SS Sheet</option>
           <option value="gi_sheet">GI Sheet</option>
-        <?php }?>
+        <?php } ?>
       </select> <br>
 
 
@@ -352,7 +352,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       </label> <br>
       <label>Dimensions:</label>
       <select style="width:10%" name="bb_dimension" id="bb_dimension">
-        <?php if ($panelCost['bbr1_dimension'] == '') {?>
+        <?php if ($panelCost['bbr1_dimension'] == '') { ?>
           <option value="">Choose One</option>
           <option value="20*5">20*5</option>
           <option value="25*5">25*5</option>
@@ -372,7 +372,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
           <option value="120*5">120*5</option>
           <option value="120*10">120*10</option>
           <option value="150*10">150*10</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['bbr1_dimension']; ?>"><?php echo $panelCost['bbr1_dimension']; ?></option>
           <option value="20*5">20*5</option>
           <option value="25*5">25*5</option>
@@ -392,7 +392,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
           <option value="120*5">120*5</option>
           <option value="120*10">120*10</option>
           <option value="150*10">150*10</option>
-        <?php }?>
+        <?php } ?>
       </select>
       <label>&ensp;&ensp;Qty(Feet):</label>
       <input type="number" style="width:10%" value="<?php echo $panelCost['bbr1_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty" required>
@@ -405,7 +405,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="two_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_two" id="bb_dimension_two">
-          <?php if ($panelCost['bbr2_dimension'] == '') {?>
+          <?php if ($panelCost['bbr2_dimension'] == '') { ?>
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
             <option value="25*5">25*5</option>
@@ -425,27 +425,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr2_dimension']; ?>"><?php echo $panelCost['bbr2_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr2_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_two" required>
@@ -459,7 +459,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="three_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_three" id="bb_dimension_three">
-          <?php if ($panelCost['bbr3_dimension'] == '') {?>
+          <?php if ($panelCost['bbr3_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -480,27 +480,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr3_dimension']; ?>"><?php echo $panelCost['bbr3_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr3_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_three" required>
@@ -514,7 +514,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="four_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_four" id="bb_dimension_four">
-          <?php if ($panelCost['bbr4_dimension'] == '') {?>
+          <?php if ($panelCost['bbr4_dimension'] == '') { ?>
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
             <option value="25*5">25*5</option>
@@ -534,27 +534,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr4_dimension']; ?>"><?php echo $panelCost['bbr4_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr4_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_four" required>
@@ -568,7 +568,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="five_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_five" id="bb_dimension_five">
-          <?php if ($panelCost['bbr5_dimension'] == '') {?>
+          <?php if ($panelCost['bbr5_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -589,27 +589,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr5_dimension']; ?>"><?php echo $panelCost['bbr5_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr5_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_five" required>
@@ -623,7 +623,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="six_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_six" id="bb_dimension_six">
-          <?php if ($panelCost['bbr6_dimension'] == '') {?>
+          <?php if ($panelCost['bbr6_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -644,27 +644,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr6_dimension']; ?>"><?php echo $panelCost['bbr6_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr6_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_six" required>
@@ -678,7 +678,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="seven_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_seven" id="bb_dimension_seven">
-          <?php if ($panelCost['bbr7_dimension'] == '') {?>
+          <?php if ($panelCost['bbr7_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -699,27 +699,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr7_dimension']; ?>"><?php echo $panelCost['bbr7_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr7_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_seven" required>
@@ -733,7 +733,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="eight_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_eight" id="bb_dimension_eight">
-          <?php if ($panelCost['bbr8_dimension'] == '') {?>
+          <?php if ($panelCost['bbr8_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -754,27 +754,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr8_dimension']; ?>"><?php echo $panelCost['bbr8_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr8_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_eight" required>
@@ -788,7 +788,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="nine_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_nine" id="bb_dimension_nine">
-          <?php if ($panelCost['bbr9_dimension'] == '') {?>
+          <?php if ($panelCost['bbr9_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -809,27 +809,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr9_dimension']; ?>"><?php echo $panelCost['bbr9_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr9_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_nine" required>
@@ -843,7 +843,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="ten_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_ten" id="bb_dimension_ten">
-          <?php if ($panelCost['bbr10_dimension'] == '') {?>
+          <?php if ($panelCost['bbr10_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -864,27 +864,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr10_dimension']; ?>"><?php echo $panelCost['bbr10_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr10_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_ten" required>
@@ -898,7 +898,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="eleven_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_eleven" id="bb_dimension_eleven">
-          <?php if ($panelCost['bbr11_dimension'] == '') {?>
+          <?php if ($panelCost['bbr11_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -919,27 +919,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr11_dimension']; ?>"><?php echo $panelCost['bbr11_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr11_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_eleven" required>
@@ -953,7 +953,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="twelve_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_twelve" id="bb_dimension_twelve">
-          <?php if ($panelCost['bbr12_dimension'] == '') {?>
+          <?php if ($panelCost['bbr12_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -974,27 +974,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr12_dimension']; ?>"><?php echo $panelCost['bbr12_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr12_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_twelve" required>
@@ -1008,7 +1008,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="thirteen_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_thirteen" id="bb_dimension_thirteen">
-          <?php if ($panelCost['bbr13_dimension'] == '') {?>
+          <?php if ($panelCost['bbr13_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -1029,27 +1029,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr13_dimension']; ?>"><?php echo $panelCost['bbr13_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr13_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_thirteen" required>
@@ -1063,7 +1063,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="fourteen_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_fourteen" id="bb_dimension_fourteen">
-          <?php if ($panelCost['bbr14_dimension'] == '') {?>
+          <?php if ($panelCost['bbr14_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -1084,27 +1084,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr14_dimension']; ?>"><?php echo $panelCost['bbr14_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr14_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_fourteen" required>
@@ -1118,7 +1118,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       <div id="fifteen_bus_bar">
         <label>Dimensions:</label>
         <select style="width:10%" name="bb_dimension_fifteen" id="bb_dimension_fifteen">
-          <?php if ($panelCost['bbr15_dimension'] == '') {?>
+          <?php if ($panelCost['bbr15_dimension'] == '') { ?>
 
             <option value="">Choose One</option>
             <option value="20*5">20*5</option>
@@ -1139,27 +1139,27 @@ while ($panelCost = mysqli_fetch_array($result)) {
             <option value="120*5">120*5</option>
             <option value="120*10">120*10</option>
             <option value="150*10">150*10</option>
-          <?php } else {?>
+          <?php } else { ?>
             <option value="<?php echo $panelCost['bbr15_dimension']; ?>"><?php echo $panelCost['bbr15_dimension']; ?></option>
             <option value="20*5">20*5</option>
-          <option value="25*5">25*5</option>
-          <option value="25*10">25*10</option>
-          <option value="30*5">30*5</option>
-          <option value="30*10">30*10</option>
-          <option value="40*5">40*5</option>
-          <option value="40*10">40*10</option>
-          <option value="50*5">50*5</option>
-          <option value="50*10">50*10</option>
-          <option value="60*5">60*5</option>
-          <option value="60*10">60*10</option>
-          <option value="80*5">80*5</option>
-          <option value="80*10">80*10</option>
-          <option value="100*5">100*5</option>
-          <option value="100*10">100*10</option>
-          <option value="120*5">120*5</option>
-          <option value="120*10">120*10</option>
-          <option value="150*10">150*10</option>
-          <?php }?>
+            <option value="25*5">25*5</option>
+            <option value="25*10">25*10</option>
+            <option value="30*5">30*5</option>
+            <option value="30*10">30*10</option>
+            <option value="40*5">40*5</option>
+            <option value="40*10">40*10</option>
+            <option value="50*5">50*5</option>
+            <option value="50*10">50*10</option>
+            <option value="60*5">60*5</option>
+            <option value="60*10">60*10</option>
+            <option value="80*5">80*5</option>
+            <option value="80*10">80*10</option>
+            <option value="100*5">100*5</option>
+            <option value="100*10">100*10</option>
+            <option value="120*5">120*5</option>
+            <option value="120*10">120*10</option>
+            <option value="150*10">150*10</option>
+          <?php } ?>
         </select>
         <label>&ensp;&ensp;Qty(Feet):</label>
         <input type="number" style="width:10%" value="<?php echo $panelCost['bbr15_qty']; ?>" placeholder="Qty(Feet)" id="busbar_qty_fifteen" required>
@@ -1174,15 +1174,15 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <h3><b>Paint Cost:</b></h3>
       </label>
       <select style="width:10%" name="paint_cost" id="paint_cost_model">
-        <?php if ($panelCost['paintcost_model'] == '') {?>
+        <?php if ($panelCost['paintcost_model'] == '') { ?>
           <option value="">Choose One</option>
           <option value="7032">7032</option>
           <option value="7035">7035</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['paintcost_model']; ?>"><?php echo $panelCost['paintcost_model']; ?></option>
           <option value="7032">7032</option>
           <option value="7035">7035</option>
-        <?php }?>
+        <?php } ?>
       </select> <br>
 
       <label>
@@ -1208,19 +1208,19 @@ while ($panelCost = mysqli_fetch_array($result)) {
       </label> <br>
       <label>Model:</label>
       <select style="width:10%" name="hinges_model" id="hinges_model">
-        <?php if ($panelCost['hinges_model'] == '') {?>
+        <?php if ($panelCost['hinges_model'] == '') { ?>
           <option value="">Choose One</option>
           <option value="hl_027">HL-027</option>
           <option value="hl_030">HL-030</option>
           <option value="hl_051">HL-051</option>
           <option value="hl_056">HL-056</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['hinges_model']; ?>" selected><?php echo $panelCost['hinges_model']; ?></option>
           <option value="hl_027">HL-027</option>
           <option value="hl_030">HL-030</option>
           <option value="hl_051">HL-051</option>
           <option value="hl_056">HL-056</option>
-        <?php }?>
+        <?php } ?>
       </select>
       <label>&ensp;&ensp;Quantity:</label>
       <input type="number" style="width:10%" value="<?php echo $panelCost['hinges_qty']; ?>" placeholder="Quantity" id="hinges_qty" required> <br>
@@ -1230,21 +1230,21 @@ while ($panelCost = mysqli_fetch_array($result)) {
       </label> <br>
       <label>Model:</label>
       <select style="width:10%" name="lock_model" id="lock_model">
-        <?php if ($panelCost['lock_model'] == '') {?>
+        <?php if ($panelCost['lock_model'] == '') { ?>
           <option value="">Choose One</option>
           <option value="ms_408">MS-408</option>
           <option value="ms_480">MS-480</option>
           <option value="bnl_22">BNL-22</option>
           <option value="pl_130">PL-130</option>
           <option value="pl_150">PL-150</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['lock_model']; ?>"><?php echo $panelCost['lock_model']; ?></option>
           <option value="ms_408">MS-408</option>
           <option value="ms_480">MS-480</option>
           <option value="bnl_22">BNL-22</option>
           <option value="pl_130">PL-130</option>
           <option value="pl_150">PL-150</option>
-        <?php }?>
+        <?php } ?>
       </select>
       <label>&ensp;&ensp;Quantity:</label>
       <input type="number" style="width:10%" value="<?php echo $panelCost['lock_qty']; ?>" placeholder="Quantity" id="lock_qty" required> <br>
@@ -1254,7 +1254,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
       </label> <br>
       <label>Model:</label>
       <select style="width:10%" name="cd_model" id="cd_model">
-        <?php if ($panelCost['cd_model'] == '') {?>
+        <?php if ($panelCost['cd_model'] == '') { ?>
           <option value="">Choose One</option>
           <option value="25*25">25*25</option>
           <option value="25*40">25*40</option>
@@ -1264,7 +1264,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
           <option value="60*40">60*40</option>
           <option value="60*60">60*60</option>
           <option value="80*80">80*80</option>
-        <?php } else {?>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['cd_model']; ?>"><?php echo $panelCost['cd_model']; ?></option>
           <option value="25*25">25*25</option>
           <option value="25*40">25*40</option>
@@ -1274,7 +1274,7 @@ while ($panelCost = mysqli_fetch_array($result)) {
           <option value="60*40">60*40</option>
           <option value="60*60">60*60</option>
           <option value="80*80">80*80</option>
-        <?php }?>
+        <?php } ?>
       </select>
       <label>&ensp;&ensp;Quantity:</label>
       <input type="number" style="width:10%" value="<?php echo $panelCost['cd_qty']; ?>" placeholder="Quantity" id="cd_qty" required> <br>
@@ -1314,128 +1314,148 @@ while ($panelCost = mysqli_fetch_array($result)) {
         <h3><b>18 SWG Increase By % :</b></h3>
       </label>
       <input type="number" style="width:10%" value="<?php echo $panelCost['18swg_percent']; ?>" placeholder="18 SWG %" id="Increase_percent_18" required> <br>
-      
-      <label> <h3><b>Sheet Value To Show In Cash demand:</b></h3> </label>
+
+      <label>
+        <h3><b>Sheet Value To Show In Cash demand:</b></h3>
+      </label>
       <select style="width:25%" name="sheet_sheet" id="sheet_sheet_cd">
-      <?php if ($panelCost['sheet_sheet_cd'] == '') {?>
-        <option value="">Choose One</option>
-        <option value="ms_sheet">MS Sheet</option>
-        <option value="ss_sheet">SS Sheet</option>
-        <option value="gi_sheet">GI Sheet</option>
-        <?php } else {?>
+        <?php if ($panelCost['sheet_sheet_cd'] == '') { ?>
+          <option value="">Choose One</option>
+          <option value="ms_sheet">MS Sheet</option>
+          <option value="ss_sheet">SS Sheet</option>
+          <option value="gi_sheet">GI Sheet</option>
+        <?php } else { ?>
           <option value="<?php echo $panelCost['sheet_sheet_cd']; ?>" selected><?php echo $panelCost['sheet_sheet_cd']; ?></option>
           <option value="ms_sheet">MS Sheet</option>
           <option value="ss_sheet">SS Sheet</option>
           <option value="gi_sheet">GI Sheet</option>
-        <?php }?>
+        <?php } ?>
 
-        
-      </select> <br> <br><br>
 
-      <button id="calculateButton" class="button" type="submit" value="Submit">Calculate All Panel Costing</button> <br><br>
+      </select> <br>
 
       <label>
-        <h3><b>Sheet Use:</b></h3>
+        <h3><b>Guage Value To Show In Cash demand:</b></h3>
       </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Use" id="sheet_use" readonly> <br>
+      <select style="width:25%" name="sheet_sheet" id="guage_value_cd">
+        <?php if ($panelCost['guage_value_cd'] == '') { ?>
+          <option value="">Choose One</option>
+          <option value="14_swg">14 SWG</option>
+          <option value="16_swg">16 SWG</option>
+          <option value="18_swg">18 SWG</option>
+        <?php } else { ?>
+          <option value="<?php echo $panelCost['guage_value_cd']; ?>" selected><?php echo $panelCost['guage_value_cd']; ?></option>
+          <option value="14_swg">14 SWG</option>
+          <option value="16_swg">16 SWG</option>
+          <option value="18_swg">18 SWG</option>
+        <?php } ?>
 
-      <label>
-        <h3><b>14 SWG Sheet:</b></h3>
-      </label><br>
-      <label>Sheet Weight</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Weight" id="sheet_weight_14" readonly>
-      <label>&ensp;&ensp;Sheet Cost</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Cost" id="sheet_cost_14" readonly> <br>
+        </select> <br> <br><br>
 
-      <label>
-        <h3><b>16 SWG Sheet:</b></h3>
-      </label><br>
-      <label>Sheet Weight</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Weight" id="sheet_weight_16" readonly>
-      <label>&ensp;&ensp;Sheet Cost</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Cost" id="sheet_cost_16" readonly> <br>
+        <button id="calculateButton" class="button" type="submit" value="Submit">Calculate All Panel Costing</button> <br><br>
 
-      <label>
-        <h3><b>18 SWG Sheet:</b></h3>
-      </label><br>
-      <label>Sheet Weight</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Weight" id="sheet_weight_18" readonly>
-      <label>&ensp;&ensp;Sheet Cost</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Cost" id="sheet_cost_18" readonly> <br>
+        <label>
+          <h3><b>Sheet Use:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Use" id="sheet_use" readonly> <br>
 
-      <label>
-        <h3><b>Paint Cost:</b></h3>
-      </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Paint Cost" id="paint_cost" readonly>
+        <label>
+          <h3><b>14 SWG Sheet:</b></h3>
+        </label><br>
+        <label>Sheet Weight</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Weight" id="sheet_weight_14" readonly>
+        <label>&ensp;&ensp;Sheet Cost</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Cost" id="sheet_cost_14" readonly> <br>
 
-      <label>
-        <h3><b>&ensp;&ensp;Hinges Cost:</b></h3>
-      </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Hinges Cost" id="hinges_cost" readonly>
+        <label>
+          <h3><b>16 SWG Sheet:</b></h3>
+        </label><br>
+        <label>Sheet Weight</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Weight" id="sheet_weight_16" readonly>
+        <label>&ensp;&ensp;Sheet Cost</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Cost" id="sheet_cost_16" readonly> <br>
 
-      <label>
-        <h3><b>&ensp;&ensp;Lock Cost:</b></h3>
-      </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Lock Cost" id="lock_cost" readonly>
+        <label>
+          <h3><b>18 SWG Sheet:</b></h3>
+        </label><br>
+        <label>Sheet Weight</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Weight" id="sheet_weight_18" readonly>
+        <label>&ensp;&ensp;Sheet Cost</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Sheet Cost" id="sheet_cost_18" readonly> <br>
 
-      <label>
-        <h3><b>&ensp;&ensp;Acrylic Cost:</b></h3>
-      </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Acrylic Cost" id="acrylic_cost" readonly> <br>
+        <label>
+          <h3><b>Paint Cost:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Paint Cost" id="paint_cost" readonly>
 
-      <label>
-        <h3><b>Gas Kit Cost:</b></h3>
-      </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Gas Kit Cost" id="gk_cost" readonly>
+        <label>
+          <h3><b>&ensp;&ensp;Hinges Cost:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Hinges Cost" id="hinges_cost" readonly>
 
-      <label>
-        <h3><b>&ensp;&ensp;I Bolt Cost:</b></h3>
-      </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="I Bolt Cost" id="ibolt_cost" readonly>
+        <label>
+          <h3><b>&ensp;&ensp;Lock Cost:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Lock Cost" id="lock_cost" readonly>
 
-      <label>
-        <h3><b>&ensp;&ensp;Cable Duct Cost:</b></h3>
-      </label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Cable Duct Cost" id="cd_cost" readonly> <br>
+        <label>
+          <h3><b>&ensp;&ensp;Acrylic Cost:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Acrylic Cost" id="acrylic_cost" readonly> <br>
 
-      <label>
-        <h3><b>Bus Bar:</b></h3>
-      </label><br>
-      <label>Weight/kg</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Weight/kg" id="bbr_total_weight" readonly>
-      <label>&ensp;&ensp;Total Cost</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Total Cost" id="busbar_total_cost" readonly>
-      <label>&ensp;&ensp;Total Sleeve Cost</label>
-      <input type="number" style="width:10%; background:none; color:red" placeholder="Total Sleeve Cost" id="busbar_total_sleeve" readonly> <br>
+        <label>
+          <h3><b>Gas Kit Cost:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Gas Kit Cost" id="gk_cost" readonly>
 
-      <label>
-        <h3><b>14 SWG Sheet:</b></h3>
-      </label><br>
-      <label>Total Cost</label>
-      <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_14_total" readonly>
-      <label>&ensp;&ensp;Final Cost</label>
-      <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_14_final_total" readonly> <br>
+        <label>
+          <h3><b>&ensp;&ensp;I Bolt Cost:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="I Bolt Cost" id="ibolt_cost" readonly>
 
-      <label>
-        <h3><b>16 SWG Sheet:</b></h3>
-      </label><br>
-      <label>Total Cost</label>
-      <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_16_total" readonly>
-      <label>&ensp;&ensp;Final Cost</label>
-      <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_16_final_total" readonly> <br>
+        <label>
+          <h3><b>&ensp;&ensp;Cable Duct Cost:</b></h3>
+        </label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Cable Duct Cost" id="cd_cost" readonly> <br>
 
-      <label>
-        <h3><b>18 SWG Sheet:</b></h3>
-      </label><br>
-      <label>Total Cost</label>
-      <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_18_total" readonly>
-      <label>&ensp;&ensp;Final Cost</label>
-      <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_18_final_total" readonly> <br><br>
-      <button id="save_exit" class="button" type="submit" value="Submit">Save And Exit</button> <br><br>
-    <?php }?>
+        <label>
+          <h3><b>Bus Bar:</b></h3>
+        </label><br>
+        <label>Weight/kg</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Weight/kg" id="bbr_total_weight" readonly>
+        <label>&ensp;&ensp;Total Cost</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Total Cost" id="busbar_total_cost" readonly>
+        <label>&ensp;&ensp;Total Sleeve Cost</label>
+        <input type="number" style="width:10%; background:none; color:red" placeholder="Total Sleeve Cost" id="busbar_total_sleeve" readonly> <br>
+
+        <label>
+          <h3><b>14 SWG Sheet:</b></h3>
+        </label><br>
+        <label>Total Cost</label>
+        <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_14_total" readonly>
+        <label>&ensp;&ensp;Final Cost</label>
+        <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_14_final_total" readonly> <br>
+
+        <label>
+          <h3><b>16 SWG Sheet:</b></h3>
+        </label><br>
+        <label>Total Cost</label>
+        <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_16_total" readonly>
+        <label>&ensp;&ensp;Final Cost</label>
+        <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_16_final_total" readonly> <br>
+
+        <label>
+          <h3><b>18 SWG Sheet:</b></h3>
+        </label><br>
+        <label>Total Cost</label>
+        <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_18_total" readonly>
+        <label>&ensp;&ensp;Final Cost</label>
+        <input type="number" style="width:14%; background:none; color:red" placeholder="Total Cost" id="swg_18_final_total" readonly> <br><br>
+        <button id="save_exit" class="button" type="submit" value="Submit">Save And Exit</button> <br><br>
+      <?php } ?>
 
     </div>
 </body>
-<script src="js_file.js"></script>
+<script src="javascript_file.js"></script>
 
 </html>

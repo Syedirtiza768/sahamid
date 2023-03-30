@@ -779,6 +779,14 @@ require_once 'assets/config.php';
     <option value="ms_sheet">MS Sheet</option>
     <option value="ss_sheet">SS Sheet</option>
     <option value="gi_sheet">GI Sheet</option>
+  </select><br>
+  
+  <label> <h3><b>Guage Value To Show In Cash demand:</b></h3> </label>
+  <select style="width:25%" name="sheet_sheet" id="guage_value_cd">
+    <option value="">Choose One</option>
+    <option value="14_swg">14 SWG</option>
+    <option value="16_swg">16 SWG</option>
+    <option value="18_swg">18 SWG</option>
   </select> <br> <br><br>
 
   <button id="calculateButton" class="button" type="submit" value="Submit">Calculate All Panel Costing</button> <br><br>
@@ -854,5 +862,5 @@ require_once 'assets/config.php';
   <button id="save_exit" class="button" type="submit" value="Submit">Save And Exit</button> <br><br>
 </div>
 </body>
-<script src="js_file.js"></script>
+<script src="javascript_file.js"></script>
 </html>

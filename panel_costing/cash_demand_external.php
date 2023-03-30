@@ -211,16 +211,64 @@ while ($panelCost = mysqli_fetch_array($result)) {
     <td></td>
   </tr>
   <tr>
-    <td><b>MS Sheets</b></td>
-    <td><?php echo $panelCost['14swg_sc']; ?></td>
-    <td><input type="number" style="text-align:center;  background:gainsboro" value = "<?php echo $cashDemand['ms_sheet_qty']; ?>" id="ms_sheet_qty" placeholder="Enter Qty"></td>
-    <td><input type="number" style="text-align:center;" value = "<?php echo $cashDemand['ms_sheet_budget'] ?>" id="ms_sheet_budget" readonly></td>
-    <td><input type="number" style="text-align:center;; background:gainsboro" value = "<?php echo $cashDemand['ms_sheet_actual'] ?>" id="ms_sheet_actual" placeholder="Enter Actual Price"></td>
-    <td><input type="number" style="text-align:center;"  value = "<?php echo $cashDemand['ms_sheet_profit']; ?>"  id="ms_sheet_profit" readonly></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
+  <?php if ($panelCost['sheet_sheet_cd'] == 'ms_sheet') { ?>
+              <tr>
+                <td><b>MS Sheets</b></td>
+                <?php if ($panelCost['guage_value_cd'] == "14_swg") { ?>
+                  <td><?php echo $panelCost['14swg_sc']; ?></td>
+                <?php } elseif ($panelCost['guage_value_cd'] == "16_swg") { ?>
+                  <td><?php echo $panelCost['16swg_sc']; ?></td>
+                <?php } elseif ($panelCost['guage_value_cd'] == "18_swg") { ?>
+                  <td><?php echo $panelCost['18swg_sc']; ?></td>
+                <?php } ?>
+                <td><input type="number" style="text-align:center;  background:gainsboro" value="<?php echo $cashDemand['ms_sheet_qty']; ?>" id="ms_sheet_qty" placeholder="Enter Qty"></td>
+                <td><input type="number" style="text-align:center;" value="<?php echo $cashDemand['ms_sheet_budget'] ?>" id="ms_sheet_budget" readonly></td>
+                <td><input type="number" style="text-align:center;; background:gainsboro" value="<?php echo $cashDemand['ms_sheet_actual'] ?>" id="ms_sheet_actual" placeholder="Enter Actual Price"></td>
+                <td><input type="number" style="text-align:center;" value="<?php echo $cashDemand['ms_sheet_profit']; ?>" id="ms_sheet_profit" readonly></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            <?php } elseif ($panelCost['sheet_sheet_cd'] == 'ss_sheet') { ?>
+              <tr>
+                <td><b>SS Sheets</b></td>
+                <?php if ($panelCost['guage_value_cd'] == "14_swg") { ?>
+                  <td><?php echo $panelCost['14swg_sc']; ?></td>
+                <?php } elseif ($panelCost['guage_value_cd'] == "16_swg") { ?>
+                  <td><?php echo $panelCost['16swg_sc']; ?></td>
+                <?php } elseif ($panelCost['guage_value_cd'] == "18_swg") { ?>
+                  <td><?php echo $panelCost['18swg_sc']; ?></td>
+                <?php } ?>
+                <td><input type="number" style="text-align:center;  background:gainsboro" value="<?php echo $cashDemand['ms_sheet_qty']; ?>" id="ms_sheet_qty" placeholder="Enter Qty"></td>
+                <td><input type="number" style="text-align:center;" value="<?php echo $cashDemand['ms_sheet_budget'] ?>" id="ms_sheet_budget" readonly></td>
+                <td><input type="number" style="text-align:center;; background:gainsboro" value="<?php echo $cashDemand['ms_sheet_actual'] ?>" id="ms_sheet_actual" placeholder="Enter Actual Price"></td>
+                <td><input type="number" style="text-align:center;" value="<?php echo $cashDemand['ms_sheet_profit']; ?>" id="ms_sheet_profit" readonly></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            <?php } elseif ($panelCost['sheet_sheet_cd'] == 'gi_sheet') { ?>
+              <tr>
+                <td><b>GI Sheets</b></td>
+                <?php if ($panelCost['guage_value_cd'] == "14_swg") { ?>
+                  <td><?php echo $panelCost['14swg_sc']; ?></td>
+                <?php } elseif ($panelCost['guage_value_cd'] == "16_swg") { ?>
+                  <td><?php echo $panelCost['16swg_sc']; ?></td>
+                <?php } elseif ($panelCost['guage_value_cd'] == "18_swg") { ?>
+                  <td><?php echo $panelCost['18swg_sc']; ?></td>
+                <?php } ?>
+                <td><input type="number" style="text-align:center;  background:gainsboro" value="<?php echo $cashDemand['ms_sheet_qty']; ?>" id="ms_sheet_qty" placeholder="Enter Qty"></td>
+                <td><input type="number" style="text-align:center;" value="<?php echo $cashDemand['ms_sheet_budget'] ?>" id="ms_sheet_budget" readonly></td>
+                <td><input type="number" style="text-align:center;; background:gainsboro" value="<?php echo $cashDemand['ms_sheet_actual'] ?>" id="ms_sheet_actual" placeholder="Enter Actual Price"></td>
+                <td><input type="number" style="text-align:center;" value="<?php echo $cashDemand['ms_sheet_profit']; ?>" id="ms_sheet_profit" readonly></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            <?php } ?>
   </tr>
   <tr>
     <td><b>Cable</b></td>

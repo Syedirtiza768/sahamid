@@ -2573,6 +2573,30 @@ document.getElementById('sheet_sheet_cd').onchange = function () {
 };
 
 
+document.getElementById('guage_value_cd').onchange = function () {
+  var guage_value_cd = $("#guage_value_cd").val();
+  var pc_id = $(".pc_id").val();
+  if (pc_h != "") {
+    $.ajax({
+      url: "cost/guage_value_cd.php",
+      method: "POST",
+      data: {
+        pc_id: pc_id,
+        guage_value_cd:guage_value_cd
+      },
+      success: function (data) {
+        setTimeout(function () {
+          $("#guage_value_cd").css("border", "green 2px solid"); // change it back after ...
+        }, 1000);
+      },
+    });
+  }
+  else {
+    Swal.fire("It seems you have't calculated or stored all of values");
+  }
+};
+
+
 $(document).on("click", "#calculateButton", function () {
   var pc_h = $("#pc_h").val();
   var pc_id = $(".pc_id").val();
@@ -2923,13 +2947,13 @@ $(document).on("click", "#calculateButton", function () {
       },
       success: function (data) {
         if (data) {
-          alert(data);
           $("#sheet_use").val(data);
         }
       },
     });
 
     var sheet_use = $("#sheet_use").val();
+    var guage_value_cd = $("#guage_value_cd").val();
     var sheet_selection = $("#sheet_selection").val();
     var wiring_cost = $("#wiring_cost").val();
     var labour = $("#labour").val();
@@ -2952,6 +2976,7 @@ $(document).on("click", "#calculateButton", function () {
         Increase_percent_18: Increase_percent_18,
         sheet_use: sheet_use,
         sheet_selection: sheet_selection,
+        guage_value_cd:guage_value_cd,
         pc_id: pc_id
       },
       success: function (data) {
@@ -2982,7 +3007,8 @@ $(document).on("click", "#calculateButton", function () {
 
 $(document).on("click", "#save_exit", function () {
   var sheet_sheet_cd = $("#sheet_sheet_cd").val();
-  if(sheet_sheet_cd != ""){
+  var guage_value_cd = $("#guage_value_cd").val();
+  if(sheet_sheet_cd != "" || guage_value_cd !=""){
   if (confirm("Once you saved you won't be able to make changes any more?") == true) {
     var pc_h = $("#swg_14_final_total").val();
     var pc_id = $(".pc_id").val();
@@ -3007,6 +3033,6 @@ $(document).on("click", "#save_exit", function () {
   else{}
 }
 else{
-  Swal.fire("Please select which sheet value to display in cash demand page");
+  Swal.fire("Please select which sheet value and guage value to display in cash demand page");
 }
 });
