@@ -158,21 +158,22 @@ if (!empty($result)) {
           {$row['category']}
           </td>
           <td style='font-size:10px'>
-          <h6>Number:{$row['d_number']}  |   Revision: {$row['d_revision']}</h6> 
-          <h6>Date:{$row['d_date']}</h6>
+          <h6>Number:{$row['pdf_number']}  |   Revision: {$row['d_revision']}</h6> 
+          <h6>Date:{$row['pdf_date']}</h6>
           $pdf
           <br>
+          <hr style='border-top: 1px dashed black;'>
           
           <h6>Deleted Versions:</h6>";
           // to get deleted pdf-file paths
           
           if(!empty($row['del_pdf'])){
             $pre_del= $row['del_pdf'];
-            if(!empty($row['del_version'])){
-              $pre_recd= $row['del_version'];
+            if(!empty($row['pdf_del_version'])){
+              $pre_recd= $row['pdf_del_version'];
               $del_version = explode (",", $pre_recd);
-          if(!empty($row['del_date'])){
-                $pre_recd= $row['del_date'];
+          if(!empty($row['pdf_del_date'])){
+                $pre_recd= $row['pdf_del_date'];
                 $del_date = explode (",", $pre_recd);
             $str_arr = explode (",", $pre_del); 
           for($i=0; $i<count($str_arr); $i++){
@@ -191,22 +192,22 @@ if (!empty($result)) {
           $opt .= "</td>
 
           <td style='font-size:10px'>
-          <h6>Number:{$row['d_number']}</h6>
-          <h6>Date:{$row['d_date']}</h6>
+          <h6>Number:{$row['excel_number']}</h6>
+          <h6>Date:{$row['excel_date']}</h6>
           $excel
-          <br>
+          <br><hr style='border-top: 1px dashed black;'>
           <h6><b>Deleted Versions:</b></h6>";
           // to get deleted excel-file paths
           if(!empty($row['del_excel'])){
             $pre_del= $row['del_excel'];
             $str_arr = explode (",", $pre_del); 
 
-            if(!empty($row['del_version'])){
-              $pre_recd= $row['del_version'];
+            if(!empty($row['excel_del_version'])){
+              $pre_recd= $row['excel_del_version'];
               $del_version = explode (",", $pre_recd);
 
-          if(!empty($row['del_date'])){
-                $pre_recd= $row['del_date'];
+          if(!empty($row['excel_del_date'])){
+                $pre_recd= $row['excel_del_date'];
                 $del_date = explode (",", $pre_recd);
 
           for($i=0; $i<count($str_arr); $i++){
@@ -220,19 +221,19 @@ if (!empty($result)) {
         $opt .= " </td>
 
           <td style='font-size:10px'>
-          <h6>Number:{$row['d_number']}</h6>
-          <h6>Date:{$row['d_date']}</h6>
+          <h6>Number:{$row['word_number']}</h6>
+          <h6>Date:{$row['word_date']}</h6>
           $word
-          <br>
+          <br><hr style='border-top: 1px dashed black;'>
           <h6><b>Deleted Versions:</b></h6>";
           // to get deleted word-file paths
           if(!empty($row['del_word'])){
             $pre_del= $row['del_word'];
-            if(!empty($row['del_version'])){
-              $pre_recd= $row['del_version'];
+            if(!empty($row['word_del_version'])){
+              $pre_recd= $row['word_del_version'];
               $del_version = explode (",", $pre_recd);
-          if(!empty($row['del_date'])){
-                $pre_recd= $row['del_date'];
+          if(!empty($row['word_del_date'])){
+                $pre_recd= $row['word_del_date'];
                 $del_date = explode (",", $pre_recd);
             $str_arr = explode (",", $pre_del); 
           for($i=0; $i<count($str_arr); $i++){
@@ -247,19 +248,19 @@ if (!empty($result)) {
     $opt .= " </td>
 
           <td style='font-size:10px'>
-          <h6>Number:{$row['d_number']}</h6>
-          <h6>Date:{$row['d_date']}</h6>
+          <h6>Number:{$row['ppt_number']}</h6>
+          <h6>Date:{$row['ppt_date']}</h6>
           $ppt
-          <br>
+          <br><hr style='border-top: 1px dashed black;'>
           <h6><b>Deleted Versions:</b></h6>";
           // to get deleted word-file paths
           if(!empty($row['del_ppt'])){
             $pre_del= $row['del_ppt'];
-            if(!empty($row['del_version'])){
-              $pre_recd= $row['del_version'];
+            if(!empty($row['ppt_del_version'])){
+              $pre_recd= $row['ppt_del_version'];
               $del_version = explode (",", $pre_recd);
-          if(!empty($row['del_date'])){
-                $pre_recd= $row['del_date'];
+          if(!empty($row['ppt_del_date'])){
+                $pre_recd= $row['ppt_del_date'];
                 $del_date = explode (",", $pre_recd);
             $str_arr = explode (",", $pre_del); 
           for($i=0; $i<count($str_arr); $i++){
@@ -279,10 +280,8 @@ if (!empty($result)) {
         <i class='material-icons update-form' data-toggle='modal'
         data_id= '". $row['id']."'
         data_name='".$row['d_name']."'
-        data_number='".$row['d_number']."'
         data_revision='".$row['d_revision']."'
         data_category='".$row['category']."'
-        data_date='".$row['d_date']."'
         title='Edit'></i>
       </a>
         </td>";
