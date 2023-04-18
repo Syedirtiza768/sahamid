@@ -38,16 +38,65 @@
 	$salescaseCount = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
 
 ?> 
-<div class="col-md-3 col-sm-6 col-xs-12 item" data-code="salescase-badge">
-	<div style="position: absolute; padding: 5px; background: white; color: black; cursor: pointer; z-index: 15;">
+<?php
+
+$SQL = "SELECT * FROM user_permission WHERE userid='" . $_SESSION['UserID'] . "' AND permission='*' ";
+$ressData = mysqli_query($db, $SQL);
+while ($rowData = mysqli_fetch_assoc($ressData)) {
+	$permission = $rowData['permission'];
+}
+?>
+<div class="col-md-4 col-sm-6 col-xs-12 item" style="height:140px; overflow:auto; margin-top:8px;" data-code="salescase-badge">
+	<div style="position: relative; padding: 5px; background: white; color: black; cursor: pointer; z-index: 15; width:100%;">
+	<?php
+		if ($permission == "*") {
+		?>
+			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+				<?php
+				$SQL = "SELECT * FROM salesman ";
+				$result = mysqli_query($db, $SQL);
+				while ($row_salesman = mysqli_fetch_assoc($result)) {
+				?>
+					<option value="<?php echo $row_salesman['salesmanname']; ?>"><?php echo $row_salesman['salesmanname']; ?></option>
+				<?php }
+				?>
+			</select>
+		<?php } else {
+			$SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "' ";
+			$resss = mysqli_query($db, $SQL); ?>
+			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+				<?php while ($row = mysqli_fetch_assoc($resss)) {
+
+					$SQL = "SELECT realname FROM www_users WHERE userid='" . $row['can_access'] . "' ";
+					$result = mysqli_query($db, $SQL);
+					while ($row_data = mysqli_fetch_assoc($result)) {
+				?>
+						<option value="<?php echo $row_data['realname']; ?>"><?php echo $row_data['realname']; ?></option>
+				<?php }
+				} ?>
+			</select>
+		<?php } ?>
+		<span class="store-data" onclick=""><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
 		<i class="fa fa-trash removeBadge"></i>
 	</div>
+	<script>
+		$(document).ready(function() {
+			$('.js-example-basic-multiple').select2({
+				placeholder: {
+					text: 'Select an option'
+				}
+			});
+		});
+	</script>
+	
+
 	<div class="info-box item-content">
             <span class="info-box-icon bg-red"><i class="fa ion-briefcase"></i></span>
             <a href="salesCasesThisMonth.php" target="_blank">
 			<div class="info-box-content">
 		  		<span class="info-box-text">Salescases</span>
                 <span class="info-box-number"><a href="#"><?php echo $salescaseCount; ?></a></span>
+				
 			</div>
 		</a>
 	</div>

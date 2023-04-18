@@ -23,7 +23,7 @@
 			$id = -1;
 		}
 	}
-
+	
 	$SQL = "SELECT * FROM dashboards WHERE id='$id'";
 	$res = mysqli_query($db, $SQL);
 

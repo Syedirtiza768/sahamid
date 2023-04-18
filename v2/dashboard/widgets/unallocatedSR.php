@@ -226,12 +226,58 @@
 	}
 
 ?>
+<?php
 
-<div class="col-md-4 item" style="height:250px;" data-code="unallocatedSR">
-	<div style="position: absolute; padding: 5px; background: white; color: black; cursor: pointer; z-index: 15; right: 15px;">
+$SQL = "SELECT * FROM user_permission WHERE userid='" . $_SESSION['UserID'] . "' AND permission='*' ";
+$ressData = mysqli_query($db, $SQL);
+while ($rowData = mysqli_fetch_assoc($ressData)) {
+	$permission = $rowData['permission'];
+}
+
+?>
+<div class="col-md-4 item" style="height:250px; overflow:auto; width:45%" data-code="unallocatedSR">
+	<div style="position: relative; padding: 5px; background: white; color: black; cursor: pointer; z-index: 15; width:100%;">
+	<?php
+		if ($permission == "*") {
+		?>
+			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+				<?php
+				$SQL = "SELECT * FROM salesman ";
+				$result = mysqli_query($db, $SQL);
+				while ($row_salesman = mysqli_fetch_assoc($result)) {
+				?>
+					<option value="<?php echo $row_salesman['salesmanname']; ?>"><?php echo $row_salesman['salesmanname']; ?></option>
+				<?php }
+				?>
+			</select>
+		<?php } else {
+			$SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "' ";
+			$resss = mysqli_query($db, $SQL); ?>
+			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+				<?php while ($row = mysqli_fetch_assoc($resss)) {
+
+					$SQL = "SELECT realname FROM www_users WHERE userid='" . $row['can_access'] . "' ";
+					$result = mysqli_query($db, $SQL);
+					while ($row_data = mysqli_fetch_assoc($result)) {
+				?>
+						<option value="<?php echo $row_data['realname']; ?>"><?php echo $row_data['realname']; ?></option>
+				<?php }
+				} ?>
+			</select>
+		<?php } ?>
+		<span class="store-data" onclick="myFunctionUASR()"><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
 		<i class="fa fa-trash removeWidget"></i>
 	</div>
-	<div id="totalunallocatedcontsr" class="item-content" style="background: white"></div>
+	<div id="totalunallocatedcontsr" class="item-content" style="background: white; width:98.3%"></div>
+	<script>
+		$(document).ready(function() {
+			$('.js-example-basic-multiple').select2({
+				placeholder: {
+					text: 'Select an option'
+				}
+			});
+		});
+	</script>
 	<script>
 		$(document).ready(function(){
 			res = <?php echo json_encode($res); ?>
@@ -267,5 +313,59 @@
 			    }]
 			});
 		});
+	</script>
+	<script>
+		function myFunctionUASR() {
+			var data = $(".dataUASR").val();
+			for (var i = 0; i < data.length; i++) {
+				if (data.hasOwnProperty(i)) {
+					data[i] = "'" + data[i] + "'";
+				}
+			}
+			var salesman = data.toString();
+			$.ajax({
+				type: "POST",
+				url: "dashboard/widgets/updated_widgets/unallocatedSRUpdate.php",
+				data: {
+					salesman: salesman
+				},
+				success: function(data) {
+					var data = JSON.parse(data);
+					console.log(data);
+					var res = data;
+
+					Highcharts.chart('totalunallocatedcontsr', {
+			    chart: {
+			        type: 'funnel',
+			        height: 250
+			    },
+			    title: {
+			        text: 'Total Unallocated'
+			    },
+			    plotOptions: {
+			        series: {
+			            dataLabels: {
+			                enabled: true,
+			                format: '<b>{point.name}</b> ({point.y:,.0f})',
+			                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black',
+			                softConnector: true
+			            },
+			            center: ['15%', '50%'],
+			            neckWidth: '30%',
+			            neckHeight: '35%',
+			            width: '30%'
+			        }
+			    },
+			    legend: {
+			        enabled: false
+			    },
+			    series: [{
+			        name: 'PKR',
+			        data: res
+			    }]
+			});
+				}
+			});
+		};
 	</script>
 </div>
