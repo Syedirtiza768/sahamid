@@ -24,16 +24,22 @@
 		<title>List Vouchers</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-		<link rel="stylesheet" href="../../quotation/assets/vendor/bootstrap/css/bootstrap.css" />
-		<link rel="stylesheet" href="../../quotation/assets/vendor/font-awesome/css/font-awesome.css" />
-		<link rel="stylesheet" href="../../quotation/assets/stylesheets/theme.css" />
-		<link rel="stylesheet" href="../../quotation/assets/vendor/sweetalert/sweetalert.css" />
-		<link rel="stylesheet" href="../../quotation/assets/stylesheets/skins/default.css" />
-		<link rel="stylesheet" href="../../quotation/assets/vendor/select2/select2.css" />
-		<link rel="stylesheet" href="../../quotation/assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+        <link rel="stylesheet" href="../../quotation/assets/vendor/bootstrap/css/bootstrap.css" />
+        <link rel="stylesheet" href="../../quotation/assets/vendor/font-awesome/css/font-awesome.css" />
+        <link rel="stylesheet" href="../../quotation/assets/vendor/nanoscroller/nanoscroller.css" />
+        <link rel="stylesheet" href="../../quotation/assets/vendor/sweetalert/sweetalert.css" />
+        <link rel="stylesheet" href="../../quotation/assets/vendor/jquery-datatables/media/css/jquery.dataTables.css">
+        <link rel="stylesheet" href="../../quotation/assets/vendor/jquery-datatables-bs3/assets/css/datatables.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css">
+        <link rel="stylesheet" href="../../quotation/assets/vendor/pnotify/pnotify.custom.css">
+        <link rel="stylesheet" href="../../quotation/assets/stylesheets/theme.css" />
+        <link rel="stylesheet" href="../../quotation/assets/stylesheets/skins/default.css" />
 
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-		<script src="../../quotation/assets/vendor/modernizr/modernizr.js"></script>
+        <script src="../../quotation/assets/vendor/modernizr/modernizr.js"></script>
+
+		<script src="../../../quotation/assets/vendor/modernizr/modernizr.js"></script>
 		<script>
 			var datatable = null;
 		</script>
@@ -133,18 +139,21 @@
 	      	</footer>
 		</section>
 
-		<script src="../../quotation/assets/vendor/jquery/jquery.js"></script>
-		<script src="../../quotation/assets/vendor/bootstrap/js/bootstrap.js"></script>
-        <script src="../../quotation/assets/vendor/select2/select2.js"></script>
-		<script src="../../quotation/assets/vendor/nanoscroller/nanoscroller.js"></script>
-		<script src="../../quotation/assets/javascripts/theme.js"></script>
-		<script src="../../quotation/assets/vendor/sweetalert/sweetalert.min.js"></script>
-		<script src="../../quotation/assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-		<script src="../../quotation/assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-		<script src="../../quotation/assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+
+        <script src="../../quotation/assets/vendor/jquery/jquery.js"></script>
+        <script src="../../quotation/assets/vendor/bootstrap/js/bootstrap.js"></script>
+        <script src="../../quotation/assets/vendor/nanoscroller/nanoscroller.js"></script>
+        <script src="../../quotation/assets/vendor/sweetalert/sweetalert.min.js"></script>
+        <script src="../../quotation/assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+        <script src="../../quotation/assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+        <script src="../../v2/assets/datatables/dataTables.buttons.min.js"></script>
+        <script src="../../v2/assets/datatables/buttons.html5.min.js"></script>
+        <script src="../../quotation/assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+        <script src="../../quotation/assets/vendor/pnotify/pnotify.custom.js"></script>
+        <script src="../../quotation/assets/javascripts/theme.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 
-	</body>
 	<script>
 
 		(function( $ ) {
@@ -243,4 +252,6 @@
 
 
     </script>
+
+    </body>
 </html>
