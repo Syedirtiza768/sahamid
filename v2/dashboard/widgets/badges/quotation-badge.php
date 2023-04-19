@@ -14,7 +14,7 @@
 
 		$SQL = "SELECT count(*) as count FROM salesorders 
 				WHERE orddate <= '".date("Y-m-t")."'
-				AND orddate >= '".date("Y-m-01")."'";
+            AND orddate >= '".date("Y-m-01")."'";
 
 	} else {
 	
@@ -53,7 +53,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 		<?php
 		if ($permission == "*") {
 		?>
-			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+			<select class="js-example-basic-multiple dataQuotation" name="states[]" multiple="multiple" style="width:90%;">
 				<?php
 				$SQL = "SELECT * FROM salesman ";
 				$result = mysqli_query($db, $SQL);
@@ -66,7 +66,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 		<?php } else {
 			$SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "' ";
 			$resss = mysqli_query($db, $SQL); ?>
-			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+			<select class="js-example-basic-multiple dataQuotation" name="states[]" multiple="multiple" style="width:90%;">
 				<?php while ($row = mysqli_fetch_assoc($resss)) {
 
 					$SQL = "SELECT realname FROM www_users WHERE userid='" . $row['can_access'] . "' ";
@@ -78,14 +78,49 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 				} ?>
 			</select>
 		<?php } ?>
-		<span class="store-data" onclick=""><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
+		<span class="store-data" onclick="searchQuote()"><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
 		<i class="fa fa-trash removeBadge"></i>
 	</div>
   	<div class="info-box item-content">
     	<span class="info-box-icon bg-aqua"><i class="ion ion-quote"></i></span>
     	<div class="info-box-content">
       		<span class="info-box-text">Quotations</span>
-      		<span class="info-box-number"><?php echo $quotationCount; ?></span>
+      		<span class="info-box-number" id="quotation"><?php echo $quotationCount; ?></span>
     	</div>
   	</div>
+
+	  <script>
+		$(document).ready(function() {
+			$('.js-example-basic-multiple').select2({
+				placeholder: {
+					text: 'Select an option'
+				}
+			});
+		});
+	</script>
+	
+	  <script>
+		function searchQuote() {
+			var data = $(".dataQuotation").val();
+			for (var i = 0; i < data.length; i++) {
+				if (data.hasOwnProperty(i)) {
+					data[i] = "'" + data[i] + "'";
+				}
+			}
+			var salesman = data.toString();
+			console.log(salesman);
+			$.ajax({
+				type: "POST",
+				url: "dashboard/widgets/badges/badge_updated/quotationUpdate.php",
+				data: {
+					salesman: salesman
+				},
+				success: function(data) {
+					console.log(data);
+					$(".ms-usereditor span[class^='ms-error']:contains('External Data')").hide()
+					$("#quotation").text(data);
+				}
+			});
+		};
+	</script>
 </div>

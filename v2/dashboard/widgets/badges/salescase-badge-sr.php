@@ -54,7 +54,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 		<?php
 		if ($permission == "*") {
 		?>
-			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+			<select class="js-example-basic-multiple dataSALESCASEsr" name="states[]" multiple="multiple" style="width:90%;">
 				<?php
 				$SQL = "SELECT * FROM salesman ";
 				$result = mysqli_query($db, $SQL);
@@ -67,7 +67,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 		<?php } else {
 			$SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "' ";
 			$resss = mysqli_query($db, $SQL); ?>
-			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+			<select class="js-example-basic-multiple dataSALESCASEsr" name="states[]" multiple="multiple" style="width:90%;">
 				<?php while ($row = mysqli_fetch_assoc($resss)) {
 
 					$SQL = "SELECT realname FROM www_users WHERE userid='" . $row['can_access'] . "' ";
@@ -79,14 +79,48 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 				} ?>
 			</select>
 		<?php } ?>
-		<span class="store-data" onclick=""><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
+		<span class="store-data" onclick="searchSalescaseSR()"><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
 		<i class="fa fa-trash removeBadge"></i>
 	</div>
 	<div class="info-box item-content">
 		<span class="info-box-icon bg-red"><i class="fa ion-briefcase"></i></span>
 		<div class="info-box-content">
 	  		<span class="info-box-text">Salescases SR</span>
-	  		<span class="info-box-number"><?php echo $salescaseCount; ?></span>
+	  		<span class="info-box-number" id="salescaseSR"><?php echo $salescaseCount; ?></span>
 		</div>
 	</div>
+
+	<script>
+		$(document).ready(function() {
+			$('.js-example-basic-multiple').select2({
+				placeholder: {
+					text: 'Select an option'
+				}
+			});
+		});
+	</script>
+
+	<script>
+		function searchSalescaseSR() {
+			var data = $(".dataSALESCASEsr").val();
+			for (var i = 0; i < data.length; i++) {
+				if (data.hasOwnProperty(i)) {
+					data[i] = "'" + data[i] + "'";
+				}
+			}
+			var salesman = data.toString();
+			console.log(salesman);
+			$.ajax({
+				type: "POST",
+				url: "dashboard/widgets/badges/badge_updated/salescaseSrUpdate.php",
+				data: {
+					salesman: salesman
+				},
+				success: function(data) {
+					$(".ms-usereditor span[class^='ms-error']:contains('External Data')").hide()
+					$("#salescaseSR").text(data);
+				}
+			});
+		};
+	</script>
 </div>

@@ -51,7 +51,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 	<?php
 		if ($permission == "*") {
 		?>
-			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+			<select class="js-example-basic-multiple dataSALESCASE" name="states[]" multiple="multiple" style="width:90%;">
 				<?php
 				$SQL = "SELECT * FROM salesman ";
 				$result = mysqli_query($db, $SQL);
@@ -64,7 +64,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 		<?php } else {
 			$SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "' ";
 			$resss = mysqli_query($db, $SQL); ?>
-			<select class="js-example-basic-multiple dataUASR" name="states[]" multiple="multiple" style="width:90%;">
+			<select class="js-example-basic-multiple dataSALESCASE" name="states[]" multiple="multiple" style="width:90%;">
 				<?php while ($row = mysqli_fetch_assoc($resss)) {
 
 					$SQL = "SELECT realname FROM www_users WHERE userid='" . $row['can_access'] . "' ";
@@ -76,7 +76,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 				} ?>
 			</select>
 		<?php } ?>
-		<span class="store-data" onclick=""><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
+		<span class="store-data" onclick="searchSalescase()"><i style="color:red;" class="fa fa-search" aria-hidden="true"></i></span>
 		<i class="fa fa-trash removeBadge"></i>
 	</div>
 	<script>
@@ -95,9 +95,34 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
             <a href="salesCasesThisMonth.php" target="_blank">
 			<div class="info-box-content">
 		  		<span class="info-box-text">Salescases</span>
-                <span class="info-box-number"><a href="#"><?php echo $salescaseCount; ?></a></span>
+                <span class="info-box-number" id="salescase"><?php echo $salescaseCount; ?></span>
 				
 			</div>
 		</a>
 	</div>
+
+
+	<script>
+		function searchSalescase() {
+			var data = $(".dataSALESCASE").val();
+			for (var i = 0; i < data.length; i++) {
+				if (data.hasOwnProperty(i)) {
+					data[i] = "'" + data[i] + "'";
+				}
+			}
+			var salesman = data.toString();
+			console.log(salesman);
+			$.ajax({
+				type: "POST",
+				url: "dashboard/widgets/badges/badge_updated/salescaseUpdate.php",
+				data: {
+					salesman: salesman
+				},
+				success: function(data) {
+					$(".ms-usereditor span[class^='ms-error']:contains('External Data')").hide()
+					$("#salescase").text(data);
+				}
+			});
+		};
+	</script>
 </div>

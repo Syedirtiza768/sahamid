@@ -329,7 +329,6 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 				},
 				success: function(data) {
 					var data = JSON.parse(data);
-					console.log(data);
 					var res = data;
 
 			Highcharts.chart('totaloutstandingcontmt', {

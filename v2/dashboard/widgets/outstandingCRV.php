@@ -252,6 +252,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 				}
 			}
 			var salesman = data.toString();
+			console.log(salesman);
 			$.ajax({
 				type: "POST",
 				url: "dashboard/widgets/updated_widgets/outstandingTotalCRVUpdate.php",
@@ -260,7 +261,6 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 				},
 				success: function(data) {
 					var data = JSON.parse(data);
-					console.log(data);
 					var res = data;
 
 					Highcharts.chart('totaloutstandingcontcrv', {
@@ -269,7 +269,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 							height: 250
 						},
 						title: {
-							text: 'Total Outstanding (MT)'
+							text: 'Total Outstanding (CRV)'
 						},
 						plotOptions: {
 							series: {
