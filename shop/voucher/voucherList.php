@@ -156,16 +156,16 @@
 			var datatableInit = function() {
 
 				datatable = $('#datatable').DataTable({
-
-					language: {
-				        search: "_INPUT_",
-				        searchPlaceholder: "Searching..."
-				    },
+                    dom: 'Bflrtip',
+                    lengthMenu: [10, 25, 50, 75, 1000,-1 ],
+                    buttons: [
+                        'copy', 'csv', 'excel'
+                    ],
 				});
 
-				$('#datatable_length')
+				/*$('#datatable_length')
 					.find("label")
-					.html("<h3 style='margin:0; padding:0; font-variant: petite-caps;'>Voucher List </h3>");
+					.html("<h3 style='margin:0; padding:0; font-variant: petite-caps;'>Voucher List </h3>");*/
 
 			};
 
