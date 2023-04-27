@@ -36,7 +36,13 @@
 
 	}
 	
-	$ocCount = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
+	$result = mysqli_query($db, $SQL);
+	if ($result === FALSE) {
+        $ocCount  = 0;
+    } else {
+        $ocCount = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
+    }
+
 
 ?>
 <?php
