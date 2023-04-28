@@ -13,15 +13,14 @@ if (isset($_POST['salesman'])) {
     $allowed = [8, 10, 22];
 
 	
+	if (in_array((int)$_SESSION['AccessLevel'], $allowed)) {
+		$SQL = "SELECT SUM(target) as target FROM salesman";
+	} else {
 		$SQL = "SELECT target FROM salesman WHERE salesmanname IN(' . $salesman . ')";
-	
-        $result = mysqli_query($db, $SQL);
-        if ($result === FALSE) {
-            $yearlySalesTarget = 0;
-        }
-        else{
-            $yearlySalesTarget = mysqli_fetch_assoc(mysqli_query($db, $SQL))['target'];
-        }
+	}
+
+	$yearlySalesTarget = mysqli_fetch_assoc(mysqli_query($db, $SQL))['target'];
+
 
 	$months = [];
 	$sales = [];
@@ -45,23 +44,20 @@ if (isset($_POST['salesman'])) {
 					INNER JOIN invoicedetails ON (invoice.invoiceno = invoicedetails.invoiceno
 						AND invoicedetails.invoicelineno = invoiceoptions.invoicelineno
 						AND invoicedetails.invoiceoptionno = invoiceoptions.invoiceoptionno)
-					WHERE salesman.salesmanname IN(' . $salesman . ')
-                    AND invoice.returned = 0
-					AND invoice.inprogress = 0";
-
-		$SQL .=	" AND invoice.invoicesdate >= '" . $startDate . "'
+					WHERE invoice.returned = 0
+					AND invoice.inprogress = 0
+					AND salesman.salesmanname IN(' . $salesman . ')
+					 AND invoice.invoicesdate >= '" . $startDate . "'
 					AND invoice.invoicesdate <= '" . $endDate . "'";
 
         $result = mysqli_query($db, $SQL);
 
         if ($result === FALSE) {
-            $sale = 0;
+            $sale = null;
         }
         else{
             $sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
         }
-
-		
 
 		$sales[]  = ($i > (int)(date('m'))) ? null : ((int)($sale ?: 0));
 		$months[] = date("M", strtotime($startDate));

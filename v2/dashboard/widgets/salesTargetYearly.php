@@ -53,6 +53,8 @@ if (mysqli_num_rows($res) == 1) {
 					WHERE invoice.returned = 0
 					AND invoice.inprogress = 0";
 
+					
+
 		if (!in_array($_SESSION['AccessLevel'], $allowed)) {
 			$SQL .=	" AND salesman.salesmanname = '" . $_SESSION['UsersRealName'] . "'";
 		}
@@ -78,7 +80,7 @@ if (mysqli_num_rows($res) == 1) {
 		$target = ($yearlySalesTarget - $salesTotal) / $monthsRemaining;
 
 		$targets[] = (int)$target;
-
+		echo $target;
 		$salesTotal += $sale;
 
 		if ($i <= (int)(date('m')))
@@ -134,11 +136,11 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 ?>
 
 <div class="col-md-12 item" style="height:250px; overflow:auto; width:95%" data-code="salesTargetYearly">
-<link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
 	<div style="position: relative; padding: 5px; background: white; color: black; cursor: pointer; z-index: 15; width:100%">
-	<?php
+		<?php
 		if ($permission == "*") {
-		?>
+			?>
 		<select class="js-example-basic-multiple SalesYearlydata" name="states[]" multiple="multiple" style="width:95%;">
 		<?php
 				$SQL = "SELECT * FROM salesman ";
@@ -184,7 +186,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 			Highcharts.chart('salespersonTargetHistory', {
 
 				title: {
-					text: 'Sales Target Yearly'
+					text: 'Sales Target Yearly '
 				},
 
 				chart: {
@@ -260,7 +262,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 					Highcharts.chart('salespersonTargetHistory', {
 
 						title: {
-							text: 'Sales Target Yearly'
+							text: 'Sales Target Yearly '
 						},
 
 						chart: {
