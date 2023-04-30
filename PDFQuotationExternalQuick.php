@@ -901,7 +901,7 @@
 
                     $html2 .= '<tr>
                                 <td><b>Grand Total</b></td>
-                                <td>PKR' . locale_number_format(round($quoteValue * 1.19), 2) .getparityrate($currency, $values,$quoteValue * 1.17) .  '</td>
+                                <td>PKR' . locale_number_format(round($quoteValue * 1.18), 2) .getparityrate($currency, $values,$quoteValue * 1.17) .  '</td>
                             </tr>';
 
                 }

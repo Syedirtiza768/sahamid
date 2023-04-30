@@ -53,8 +53,6 @@ if (mysqli_num_rows($res) == 1) {
 					WHERE invoice.returned = 0
 					AND invoice.inprogress = 0";
 
-					
-
 		if (!in_array($_SESSION['AccessLevel'], $allowed)) {
 			$SQL .=	" AND salesman.salesmanname = '" . $_SESSION['UsersRealName'] . "'";
 		}

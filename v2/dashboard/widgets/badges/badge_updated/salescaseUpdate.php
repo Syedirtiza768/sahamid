@@ -24,5 +24,5 @@ if (isset($_POST['salesman'])) {
         $salescaseCount = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
     }
 
-    echo $SQL;
+    echo $salescaseCount;
 }
