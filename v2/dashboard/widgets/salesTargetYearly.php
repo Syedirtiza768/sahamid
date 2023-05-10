@@ -14,7 +14,7 @@ $key = "salesTargetYearlyTotal-" . $_SESSION['UserID'];
 $SQL = "SELECT value FROM cache WHERE unique_key = '$key' AND refreshed_at > '" . date('Y-m-d') . " 00:00:01'";
 $res = mysqli_query($db, $SQL);
 
-if (mysqli_num_rows($res) == 1) {
+if (mysqli_num_rows($res) == "MAin") {
 	$response = json_decode(mysqli_fetch_assoc($res)['value']);
 } else {
 
@@ -41,6 +41,7 @@ if (mysqli_num_rows($res) == 1) {
 
 		$startDate = date('Y-' . $month . '-01');
 		$endDate = date('Y-' . $month . '-31');
+		
 
 		$SQL = "SELECT SUM((((invoicedetails.unitprice / 100) * ((1-invoicedetails.discountpercent)*100))
 							*invoicedetails.quantity)*invoiceoptions.quantity) as price,custbranch.salesman  FROM invoice 
@@ -52,13 +53,11 @@ if (mysqli_num_rows($res) == 1) {
 						AND invoicedetails.invoiceoptionno = invoiceoptions.invoiceoptionno)
 					WHERE invoice.returned = 0
 					AND invoice.inprogress = 0";
-
 		if (!in_array($_SESSION['AccessLevel'], $allowed)) {
 			$SQL .=	" AND salesman.salesmanname = '" . $_SESSION['UsersRealName'] . "'";
 		}
-
 		$SQL .=	" AND invoice.invoicesdate >= '" . $startDate . "'
-					AND invoice.invoicesdate <= '" . $endDate . "'";
+				  AND invoice.invoicesdate <= '" . $endDate . "'";
 
 		$sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
 
@@ -78,7 +77,6 @@ if (mysqli_num_rows($res) == 1) {
 		$target = ($yearlySalesTarget - $salesTotal) / $monthsRemaining;
 
 		$targets[] = (int)$target;
-		echo $target;
 		$salesTotal += $sale;
 
 		if ($i <= (int)(date('m')))
@@ -180,6 +178,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 	<script>
 		$(document).ready(function() {
 			res = <?php echo json_encode($response); ?>;
+			console.log(res);
 
 			Highcharts.chart('salespersonTargetHistory', {
 
@@ -260,7 +259,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 					Highcharts.chart('salespersonTargetHistory', {
 
 						title: {
-							text: 'Sales Target Yearly '
+							text: 'Sales Target Yearly Updated'
 						},
 
 						chart: {

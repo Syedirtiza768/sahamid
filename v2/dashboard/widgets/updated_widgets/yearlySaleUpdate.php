@@ -13,13 +13,15 @@ if (isset($_POST['salesman'])) {
     $allowed = [8, 10, 22];
 
 	
-	if (in_array((int)$_SESSION['AccessLevel'], $allowed)) {
-		$SQL = "SELECT SUM(target) as target FROM salesman";
-	} else {
-		$SQL = "SELECT target FROM salesman WHERE salesmanname IN(' . $salesman . ')";
+	
+	$SQL = "SELECT SUM(target) FROM salesman WHERE salesmanname IN(" . $salesman . ")";
+	$result = mysqli_query($db, $SQL);
+	if ($result === FALSE) {
+		$yearlySalesTarget = 0;
 	}
-
-	$yearlySalesTarget = mysqli_fetch_assoc(mysqli_query($db, $SQL))['target'];
+	else{
+		$yearlySalesTarget = mysqli_fetch_assoc(mysqli_query($db, $SQL))['SUM(target)'];
+	}
 
 
 	$months = [];
@@ -35,7 +37,6 @@ if (isset($_POST['salesman'])) {
 
 		$startDate = date('Y-' . $month . '-01');
 		$endDate = date('Y-' . $month . '-31');
-
 		$SQL = "SELECT SUM((((invoicedetails.unitprice / 100) * ((1-invoicedetails.discountpercent)*100))
 							*invoicedetails.quantity)*invoiceoptions.quantity) as price,custbranch.salesman  FROM invoice 
 					INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode
@@ -46,8 +47,8 @@ if (isset($_POST['salesman'])) {
 						AND invoicedetails.invoiceoptionno = invoiceoptions.invoiceoptionno)
 					WHERE invoice.returned = 0
 					AND invoice.inprogress = 0
-					AND salesman.salesmanname IN(' . $salesman . ')
-					 AND invoice.invoicesdate >= '" . $startDate . "'
+					AND salesman.salesmanname IN(" . $salesman . ")
+					AND invoice.invoicesdate >= '" . $startDate . "'
 					AND invoice.invoicesdate <= '" . $endDate . "'";
 
         $result = mysqli_query($db, $SQL);
@@ -58,7 +59,6 @@ if (isset($_POST['salesman'])) {
         else{
             $sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
         }
-
 		$sales[]  = ($i > (int)(date('m'))) ? null : ((int)($sale ?: 0));
 		$months[] = date("M", strtotime($startDate));
 	}
