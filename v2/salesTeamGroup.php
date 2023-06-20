@@ -137,7 +137,9 @@ $salesmen = mysqli_query($db, $SQL);
         <div class="row">
             <div class="col-md-12">
                 <section class="group-container">
-                    <?php while ($row = mysqli_fetch_assoc($teams)) { ?>
+                    <?php 
+                    if ($teams != FALSE) {
+                        while ($row = mysqli_fetch_assoc($teams)) { ?>                   
                         <div id="group-<?php ec($row['id']); ?>" class="customer-group">
                             <div class="group-display-view">
                                 <div class="group-name-display"><b>Team: </b><?php ec($row['name']); ?></div>
@@ -157,7 +159,7 @@ $salesmen = mysqli_query($db, $SQL);
                                 </section>
                             </div>
                         </div>
-                    <?php } ?>
+                    <?php } } ?>
                 </section>
             </div>
         </div>
