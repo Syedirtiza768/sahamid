@@ -126,7 +126,7 @@
       <table class="table table-condensed table-striped">
         <thead>
         	<tr>
-              <th style="">#</th>
+              <th>#</th>
               <th>Name</th>
               <th>Sales Total</th>
 			  <th>3 Months</th>

@@ -124,6 +124,7 @@
 		'Inventory Category Maintenance' => '../StockCategories.php',
 		'Salescase Access Control' => '../setup/SCPC/indexpermission.php',
 		'Salesperson Targets (clients)' => '../v2/customerGroups.php',
+		'Salesperson Teams' => '../v2/salesTeamGroup.php',
         'Salesperson Achieved Targets (clients)' => '../v2/updateCustomerGroupsSalesTargets.php',
 		'User Permissions New' => '../v2/userPermissions.php',
         'Recovery Permissions' => '../v2/recoverypermissions.php',
