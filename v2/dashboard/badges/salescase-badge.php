@@ -22,16 +22,17 @@ while ($row = mysqli_fetch_assoc($res))
 $SQL = "SELECT * FROM salesteam WHERE lead='" . $name . "'";
 $res = mysqli_query($db, $SQL);
 $members = [];
-while ($row = mysqli_fetch_assoc($res)) {
-	$members[] = $row['members'];
+if ($res === FALSE) {
+    $salesman = "'  $name  '";
+} else {
+	while ($row = mysqli_fetch_assoc($res)) {
+		$members[] = $row['members'];
+	}
+	$salesman = implode(',', $members);
+	$choices = explode(",", $salesman);
+	$salesman = "'" . implode("','", $choices) . "";
+    $salesman = $salesman . "','" . $name . "'";
 }
-$salesman = implode(',', $members);
-$choices = explode(",", $salesman);
-
-// $choice = "'" . implode("','", $choices) . "";
-
-$salesman = "'" . implode("','", $choices) . "";
-$salesman = $salesman . "','" . $name . "'";
 // $quotes = "'".$quotes."'";
 $SQL = "SELECT count(*) as count FROM salescase 
 INNER JOIN www_users ON www_users.realname = salescase.salesman

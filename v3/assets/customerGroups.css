@@ -1,0 +1,17 @@
+.group-container, .branches-container{display:flex; justify-content:space-between; flex-wrap: wrap;}
+.customer-group, .branch-item{padding:5px; margin:5px 10px; border:1px solid #424242; border-radius:7px; width:230px;}
+.group-name-input{width:100%; margin-bottom:5px; border:1px solid #424242; border-radius:7px; padding:5px;}
+.filter-group-input{margin-bottom:5px; border:1px solid #424242; border-radius:7px; padding:5px;}
+.display-hidden{display:none !important; }
+.overlay-container{padding-top:50px !important}
+.overlay-parent{display:flex; width:100%; position:absolute; right:-100%; transition:all .7s ease-in}
+.overlay-close {width:50px; background:#ccc}
+.overlay-close-button{background:white; color:#CCC; border-radius:50%; margin:10px 9px; width:30px; height:30px; font-size:1.5em}
+.overlay-body{background:#ecf0f5; height: calc(100vh - 50px); width:100%;padding:10px; padding-right:45px; border-left:1px solid #424242;}
+.overlay-loading-icon{backgrount:#ecf0f5; width:100%; display:flex; justify-content:center; align-items:center; height:calc(100vh - 50px)}
+.attach-branch-container{display:flex; width:100%; justify-content:space-between; height:60px; background:white; box-shadow:0px 2px 5px 2px #ccc; margin-bottom:10px}
+.branch-assign,.select2-container{margin:10px; flex:1}
+.select2-container--open .select2-dropdown{left:-10px !important; top:-12px}
+.select2-selection{flex:1; height:auto !important}
+.branches-container{padding-top:20px; overflow-y: scroll; max-height: calc(100vh - 250px);}
+#selected-group-target{border:1px solid #424242; border-radius:7px; padding:4px; margin:5px}

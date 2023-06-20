@@ -21,16 +21,17 @@ $allowed = [8, 10, 22];
 $SQL = "SELECT * FROM salesteam WHERE lead='" . $name . "'";
 $res = mysqli_query($db, $SQL);
 $members = [];
-while ($row = mysqli_fetch_assoc($res)) {
-	$members[] = $row['members'];
+if ($res === FALSE) {
+    $salesman = "'  $name  '";
+} else {
+	while ($row = mysqli_fetch_assoc($res)) {
+		$members[] = $row['members'];
+	}
+	$salesman = implode(',', $members);
+	$choices = explode(",", $salesman);
+	$salesman = "'" . implode("','", $choices) . "";
+    $salesman = $salesman . "','" . $name . "'";
 }
-$salesman = implode(',', $members);
-$choices = explode(",", $salesman);
-
-// $choice = "'" . implode("','", $choices) . "";
-
-$salesman = "'" . implode("','", $choices) . "";
-$salesman = $salesman . "','" . $name . "'";
 
 $SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "'";
 $res = mysqli_query($db, $SQL);
