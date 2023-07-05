@@ -72,9 +72,9 @@ if (mysqli_num_rows($res) != 1) {
     <link rel="stylesheet" href="asset/vendor/css/classic.date.css">
     <link rel="stylesheet" href="asset/vendor/css/classic.css">
     <!-- Core CSS -->
-    <link rel="stylesheet" href="asset/vendor/css/core.css" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="asset/vendor/css/coreStyle.css" class="template-customizer-core-css" />
     <link rel="stylesheet" href="asset/vendor/css/theme-default.css" class="template-customizer-theme-css" />
-    <link rel="stylesheet" href="asset/vendor/css/style.css" />
+    <link rel="stylesheet" href="asset/vendor/css/styles.css" />
     <link rel="stylesheet" href="asset/vendor/css/main_css.css" />
 
     <!-- Vendors CSS -->
@@ -97,7 +97,7 @@ if (mysqli_num_rows($res) != 1) {
         <div class="layout-container">
             <div class="layout-page">
                 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar" style="position:absolute;
-                 margin:auto; background-color:red; margin-left:2%">
+                 margin:auto; background-color:red; width: 100% !important">
                     <div class="navbar-nav align-items-left">
                         <div class="nav-item d-flex align-items-left name">
                             <div class="twelve">
@@ -142,11 +142,11 @@ if (mysqli_num_rows($res) != 1) {
                                                         <?php
                                                         $SQL = "SELECT * FROM salesteam WHERE lead='$name'";
                                                         $res = mysqli_query($db, $SQL); ?>
-                                                        <optgroup label="Team (Leader)">
+                                                        <optgroup label="Team (Leader)" class="select2-result-selectable">
                                                             <option value="<?php echo $name; ?>"><?php echo $name; ?></option>
                                                         </optgroup>
                                                         <?php while ($row = mysqli_fetch_assoc($res)) { ?>
-                                                            <optgroup label="Team (<?php echo $row["name"] ?>)">
+                                                            <optgroup label="Team (<?php echo $row["name"] ?>)" class="select2-result-selectable">
                                                                 <?php $members = explode(',', $row["members"]);
                                                                 foreach ($members as $member) { ?>
                                                                     <option value="<?php echo $member; ?>"><?php echo $member; ?></option>
@@ -155,10 +155,10 @@ if (mysqli_num_rows($res) != 1) {
                                                         <?php }
                                                         ?>
                                                     </select>
-                                                    <i class="fa fa-calendar" style="color:#ef3f5a;font-size:30px"></i>
+                                                    <!-- <i class="fa fa-calendar" style="color:#ef3f5a;font-size:30px"></i>
                                                     <input type="text" class="form-control" onfocus="(this.type='date')" id="from" placeholder="Start Date">
                                                     <i class="fa fa-calendar" style="color:#ef3f5a;font-size:30px"></i>
-                                                    <input type="text" class="form-control" onfocus="(this.type='date')" id="to" placeholder="End Date">
+                                                    <input type="text" class="form-control" onfocus="(this.type='date')" id="to" placeholder="End Date"> -->
                                                     <input type="submit" id="submit" value="Search">
                                                 </form>
                                             </div>
@@ -173,15 +173,41 @@ if (mysqli_num_rows($res) != 1) {
 
                             <!-- updated Badges file -->
                             <div class="row">
+                                <?php include('dashboard/badges/pendingdc-badge.php'); ?>
+                                <?php include('dashboard/badges/os-badge.php'); ?>
+                                <?php include('dashboard/badges/st-badge.php'); ?>
+                                <?php include('dashboard/badges/tc-badge.php'); ?>
+                            </div>
+
+                            <div class="col-lg-12 mb-4 order-0">
+                                <div style="background-color:#f5f5f9; height:25%">
+                                    <div class="d-flex  row">
+                                        <div class="col-sm-5 text-center text-sm-left">
+                                            <div class="card-body pb-0 px-0 px-md-4">
+                                                <!-- <img src="asset/img/illustrations/man-with-laptop-light.png" height="140" alt="View Badge User" data-app-dark-img="illustrations/man-with-laptop-dark.png" data-app-light-img="illustrations/man-with-laptop-light.png" /> -->
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-7">
+                                            <div class="card-body">
+                                                <form class="flex-form">
+                                                    <i class="fa fa-calendar" style="color:#ef3f5a;font-size:30px"></i>
+                                                    <input type="text" class="form-control" onfocus="(this.type='date')" id="from" placeholder="Start Date">
+                                                    <i class="fa fa-calendar" style="color:#ef3f5a;font-size:30px"></i>
+                                                    <input type="text" class="form-control" onfocus="(this.type='date')" id="to" placeholder="End Date">
+                                                    <input type="submit" id="submit1" value="Search">
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
                                 <?php include('dashboard/badges/salescase-badge.php'); ?>
                                 <?php include('dashboard/badges/quotation-badge.php'); ?>
                                 <?php include('dashboard/badges/oc-badge.php'); ?>
                                 <?php include('dashboard/badges/dc-badge.php'); ?>
-                                <?php include('dashboard/badges/pendingdc-badge.php'); ?>
-                                <?php include('dashboard/badges/os-badge.php'); ?>
                                 <?php include('dashboard/badges/invoice-badge.php'); ?>
-                                <?php include('dashboard/badges/st-badge.php'); ?>
-                                <?php include('dashboard/badges/tc-badge.php'); ?>
                             </div>
                             <!-- Total Revenue -->
                             <!-- <div class="col-12 col-lg-8 order-2 order-md-3 order-lg-2 mb-4">
@@ -517,7 +543,7 @@ if (mysqli_num_rows($res) != 1) {
 
         <!-- Page JS -->
         <script src="asset/js/dashboards-analytics.js"></script>
-        <script src="dashboard/assets/js/badgeDiv.js"></script>
+        <script src="dashboard/assets/js/DashV2s.js"></script>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
         <!-- Place this tag in your head or just before your close body tag. -->

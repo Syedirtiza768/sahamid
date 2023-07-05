@@ -16585,7 +16585,7 @@ html:not(.layout-menu-fixed) .menu-inner-shadow {
 }
 
 .layout-navbar.navbar-detached.container-xxl {
-  max-width: calc(1440px - calc(1.625rem * 2));
+  max-width: 100%;
 }
 
 .layout-navbar-fixed .layout-navbar.navbar-detached {
@@ -16610,7 +16610,7 @@ html:not(.layout-menu-fixed) .menu-inner-shadow {
 
 @media (max-width: 1199.98px) {
   .layout-navbar.navbar-detached {
-    width: calc(100vw - (100vw - 100%) - (1.625rem * 2)) !important;
+    width: 100% !important;
   }
 }
 

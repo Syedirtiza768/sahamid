@@ -40,6 +40,7 @@ while ($row = mysqli_fetch_assoc($res))
 while ($row = mysqli_fetch_assoc($res)) {
     $totalTarget = $row['target'] + $totalTarget;
 }
+$totalTarget = locale_number_format(round($totalTarget,0));
 ?>
 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
@@ -54,7 +55,7 @@ while ($row = mysqli_fetch_assoc($res)) {
             <?php if($totalTarget == NULL){ ?>
             <h3 class="card-title mb-2" style="color:#66c732" id="salestarget"> 0 </h3>
             <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:#66c732;" id="salestarget"><?php echo round($totalTarget, 0); ?></h3>
+            <h3 class="card-title mb-2" style="color:#66c732;" id="salestarget"><?php echo $totalTarget; ?></h3>
             <?php } ?>
             <!-- <hr>
             <h5 class="total"> Total: 12352</h5> -->

@@ -135,8 +135,8 @@ AND debtorno LIKE 'MT%'";
 		WHERE salescase.salesman IN($salesman)
         AND dcdetails.lineoptionno = 0  
 		AND dcoptions.optionno = 0 
-		AND dcs.orddate >= '$from'
-		AND dcs.orddate <= '$to'
+		-- AND dcs.orddate >= '$from'
+		-- AND dcs.orddate <= '$to'
 		AND dcs.courierslipdate = '0000-00-00 00:00:00' AND dcs.invoicedate='0000-00-00 00:00:00' 
 		AND dcs.grbdate='0000-00-00 00:00:00'
 		AND dcs.invoicegroupid is null
@@ -174,8 +174,8 @@ INNER JOIN debtortrans ON (debtortrans.type = 10
 WHERE salesman.salesmanname IN($salesman)
 AND invoice.returned = 0
 AND invoice.inprogress = 0
-AND invoice.invoicesdate >= '$from'
-AND invoice.invoicesdate <= '$to'
+-- AND invoice.invoicesdate >= '$from'
+-- AND invoice.invoicesdate <= '$to'
 		";
     $totalScore = NULL;
     $resp = mysqli_query($db, $SQL);
@@ -242,8 +242,36 @@ INNER JOIN www_users ON salescase.salesman = www_users.realname AND ( salescase.
             $outstanding = $row['remaining'] + $outstanding;
         }
         $outstanding = round($outstanding, 0);
-
     }
+
+
+    // Total Cart Value Update
+    $SQL = "SELECT      stockissuance.salesperson,
+                    SUM(stockissuance.issued*stockmaster.materialcost) as totalValue
+						
+					FROM stockissuance,
+						stockmaster
+						
+					WHERE stockissuance.stockid=stockmaster.stockid
+					AND stockissuance.salesperson IN($salesman)
+ GROUP BY stockissuance.salesperson
+ORDER BY totalValue desc
+            ";
+    $res = mysqli_query($db, $SQL);
+
+    if ($res === FALSE) {
+        $totalCart  = 0;
+    } else {
+        
+        
+        $totalCart = NULL;
+        while ($clients = mysqli_fetch_assoc($res)) {
+            $totalCart = $clients['totalValue'] + $totalCart;
+        }
+        $totalCart = round($totalCart, 0);
+    }
+
+
 
     $data = array(
         'salescaseCount' => $salescaseCount,
@@ -269,6 +297,8 @@ INNER JOIN www_users ON salescase.salesman = www_users.realname AND ( salescase.
         'salestarget' => $salestarget,
 
         'outstanding' => $outstanding,
+        
+        'totalCart' => $totalCart,
     );
     echo json_encode($data);
 }

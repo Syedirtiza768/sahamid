@@ -16,12 +16,71 @@ $(document).ready(function () {
         })
     });
 
+    $(document).on("click", ".select2-results__group", function(){
+
+        var groupName = $(this).html()
+        var options = $('#salesman option');
+        
+        $.each(options, function(key, value){
+                
+            if($(value)[0].parentElement.label.indexOf(groupName) >= 0){
+                $(value).prop("selected","selected");
+            }
+            
+        });
+          
+        $("#salesman").trigger("change");
+        $("#salesman").select2('close'); 
+    
+      });
+
     $('#submit').click(function (e) {
         e.preventDefault();
         var salesman = $('#salesman').val();
         var from = $('#from').val();
         var to = $('#to').val();
-        if (salesman != "" && from != "" && to != "") {
+        if (salesman != "" ) {
+            $('.ajax-loader').css("visibility", "visible");
+            $.ajax({
+                type: 'POST',
+                url: '../V2/dashboard/badges/update-badge.php',
+                data: { salesman: salesman, from: from, to: to },
+                success: function (response) {
+                    var result = $.parseJSON(response);
+                    var pdcCount = (result.pdcCount).toLocaleString(
+                        undefined,
+                    );
+                    $('#pdcCount').html(pdcCount);
+                    
+                    var salestarget = (result.salestarget).toLocaleString(
+                        undefined,
+                    );
+                    $('#salestarget').html(salestarget);
+
+                    var outstanding = (result.outstanding).toLocaleString(
+                        undefined,
+                    );
+                    $('#outstanding').html(outstanding);
+                    
+                    var totalCart = (result.totalCart).toLocaleString(
+                        undefined,
+                    );
+                    
+                    $('.totalCart').html(totalCart);
+
+                    $('.ajax-loader').css("visibility", "hidden");
+                }
+            });
+        }
+        else { alert("Please Select Salesman."); }
+    });
+
+    $('#submit1').click(function (e) {
+        e.preventDefault();
+        var salesman = $('#salesman').val();
+        var from = $('#from').val();
+        var to = $('#to').val();
+        if ( salesman != "" && from != "" && to != "") {
             $('.ajax-loader').css("visibility", "visible");
             $.ajax({
                 type: 'POST',
@@ -36,28 +95,25 @@ $(document).ready(function () {
                     $('#quotationCount').html(result.quotationCount);
                     $('#quotationCountSR').html(result.quotationCountSR);
                     $('#quotationCountMT').html(result.quotationCountMT);
-                    
+
                     $('#ocCount').html(result.ocCount);
                     $('#ocCountSR').html(result.ocCountSR);
                     $('#ocCountMT').html(result.ocCountMT);
-                    
+
                     $('#dcCount').html(result.dcCount);
                     $('#dcCountSR').html(result.dcCountSR);
                     $('#dcCountMT').html(result.dcCountMT);
-                    
-                    $('#pdcCount').html(result.pdcCount);
 
-                    $('#totalScore').html(result.totalScore);
 
-                    $('#salestarget').html(result.salestarget);
-                    
-                    $('#outstanding').html(result.outstanding);
-
+                    var totalScore = (result.totalScore).toLocaleString(
+                        undefined,
+                    );
+                    $('#totalScore').html(totalScore);
                     $('.ajax-loader').css("visibility", "hidden");
                 }
             });
         }
-        else { alert("Please Enter Salesman or Starting and Ending dates."); }
+        else { alert("Please Enter Both Start and End dates Also Salesman."); }
     });
 
     $('#salescase').click(function () {
@@ -128,4 +184,6 @@ $(document).ready(function () {
         $('#dcSRDiv').hide();
         $('#dcMTDiv').show();
     });
+
+
 });

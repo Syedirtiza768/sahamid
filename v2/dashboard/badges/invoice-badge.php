@@ -66,6 +66,7 @@ $resp = mysqli_query($db, $SQL);
 while ($row = mysqli_fetch_assoc($resp)) {
     $totalScore = $row['price'] + $totalScore;
 }
+$totalScore = locale_number_format(round($totalScore,0));
 ?>
 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
@@ -80,7 +81,7 @@ while ($row = mysqli_fetch_assoc($resp)) {
             <?php if($totalScore == NULL){ ?>
             <h3 class="card-title mb-2" style="color:#66c732" id="totalScore"> 0 </h3>
             <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:#66c732;" id="totalScore"><?php echo round($totalScore, 0); ?></h3>
+            <h3 class="card-title mb-2" style="color:#66c732;" id="totalScore"><?php echo $totalScore ?></h3>
             <?php } ?>
             <!-- <hr>
             <h5 class="total">Total Score</h5> -->

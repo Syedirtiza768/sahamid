@@ -23,7 +23,12 @@ if ($res === FALSE) {
 	$salesman = implode(',', $members);
 	$choices = explode(",", $salesman);
 	$salesman = "'" . implode("','", $choices) . "";
-    $salesman = $salesman . "','" . $name . "'";
+}
+if($salesman == "'" ){
+    $salesman = "'  $name  '";
+}
+else{
+$salesman = $salesman . "','" . $name . "'";
 }
 
 $SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "'";
@@ -41,14 +46,17 @@ $SQL = "SELECT      stockissuance.salesperson,
 						stockmaster
 						
 					WHERE stockissuance.stockid=stockmaster.stockid
-					AND stockissuance.salesperson = '" .$name. "'
+					AND stockissuance.salesperson IN($salesman)
  GROUP BY stockissuance.salesperson
 ORDER BY totalValue desc
             ";
 $res = mysqli_query($db, $SQL);
+
+$totalCart = NULL;
 while ($clients = mysqli_fetch_assoc($res)) {
-    $totalCart = locale_number_format(round($clients['totalValue'],0));
+    $totalCart = $clients['totalValue'] + $totalCart;
 }
+$totalCart = locale_number_format(round($totalCart,0));
 
 ?>
 
@@ -61,7 +69,11 @@ while ($clients = mysqli_fetch_assoc($res)) {
                 </div>
             </div>
             <span class="fw-semibold d-block mb-1">Total Cart</span>
-            <h3 class="card-title mb-2" style="color:#66c732;"><?php echo $totalCart ?></h3>
+            <?php if($totalCart == NULL){ ?>
+            <h3 class="card-title mb-2 totalcarts" style="color:#66c732" id="totalcarts"> 0 </h3>
+            <?php } else{ ?>
+            <h3 class="card-title mb-2 totalcarts" style="color:#66c732;" id="totalcarts"><?php echo $totalCart ?></h3>
+            <?php } ?>
             <!-- <hr>
             <h5 class="total"> Total: 12352</h5> -->
         </div>

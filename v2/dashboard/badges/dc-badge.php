@@ -43,6 +43,7 @@ $SQL = "SELECT count(*) as count FROM dcs
 			AND salescase.salesman IN( $salesman)";
 
 $dcCount = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
+$dcCount = locale_number_format(round($dcCount,0));
 
 $SQL = "SELECT count(*) as count FROM dcs 
 			INNER JOIN salescase ON salescase.salescaseref = dcs.salescaseref
@@ -58,6 +59,7 @@ if ($result === FALSE) {
 	$dcCountSR  = 0;
 } else {
 	$dcCountSR = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
+	$dcCountSR = locale_number_format(round($dcCountSR,0));
 }
 
 $SQL = "SELECT count(*) as count FROM dcs 
@@ -73,6 +75,7 @@ if ($result === FALSE) {
 	$dcCountMT  = 0;
 } else {
 	$dcCountMT = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
+	$dcCountMT = locale_number_format(round($dcCountMT,0));
 }
 
 ?>

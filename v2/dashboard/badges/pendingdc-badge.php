@@ -58,9 +58,10 @@ $resp = mysqli_query($db, $SQL);
 while ($row = mysqli_fetch_assoc($resp)) {
     $totalPending = round($row['totalamount']) + $totalPending;
 }
+$totalPending = locale_number_format(round($totalPending,0));
 ?>
 
-<div class="col-lg-2 col-md-12 col-6 mb-4" >
+<div class="col-lg-2 col-md-12 col-6 mb-4" style="margin-left:17%;">
     <div class="card">
         <div class="card-body salescase">
             <div class="card-title d-flex align-items-start justify-content-between">
@@ -72,7 +73,7 @@ while ($row = mysqli_fetch_assoc($resp)) {
             <?php if($totalPending == NULL){ ?>
             <h3 class="card-title mb-2" style="color:#66c732" id="pdcCount"> 0 </h3>
             <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:#66c732;" id="pdcCount"><?php echo round($totalPending, 0); ?></h3>
+            <h3 class="card-title mb-2" style="color:#66c732;" id="pdcCount"><?php echo $totalPending ?></h3>
             <?php } ?>
             <!-- <hr>
             <h5 class="total">Pending DC's</h5> -->
