@@ -43,7 +43,7 @@ while ($row = mysqli_fetch_assoc($res)) {
 $totalTarget = locale_number_format(round($totalTarget,0));
 ?>
 
-<div class="col-lg-2 col-md-12 col-6 mb-4">
+<div class="col-lg-2 col-md-12 col-6 mb-4" style="margin-left:17%;">
     <div class="card">
         <div class="card-body salescase">
             <div class="card-title d-flex align-items-start justify-content-between">
@@ -53,9 +53,9 @@ $totalTarget = locale_number_format(round($totalTarget,0));
             </div>
             <span class="fw-semibold d-block mb-1">Total Sales Target</span>
             <?php if($totalTarget == NULL){ ?>
-            <h3 class="card-title mb-2" style="color:#66c732" id="salestarget"> 0 </h3>
+            <h3 class="card-title mb-2" style="color:red" id="salestarget"><span id="usingCSSBlink"> 0 </span></h3>
             <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:#66c732;" id="salestarget"><?php echo $totalTarget; ?></h3>
+            <h3 class="card-title mb-2" style="color:red;" id="salestarget"><span id="usingCSSBlink"><?php echo $totalTarget; ?> </span></h3>
             <?php } ?>
             <!-- <hr>
             <h5 class="total"> Total: 12352</h5> -->

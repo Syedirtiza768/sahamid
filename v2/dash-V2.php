@@ -90,7 +90,29 @@ if (mysqli_num_rows($res) != 1) {
     <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
     <script src="asset/js/config.js"></script>
 </head>
-
+<style>
+    #usingCSSBlink {
+        color: red;
+        animation: blinking-usingCSSBlink 1s linear infinite;
+    }
+    @keyframes blinking-usingCSSBlink {
+    50% {
+            opacity: 0;
+        }
+    }
+    #usingCSSBlinkColor{
+        color: white;
+        animation: blinking-usingCSSBlinkColor 1s linear infinite;
+    }
+    @keyframes blinking-usingCSSBlinkColor {
+    20% {
+    color: red;
+    }
+    80%{
+    color: white;
+    }
+}
+</style>
 <body>
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
@@ -173,9 +195,9 @@ if (mysqli_num_rows($res) != 1) {
 
                             <!-- updated Badges file -->
                             <div class="row">
-                                <?php include('dashboard/badges/pendingdc-badge.php'); ?>
-                                <?php include('dashboard/badges/os-badge.php'); ?>
                                 <?php include('dashboard/badges/st-badge.php'); ?>
+                                <?php include('dashboard/badges/os-badge.php'); ?>
+                                <?php include('dashboard/badges/pendingdc-badge.php'); ?>
                                 <?php include('dashboard/badges/tc-badge.php'); ?>
                             </div>
 
@@ -543,7 +565,7 @@ if (mysqli_num_rows($res) != 1) {
 
         <!-- Page JS -->
         <script src="asset/js/dashboards-analytics.js"></script>
-        <script src="dashboard/assets/js/DashV2s.js"></script>
+        <script src="dashboard/assets/js/DashV2.js"></script>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
         <!-- Place this tag in your head or just before your close body tag. -->

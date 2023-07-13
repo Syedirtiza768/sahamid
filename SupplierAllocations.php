@@ -412,7 +412,9 @@ If (isset($_GET['AllocTrans'])){
 			ON supptrans.supplierno = suppliers.supplierid
 			INNER JOIN currencies
 			ON suppliers.currcode=currencies.currabrev
-		    WHERE supptrans.id='" . $_SESSION['AllocTrans'] . "'";
+		    WHERE supptrans.id='" . $_SESSION['AllocTrans'] . "'
+			AND supptrans.reversed=0"
+			;
 
 	$Result = DB_query($SQL, $db);
 	if (DB_num_rows($Result) != 1){
@@ -454,6 +456,7 @@ If (isset($_GET['AllocTrans'])){
 			FROM supptrans INNER JOIN systypes
 			ON supptrans.type = systypes.typeid
 			WHERE supptrans.settled=0
+			AND supptrans.reversed=0
 			AND abs(ovamount+ovgst-alloc)>0.009
 			AND supplierno='" . $_SESSION['Alloc']->SupplierID . "'";
 
@@ -500,7 +503,8 @@ If (isset($_GET['AllocTrans'])){
 			INNER JOIN suppallocs
 			ON supptrans.id=suppallocs.transid_allocto
 			WHERE suppallocs.transid_allocfrom='" . $_SESSION['AllocTrans'] .
-			"' AND supplierno='" . $_SESSION['Alloc']->SupplierID . "'";
+			"' AND supplierno='" . $_SESSION['Alloc']->SupplierID . "'
+			AND supptrans.reversed=0";
 
 	$ErrMsg = _('There was a problem retrieving the previously allocated transactions for modification');
 
@@ -662,6 +666,7 @@ if (isset($_POST['AllocTrans'])){
 			AND (supptrans.type=21 OR supptrans.type=22)
 			AND abs(ovamount+ovgst-alloc)>0.9
 			AND settled=0
+			AND supptrans.reversed=0
 			ORDER BY id";
 
   $result = DB_query($sql, $db);
@@ -742,6 +747,7 @@ if (isset($_POST['AllocTrans'])){
 			ON suppliers.currcode=currencies.currabrev
 			WHERE (supptrans.type=21 OR supptrans.type=22)
 			AND settled=0
+			AND supptrans.reversed=0
 			
 			ORDER BY id";
 

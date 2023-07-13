@@ -93,9 +93,9 @@ $totaloutstanding = locale_number_format(round($totaloutstanding,0));
             </div>
             <span class="fw-semibold d-block mb-1">Total Outstanding</span>
             <?php if($totaloutstanding == NULL){ ?>
-            <h3 class="card-title mb-2" style="color:#66c732" id="outstanding"> 0 </h3>
+            <h3 class="card-title mb-2" style="color:red" id="outstanding"><span id="usingCSSBlink"> 0 </span></h3>
             <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:#66c732;" id="outstanding"><?php echo $totaloutstanding ?></h3>
+            <h3 class="card-title mb-2" style="color:red;" id="outstanding"><span id="usingCSSBlink"><?php echo $totaloutstanding ?> </span></h3>
             <?php } ?>
             <!-- <hr>
             <h5 class="total">Pending DC's</h5> -->

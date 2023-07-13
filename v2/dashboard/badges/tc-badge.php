@@ -60,6 +60,7 @@ $totalCart = locale_number_format(round($totalCart,0));
 
 ?>
 
+
 <div class="col-lg-2 col-md-12 col-6 mb-4">
     <div class="card">
         <div class="card-body salescase">
@@ -70,9 +71,9 @@ $totalCart = locale_number_format(round($totalCart,0));
             </div>
             <span class="fw-semibold d-block mb-1">Total Cart</span>
             <?php if($totalCart == NULL){ ?>
-            <h3 class="card-title mb-2 totalcarts" style="color:#66c732" id="totalcarts"> 0 </h3>
+            <h3 class="card-title mb-2 totalcart" style="color:red" id="totalcarts"> <span id="usingCSSBlink"> 0 </span></h3>
             <?php } else{ ?>
-            <h3 class="card-title mb-2 totalcarts" style="color:#66c732;" id="totalcarts"><?php echo $totalCart ?></h3>
+            <h3 class="card-title mb-2 totalcart" style="color:red;" id="totalcarts"><span id="usingCSSBlink"><?php echo $totalCart ?></span></h3>
             <?php } ?>
             <!-- <hr>
             <h5 class="total"> Total: 12352</h5> -->

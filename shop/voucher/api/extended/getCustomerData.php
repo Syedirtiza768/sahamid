@@ -76,6 +76,7 @@
                 ON supptrans.type = systypes.typeid 
                 WHERE supptrans.settled=0 AND supptrans.type=601
                 AND reversed = 0 
+                AND settled = 0 
                 AND abs(ovamount+ovgst-alloc)>0.009 AND supplierno='" . $branchCode . "'
                 ORDER BY transno";
         $response=[];
@@ -94,7 +95,7 @@
                 FROM supptrans 
                 INNER JOIN systypes 
                 ON supptrans.type = systypes.typeid 
-                WHERE supptrans.settled=0 AND supptrans.type=601 AND abs(ovamount+ovgst-alloc)>0.009 AND supplierno='" . $branchCode . "'";
+                WHERE supptrans.settled=0 AND supptrans.reversed=0  AND supptrans.type=601 AND abs(ovamount+ovgst-alloc)>0.009 AND supplierno='" . $branchCode . "'";
 
         $response['totalDue'] = mysqli_fetch_assoc(mysqli_query($db, $SQL))['total'];
 

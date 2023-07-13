@@ -22,6 +22,47 @@
             </li>
         <?php } ?>
 
+        <li class="treeview dropdownmenu <?php ecif($active == "dashboard","active") ?>">
+        <a href="#">
+          <i class="fa fa-dashboard"></i> <span>New Dashboards</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" style="">
+          <?php
+            $SQL = "SELECT dashboard_id,name 
+                    FROM user_dashboards 
+                    INNER JOIN dashboards ON dashboards.id = user_dashboards.dashboard_id
+                    WHERE user_id='".$_SESSION['UserID']."'";
+            $dashboards = mysqli_query($db, $SQL);
+            while($row = mysqli_fetch_assoc($dashboards)){
+          ?>
+          <li class="treeview">
+            <a target="_blank" href="<?php echo $NewRootPath."v2/dash-V2.php?Dashboard=".$row['dashboard_id'].'"'; ?>>
+              <i class="fa fa-dashboard"></i> <?php echo $row['name']; ?>
+            </a>
+          </li>
+          <?php } ?>
+          <?php if(userHasPermission($db, 'create_new_dashboard')){ ?>
+            <li class="treeview">
+              <a href="<?php echo $NewRootPath; ?>v2/dashboard-UD.php"; >
+                <i class="fa fa-dashboard"></i> Create Dashboard
+              </a>
+            </li>
+          <?php } ?>
+          <?php if(userHasPermission($db, 'assign_user_dashboard')){ ?>
+            <li class="treeview">
+              <a href="<?php echo $NewRootPath; ?>v2/userDashboards.php"; >
+                <i class="fa fa-dashboard"></i> Assign User Dashboard
+              </a>
+            </li>
+          <?php } ?>
+        </ul>
+      </li>
+
+
+
 
         <li class="treeview dropdownmenu <?php ecif($active == "dashboard","active") ?>">
         <a href="#">

@@ -16,30 +16,31 @@ $(document).ready(function () {
         })
     });
 
-    $(document).on("click", ".select2-results__group", function(){
+    $(document).on("click", ".select2-results__group", function () {
 
         var groupName = $(this).html()
         var options = $('#salesman option');
-        
-        $.each(options, function(key, value){
-                
-            if($(value)[0].parentElement.label.indexOf(groupName) >= 0){
-                $(value).prop("selected","selected");
+
+        $.each(options, function (key, value) {
+
+            if ($(value)[0].parentElement.label.indexOf(groupName) >= 0) {
+                $(value).prop("selected", "selected");
             }
-            
+
         });
-          
+
         $("#salesman").trigger("change");
-        $("#salesman").select2('close'); 
-    
-      });
+        $("#salesman").select2('close');
+
+    });
 
     $('#submit').click(function (e) {
         e.preventDefault();
         var salesman = $('#salesman').val();
         var from = $('#from').val();
         var to = $('#to').val();
-        if (salesman != "" ) {
+
+        if (salesman != "") {
             $('.ajax-loader').css("visibility", "visible");
             $.ajax({
                 type: 'POST',
@@ -51,7 +52,7 @@ $(document).ready(function () {
                         undefined,
                     );
                     $('#pdcCount').html(pdcCount);
-                    
+
                     var salestarget = (result.salestarget).toLocaleString(
                         undefined,
                     );
@@ -61,11 +62,11 @@ $(document).ready(function () {
                         undefined,
                     );
                     $('#outstanding').html(outstanding);
-                    
+
                     var totalCart = (result.totalCart).toLocaleString(
                         undefined,
                     );
-                    
+
                     $('.totalCart').html(totalCart);
 
                     $('.ajax-loader').css("visibility", "hidden");
@@ -80,14 +81,25 @@ $(document).ready(function () {
         var salesman = $('#salesman').val();
         var from = $('#from').val();
         var to = $('#to').val();
-        if ( salesman != "" && from != "" && to != "") {
+        startYear = from.substring(0, 4);
+        endYear = to.substring(0, 4);
+        startMonth = from.substring(7, 5);
+        endMonth = to.substring(7, 5);
+        if (salesman != "" && from != "" && to != "") {
             $('.ajax-loader').css("visibility", "visible");
             $.ajax({
                 type: 'POST',
                 url: '../V2/dashboard/badges/update-badge.php',
-                data: { salesman: salesman, from: from, to: to },
+                data: { salesman: salesman, from: from, to: to , startYear: startYear,
+                    startMonth: startMonth, endMonth: endMonth},
                 success: function (response) {
                     var result = $.parseJSON(response);
+
+                    $('#targetAcheived').html(result.acheivedTarget);
+                    $('#actualTarget').html(result.target);
+                    $('#acheiveRatio').html(result.acheiveRatio);
+
+
                     $('#salescaseCount').html(result.salescaseCount);
                     $('#salescaseCountSR').html(result.salescaseCountSR);
                     $('#salescaseCountMT').html(result.salescaseCountMT);

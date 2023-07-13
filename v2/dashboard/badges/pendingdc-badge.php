@@ -26,6 +26,7 @@ if ($res === FALSE) {
     $salesman = $salesman . "','" . $name . "'";
 }
 
+
 $SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "'";
 $res = mysqli_query($db, $SQL);
 
@@ -61,7 +62,7 @@ while ($row = mysqli_fetch_assoc($resp)) {
 $totalPending = locale_number_format(round($totalPending,0));
 ?>
 
-<div class="col-lg-2 col-md-12 col-6 mb-4" style="margin-left:17%;">
+<div class="col-lg-2 col-md-12 col-6 mb-4">
     <div class="card">
         <div class="card-body salescase">
             <div class="card-title d-flex align-items-start justify-content-between">
@@ -71,9 +72,9 @@ $totalPending = locale_number_format(round($totalPending,0));
             </div>
             <span class="fw-semibold d-block mb-1">Total Pending DC's</span>
             <?php if($totalPending == NULL){ ?>
-            <h3 class="card-title mb-2" style="color:#66c732" id="pdcCount"> 0 </h3>
+            <h3 class="card-title mb-2" style="color:red" id="pdcCount"><span id="usingCSSBlink"> 0 </span></h3>
             <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:#66c732;" id="pdcCount"><?php echo $totalPending ?></h3>
+            <h3 class="card-title mb-2" style="color:red;" id="pdcCount"><span id="usingCSSBlink"> <?php echo $totalPending ?> </span></h3>
             <?php } ?>
             <!-- <hr>
             <h5 class="total">Pending DC's</h5> -->

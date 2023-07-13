@@ -11,6 +11,7 @@
 			INNER JOIN suppliers ON suppliers.supplierid = supptrans.supplierno 
 			WHERE supptrans.type=601
 			AND supptrans.settled=0
+			AND supptrans.reversed=0
 			GROUP BY suppliers.supplierid'; 
 	
 	$result = mysqli_query($db, $SQL);

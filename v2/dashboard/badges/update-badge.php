@@ -14,6 +14,9 @@ if (isset($_POST['salesman']) || (isset($_POST['from']) && isset($_POST['to'])))
     $salesman = "'" . implode("', '", $salesman) . "'";
     $from = $_POST['from'];
     $to = $_POST['to'];
+    $startYear = $_POST['startYear'];
+    $startMonth = $_POST['startMonth'];
+    $endMonth = $_POST['endMonth'];
 
 
     // Salescase badge value update
@@ -135,8 +138,8 @@ AND debtorno LIKE 'MT%'";
 		WHERE salescase.salesman IN($salesman)
         AND dcdetails.lineoptionno = 0  
 		AND dcoptions.optionno = 0 
-		-- AND dcs.orddate >= '$from'
-		-- AND dcs.orddate <= '$to'
+		AND dcs.orddate <= '" . date("Y-m-31 23:59:59") . "'
+		AND dcs.orddate >= '" . date("Y-m-01 00:00:00") . "'
 		AND dcs.courierslipdate = '0000-00-00 00:00:00' AND dcs.invoicedate='0000-00-00 00:00:00' 
 		AND dcs.grbdate='0000-00-00 00:00:00'
 		AND dcs.invoicegroupid is null
@@ -262,8 +265,8 @@ ORDER BY totalValue desc
     if ($res === FALSE) {
         $totalCart  = 0;
     } else {
-        
-        
+
+
         $totalCart = NULL;
         while ($clients = mysqli_fetch_assoc($res)) {
             $totalCart = $clients['totalValue'] + $totalCart;
@@ -272,8 +275,83 @@ ORDER BY totalValue desc
     }
 
 
+    // Total Acheive Target Update
+    $SQL = "SELECT * FROM salesman WHERE salesmanname IN($salesman)";
+    $res = mysqli_query($db, $SQL);
+    $totalTarget  = NULL;
+    while ($row = mysqli_fetch_assoc($res)) {
+        $totalTarget = $row['target'] + $totalTarget;
+    }
+    $Target = $totalTarget / 12;
+
+    $months = [];
+    $acheived = [];
+
+    for ($i = 1; $i <= 12; $i++) {
+        $month = 0;
+        if ($i <= 9)
+            $month .= $i;
+        else
+            $month = $i;
+        $startDate = date($startYear.'-' . $month . '-01');
+        $endDate = date($startYear.'-' . $month . '-31');
+        $SQL = "SELECT 
+        SUM(debtortrans.ovamount) as price
+        FROM invoice 
+        INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode
+        INNER JOIN debtorsmaster ON invoice.debtorno = debtorsmaster.debtorno
+        INNER JOIN salesman ON custbranch.salesman = salesman.salesmancode
+        INNER JOIN debtortrans ON (debtortrans.type = 10
+                                    AND debtortrans.transno = invoice.invoiceno
+                                    AND debtortrans.reversed = 0)
+        WHERE salesman.salesmanname IN( $salesman)
+        AND invoice.returned = 0
+        AND invoice.inprogress = 0
+         AND invoice.invoicesdate >= '" . $startDate . "'
+				  AND invoice.invoicesdate <= '" . $endDate . "'";
+        $sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
+        $acheived[]  = ($i > (int)(date('m'))) ? null : ((int)($sale ?: 0));
+        $months[] = date("M", strtotime($startDate));
+    }
+
+    $targets = [];
+    $months = 0;
+     foreach (range($startMonth, $endMonth) as $number) {
+        $months  += 1;
+    }
+    $target=0;
+    $actualTarget =0;
+	$monthsRemaining = 12;
+    $totalAcheive = 0;
+	$acheivedTarget = 0;
+    $endMonth = $endMonth -1;
+    $startMonth = $startMonth -1;
+    $formula = 12 -$startMonth;
+    for($i=0; $i<=$endMonth; $i++){
+        $totalAcheive += $acheived[$i];
+        if($i >= $startMonth && $i <= $endMonth){
+            $acheivedTarget += $acheived[$i];
+            if($startMonth == 0){
+                $target = $Target * $months;
+            }
+            if($i == $startMonth){
+                $actualTarget = $totalTarget-$totalAcheive/12 - $formula;
+                $target = $actualTarget  * $months ;
+            }
+        }
+    }
+    $acheiveRatio = ($acheivedTarget *100) / $target;
+    $target = round($target, 0);
+    $acheivedTarget = round($acheivedTarget, 0);
+    $acheiveRatio = round($acheiveRatio, 2)."%";
+
 
     $data = array(
+        'acheivedTarget' => $acheivedTarget,
+        'target' => $target,
+        'acheiveRatio' => $acheiveRatio,
+
+
         'salescaseCount' => $salescaseCount,
         'salescaseCountSR' => $salescaseCountSR,
         'salescaseCountMT' => $salescaseCountMT,
@@ -297,7 +375,7 @@ ORDER BY totalValue desc
         'salestarget' => $salestarget,
 
         'outstanding' => $outstanding,
-        
+
         'totalCart' => $totalCart,
     );
     echo json_encode($data);

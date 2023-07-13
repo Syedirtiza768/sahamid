@@ -109,20 +109,20 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 			<div id="ocDiv">
 				<span class="fw-semibold d-block mb-1">Order Confirmation</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="ocCount"><?php echo $ocCount; ?></h3>
-				<!-- <hr>
-				<h5 class="total"> Total: 12352</h5> -->
+				<hr>
+				<h5 class="total"> Total: 12352</h5>
 			</div>
 			<div id="ocSRDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">OC SR</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="ocCountSR"><?php echo $ocCountSR; ?></h3>
-				<!-- <hr>
-				<h5 class="total"> Total: 12352</h5> -->
+				<hr>
+				<h5 class="total"> Total: 12352</h5>
 			</div>
 			<div id="ocMTDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">OC MT</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="ocCountMT"><?php echo $ocCountMT; ?></h3>
-				<!-- <hr>
-				<h5 class="total"> Total: 12352</h5> -->
+				<hr>
+				<h5 class="total"> Total: 12352</h5>
 			</div>
 		</div>
 	</div>
