@@ -14,9 +14,14 @@ if (isset($_POST['salesman']) || (isset($_POST['from']) && isset($_POST['to'])))
     $salesman = "'" . implode("', '", $salesman) . "'";
     $from = $_POST['from'];
     $to = $_POST['to'];
-    $startYear = $_POST['startYear'];
-    $startMonth = $_POST['startMonth'];
-    $endMonth = $_POST['endMonth'];
+    if(isset($_POST['startYear'])){
+    $startYear = $_POST['startYear'];}
+
+    if(isset($_POST['startMonth'])){
+    $startMonth = $_POST['startMonth'];}
+
+    if(isset($_POST['endMonth'])){
+    $endMonth = $_POST['endMonth'];}
 
 
     // Salescase badge value update
@@ -276,6 +281,10 @@ ORDER BY totalValue desc
 
 
     // Total Acheive Target Update
+    $acheiveRatio = 0;
+    $acheivedTarget = 0;
+    $target = 0;
+    if($from){
     $SQL = "SELECT * FROM salesman WHERE salesmanname IN($salesman)";
     $res = mysqli_query($db, $SQL);
     $totalTarget  = NULL;
@@ -344,7 +353,9 @@ ORDER BY totalValue desc
     $target = round($target, 0);
     $acheivedTarget = round($acheivedTarget, 0);
     $acheiveRatio = round($acheiveRatio, 2)."%";
+    }
 
+    
 
     $data = array(
         'acheivedTarget' => $acheivedTarget,

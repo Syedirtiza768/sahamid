@@ -47,6 +47,8 @@ $(document).ready(function () {
                 url: '../V2/dashboard/badges/update-badge.php',
                 data: { salesman: salesman, from: from, to: to },
                 success: function (response) {
+                    
+
                     var result = $.parseJSON(response);
                     var pdcCount = (result.pdcCount).toLocaleString(
                         undefined,
