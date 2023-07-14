@@ -79,6 +79,14 @@ if ($result === FALSE) {
 }
 
 ?>
+<?php
+
+$SQL = "SELECT * FROM user_permission WHERE userid='" . $_SESSION['UserID'] . "' AND permission='*' ";
+$ressData = mysqli_query($db, $SQL);
+while ($rowData = mysqli_fetch_assoc($ressData)) {
+	$permission = $rowData['permission'];
+}
+?>
 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
 	<div class="card">
@@ -100,7 +108,7 @@ if ($result === FALSE) {
 			</div>
 			<div id="dcDiv">
 				<span class="fw-semibold d-block mb-1">Delivery Challan</span>
-				<h3 class="card-title mb-2" style="color:#66c732" id="dcCount"><?php echo $SQL; ?></h3>
+				<h3 class="card-title mb-2" style="color:#66c732" id="dcCount"><?php echo $dcCount; ?></h3>
 				<hr>
 				<h5 class="total"> Total: 12352</h5>
 			</div>
