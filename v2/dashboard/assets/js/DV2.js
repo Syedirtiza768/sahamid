@@ -107,22 +107,17 @@ $(document).ready(function () {
                     $('#salescaseCountSR').html(result.salescaseCountSR);
                     $('#salescaseCountMT').html(result.salescaseCountMT);
 
+                    $('#quototal').html(result.quototal);
                     $('#quotationCount').html(result.quotationCount);
                     $('#quotationCountSR').html(result.quotationCountSR);
                     $('#quotationCountMT').html(result.quotationCountMT);
 
-                    var octotal = (result.octotal).toLocaleString(
-                        undefined,
-                    );
-                    $('#octotal').html(octotal);
+                    $('#octotal').html(result.octotal);
                     $('#ocCount').html(result.ocCount);
                     $('#ocCountSR').html(result.ocCountSR);
                     $('#ocCountMT').html(result.ocCountMT);
-
-                    var dctotal = (result.dctotal).toLocaleString(
-                        undefined,
-                    );
-                    $('#dctotal').html(dctotal);
+                     
+                    $('#dctotal').html(result.dctotal);
                     $('#dcCount').html(result.dcCount);
                     $('#dcCountSR').html(result.dcCountSR);
                     $('#dcCountMT').html(result.dcCountMT);

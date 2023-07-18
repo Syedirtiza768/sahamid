@@ -51,7 +51,7 @@ if (isset($_POST['submit']) OR isset($_GET['remove']) OR isset($_GET['add']) ) {
 	} elseif (isset($SelectedRole) ) {
 		$PageTokenId = $_GET['PageToken'];
 		if( isset($_GET['add']) ) { // updating Security Groups add a page token
-			$sql = "INSERT INTO securitygroups (secroleid,
+			$sql = "INSERT INTO  (secroleid,
 											tokenid)
 									VALUES ('".$SelectedRole."',
 											'".$PageTokenId."' )";

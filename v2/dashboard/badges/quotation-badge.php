@@ -22,7 +22,7 @@ $SQL = "SELECT * FROM salesteam WHERE lead='" . $name . "'";
 $res = mysqli_query($db, $SQL);
 $members = [];
 if ($res === FALSE) {
-    $salesman = "'  $name  '";
+	$salesman = "'  $name  '";
 } else {
 	while ($row = mysqli_fetch_assoc($res)) {
 		$members[] = $row['members'];
@@ -30,7 +30,7 @@ if ($res === FALSE) {
 	$salesman = implode(',', $members);
 	$choices = explode(",", $salesman);
 	$salesman = "'" . implode("','", $choices) . "";
-    $salesman = $salesman . "','" . $name . "'";
+	$salesman = $salesman . "','" . $name . "'";
 }
 
 $SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "'";
@@ -78,13 +78,29 @@ $quotationCountMT = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
 
 ?>
 <?php
+$SQL = 'SELECT salesorders.orderno as quoteno,SUM(salesorderdetails.unitprice* (1 - salesorderdetails.discountpercent)*salesorderdetails.quantity*salesorderoptions.quantity
+) as totalamount from salesorderdetails INNER JOIN salesorderoptions on (salesorderdetails.orderno = salesorderoptions.orderno AND salesorderdetails.orderlineno = salesorderoptions.lineno) 
+INNER JOIN salesorders on salesorders.orderno = salesorderdetails.orderno
+INNER JOIN salescase on salescase.salescaseref=salesorders.salescaseref
+INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
 
-$SQL = "SELECT * FROM user_permission WHERE userid='" . $_SESSION['UserID'] . "' AND permission='*' ";
+AND salesorders.orddate BETWEEN  "' . date("Y-m-01") . '" AND "' . date("Y-m-31") . '"
+WHERE salesorderdetails.lineoptionno = 0  
+and salesorderoptions.optionno = 0 
+AND salescase.salesman IN( ' . $salesman . ')
+GROUP BY salesorderdetails.orderno
+ORDER BY salesorderdetails.orderno';
 $ressData = mysqli_query($db, $SQL);
-while ($rowData = mysqli_fetch_assoc($ressData)) {
-	$permission = $rowData['permission'];
+if ($ressData != NULL) {
+	while ($rowData = mysqli_fetch_assoc($ressData)) {
+		$qtotal  += $rowData['totalamount'];
+	}
+} else {
+	$qtotal = 0;
 }
+$qtotal = locale_number_format(round($qtotal, 0));
 ?>
+
 
 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
@@ -108,21 +124,17 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 			<div id="quotationDiv">
 							<span class="fw-semibold d-block mb-1">Quotation</span>
 							<h3 class="card-title mb-2" style="color:#66c732" id="quotationCount"><?php echo $quotationCount; ?></h3>
-							<hr>
-							<h5 class="total"> Total: 12352</h5>
 					</div>
 					<div id="quotationSRDiv" style="display: none;">
 						<span class="fw-semibold d-block mb-1">Quotation SR</span>
 						<h3 class="card-title mb-2" style="color:#66c732" id="quotationCountSR"><?php echo $quotationCountSR; ?></h3>
-						<hr>
-						<h5 class="total"> Total: 12352</h5>
 					</div>
 					<div id="quotationMTDiv" style="display: none;">
 						<span class="fw-semibold d-block mb-1">Quotation MT</span>
 						<h3 class="card-title mb-2" style="color:#66c732" id="quotationCountMT"><?php echo $quotationCountMT; ?></h3>
-						<hr>
-						<h5 class="total"> Total: 12352</h5>
 					</div>
+					<hr>
+					<h5>Total: <span class="total" id="quototal"><?php echo $qtotal; ?></span></h5>
 				</div>
 			</div>
 		</div>

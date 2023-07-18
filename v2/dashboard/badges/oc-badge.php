@@ -95,12 +95,12 @@ ORDER BY ocdetails.orderno';
 $ressData = mysqli_query($db, $SQL);
 if($ressData != NULL){
 while ($rowData = mysqli_fetch_assoc($ressData)) {
-	$total  += $rowData['totalamount'];
+	$octotal  += $rowData['totalamount'];
 }
 } else{
-	$total = 0;
+	$octotal = 0;
 }
-$total = locale_number_format(round($total,0));
+$octotal = locale_number_format(round($octotal,0));
 ?>
 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
@@ -134,7 +134,7 @@ $total = locale_number_format(round($total,0));
 				<h3 class="card-title mb-2" style="color:#66c732" id="ocCountMT"><?php echo $ocCountMT; ?></h3>
 			</div>
 			<hr>
-			<h5>Total: <span class="total" id="octotal"><?php echo $total; ?></span></h5> 
+			<h5>Total: <span class="total" id="octotal"><?php echo $octotal; ?></span></h5> 
 		</div>
 	</div>
 </div>

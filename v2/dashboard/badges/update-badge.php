@@ -55,6 +55,27 @@ AND debtorno LIKE 'MT%'";
 
 
     // Quotations badge value update
+    $quototal = 0;
+    $SQL = 'SELECT salesorders.orderno as quoteno,SUM(salesorderdetails.unitprice* (1 - salesorderdetails.discountpercent)*salesorderdetails.quantity*salesorderoptions.quantity
+    ) as totalamount from salesorderdetails INNER JOIN salesorderoptions on (salesorderdetails.orderno = salesorderoptions.orderno AND salesorderdetails.orderlineno = salesorderoptions.lineno) 
+    INNER JOIN salesorders on salesorders.orderno = salesorderdetails.orderno
+    INNER JOIN salescase on salescase.salescaseref=salesorders.salescaseref
+    INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+    
+    AND salesorders.orddate BETWEEN  "' . $from . '" AND "' . $to . '"
+    WHERE salesorderdetails.lineoptionno = 0  
+    and salesorderoptions.optionno = 0 
+    AND salescase.salesman IN( ' . $salesman . ')
+    GROUP BY salesorderdetails.orderno
+    ORDER BY salesorderdetails.orderno';
+
+    $ressData = mysqli_query($db, $SQL);
+    // if ($ressData != NULL) {
+    while ($rowData = mysqli_fetch_assoc($ressData)) {
+        $quototal  += $rowData['totalamount'];
+        // }
+    }
+    $quototal = (int)$quototal;
     $SQL = "SELECT count(*) as count FROM salesorders 
 				INNER JOIN salescase ON salescase.salescaseref = salesorders.salescaseref
 				INNER JOIN www_users ON www_users.realname = salescase.salesman
@@ -101,6 +122,7 @@ AND debtorno LIKE 'MT%'";
         $octotal  += $rowData['totalamount'];
         // }
     }
+    $octotal = (int)$octotal;
     $SQL = "SELECT count(*) as count FROM ocs 
 				INNER JOIN salescase ON salescase.salescaseref = ocs.salescaseref
 				INNER JOIN www_users ON www_users.realname = salescase.salesman
@@ -148,6 +170,7 @@ AND debtorno LIKE 'MT%'";
         $dctotal  += $rowData['totalamount'];
         // }
     }
+    $dctotal = (int)$dctotal;
 
     $SQL = "SELECT count(*) as count FROM dcs 
 			INNER JOIN salescase ON salescase.salescaseref = dcs.salescaseref
@@ -415,6 +438,7 @@ ORDER BY totalValue desc
         'salescaseCountSR' => $salescaseCountSR,
         'salescaseCountMT' => $salescaseCountMT,
 
+        'quototal' => $quototal,
         'quotationCount' => $quotationCount,
         'quotationCountSR' => $quotationCountSR,
         'quotationCountMT' => $quotationCountMT,

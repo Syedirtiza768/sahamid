@@ -54,7 +54,8 @@
 		'Partial Quick Quotations' 		=> '../quotation/partialQuickQuotations.php',
 		'Outstanding Invoices'			=> '../v2/outstanding.php',
 		'Outstanding CRV'				=> '../v2/outstandingCRV.php',
-        'pending Orders'				=> '../reports/pending/pendingorders.php'
+        'pending Orders'				=> '../reports/pending/pendingorders.php',
+        'Sale Teams Group'				=> '../v2/salesTeamGroup.php'
 	];
 	
 	$links['Inventory'] = [
