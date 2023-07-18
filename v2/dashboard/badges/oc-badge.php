@@ -80,12 +80,27 @@ $ocCountMT = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
 
 ?>
 <?php
+$SQL = 'SELECT ocs.orderno as ocno,SUM(ocdetails.unitprice* (1 - ocdetails.discountpercent)*ocdetails.quantity*ocoptions.quantity
+) as totalamount from ocdetails INNER JOIN ocoptions on (ocdetails.orderno = ocoptions.orderno AND ocdetails.orderlineno = ocoptions.lineno) 
+INNER JOIN ocs on ocs.orderno = ocdetails.orderno
+INNER JOIN salescase on salescase.salescaseref=ocs.salescaseref
+INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
 
-$SQL = "SELECT * FROM user_permission WHERE userid='" . $_SESSION['UserID'] . "' AND permission='*' ";
+AND ocs.orddate BETWEEN  "' . date("Y-m-01") . '" AND "' . date("Y-m-31") . '"
+WHERE ocdetails.lineoptionno = 0  
+and ocoptions.optionno = 0 
+AND salescase.salesman IN( '.$salesman.')
+GROUP BY ocdetails.orderno
+ORDER BY ocdetails.orderno';
 $ressData = mysqli_query($db, $SQL);
+if($ressData != NULL){
 while ($rowData = mysqli_fetch_assoc($ressData)) {
-	$permission = $rowData['permission'];
+	$total  += $rowData['totalamount'];
 }
+} else{
+	$total = 0;
+}
+$total = locale_number_format(round($total,0));
 ?>
 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
@@ -109,21 +124,18 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 			<div id="ocDiv">
 				<span class="fw-semibold d-block mb-1">Order Confirmation</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="ocCount"><?php echo $ocCount; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
 			</div>
 			<div id="ocSRDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">OC SR</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="ocCountSR"><?php echo $ocCountSR; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
 			</div>
 			<div id="ocMTDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">OC MT</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="ocCountMT"><?php echo $ocCountMT; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
 			</div>
+			<hr>
+			<h5>Total: <span class="total" id="octotal"><?php echo $total; ?></span></h5> 
 		</div>
 	</div>
 </div>
+

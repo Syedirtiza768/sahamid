@@ -74,7 +74,7 @@ if (mysqli_num_rows($res) != 1) {
     <!-- Core CSS -->
     <link rel="stylesheet" href="asset/vendor/css/coreStyle.css" class="template-customizer-core-css" />
     <link rel="stylesheet" href="asset/vendor/css/theme-default.css" class="template-customizer-theme-css" />
-    <link rel="stylesheet" href="asset/vendor/css/styles.css" />
+    <link rel="stylesheet" href="asset/vendor/css/styl.css" />
     <link rel="stylesheet" href="asset/vendor/css/main_css.css" />
 
     <!-- Vendors CSS -->
@@ -565,7 +565,7 @@ if (mysqli_num_rows($res) != 1) {
 
         <!-- Page JS -->
         <script src="asset/js/dashboards-analytics.js"></script>
-        <script src="dashboard/assets/js/DashV2new.js"></script>
+        <script src="dashboard/assets/js/DashV2n.js"></script>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
         <!-- Place this tag in your head or just before your close body tag. -->

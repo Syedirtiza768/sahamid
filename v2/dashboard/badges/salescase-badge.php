@@ -99,21 +99,20 @@ $salescaseCountMT = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
 			<div id="salescaseDiv">
 				<span class="fw-semibold d-block mb-1">Salescase</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="salescaseCount"><?php echo $salescaseCount; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
+				
 			</div>
 			<div id="salescaseSRDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">Salescase SR</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="salescaseCountSR"><?php echo $salescaseCountSR; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
+				
 			</div>
 			<div id="salescaseMTDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">Salescase MT</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="salescaseCountMT"><?php echo $salescaseCountMT; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
+				
 			</div>
+			<hr>
+				<h5 class="total"> Salescase </h5>
 		</div>
 	</div>
 </div>

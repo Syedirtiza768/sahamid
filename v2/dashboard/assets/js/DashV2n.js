@@ -48,7 +48,7 @@ $(document).ready(function () {
                 data: { salesman: salesman, from: from, to: to },
                 success: function (response) {
                     
-
+                    // alert(response);
                     var result = $.parseJSON(response);
                     var pdcCount = (result.pdcCount).toLocaleString(
                         undefined,
@@ -95,6 +95,7 @@ $(document).ready(function () {
                 data: { salesman: salesman, from: from, to: to , startYear: startYear,
                     startMonth: startMonth, endMonth: endMonth},
                 success: function (response) {
+                    // alert(response);
                     var result = $.parseJSON(response);
 
                     $('#targetAcheived').html(result.acheivedTarget);
@@ -110,10 +111,18 @@ $(document).ready(function () {
                     $('#quotationCountSR').html(result.quotationCountSR);
                     $('#quotationCountMT').html(result.quotationCountMT);
 
+                    var octotal = (result.octotal).toLocaleString(
+                        undefined,
+                    );
+                    $('#octotal').html(octotal);
                     $('#ocCount').html(result.ocCount);
                     $('#ocCountSR').html(result.ocCountSR);
                     $('#ocCountMT').html(result.ocCountMT);
 
+                    var dctotal = (result.dctotal).toLocaleString(
+                        undefined,
+                    );
+                    $('#dctotal').html(dctotal);
                     $('#dcCount').html(result.dcCount);
                     $('#dcCountSR').html(result.dcCountSR);
                     $('#dcCountMT').html(result.dcCountMT);

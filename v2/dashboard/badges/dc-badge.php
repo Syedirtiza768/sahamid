@@ -68,7 +68,7 @@ $SQL = "SELECT count(*) as count FROM dcs
 			WHERE orddate <= '" . date("Y-m-31") . "'
 			AND orddate >= '" . date("Y-m-01") . "'
 			AND salescase.debtorno LIKE 'MT%'
-			AND salescase.salesman = IN( $salesman)";
+			AND salescase.salesman IN( $salesman)";
 
 $result = mysqli_query($db, $SQL);
 if ($result === FALSE) {
@@ -81,11 +81,28 @@ if ($result === FALSE) {
 ?>
 <?php
 
-$SQL = "SELECT * FROM user_permission WHERE userid='" . $_SESSION['UserID'] . "' AND permission='*' ";
+$SQL = 'SELECT dcs.orderno as dcno,SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
+		 	) as totalamount from dcdetails INNER JOIN dcoptions on (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno) 
+		INNER JOIN dcs on dcs.orderno = dcdetails.orderno
+		INNER JOIN salescase on salescase.salescaseref=dcs.salescaseref
+		INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+		
+		AND dcs.orddate BETWEEN  "' . date("Y-m-01") . '" AND "' . date("Y-m-31") . '"
+		AND dcs.grbdate LIKE "0000-00-00 00:00:00"
+		WHERE dcdetails.lineoptionno = 0  
+			and dcoptions.optionno = 0 
+		 	AND salescase.salesman IN( '.$salesman.')
+		GROUP BY dcdetails.orderno
+		ORDER BY dcdetails.orderno';
 $ressData = mysqli_query($db, $SQL);
+if($ressData != NULL){
 while ($rowData = mysqli_fetch_assoc($ressData)) {
-	$permission = $rowData['permission'];
+	$total  += $rowData['totalamount'];
 }
+} else{
+	$total = 0;
+}
+$total = locale_number_format(round($total,0));
 ?>
 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
@@ -109,21 +126,20 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 			<div id="dcDiv">
 				<span class="fw-semibold d-block mb-1">Delivery Challan</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="dcCount"><?php echo $dcCount; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
+				
 			</div>
 			<div id="dcSRDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">DC SR</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="dcCountSR"><?php echo $dcCountSR; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
+				
 			</div>
 			<div id="dcMTDiv" style="display: none;">
 				<span class="fw-semibold d-block mb-1">DC MT</span>
 				<h3 class="card-title mb-2" style="color:#66c732" id="dcCountMT"><?php echo $dcCountMT; ?></h3>
-				<hr>
-				<h5 class="total"> Total: 12352</h5>
+				
 			</div>
+			<hr>
+				<h5>Total: <span class="total" id="dctotal"><?php echo $total; ?></span></h5> 
 		</div>
 	</div>
 </div>

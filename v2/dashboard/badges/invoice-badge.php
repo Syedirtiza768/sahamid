@@ -93,8 +93,12 @@ while ($row = mysqli_fetch_assoc($res))
 		$i++;
 	}
 $targetAcheived = locale_number_format(round($salesTotal, 0));
-
+if($actualTarget != 0){
 $acheiveRatio = ($targetAcheived *100) / $actualTarget;
+}
+else{
+    $acheiveRatio = 0;
+}
 $acheiveRatio = round($acheiveRatio, 2);
 ?>
 <style>

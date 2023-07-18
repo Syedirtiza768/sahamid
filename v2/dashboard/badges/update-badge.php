@@ -14,14 +14,18 @@ if (isset($_POST['salesman']) || (isset($_POST['from']) && isset($_POST['to'])))
     $salesman = "'" . implode("', '", $salesman) . "'";
     $from = $_POST['from'];
     $to = $_POST['to'];
-    if(isset($_POST['startYear'])){
-    $startYear = $_POST['startYear'];}
+    $startYear = 0;
+    if (isset($_POST['startYear'])) {
+        $startYear = $_POST['startYear'];
+    }
 
-    if(isset($_POST['startMonth'])){
-    $startMonth = $_POST['startMonth'];}
+    if (isset($_POST['startMonth'])) {
+        $startMonth = $_POST['startMonth'];
+    }
 
-    if(isset($_POST['endMonth'])){
-    $endMonth = $_POST['endMonth'];}
+    if (isset($_POST['endMonth'])) {
+        $endMonth = $_POST['endMonth'];
+    }
 
 
     // Salescase badge value update
@@ -78,6 +82,25 @@ AND debtorno LIKE 'MT%'";
     $quotationCountMT = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
 
     // Order Confirmation badge value update
+    $octotal = 0;
+    $SQL = 'SELECT ocs.orderno as ocno,SUM(ocdetails.unitprice* (1 - ocdetails.discountpercent)*ocdetails.quantity*ocoptions.quantity
+    ) as totalamount from ocdetails INNER JOIN ocoptions on (ocdetails.orderno = ocoptions.orderno AND ocdetails.orderlineno = ocoptions.lineno) 
+    INNER JOIN ocs on ocs.orderno = ocdetails.orderno
+    INNER JOIN salescase on salescase.salescaseref=ocs.salescaseref
+    INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+    
+    AND ocs.orddate BETWEEN  "' . $from . '" AND "' . $to . '"
+    WHERE ocdetails.lineoptionno = 0  
+    and ocoptions.optionno = 0 
+    AND salescase.salesman IN( ' . $salesman . ')
+    GROUP BY ocdetails.orderno
+    ORDER BY ocdetails.orderno';
+    $ressData = mysqli_query($db, $SQL);
+    // if ($ressData != NULL) {
+    while ($rowData = mysqli_fetch_assoc($ressData)) {
+        $octotal  += $rowData['totalamount'];
+        // }
+    }
     $SQL = "SELECT count(*) as count FROM ocs 
 				INNER JOIN salescase ON salescase.salescaseref = ocs.salescaseref
 				INNER JOIN www_users ON www_users.realname = salescase.salesman
@@ -105,6 +128,27 @@ AND debtorno LIKE 'MT%'";
     $ocCountMT = mysqli_fetch_assoc(mysqli_query($db, $SQL))['count'];
 
     // Delivery Challan badge value update
+    $dctotal = 0;
+    $SQL = 'SELECT dcs.orderno as dcno,SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
+		 	) as totalamount from dcdetails INNER JOIN dcoptions on (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno) 
+		INNER JOIN dcs on dcs.orderno = dcdetails.orderno
+		INNER JOIN salescase on salescase.salescaseref=dcs.salescaseref
+		INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
+		
+		AND dcs.orddate BETWEEN  "' . $from . '" AND "' . $to . '"
+		AND dcs.grbdate LIKE "0000-00-00 00:00:00"
+		WHERE dcdetails.lineoptionno = 0  
+			and dcoptions.optionno = 0 
+		 	AND salescase.salesman IN( ' . $salesman . ')
+		GROUP BY dcdetails.orderno
+		ORDER BY dcdetails.orderno';
+    $ressData = mysqli_query($db, $SQL);
+    // if ($ressData != NULL) {
+    while ($rowData = mysqli_fetch_assoc($ressData)) {
+        $dctotal  += $rowData['totalamount'];
+        // }
+    }
+
     $SQL = "SELECT count(*) as count FROM dcs 
 			INNER JOIN salescase ON salescase.salescaseref = dcs.salescaseref
 			INNER JOIN www_users ON www_users.realname = salescase.salesman
@@ -284,27 +328,27 @@ ORDER BY totalValue desc
     $acheiveRatio = 0;
     $acheivedTarget = 0;
     $target = 0;
-    if($from){
-    $SQL = "SELECT * FROM salesman WHERE salesmanname IN($salesman)";
-    $res = mysqli_query($db, $SQL);
-    $totalTarget  = NULL;
-    while ($row = mysqli_fetch_assoc($res)) {
-        $totalTarget = $row['target'] + $totalTarget;
-    }
-    $Target = $totalTarget / 12;
+    if ($startYear != 0) {
+        $SQL = "SELECT * FROM salesman WHERE salesmanname IN($salesman)";
+        $res = mysqli_query($db, $SQL);
+        $totalTarget  = NULL;
+        while ($row = mysqli_fetch_assoc($res)) {
+            $totalTarget = $row['target'] + $totalTarget;
+        }
+        $Target = $totalTarget / 12;
 
-    $months = [];
-    $acheived = [];
+        $months = [];
+        $acheived = [];
 
-    for ($i = 1; $i <= 12; $i++) {
-        $month = 0;
-        if ($i <= 9)
-            $month .= $i;
-        else
-            $month = $i;
-        $startDate = date($startYear.'-' . $month . '-01');
-        $endDate = date($startYear.'-' . $month . '-31');
-        $SQL = "SELECT 
+        for ($i = 1; $i <= 12; $i++) {
+            $month = 0;
+            if ($i <= 9)
+                $month .= $i;
+            else
+                $month = $i;
+            $startDate = date($startYear . '-' . $month . '-01');
+            $endDate = date($startYear . '-' . $month . '-31');
+            $SQL = "SELECT 
         SUM(debtortrans.ovamount) as price
         FROM invoice 
         INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode
@@ -318,44 +362,48 @@ ORDER BY totalValue desc
         AND invoice.inprogress = 0
          AND invoice.invoicesdate >= '" . $startDate . "'
 				  AND invoice.invoicesdate <= '" . $endDate . "'";
-        $sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
-        $acheived[]  = ($i > (int)(date('m'))) ? null : ((int)($sale ?: 0));
-        $months[] = date("M", strtotime($startDate));
-    }
+            $sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
+            $acheived[]  = ($i > (int)(date('m'))) ? null : ((int)($sale ?: 0));
+            $months[] = date("M", strtotime($startDate));
+        }
 
-    $targets = [];
-    $months = 0;
-     foreach (range($startMonth, $endMonth) as $number) {
-        $months  += 1;
-    }
-    $target=0;
-    $actualTarget =0;
-	$monthsRemaining = 12;
-    $totalAcheive = 0;
-	$acheivedTarget = 0;
-    $endMonth = $endMonth -1;
-    $startMonth = $startMonth -1;
-    $formula = 12 -$startMonth;
-    for($i=0; $i<=$endMonth; $i++){
-        $totalAcheive += $acheived[$i];
-        if($i >= $startMonth && $i <= $endMonth){
-            $acheivedTarget += $acheived[$i];
-            if($startMonth == 0){
-                $target = $Target * $months;
-            }
-            if($i == $startMonth){
-                $actualTarget = $totalTarget-$totalAcheive/12 - $formula;
-                $target = $actualTarget  * $months ;
+        $targets = [];
+        $months = 0;
+        foreach (range($startMonth, $endMonth) as $number) {
+            $months  += 1;
+        }
+        $target = 0;
+        $actualTarget = 0;
+        $monthsRemaining = 12;
+        $totalAcheive = 0;
+        $acheivedTarget = 0;
+        $endMonth = $endMonth - 1;
+        $startMonth = $startMonth - 1;
+        $formula = 12 - $startMonth;
+        for ($i = 0; $i <= $endMonth; $i++) {
+            $totalAcheive += $acheived[$i];
+            if ($i >= $startMonth && $i <= $endMonth) {
+                $acheivedTarget += $acheived[$i];
+                if ($startMonth == 0) {
+                    $target = $Target * $months;
+                }
+                if ($i == $startMonth) {
+                    $actualTarget = $totalTarget - $totalAcheive / 12 - $formula;
+                    $target = $actualTarget  * $months;
+                }
             }
         }
-    }
-    $acheiveRatio = ($acheivedTarget *100) / $target;
-    $target = round($target, 0);
-    $acheivedTarget = round($acheivedTarget, 0);
-    $acheiveRatio = round($acheiveRatio, 2)."%";
+        if ($target != 0) {
+            $acheiveRatio = ($acheivedTarget * 100) / $target;
+        } else {
+            $acheivedTarget = 0;
+        }
+        $target = round($target, 0);
+        $acheivedTarget = round($acheivedTarget, 0);
+        $acheiveRatio = round($acheiveRatio, 2) . "%";
     }
 
-    
+
 
     $data = array(
         'acheivedTarget' => $acheivedTarget,
@@ -371,10 +419,12 @@ ORDER BY totalValue desc
         'quotationCountSR' => $quotationCountSR,
         'quotationCountMT' => $quotationCountMT,
 
+        'octotal' => $octotal,
         'ocCount' => $ocCount,
         'ocCountSR' => $ocCountSR,
         'ocCountMT' => $ocCountMT,
 
+        'dctotal' => $dctotal,
         'dcCount' => $dcCount,
         'dcCountSR' => $dcCountSR,
         'dcCountMT' => $dcCountMT,
