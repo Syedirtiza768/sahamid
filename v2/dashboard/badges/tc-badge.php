@@ -25,7 +25,7 @@ if ($res === FALSE) {
 	$salesman = "'" . implode("','", $choices) . "";
 }
 if($salesman == "'" ){
-    $salesman = "'  $name  '";
+    $salesman = "'$name'";
 }
 else{
 $salesman = $salesman . "','" . $name . "'";

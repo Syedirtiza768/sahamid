@@ -410,7 +410,7 @@ ORDER BY totalValue desc
                 if ($startMonth == 0) {
                     $target = $Target * $months;
                 }
-                if ($i == $startMonth) {
+                if ($i == $startMonth && $i != 0) {
                     $actualTarget = $totalTarget - $totalAcheive / 12 - $formula;
                     $target = $actualTarget  * $months;
                 }
