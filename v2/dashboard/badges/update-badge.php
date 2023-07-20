@@ -404,17 +404,19 @@ ORDER BY totalValue desc
         $startMonth = $startMonth - 1;
         $formula = 12 - $startMonth;
         for ($i = 0; $i <= $endMonth; $i++) {
-            $totalAcheive += $acheived[$i];
+            
             if ($i >= $startMonth && $i <= $endMonth) {
                 $acheivedTarget += $acheived[$i];
                 if ($startMonth == 0) {
                     $target = $Target * $months;
                 }
                 if ($i == $startMonth && $i != 0) {
-                    $actualTarget = $totalTarget - $totalAcheive / 12 - $formula;
+                    $actualTarget = $totalTarget - $totalAcheive;
+                    $actualTarget = $actualTarget / $formula;
                     $target = $actualTarget  * $months;
                 }
             }
+            $totalAcheive = $totalAcheive + $acheived[$i];
         }
         if ($target != 0) {
             $acheiveRatio = ($acheivedTarget * 100) / $target;
