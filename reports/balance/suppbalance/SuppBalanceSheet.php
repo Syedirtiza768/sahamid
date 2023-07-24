@@ -77,8 +77,9 @@
   				<tr style="background-color: #424242; color: white">
   					<th style="width: 1%; white-space: nowrap;">Supplier #</th>
   					<th style="text-align: left;">Supplier Name</th>
-  					<th>Amount Due</th>
+					<th>Amount Due</th>
   					<th></th>
+					<th>Ledger Status</th>
   				</tr>
   			</thead>
   			<tbody>
@@ -90,6 +91,7 @@
   					<th style="text-align: left;">Supplier Name</th>
   					<th>Amount Due</th>
   					<th></th>
+					<th>Ledger Status</th>
   				</tr>
   			</tfoot>
   		</table>

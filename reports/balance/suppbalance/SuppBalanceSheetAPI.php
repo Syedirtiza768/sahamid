@@ -6,6 +6,7 @@
 	include('../../../includes/SQL_CommonFunctions.inc');
 
 	$SQL = 'SELECT suppliers.supplierid as debtorno,suppliers.suppname as name,
+	suppliers.ledgerstatus as ledgerstatus,
 				SUM(ovamount - alloc) as curr  
 			FROM supptrans 
 			INNER JOIN suppliers ON suppliers.supplierid = supptrans.supplierno 
@@ -30,7 +31,7 @@
 		$res[1] = $customer['name'];
 		$res[2] = locale_number_format($customer['curr'],2). "<sub>PKR</sub>";
 		$res[3] = '<a href="../../../Payments.php?SupplierID='.$customer['debtorno'].'" class="btn btn-info" target="_blank" style="font-size:11px; white-space: nowrap;">Enter Payment</a>';
-
+		$res[4] = $customer['ledgerstatus'];
 		$response[] = $res;
 
 	}
