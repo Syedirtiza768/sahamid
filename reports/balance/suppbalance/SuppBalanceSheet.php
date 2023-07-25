@@ -239,6 +239,8 @@ function updateRowTextColorAndCellBackground(selectElement) {
                 $("tbody tr td").html("Error...");
             }
         });
+		
+
 
         $.ajax({
             type: 'GET',
@@ -251,8 +253,8 @@ function updateRowTextColorAndCellBackground(selectElement) {
                 $("#totalBalance").html("-Fetch Failed-");
             }
         });
-
-        // Add event listener for onchange event to all elements with class "ledgerstatus"
+		
+		
         $(document).on('change', '.ledgerstatus', function() {
             const selectElement = this;
             const table = $(selectElement).data('tablename');
@@ -267,6 +269,21 @@ function updateRowTextColorAndCellBackground(selectElement) {
             // Call the function to change cell background color and row text color based on the selected value
             updateRowTextColorAndCellBackground(selectElement);
         });
+		$(document).on('mouseover', '.dataTable', function() {
+            const selectElement = this;
+            const table = $(selectElement).data('tablename');
+            const column = $(selectElement).data('colname');
+            const supplierId = $(selectElement).data('supplierid');
+            const newValue = $(selectElement).val();
+
+          
+    
+            updateDatabaseValue(table, column, supplierId, newValue);
+
+            // Call the function to change cell background color and row text color based on the selected value
+            updateRowTextColorAndCellBackground(selectElement);
+        });
+		
     });
 
 })(jQuery);
