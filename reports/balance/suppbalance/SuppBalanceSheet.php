@@ -19,15 +19,20 @@
 	<title>Supplier Balance</title>
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.0.1/css/buttons.dataTables.min.css">
+	<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+	<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js"></script>
+	
 	<link rel="stylesheet" href="../../../quotation/assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="../../../quotation/assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="../../../quotation/assets/stylesheets/theme.css" />
 	<link rel="stylesheet" href="../../../quotation/assets/vendor/sweetalert/sweetalert.css" />
 	<link rel="stylesheet" href="../../../quotation/assets/stylesheets/skins/default.css" />
 	<link rel="stylesheet" href="../../../quotation/assets/vendor/select2/select2.css" />
-	<link rel="stylesheet" href="../../../quotation/assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
-
+	
 	<script src="../../../quotation/assets/vendor/modernizr/modernizr.js"></script>
 
 	<style>
@@ -114,15 +119,10 @@
 		Powered By&nbsp;:&nbsp;<span class="bold" style="color:#aaa;">Compresol</span>
 	</footer>
 
-	<script src="../../../quotation/assets/vendor/jquery/jquery.js"></script>
 	<script src="../../../quotation/assets/vendor/bootstrap/js/bootstrap.js"></script>
 	<script src="../../../quotation/assets/vendor/nanoscroller/nanoscroller.js"></script>
 	<script src="../../../quotation/assets/javascripts/theme.js"></script>
 	<script src="../../../quotation/assets/vendor/sweetalert/sweetalert.min.js"></script>
-	<script src="../../../quotation/assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-	<script src="../../../quotation/assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-	<script src="../../../quotation/assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
-	<script src="../../../quotation/assets/vendor/jquery-datatables/extras/sum.js"></script>
 
 	<script>
 		
@@ -192,6 +192,8 @@ function updateRowTextColorAndCellBackground(selectElement) {
 				{ "searchable": false, "targets": [5] },
 				{ "visible": false, "targets": [4] }
             ],
+			dom: 'lBftip',
+
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
             language: {
                 search: "_INPUT_",
