@@ -31,10 +31,17 @@
 		$res[1] = $customer['name'];
 		$res[2] = locale_number_format($customer['curr'],2). "<sub>PKR</sub>";
 		$res[3] = '<a href="../../../Payments.php?SupplierID='.$customer['debtorno'].'" class="btn btn-info" target="_blank" style="font-size:11px; white-space: nowrap;">Enter Payment</a>';
-		$res[4] = $customer['ledgerstatus'];
+		$selectMenu = '<select name="ledgerstatus" class="form-control ledgerstatus" data-tablename="suppliers" data-colname="ledgerstatus" data-supplierid='.$customer['debtorno'].'>
+                      <option value="showroom mismanaged" ' . ($customer['ledgerstatus'] === 'showroom mismanaged' ? 'selected' : '') . '>showroom mismanaged</option>
+                      <option value="showroom corrected" ' . ($customer['ledgerstatus'] === 'showroom corrected' ? 'selected' : '') . '>showroom corrected</option>
+                      <option value="mto mismanaged" ' . ($customer['ledgerstatus'] === 'mto mismanaged' ? 'selected' : '') . '>mto mismanaged</option>
+                      <option value="mto corrected" ' . ($customer['ledgerstatus'] === 'mto corrected' ? 'selected' : '') . '>mto corrected</option>
+                  </select>';
+    $res[4] = $selectMenu;
 		$response[] = $res;
 
 	}
 
 	echo json_encode($response);
 	return;
+?>
