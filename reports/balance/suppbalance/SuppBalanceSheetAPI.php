@@ -37,7 +37,10 @@
                       <option value="mto mismanaged" ' . ($customer['ledgerstatus'] === 'mto mismanaged' ? 'selected' : '') . '>mto mismanaged</option>
                       <option value="mto corrected" ' . ($customer['ledgerstatus'] === 'mto corrected' ? 'selected' : '') . '>mto corrected</option>
                   </select>';
-    $res[4] = $selectMenu;
+   // $res[4] = $selectMenu;
+   $res[4] = $customer['ledgerstatus'];
+   $res[5] = $selectMenu;
+	
 		$response[] = $res;
 
 	}

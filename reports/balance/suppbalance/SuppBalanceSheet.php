@@ -80,6 +80,7 @@
 					<th>Amount Due</th>
   					<th></th>
 					<th>Ledger Status</th>
+					<th>Ledger Status</th>
   				</tr>
   			</thead>
   			<tbody>
@@ -91,6 +92,7 @@
   					<th style="text-align: left;">Supplier Name</th>
   					<th>Amount Due</th>
   					<th></th>
+					<th>Ledger Status</th>
 					<th>Ledger Status</th>
   				</tr>
   			</tfoot>
@@ -186,7 +188,9 @@ function updateRowTextColorAndCellBackground(selectElement) {
     var datatableInit = function() {
         datatable = $('#datatable').DataTable({
             "aoColumnDefs": [
-                { "sClass": "textLeft", "aTargets": [ 1 ] }
+                { "sClass": "textLeft", "aTargets": [ 1 ] },
+				{ "searchable": false, "targets": [5] },
+				{ "visible": false, "targets": [4] }
             ],
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
             language: {
