@@ -191,6 +191,8 @@
 					{ "visible": false, "targets": [ 0, 3, 6 ] }
 				],
 				dom: 'lBftip',
+				"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    
 				buttons: [
 					{
 						extend: 'csv',
@@ -208,7 +210,7 @@
 						}
 					}
 				],
-				"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+				
 				language: {
 					search: "_INPUT_",
 					searchPlaceholder: "Search..."
@@ -227,7 +229,7 @@
 				}
 			});
 
-			$('#datatable_length').find("label").html("<h3 style='margin:0; padding:0; font-variant: petite-caps;'><i class='fa fa-money' aria-hidden='true'></i> Supplier Balance Sheet <a class='btn btn-warning' href='../../../SupplierAllocations.php' target='_blank'>Allocate Balance</a></h3>");
+			$('#datatable_length').find("label").append("<h3 style='margin:0; padding:0; font-variant: petite-caps;'><i class='fa fa-money' aria-hidden='true'></i> Supplier Balance Sheet <a class='btn btn-warning' href='../../../SupplierAllocations.php' target='_blank'>Allocate Balance</a></h3>");
 		};
 
 		$(function() {
