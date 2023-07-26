@@ -179,6 +179,12 @@ function updateRowTextColorAndCellBackground(selectElement) {
     } else {
         row.css('color', ''); // Reset to default text color
     }
+	 // Update text in the second last column to be the same as the selected value in the last column
+	 const secondLastColumnIndex = table.column(columnIndex - 1).index();
+		        table.column(secondLastColumnIndex).nodes().each(function(cell, index) {
+		            const lastColumnValue = $(cell).next().find('.ledgerstatus').val();
+		            $(cell).text(lastColumnValue);
+		        });
 }
 
 
