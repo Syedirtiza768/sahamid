@@ -80,6 +80,7 @@
   		<table class="table table-bordered table-striped mb-none" id="datatable">
   			<thead>
   				<tr style="background-color: #424242; color: white">
+				  <th>Supplier #</th>
   					<th style="width: 1%; white-space: nowrap;">Supplier #</th>
   					<th style="text-align: left;">Supplier Name</th>
 					<th>Amount Due</th>
@@ -93,6 +94,7 @@
   			</tbody>
   			<tfoot>
   				<tr style="background-color: #424242; color: white">
+				  <th>Supplier #</th>
   					<th style="width: 1%; white-space: nowrap;">Supplier #</th>
   					<th style="text-align: left;">Supplier Name</th>
   					<th>Amount Due</th>
@@ -189,10 +191,27 @@ function updateRowTextColorAndCellBackground(selectElement) {
         datatable = $('#datatable').DataTable({
             "aoColumnDefs": [
                 { "sClass": "textLeft", "aTargets": [ 1 ] },
-				{ "searchable": false, "targets": [5] },
-				{ "visible": false, "targets": [4] }
+				{ "searchable": false, "targets": [6] },
+				{ "visible": false, "targets": [0,5] }
             ],
 			dom: 'lBftip',
+			buttons: [
+		                {
+		                    extend: 'csv',
+		                    text: 'Export CSV',
+							exportOptions: {
+		                        columns: [0, 2, 3,5] // Include only the 1st, 3rd, and 5th column (zero-based index)
+		                    },
+							customizeData: function (csv) {
+		                        // Manually append the data from the hidden 4th column to the CSV
+		                        var data = datatable.rows().data();
+		                        for (var i = 0; i < data.length; i++) {
+		                            csv += '\n"' + data[i][4] + '"';
+		                        }
+		                        return csv;
+		                    }
+		                }
+		            ],
 
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
             language: {
@@ -212,6 +231,7 @@ function updateRowTextColorAndCellBackground(selectElement) {
                 // );
             }
         });
+		
 
         $('#datatable_length').find("label").html("<h3 style='margin:0; padding:0; font-variant: petite-caps;'><i class='fa fa-money' aria-hidden='true'></i> Supplier Balance Sheet <a class='btn btn-warning' href='../../../SupplierAllocations.php' target='_blank'>Allocate Balance</a></h3>");
 		

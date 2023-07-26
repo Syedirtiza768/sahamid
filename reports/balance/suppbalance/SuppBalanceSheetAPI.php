@@ -23,14 +23,16 @@
 
 		$res = [];
 
-		$res[0] = "<form action='".$RootPath."/../suppstatement/SupplierStatement.php' method='post' target='_blank'>
+		$res[0] = $customer['debtorno'];
+		$res[1] = "<form action='".$RootPath."/../suppstatement/SupplierStatement.php' method='post' target='_blank'>
 						<input type='hidden' name='FormID' value='".$_SESSION['FormID']."' />
 						<input type='hidden' name='cust' value='".$customer['debtorno']."' />
 						<input type='submit' class='btn btn-info' style='width:100%' value='".$customer['debtorno']."' />
 					</form>";
-		$res[1] = $customer['name'];
-		$res[2] = locale_number_format($customer['curr'],2). "<sub>PKR</sub>";
-		$res[3] = '<a href="../../../Payments.php?SupplierID='.$customer['debtorno'].'" class="btn btn-info" target="_blank" style="font-size:11px; white-space: nowrap;">Enter Payment</a>';
+		
+		$res[2] = $customer['name'];
+		$res[3] = locale_number_format($customer['curr'],2). "<sub>PKR</sub>";
+		$res[4] = '<a href="../../../Payments.php?SupplierID='.$customer['debtorno'].'" class="btn btn-info" target="_blank" style="font-size:11px; white-space: nowrap;">Enter Payment</a>';
 		$selectMenu = '<select name="ledgerstatus" class="form-control ledgerstatus" data-tablename="suppliers" data-colname="ledgerstatus" data-supplierid='.$customer['debtorno'].'>
                       <option value="showroom mismanaged" ' . ($customer['ledgerstatus'] === 'showroom mismanaged' ? 'selected' : '') . '>showroom mismanaged</option>
                       <option value="showroom corrected" ' . ($customer['ledgerstatus'] === 'showroom corrected' ? 'selected' : '') . '>showroom corrected</option>
@@ -38,8 +40,8 @@
                       <option value="mto corrected" ' . ($customer['ledgerstatus'] === 'mto corrected' ? 'selected' : '') . '>mto corrected</option>
                   </select>';
    // $res[4] = $selectMenu;
-   $res[4] = $customer['ledgerstatus'];
-   $res[5] = $selectMenu;
+   $res[5] = $customer['ledgerstatus'];
+   $res[6] = $selectMenu;
 	
 		$response[] = $res;
 
