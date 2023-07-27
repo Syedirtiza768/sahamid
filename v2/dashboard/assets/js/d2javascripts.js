@@ -98,12 +98,12 @@ $(document).ready(function () {
                     // alert(response);
                     var result = $.parseJSON(response);
 
-                    var targetAcheived = (result.targetAcheived).toLocaleString(
+                    var targetAcheived = (result.acheivedTarget).toLocaleString(
                         undefined,
                     );
                     $('#targetAcheived').html(targetAcheived);
 
-                    var actualTarget = (result.actualTarget).toLocaleString(
+                    var actualTarget = (result.target).toLocaleString(
                         undefined,
                     );
                     $('#actualTarget').html(actualTarget);
