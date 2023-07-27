@@ -98,27 +98,62 @@ $(document).ready(function () {
                     // alert(response);
                     var result = $.parseJSON(response);
 
-                    $('#targetAcheived').html(result.acheivedTarget);
-                    $('#actualTarget').html(result.target);
+                    var targetAcheived = (result.targetAcheived).toLocaleString(
+                        undefined,
+                    );
+                    $('#targetAcheived').html(targetAcheived);
+
+                    var actualTarget = (result.actualTarget).toLocaleString(
+                        undefined,
+                    );
+                    $('#actualTarget').html(actualTarget);
+
                     $('#acheiveRatio').html(result.acheiveRatio);
 
 
-                    $('#salescaseCount').html(result.salescaseCount);
+                    var salescaseCount = (result.salescaseCount).toLocaleString(
+                        undefined,
+                    );
+                    $('#salescaseCount').html(salescaseCount);
                     $('#salescaseCountSR').html(result.salescaseCountSR);
                     $('#salescaseCountMT').html(result.salescaseCountMT);
 
-                    $('#quototal').html(result.quototal);
-                    $('#quotationCount').html(result.quotationCount);
+                    var quototal = (result.quototal).toLocaleString(
+                        undefined,
+                    );
+                    $('#quototal').html(quototal);
+
+                    var quotationCount = (result.quotationCount).toLocaleString(
+                        undefined,
+                    );
+                    $('#quotationCount').html(quotationCount);
                     $('#quotationCountSR').html(result.quotationCountSR);
                     $('#quotationCountMT').html(result.quotationCountMT);
 
-                    $('#octotal').html(result.octotal);
-                    $('#ocCount').html(result.ocCount);
+                   
+                    var octotal = (result.octotal).toLocaleString(
+                        undefined,
+                    );
+                    $('#octotal').html(octotal);
+                    
+
+                    var ocCount = (result.ocCount).toLocaleString(
+                        undefined,
+                    );
+                    $('#ocCount').html(ocCount);
                     $('#ocCountSR').html(result.ocCountSR);
                     $('#ocCountMT').html(result.ocCountMT);
 
-                    $('#dctotal').html(result.dctotal);
-                    $('#dcCount').html(result.dcCount);
+                    
+                    var dctotal = (result.dctotal).toLocaleString(
+                        undefined,
+                    );
+                    $('#dctotal').html(dctotal);
+
+                    var dcCount = (result.dcCount).toLocaleString(
+                        undefined,
+                    );
+                    $('#dcCount').html(dcCount);
                     $('#dcCountSR').html(result.dcCountSR);
                     $('#dcCountMT').html(result.dcCountMT);
 
