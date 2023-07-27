@@ -39,7 +39,7 @@
             while($row = mysqli_fetch_assoc($dashboards)){
           ?>
           <li class="treeview">
-            <a target="_blank" href="<?php echo $NewRootPath."v2/dash-V2.php?Dashboard=".$row['dashboard_id'].'"'; ?>>
+            <a target="_blank" href="<?php echo $NewRootPath."v2/dashV2.php?Dashboard=".$row['dashboard_id'].'"'; ?>>
               <i class="fa fa-dashboard"></i> <?php echo $row['name']; ?>
             </a>
           </li>

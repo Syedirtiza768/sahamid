@@ -102,7 +102,17 @@ $qtotal = locale_number_format(round($qtotal, 0));
 ?>
 
 
+<div class="border rounded-lg w-full sm:w-10/12 h-40" style="box-shadow: inset 0px 3px 6px #00000029, 0px 25px 30px #0000001A;">
+	<div class="font-serif py-4 font-semibold text-center text-lg text-slate-800"><span>Quotation</span>
+	</div>
+	<div class="flex justify-between items-center">
+		<div class="ml-4 text-lg py-2 font-bold text-center text-slate-700"><span id="quotationCount"><?php echo $quotationCount; ?></span></div>
+		<div class="mr-8"><img class="w-16" src="dashV2-assets/img/salescase.png"></img></div>
+	</div>
+	<div class="ml-6 text-xs py-6 font-medium text-gray-600">Total: <span id="quototal">Total: <?php echo $qtotal; ?></span></div>
+</div>
 
+<!-- 
 <div class="col-lg-2 col-md-12 col-6 mb-4">
 	<div class="card">
 		<div class="card-body salescase">
@@ -121,7 +131,7 @@ $qtotal = locale_number_format(round($qtotal, 0));
 					</div>
 				</div>
 			</div>
-			<div id="quotationDiv">
+			<div id=" quotationDiv">
 							<span class="fw-semibold d-block mb-1">Quotation</span>
 							<h3 class="card-title mb-2" style="color:#66c732" id="quotationCount"><?php echo $quotationCount; ?></h3>
 					</div>
@@ -137,4 +147,4 @@ $qtotal = locale_number_format(round($qtotal, 0));
 					<h5>Total: <span class="total" id="quototal"><?php echo $qtotal; ?></span></h5>
 				</div>
 			</div>
-		</div>
+		</div> -->

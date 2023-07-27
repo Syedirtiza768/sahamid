@@ -17,12 +17,12 @@ $members = [];
 if ($res === FALSE) {
     $salesman = "'  $name  '";
 } else {
-	while ($row = mysqli_fetch_assoc($res)) {
-		$members[] = $row['members'];
-	}
-	$salesman = implode(',', $members);
-	$choices = explode(",", $salesman);
-	$salesman = "'" . implode("','", $choices) . "";
+    while ($row = mysqli_fetch_assoc($res)) {
+        $members[] = $row['members'];
+    }
+    $salesman = implode(',', $members);
+    $choices = explode(",", $salesman);
+    $salesman = "'" . implode("','", $choices) . "";
     $salesman = $salesman . "','" . $name . "'";
 }
 $SQL = "SELECT can_access FROM salescase_permissions WHERE user='" . $_SESSION['UserID'] . "'";
@@ -74,31 +74,30 @@ INNER JOIN www_users ON salescase.salesman = www_users.realname AND ( salescase.
 $totaloutstanding = NULL;
 $resp = mysqli_query($db, $SQL);
 if ($resp === FALSE) {
-	$totaloutstanding  = 0;
+    $totaloutstanding  = 0;
 } else {
-while ($row = mysqli_fetch_assoc($resp)) {
-    $totaloutstanding = $row['remaining'] + $totaloutstanding;
-}
-$totaloutstanding = locale_number_format(round($totaloutstanding,0));
+    while ($row = mysqli_fetch_assoc($resp)) {
+        $totaloutstanding = $row['remaining'] + $totaloutstanding;
+    }
+    $totaloutstanding = locale_number_format(round($totaloutstanding, 0));
 }
 ?>
 
-<div class="col-lg-2 col-md-12 col-6 mb-4" >
-    <div class="card">
-        <div class="card-body salescase">
-            <div class="card-title d-flex align-items-start justify-content-between">
-                <div class="avatar flex-shrink-0">
-                    <img src="asset/img/icons/unicons/6.svg" style="width:50; height:auto" alt="chart success" class="rounded" />
-                </div>
+
+<div class="border rounded-lg sm:w-11/12 shadow-2xl">
+    <div class="flex justify-start">
+        <div class="mr-6 ml-6 py-5 flex-none"><img class="w-12" src="dashV2-assets/img/os.png"></img></div>
+        <div class="flex flex-col">
+            <div class="font-serif mt-4 font-semibold text-gray-400">
+                <h3>Total Outstandings</h3>
             </div>
-            <span class="fw-semibold d-block mb-1">Total Outstanding</span>
-            <?php if($totaloutstanding == NULL){ ?>
-            <h3 class="card-title mb-2" style="color:red" id="outstanding"><span id="usingCSSBlink"> 0 </span></h3>
-            <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:red;" id="outstanding"><span id="usingCSSBlink"><?php echo $totaloutstanding ?> </span></h3>
+            <?php if ($totaloutstanding == NULL) { ?>
+                <div class="text-red-500 text-lg font-bold" id="outstanding"><span id="usingCSSBlink"> 0 </span></div>
+            <?php } else { ?>
+                <div class="text-red-500 text-lg font-bold" id="outstanding"><span id="usingCSSBlink"> <?php echo $totaloutstanding ?> </span></div>
             <?php } ?>
-            <!-- <hr>
-            <h5 class="total">Pending DC's</h5> -->
         </div>
     </div>
 </div>
+
+

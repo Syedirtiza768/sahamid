@@ -17,12 +17,12 @@ $members = [];
 if ($res === FALSE) {
     $salesman = "'  $name  '";
 } else {
-	while ($row = mysqli_fetch_assoc($res)) {
-		$members[] = $row['members'];
-	}
-	$salesman = implode(',', $members);
-	$choices = explode(",", $salesman);
-	$salesman = "'" . implode("','", $choices) . "";
+    while ($row = mysqli_fetch_assoc($res)) {
+        $members[] = $row['members'];
+    }
+    $salesman = implode(',', $members);
+    $choices = explode(",", $salesman);
+    $salesman = "'" . implode("','", $choices) . "";
     $salesman = $salesman . "','" . $name . "'";
 }
 
@@ -34,31 +34,27 @@ $canAccess = [];
 while ($row = mysqli_fetch_assoc($res))
     $canAccess[] = $row['can_access'];
 
-    $SQL = "SELECT * FROM salesman WHERE salesmanname IN($salesman)";
-	$res = mysqli_query($db, $SQL);
-    $totalTarget  = NULL;
+$SQL = "SELECT * FROM salesman WHERE salesmanname IN($salesman)";
+$res = mysqli_query($db, $SQL);
+$totalTarget  = NULL;
 while ($row = mysqli_fetch_assoc($res)) {
     $totalTarget = $row['target'] + $totalTarget;
 }
-$totalTarget = locale_number_format(round($totalTarget,0));
+$totalTarget = locale_number_format(round($totalTarget, 0));
 ?>
 
-<div class="col-lg-2 col-md-12 col-6 mb-4" style="margin-left:17%;">
-    <div class="card">
-        <div class="card-body salescase">
-            <div class="card-title d-flex align-items-start justify-content-between">
-                <div class="avatar flex-shrink-0">
-                    <img src="asset/img/icons/unicons/4.svg" style="width:50; height:auto" alt="chart success" class="rounded" />
-                </div>
+<div class="border rounded-lg w-full sm:w-10/12 sm:shadow-2xl">
+    <div class="flex justify-start">
+        <div class="mr-6 ml-6 py-5 flex-none"><img class="w-12" src="dashV2-assets/img/salesTarget.png"></img></div>
+        <div class="flex flex-col">
+            <div class="font-serif mt-4 font-semibold text-gray-400">
+                <h3>Total Sales Target</h3>
             </div>
-            <span class="fw-semibold d-block mb-1">Total Sales Target</span>
-            <?php if($totalTarget == NULL){ ?>
-            <h3 class="card-title mb-2" style="color:red" id="salestarget"><span id="usingCSSBlink"> 0 </span></h3>
-            <?php } else{ ?>
-            <h3 class="card-title mb-2" style="color:red;" id="salestarget"><span id="usingCSSBlink"><?php echo $totalTarget; ?> </span></h3>
+            <?php if ($totalTarget == NULL) { ?>
+                <h3 class="text-red-500 text-lg font-bold" id="salestarget"><span id="usingCSSBlink"> 0 </span></h3>
+            <?php } else { ?>
+                <h3 class="text-red-500 text-lg font-bold" id="salestarget"><span id="usingCSSBlink"> <?php echo $totalTarget; ?> </span></h3>
             <?php } ?>
-            <!-- <hr>
-            <h5 class="total"> Total: 12352</h5> -->
         </div>
     </div>
 </div>
