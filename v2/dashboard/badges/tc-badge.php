@@ -60,23 +60,18 @@ $totalCart = locale_number_format(round($totalCart,0));
 
 ?>
 
-
-<div class="col-lg-2 col-md-12 col-6 mb-4">
-    <div class="card">
-        <div class="card-body salescase">
-            <div class="card-title d-flex align-items-start justify-content-between">
-                <div class="avatar flex-shrink-0">
-                    <img src="asset/img/icons/unicons/7.svg" style="width:50; height:auto" alt="chart success" class="rounded" />
-                </div>
+<div class="border rounded-lg w-full sm:w-10/12 sm:shadow-2xl">
+    <div class="flex justify-start">
+        <div class="mr-6 ml-6 py-5 flex-none"><img class="w-12" src="dashV2-assets/img/salesTarget.png"></img></div>
+        <div class="flex flex-col">
+            <div class="font-serif mt-4 font-semibold text-gray-400">
+                <h3>Total Cart</h3>
             </div>
-            <span class="fw-semibold d-block mb-1">Total Cart</span>
-            <?php if($totalCart == NULL){ ?>
-            <h3 class="card-title mb-2 totalcart" style="color:red" id="totalcarts"> <span id="usingCSSBlink"> 0 </span></h3>
-            <?php } else{ ?>
-            <h3 class="card-title mb-2 totalcart" style="color:red;" id="totalcarts"><span id="usingCSSBlink"><?php echo $totalCart ?></span></h3>
+            <?php if ($totalCart == NULL) { ?>
+                <div class="text-red-500 text-lg font-bold" id="totalCart"><span id="usingCSSBlink"> 0 </span></div>
+            <?php } else { ?>
+                <div class="text-red-500 text-lg font-bold" id="totalCart"><span id="usingCSSBlink"> <?php echo $totalCart; ?> </span></div>
             <?php } ?>
-            <!-- <hr>
-            <h5 class="total"> Total: 12352</h5> -->
         </div>
     </div>
 </div>

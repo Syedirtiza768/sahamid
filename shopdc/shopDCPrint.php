@@ -281,12 +281,11 @@ if(!isset($_GET['withoutPrice'])){
 
     }else{
 
-        $html .= 	'<tr>
+        if($dc['GSTAdd'] == 'exclusive' && strtotime($dc['quotedate']) < strtotime('2023-02-14')){
+			$html .= 	'<tr>
 							<td><b>'.(($exclusive) ? 'SUBTOTAL':'Grand Total inclusive of 17% GST').'</b></td>
 							<td>'.locale_number_format(round($total),2).'</td>
 						</tr>';
-
-        if($dc['GSTAdd'] == 'exclusive' && strtotime($dc['quotedate']) < strtotime('2023-02-14')){
             if($services) {
                 $html .= '<tr>
 								<td><b>16% GST</b></td>
@@ -312,6 +311,10 @@ if(!isset($_GET['withoutPrice'])){
 
         }
 		elseif($dc['GSTAdd'] == 'exclusive' && strtotime($dc['quotedate']) >= strtotime('2023-02-14')){
+			$html .= 	'<tr>
+							<td><b>'.(($exclusive) ? 'SUBTOTAL':'Grand Total inclusive of 18% GST').'</b></td>
+							<td>'.locale_number_format(round($total),2).'</td>
+						</tr>';
             if($services) {
                 $html .= '<tr>
 								<td><b>16% GST</b></td>
@@ -337,7 +340,19 @@ if(!isset($_GET['withoutPrice'])){
 
         }
 
-		elseif($dc['GSTAdd'] == 'update'){
+		elseif($dc['GSTAdd'] == 'inclusive'){
+			$html .= 	'<tr>
+							<td><b>'.(($exclusive) ? 'SUBTOTAL':'Grand Total inclusive of 18% GST').'</b></td>
+							<td>'.locale_number_format(round($total),2).'</td>
+						</tr>';
+
+        }
+
+		elseif($dc['GSTAdd'] == 'update' && strtotime($dc['quotedate']) < strtotime('2023-02-14')){
+			$html .= 	'<tr>
+							<td><b>'.(($exclusive) ? 'SUBTOTAL':'Grand Total inclusive of 18% GST').'</b></td>
+							<td>'.locale_number_format(round($total),2).'</td>
+						</tr>';
             if($services) {
                 $html .= '<tr>
 								<td><b>16% GST</b></td>
@@ -359,6 +374,15 @@ if(!isset($_GET['withoutPrice'])){
 								<td>' . (locale_number_format(round(($total * 1.18)), 2)) . '</td>
 							</tr>';
             }
+
+
+        }
+		elseif($dc['GSTAdd'] == 'update' && strtotime($dc['quotedate']) >= strtotime('2023-02-14')){
+			$html .= 	'<tr>
+							<td><b>Grand Total </b></td>
+							<td>'.locale_number_format(round($total),2).'</td>
+						</tr>';
+           
 
 
         }

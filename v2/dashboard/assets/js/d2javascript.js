@@ -2,8 +2,6 @@ $(document).ready(function () {
     $('.js-example-basic-multiple').select2({
         dropdownAutoWidth: false,
         multiple: true,
-        width: '128%',
-        height: '80px',
         placeholder: "  Select Team Members",
         allowClear: true
     });
@@ -35,7 +33,7 @@ $(document).ready(function () {
     });
 
     $('#submit').click(function (e) {
-        e.preventDefault();
+        e.preventDefault()
         var salesman = $('#salesman').val();
         var from = $('#from').val();
         var to = $('#to').val();
@@ -47,7 +45,7 @@ $(document).ready(function () {
                 url: '../V2/dashboard/badges/update-badge.php',
                 data: { salesman: salesman, from: from, to: to },
                 success: function (response) {
-                    
+
                     // alert(response);
                     var result = $.parseJSON(response);
                     var pdcCount = (result.pdcCount).toLocaleString(
@@ -92,8 +90,10 @@ $(document).ready(function () {
             $.ajax({
                 type: 'POST',
                 url: '../V2/dashboard/badges/update-badge.php',
-                data: { salesman: salesman, from: from, to: to , startYear: startYear,
-                    startMonth: startMonth, endMonth: endMonth},
+                data: {
+                    salesman: salesman, from: from, to: to, startYear: startYear,
+                    startMonth: startMonth, endMonth: endMonth
+                },
                 success: function (response) {
                     // alert(response);
                     var result = $.parseJSON(response);
@@ -116,7 +116,7 @@ $(document).ready(function () {
                     $('#ocCount').html(result.ocCount);
                     $('#ocCountSR').html(result.ocCountSR);
                     $('#ocCountMT').html(result.ocCountMT);
-                     
+
                     $('#dctotal').html(result.dctotal);
                     $('#dcCount').html(result.dcCount);
                     $('#dcCountSR').html(result.dcCountSR);
@@ -127,6 +127,27 @@ $(document).ready(function () {
                         undefined,
                     );
                     $('#totalScore').html(totalScore);
+
+                    var pdcCount = (result.pdcCount).toLocaleString(
+                        undefined,
+                    );
+                    $('#pdcCount').html(pdcCount);
+
+                    var salestarget = (result.salestarget).toLocaleString(
+                        undefined,
+                    );
+                    $('#salestarget').html(salestarget);
+
+                    var outstanding = (result.outstanding).toLocaleString(
+                        undefined,
+                    );
+                    $('#outstanding').html(outstanding);
+
+                    var totalCart = (result.totalCart).toLocaleString(
+                        undefined,
+                    );
+
+                    $('#totalCart').html(totalCart);
                     $('.ajax-loader').css("visibility", "hidden");
                 }
             });
