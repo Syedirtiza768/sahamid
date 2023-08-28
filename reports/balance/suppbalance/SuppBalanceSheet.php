@@ -89,6 +89,8 @@
   					<th></th>
 					<th>Ledger Status</th>
 					<th>Ledger Status</th>
+					<th>PV</th>
+					<th>Statement</th>
   				</tr>
   			</thead>
   			<tbody></tbody>
@@ -102,6 +104,8 @@
   					<th></th>
 					<th>Ledger Status</th>
 					<th>Ledger Status</th>
+					<th>PV</th>
+					<th>Statement</th>
   				</tr>
   			</tfoot>
   		</table>

@@ -50,6 +50,18 @@ while ($customer = mysqli_fetch_assoc($result)) {
     // $res[4] = $selectMenu;
     $res[6] = $customer['ledgerstatus'];
     $res[7] = $selectMenu;
+    $res[8] = '<td class="btn-info">
+    <input type="submit" value="PV" class="btn-info" style="width: 100%; padding: 4px; border:1px #424242 solid;">
+    </form>
+</td>';
+$res[9] = '
+<td class="btn-info">
+							<form action="/sahamid/reports/balance/suppstatement/SupplierStatement.php" method="post" target="_blank">
+							<input type="hidden" name="FormID" value="'.$_SESSION['FormID'].'">
+							<input type="hidden" name="cust" value="'.$customer['supplierid'].'">
+							<input type="submit" value="Supplier Statement" class="btn-info" style="padding: 8px; border:1px #424242 solid;">
+							</form>
+						</td>';
 
     $response[] = $res;
 }
