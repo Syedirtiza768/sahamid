@@ -76,6 +76,7 @@ AND debtorno LIKE 'MT%'";
         // }
     }
     $quototal = (int)$quototal;
+    $quototal = round($quototal, 0);
     $SQL = "SELECT count(*) as count FROM salesorders 
 				INNER JOIN salescase ON salescase.salescaseref = salesorders.salescaseref
 				INNER JOIN www_users ON www_users.realname = salescase.salesman
@@ -123,6 +124,7 @@ AND debtorno LIKE 'MT%'";
         // }
     }
     $octotal = (int)$octotal;
+    $octotal = round($octotal, 0);
     $SQL = "SELECT count(*) as count FROM ocs 
 				INNER JOIN salescase ON salescase.salescaseref = ocs.salescaseref
 				INNER JOIN www_users ON www_users.realname = salescase.salesman
@@ -171,6 +173,7 @@ AND debtorno LIKE 'MT%'";
         // }
     }
     $dctotal = (int)$dctotal;
+    $dctotal = round($dctotal, 0);
 
     $SQL = "SELECT count(*) as count FROM dcs 
 			INNER JOIN salescase ON salescase.salescaseref = dcs.salescaseref
@@ -427,6 +430,8 @@ ORDER BY totalValue desc
         $acheivedTarget = round($acheivedTarget, 0);
         $acheiveRatio = round($acheiveRatio, 2) . "%";
     }
+    $acheivedTarget = round($acheivedTarget, 0);
+    $target = round($target, 0);
 
 
 
