@@ -61,7 +61,7 @@ for ($i = 1; $i <= 12; $i++) {
 
 
     $SQL = "SELECT 
-        SUM(debtortrans.ovamount) as price
+        SUM(debtortrans.ovamount - debtortrans.GSTtotalamt) as price
         FROM invoice 
         INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode
         INNER JOIN debtorsmaster ON invoice.debtorno = debtorsmaster.debtorno
@@ -93,6 +93,7 @@ foreach ($acheived as $acheived) {
     $i++;
 }
 $targetAcheived = locale_number_format(round($salesTotal, 0));
+$totalTarget = locale_number_format(round($totalTarget, 0));
 if ($actualTarget != 0) {
     $acheiveRatio = ($targetAcheived * 100) / $actualTarget;
 } else {
@@ -119,7 +120,7 @@ $acheiveRatio = round($acheiveRatio, 2);
         <?php if ($targetAcheived == NULL) { ?>
             <div class="font-semibold text-md mt-2"><span> 0 </span></div>
         <?php } else { ?>
-            <div class="font-semibold text-md mt-2"><span id="actualTarget"> <?php echo $actualTarget ?> </span></div>
+            <div class="font-semibold text-md mt-2"><span id="actualTarget"> <?php echo $totalTarget ?> </span></div>
         <?php } ?>
 
     </div>

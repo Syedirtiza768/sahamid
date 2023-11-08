@@ -146,7 +146,7 @@
 	
 	include('erp/includes/footer.php'); 
 
-if ($_SESSION['AccessLevel'] == 10 OR $_SESSION['AccessLevel'] == 22 OR $_SESSION['AccessLevel'] == 23)
+if ($_SESSION['AccessLevel'] == 10 OR $_SESSION['AccessLevel'] == 22 OR $_SESSION['AccessLevel'] == 23 OR $_SESSION['AccessLevel'] == 27)
 {
 echo'
 <script type="text/javascript" language="javascript" class="init">

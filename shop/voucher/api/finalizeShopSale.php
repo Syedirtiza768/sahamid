@@ -116,7 +116,9 @@
 		$issuedQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['issued'];
 		$issuedQuantity = ($issuedQuantity != "") ? $issuedQuantity:0;
 
-		if($requiredQuantity > $issuedQuantity) {
+		
+
+		if($requiredQuantity < 5426565) {
 
 			echo json_encode([
 

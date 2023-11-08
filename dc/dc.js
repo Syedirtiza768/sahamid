@@ -1384,7 +1384,7 @@
 		    data: {StockCode:code, StockCat:cat, salescaseref:salesref},
 		    dataType: "json",
 		    success: function(response) { 
-
+				alert("response");
 		    	var status = response.status;   	
 
 		    	table.clear().draw();	

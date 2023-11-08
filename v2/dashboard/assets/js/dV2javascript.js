@@ -56,6 +56,7 @@ $(document).ready(function () {
                     var salestarget = (result.salestarget).toLocaleString(
                         undefined,
                     );
+                    
                     $('#salestarget').html(salestarget);
 
                     var outstanding = (result.outstanding).toLocaleString(
@@ -98,26 +99,57 @@ $(document).ready(function () {
                     // alert(response);
                     var result = $.parseJSON(response);
 
-                    $('#targetAcheived').html(result.acheivedTarget);
-                    $('#actualTarget').html(result.target);
-                    $('#acheiveRatio').html(result.acheiveRatio);
-
-
-                    $('#salescaseCount').html(result.salescaseCount);
-                    $('#salescaseCountSR').html(result.salescaseCountSR);
-                    $('#salescaseCountMT').html(result.salescaseCountMT);
-
-                    $('#quototal').html(result.quototal);
+                    var targetAcheived = (result.acheivedTarget).toLocaleString(
+                        undefined,
+                    );
+                    $('#targetAcheived').html(targetAcheived);
+                    
+                    var actualTarget = (result.target).toLocaleString(
+                        undefined,
+                    );
+                    $('#actualTarget').html(actualTarget);
+                    
+                    var acheiveRatio = (result.acheiveRatio).toLocaleString(
+                        undefined,
+                    );
+                    $('#acheiveRatio').html(acheiveRatio);
+                    
+                    var salescaseCount = (result.salescaseCount).toLocaleString(
+                        undefined,
+                    );
+                    $('#salescaseCount').html(salescaseCount);
+                    
+                    var salescaseCountSR = (result.salescaseCountSR).toLocaleString(
+                        undefined,
+                    );
+                    $('#salescaseCountSR').html(salescaseCountSR);
+                    
+                    var salescaseCountMT = (result.salescaseCountMT).toLocaleString(
+                        undefined,
+                    );
+                    $('#salescaseCountMT').html(salescaseCountMT);
+                    
+                    
+                    var quototal = (result.quototal).toLocaleString(
+                        undefined,
+                    );
+                    $('#quototal').html(quototal);
                     $('#quotationCount').html(result.quotationCount);
                     $('#quotationCountSR').html(result.quotationCountSR);
                     $('#quotationCountMT').html(result.quotationCountMT);
 
-                    $('#octotal').html(result.octotal);
+                    var octotal = (result.octotal).toLocaleString(
+                        undefined,
+                    );
+                    $('#octotal').html(octotal);
                     $('#ocCount').html(result.ocCount);
                     $('#ocCountSR').html(result.ocCountSR);
                     $('#ocCountMT').html(result.ocCountMT);
 
-                    $('#dctotal').html(result.dctotal);
+                    var dctotal = (result.dctotal).toLocaleString(
+                        undefined,
+                    );
+                    $('#dctotal').html(dctotal);
                     $('#dcCount').html(result.dcCount);
                     $('#dcCountSR').html(result.dcCountSR);
                     $('#dcCountMT').html(result.dcCountMT);
@@ -136,6 +168,7 @@ $(document).ready(function () {
                     var salestarget = (result.salestarget).toLocaleString(
                         undefined,
                     );
+                    
                     $('#salestarget').html(salestarget);
 
                     var outstanding = (result.outstanding).toLocaleString(

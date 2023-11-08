@@ -12,8 +12,80 @@ if(isset($_POST['fromloc'.$_POST['slct']]))
 	$_SESSION['fromloc'] = $_POST['fromloc'.$_POST['slct']];
 if(isset($_POST['authorizer'.$_POST['slct']]))
 	$_SESSION['tosalesperson'] = $_POST['authorizer'.$_POST['slct']];
+$RequestID=$_POST['slct'];
+foreach ($_POST as $key => $value) {
+	if (strpos($key, $RequestID) !== false) {
+//		echo $_POST[$RequestID.'maxdispatchitemid'];
+    for ($ind=0;$ind<=$_POST[$RequestID.'maxdispatchitemid'];$ind++){
+				$LineID = $ind;
+		$Quantity = filter_number_format($_POST[$RequestID.'Qty'.$LineID]);
+		$StockID = $_POST[$RequestID.'StockID'.$LineID];
+		$Location = $_POST[$RequestID.'Location'.$LineID];
+		$Department = $_POST[$RequestID.'Department'.$LineID];
+		$Tag = $_POST[$RequestID.'Tag'.$LineID];
+echo		$RequestedQuantity = filter_number_format($_POST[$RequestID.'RequestedQuantity'.$LineID]);
+		if($StockID!='')
+		{
+			$SQL="SELECT locstock.quantity
+					FROM locstock
+					WHERE locstock.stockid='" . $StockID . "'
+						AND loccode= '" . $_SESSION['fromloc'] . "'";
+			$Result = DB_query($SQL, $db);
+			if (DB_num_rows($Result)==1){
+				$LocQtyRow = DB_fetch_row($Result);
+				$QtyOnHandPrior = $LocQtyRow[0];
+			} else {
+				// There must actually be some error this should never happen
+				$QtyOnHandPrior = 0;
+			}
+			round($QtyOnHandPrior - $Quantity,0);
+				if	(round($QtyOnHandPrior - $Quantity,0) < 0){
+			prnMsg (_('Negative quantity Not Allowed'),'error');
+			include('includes/footer.inc');
+			exit;
 
+			}
+			}    
+    }
+	}
+	
+	}
+//print_r($_SESSION);
+/*
+	//		$RequestID = mb_substr($key,0, mb_strpos($key,'Qty'));
+			$RequestID = $_POST['slct'];
+	//		if($_POST[''])
+			$LineID = mb_substr($key,mb_strpos($key,'Qty')+3);
+			$Quantity = filter_number_format($_POST[$RequestID.'Qty'.$LineID]);
+			$StockID = $_POST[$RequestID.'StockID'.$LineID];
+			$Location = $_POST[$RequestID.'Location'.$LineID];
+			$Department = $_POST[$RequestID.'Department'.$LineID];
+			$Tag = $_POST[$RequestID.'Tag'.$LineID];
+			$RequestedQuantity = filter_number_format($_POST[$RequestID.'RequestedQuantity'.$LineID]);
+			$SQL="SELECT locstock.quantity
+					FROM locstock
+					WHERE locstock.stockid='" . $StockID . "'
+						AND loccode= '" . $_SESSION['fromloc'] . "'";
+			$Result = DB_query($SQL, $db);
+			if (DB_num_rows($Result)==1){
+				$LocQtyRow = DB_fetch_row($Result);
+				$QtyOnHandPrior = $LocQtyRow[0];
+			} else {
+				// There must actually be some error this should never happen
+				$QtyOnHandPrior = 0;
+			}
+			echo round($QtyOnHandPrior - $LineItems->Quantity,0);
+				if	(round($QtyOnHandPrior - $LineItems->Quantity,0) < 0){
+			prnMsg (_('Negative quantity Not Allowed'),'error');
+			include('includes/footer.inc');
+			exit;
 
+			}
+
+			
+	}
+}
+*/
 if (isset($_POST['UpdateAll'])) {
 	
 	foreach ($_POST as $key => $value) {
@@ -47,10 +119,10 @@ if (isset($_POST['UpdateAll'])) {
 			$Result = DB_Txn_Begin($db);
 
 			// Need to get the current location quantity will need it later for the stock movement
-			$SQL="SELECT locstock.quantity
+	echo		$SQL="SELECT locstock.quantity
 					FROM locstock
 					WHERE locstock.stockid='" . $StockID . "'
-						AND loccode= '" . $Location . "'";
+						AND loccode= '" . $_SESSION['UserStockLocation']  . "'";
 			$Result = DB_query($SQL, $db);
 			if (DB_num_rows($Result)==1){
 				$LocQtyRow = DB_fetch_row($Result);
@@ -61,7 +133,15 @@ if (isset($_POST['UpdateAll'])) {
 			}
 
 			if ($_SESSION['ProhibitNegativeStock']==0 OR ($_SESSION['ProhibitNegativeStock']==1 AND $QtyOnHandPrior >= $Quantity)) {
-
+				$SQL = "SELECT locstock.quantity FROM locstock
+						WHERE locstock.stockid='". $StockID ."' 
+						AND loccode='".$_SESSION['UserStockLocation']."'";
+				$ResultQ = DB_query($SQL, $db);
+				$QtyOnHandPrior = 0;
+				if (DB_num_rows($ResultQ)==1){
+					$LocQtyRow = DB_fetch_row($ResultQ);
+					$QtyOnHandPrior = $LocQtyRow[0];
+				}
 				$SQL = "INSERT INTO stockmoves (
 									stockid,
 									type,
@@ -424,7 +504,7 @@ if ($_POST['toloc'.$_POST['slct']] == $_POST['fromloc'.$_POST['slct']]){
 
 		 $HeaderSQL="INSERT INTO posdispatch (dispatchid,
 											loccode,
-											
+											despatchdate,
 											
 											deliveredto,
 											storemanager
@@ -434,7 +514,7 @@ if ($_POST['toloc'.$_POST['slct']] == $_POST['fromloc'.$_POST['slct']]){
 											
 											'" . $_SESSION['toloc'] . "',
 										
-											
+											'" .Date("Y-m-d"). "',
 											'" . $_SESSION['tosalesperson'] . "',
 											'" . $_SESSION['UsersRealName']. "')";
 		$ErrMsg =_('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
@@ -469,6 +549,61 @@ if ($_POST['toloc'.$_POST['slct']] == $_POST['fromloc'.$_POST['slct']]){
 	";
 				$Result = DB_query($SQL, $db);
 				echo mysqli_num_rows($Result);
+					echo					$SQL="SELECT locstock.quantity
+						FROM locstock
+						WHERE locstock.stockid='" . $LineItems->StockID . "'
+						AND loccode= '" . $_SESSION['UserStockLocation']  . "'";
+
+			$ResultQ = DB_query($SQL, $db);
+			if (DB_num_rows($ResultQ)==1){
+					$LocQtyRow = DB_fetch_row($ResultQ);
+					$QtyOnHandPrior = $LocQtyRow[0];
+				} else {
+					// There must actually be some error this should never happen
+					$QtyOnHandPrior = 0;
+				}
+		echo $qty = $_POST['StockQTY' . $i];
+				$SQL = "SELECT locstock.quantity FROM locstock
+						WHERE locstock.stockid='". $_POST['StockID' . $i] ."' 
+						AND loccode='".$_SESSION['UserStockLocation']."'";
+				$ResultQ = DB_query($SQL, $db);
+				$QtyOnHandPrior = 0;
+				if (DB_num_rows($ResultQ)==1){
+					$LocQtyRow = DB_fetch_row($ResultQ);
+					$QtyOnHandPrior = $LocQtyRow[0];
+				}
+
+			echo	$SQL = "INSERT INTO stockmoves (stockid,
+												type,
+												transno,
+												loccode,
+												trandate,
+												reference,
+												qty,
+												newqoh
+												)
+					
+					VALUES (
+						'" . $_POST['StockID' . $i] . "',
+						513,
+						'" . $RequestNo . "',
+						'" . $_SESSION['UserStockLocation'] . "',
+							'" . Date("Y-m-d") . "',
+						'" . _('To') . ' ' . $_SESSION['tosalesperson'] ."'
+						,'" . round($qty,0). "'
+						,'" .round($QtyOnHandPrior - $qty,0). "'
+						)";
+
+				$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
+				$DbgMsg =  _('The following SQL to insert the stock movement record was used');
+				$ResultQ = DB_query($SQL, $db, $ErrMsg, $DbgMsg, true);
+
+
+			
+				
+				
+				
+				
 			if (mysqli_num_rows($Result)>0)
 				{
 					$SQL = "UPDATE stockissuance

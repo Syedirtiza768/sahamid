@@ -367,7 +367,10 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
                 if(userHasPermission($db, 'panel_costing')) {
                     echo '<a href="#pcbutton" class="btn btn-default buttons" role="button" id="pcbutton">Panel Costing <span id="pcCount" class="label btn-success"></span></a>';
                 }
+				$stockrequest = $salescase['salescaseref'];
                 ?>
+				<!-- <a href="#ogpbutton" class="btn btn-default buttons" role="button" id="ogpbutton">OGP <span id="ogpCount" class="label btn-success"></span></a> -->
+				<a class="btn btn-default buttons" onclick="stockrequest('<?php echo $stockrequest; ?>')" target = "_blank">Create Stock Request<span id="ogpCount" class="label btn-success"></span></a>
 
 			</div>
 			<div id="details" class="tab">
@@ -1666,6 +1669,20 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
 				},
 			});
 		}
+		
+		function stockrequest($id) {
+			let stockrequest = $id;
+			$.ajax({
+				url: "../InterStoreStockRequest.php",
+				method: "POST",
+				data: {
+					stockrequest:stockrequest
+				},
+				success: function(data) {
+					window.open("../InterStoreStockRequest.php?New=Yes");
+				},
+			});
+		}
 
 
 		var lookup = [];
@@ -1676,7 +1693,7 @@ $canCreateRevision = userHasPermission($db, 'create_quotation_revision');
 		lookup['dcbutton'] = "#dctab";
 		lookup['pcbutton'] = "#pctab";
 		lookup['saleslogbutton'] = "#salescaselog";
-
+		lookup['ogpbutton'] = "#ogptab";
 		$(document).ready(function() {
 			$("#salescase_priority").val('<?php echo $salescase['priority'] ?>');
 		});

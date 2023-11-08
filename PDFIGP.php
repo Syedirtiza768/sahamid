@@ -20,12 +20,48 @@ $line_height=30;
 
 $ErrMsg = _('An error occurred retrieving the items on the transfer'). '.' . '<p>' .  _('This page must be called with a location transfer reference number').'.';
 $DbgMsg = _('The SQL that failed while retrieving the items on the transfer was');
+$query = NULL;
+$query1 = NULL;
+$query2 = NULL;
+$sql = "SELECT * FROM ogpsalescaseref WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpsalescaseref.salescaseref,";
+	$query2 = "ogpsalescaseref.requestedby,";
+ $query = "INNER JOIN ogpsalescaseref ON igp.dispatchid=ogpsalescaseref.dispatchid";
+}
+
+$sql = "SELECT * FROM ogpcsvref WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpcsvref.csv,";
+	$query2 = "ogpcsvref.requestedby,";
+ $query = "INNER JOIN ogpcsvref ON igp.dispatchid=ogpcsvref.dispatchid";
+}
+
+$sql = "SELECT * FROM ogpcrvref WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpcrvref.crv,";
+	$query2 = "ogpcrvref.requestedby,";
+ $query = "INNER JOIN ogpcrvref ON igp.dispatchid=ogpcrvref.dispatchid";
+}
+
+$sql = "SELECT * FROM ogpmporef WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpmporef.mpo,";
+	$query2 = "ogpmporef.requestedby,";
+ $query = "INNER JOIN ogpmporef ON igp.dispatchid=ogpmporef.dispatchid";
+}
+
 echo $sql = "SELECT
 igp.receivedfrom, 
 igp.storemanager,
 igp.loccode,
 igp.despatchdate,
- 
+". $query1 ."
+". $query2 ."
 locations.locationname,
 		igpitems.dispatchid,
 		igpitems.stockid,
@@ -41,6 +77,7 @@ locations.locationname,
 		
 		INNER JOIN igp ON igp.dispatchid=igpitems.dispatchid
 		INNER JOIN locations ON igp.loccode=locations.loccode
+		". $query ."
 		WHERE igp.dispatchid=" . $_GET['RequestNo'] . "";
 
 		

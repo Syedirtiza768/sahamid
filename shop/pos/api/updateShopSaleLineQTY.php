@@ -16,6 +16,14 @@
 	$lineno  		= $_POST['line'];
 	$quantity 		= $_POST['quantity'];
 
+	if($quantity == 0 ){
+		echo json_encode([
+				'status' 	=> 'error',
+				'message' 	=> 'Quantity cannot be 0 please add quantity again'
+			]);
+		return;
+	}
+
 
 	$SQL = "SELECT complete FROM shopsale WHERE orderno=$orderno";
 	$res = mysqli_query($db, $SQL);

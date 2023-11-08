@@ -372,7 +372,7 @@ ORDER BY totalValue desc
             $startDate = date($startYear . '-' . $month . '-01');
             $endDate = date($startYear . '-' . $month . '-31');
             $SQL = "SELECT 
-        SUM(debtortrans.ovamount) as price
+        SUM(debtortrans.ovamount - debtortrans.GSTtotalamt) as price
         FROM invoice 
         INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode
         INNER JOIN debtorsmaster ON invoice.debtorno = debtorsmaster.debtorno

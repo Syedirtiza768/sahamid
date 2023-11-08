@@ -290,6 +290,11 @@
             </a>
           </li>
           <?php } ?>
+          <li>
+            <a target="_blank" href="<?php echo $NewRootPath; ?>ItemReference/changeItemReference.php">
+              <i class="fa fa-arrow-left"></i> Change Item Reference
+            </a>
+          </li>
 		  <?php
             $PageSecurity = $_SESSION['PageSecurityArray']['StockAdjustments.php'];
             if(in_array($PageSecurity, $_SESSION['AllowedPageSecurityTokens'])){ 
@@ -300,7 +305,7 @@
             </a>
           </li>
           <?php } ?>
-          <?php
+          <!-- <?php
             $PageSecurity = $_SESSION['PageSecurityArray']['InterStoreStockRequest.php'];
             if(in_array($PageSecurity, $_SESSION['AllowedPageSecurityTokens'])){ 
           ?>
@@ -329,7 +334,7 @@
               <i class="fa fa-question"></i> Authorise Stock Request
             </a>
           </li>
-          <?php } ?>
+          <?php } ?> -->
           <?php
             $PageSecurity = $_SESSION['PageSecurityArray']['InterStoreStockRequestFulfill.php'];
             if(in_array($PageSecurity, $_SESSION['AllowedPageSecurityTokens'])){ 

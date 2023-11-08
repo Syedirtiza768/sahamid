@@ -60,10 +60,12 @@ $sql = "SELECT stockrequestitems.dispatchid as reference,
 			   locations.locationname as shiplocname,
 			   stockrequest.recloc as recloc,
 			   locationsrec.locationname as reclocname,
-			   stockmaster.decimalplaces
+			   stockmaster.decimalplaces,
+			   ogpsalescaseref.salescaseref,
+			   ogpsalescaseref.requestedby
 		FROM stockmaster inner join manufacturers on stockmaster.brand= manufacturers.manufacturers_id
 		INNER JOIN stockrequestitems ON stockrequestitems.stockid=stockmaster.stockid
-		
+		INNER JOIN ogpsalescaseref ON ogpsalescaseref.dispatchid=stockrequestitems.dispatchid
 		INNER JOIN stockrequest ON stockrequest.dispatchid=stockrequestitems.dispatchid
 		INNER JOIN locations ON stockrequest.shiploc=locations.loccode
 		INNER JOIN locations AS locationsrec ON stockrequest.recloc = locationsrec.loccode

@@ -21,28 +21,64 @@ $pdf->SetFont('helvetica', '', 10, '', true);
 
 $ErrMsg = _('An error occurred retrieving the items on the transfer'). '.' . '<p>' .  _('This page must be called with a location transfer reference number').'.';
 $DbgMsg = _('The SQL that failed while retrieving the items on the transfer was');
-echo $sql = "SELECT
-posdispatch.deliveredto, 
 
+$query = NULL;
+$query1 = NULL;
+$query2 = NULL;
+$sql = "SELECT * FROM ogpsalescaseref WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpsalescaseref.salescaseref,";
+	$query2 = "ogpsalescaseref.requestedby,";
+ $query = "INNER JOIN ogpsalescaseref ON posdispatch.dispatchid=ogpsalescaseref.dispatchid";
+}
+
+$sql = "SELECT * FROM ogpcsvref WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpcsvref.csv,";
+	$query2 = "ogpcsvref.requestedby,";
+ $query = "INNER JOIN ogpcsvref ON posdispatch.dispatchid=ogpcsvref.dispatchid";
+}
+
+$sql = "SELECT * FROM ogpcrvref WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpcrvref.crv,";
+	$query2 = "ogpcrvref.requestedby,";
+ $query = "INNER JOIN ogpcrvref ON posdispatch.dispatchid=ogpcrvref.dispatchid";
+}
+
+$sql = "SELECT * FROM ogpmporef WHERE dispatchid =" . $_GET['RequestNo'] . " ";
+$result = DB_query($sql,$db);
+If (DB_num_rows($result)!=0){
+	$query1 = "ogpmporef.mpo,";
+	$query2 = "ogpmporef.requestedby,";
+ $query = "INNER JOIN ogpmporef ON posdispatch.dispatchid=ogpmporef.dispatchid";
+}
+
+echo $sql = "SELECT DISTINCT
+posdispatch.deliveredto,
 posdispatch.loccode,
 posdispatch.despatchdate,
- 
 posdispatch.storemanager,
 locations.locationname,
+". $query1 ."
+". $query2 ."
 		posdispatchitems.dispatchid,
 		posdispatchitems.stockid,
 		posdispatchitems.quantity, 
 		stockmaster.description,
 			   stockmaster.mnfCode,
 			   stockmaster.mnfpno,
-		manufacturers.manufacturers_name,
+		 manufacturers.manufacturers_name,
 		 stockmaster.decimalplaces
 		FROM stockmaster inner join manufacturers on stockmaster.brand= manufacturers.manufacturers_id
 		INNER JOIN posdispatchitems ON posdispatchitems.stockid=stockmaster.stockid
-		
 		INNER JOIN posdispatch ON posdispatch.dispatchid=posdispatchitems.dispatchid
 		INNER JOIN locations ON posdispatch.loccode=locations.loccode
-		WHERE posdispatch.dispatchid=" . $_GET['RequestNo'] . "";
+		". $query ."
+		WHERE posdispatch.dispatchid=" . $_GET['RequestNo'] . " ";
 
 		
 $result = DB_query($sql,$db, $ErrMsg, $DbgMsg);

@@ -166,11 +166,11 @@
 			    overflow: auto;
 			   	z-index: 200;
 			   	display: none;
-
-			    .overlay-content {
-			        height: 100%;
-			        overflow: scroll;
-			    }
+			}
+			
+			.overlay-content {
+				height: 100%;
+				overflow: scroll;
 			}
 			  
 			.background-content{
