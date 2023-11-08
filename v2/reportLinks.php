@@ -69,7 +69,7 @@
 		'Movement By Loc/Date'		=> '../StockLocMovements.php',
 		'Cart Status'				=> '../cartstatus.php',
         'Cart Report'				=> '../v2/cartreport.php',
-        'New Cart Report'			=> '../v2/cartreport1.php',
+        'New Cart Report'				=> '../v2/cartreport1.php',
 		'Reprint Documents'			=> '../reprintdocuments.php',
 		'Reprint Documents (New)'	=> '../reprintdocumentsnew.php',
         'DC Attachments'			=> '../v2/dcattachments.php',

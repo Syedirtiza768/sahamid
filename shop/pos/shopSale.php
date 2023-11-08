@@ -351,7 +351,6 @@
                                     <option value="Sajjad Ahmed Khan">Sajjad Ahmed Khan</option>
                                     <option value="Ammar Hafeez">Ammar Hafeez</option>
                                     <option value="Muhammad Shehzad">Muhammad Shehzad</option>
-									<option value="Ashfaq Ahmad (N)">Ashfaq Ahmad (N)</option>
 		      					</select>
 		      				</label>
 		      			</h3>
