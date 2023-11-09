@@ -74,15 +74,16 @@
 
 		$optionQuantity = $row['quantity'];
 
-		$SQL = "SELECT issued,dc FROM stockissuance 
+		$SQL = "SELECT quantity FROM ogpsalescaseref 
 				WHERE stockid='".$stockid."'
-				AND salesperson='".$salesman."'";
+				AND salesman='".$salesman."'
+				AND salescaseref = '".$salescaseref."'";
 
 		$result = mysqli_query($db, $SQL);
 
 		$quant = mysqli_fetch_assoc($result);
 
-		$issuedQuantity = $quant['issued'];
+		$issuedQuantity = $quant['quantity'];
 		$dcQuantity = $quant['dc'];
 
 		if($value <= 0){
@@ -120,7 +121,7 @@
 			return;	
 		}
 
-		if($issuedQuantity < $quantityDifference){
+		if($issuedQuantity < $quantityDifference && ($optionQuantity*$value > $issuedQuantity || $value < $stkQuantity)){
 
 			$response = [
 				'status'  => 'alert',
@@ -132,6 +133,27 @@
 			return;	
 
 		}
+
+		if($value > $stkQuantity){
+			$difference = $optionQuantity*$value;
+			$difference = $difference - $stkQuantity;
+			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '".$salescaseref."'
+			AND stockid='".$stockid."'
+			AND salesman='".$salesman."'";
+
+            $result = mysqli_query($db, $SQL);
+		
+		}
+		if($value < $stkQuantity){
+			$difference = $stkQuantity-$value;
+			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '".$salescaseref."'
+			AND stockid='".$stockid."'
+			AND salesman='".$salesman."'";
+
+            $result = mysqli_query($db, $SQL);
+		
+		}
+
 
 		$newIssued = $issuedQuantity - $quantityDifference;
 		$newDCVal  = $dcQuantity + $quantityDifference;

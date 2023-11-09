@@ -858,7 +858,7 @@ if (isset($_GET['Edit'])) {
 	echo ' </tr>';
 
 	if (isset($_SESSION['Request']->igp) and $_SESSION['Request']->igp == "B") {
-		$_SESSION['Request']->igp = $_POST['igp'];
+		// $_SESSION['Request']->igp = $_POST['igp'];
 
 		echo	'<tr>
 		<td>' . _('From Stock Location') . ':</td>';
