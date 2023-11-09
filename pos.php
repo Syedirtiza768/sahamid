@@ -234,10 +234,17 @@ if (isset($_POST['Submit']) and $count > 0) {
 		if ($_SESSION['Request']->salescaseref) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
-				$itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'";
+				$itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'	
+					AND stockid = '" . $LineItems->StockID . "' AND salesman = '" . $_SESSION['Request']->deliveredto . "'";
 				$Result = DB_query($itemcode, $db);
 
-				$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
+				if (DB_num_rows($Result) == 1) {
+					$itemcode = "UPDATE ogpsalescaseref SET quantity =quantity +'" . $LineItems->Quantity . "' WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'
+							AND stockid = '" . $LineItems->StockID . "' AND  salesman = '" . $_SESSION['Request']->deliveredto . "'";
+					$Result = DB_query($itemcode, $db);
+				} else {
+
+					$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
 												salescaseref,
 												requestedby,
 												stockid,
@@ -252,9 +259,10 @@ if (isset($_POST['Submit']) and $count > 0) {
 												'" . $_SESSION['Request']->deliveredto . "',
 												'" . $LineItems->Quantity . "')";
 
-				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-				$DbgMsg = _('The following SQL to insert the request header record was used');
-				$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				}
 			}
 		}
 
@@ -684,7 +692,7 @@ if (isset($_POST['Submit']) and $count > 0) {
 		if (isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "D")
 			echo '<option value="D" selected = "selected">' . _('Salescase') . '</option>';
 		else echo '<option value="D">' . _('Salescase') . '</option>';
-		
+
 		if (isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "E")
 			echo '<option value="E" selected = "selected">' . _('Cart') . '</option>';
 		else echo '<option value="E">' . _('Cart') . '</option>';

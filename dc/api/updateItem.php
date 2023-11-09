@@ -121,6 +121,9 @@
 			return;	
 		}
 
+		$new = $optionQuantity*$value;
+		$old = $optionQuantity*$stkQuantity;
+
 		if($issuedQuantity < $quantityDifference && ($optionQuantity*$value > $issuedQuantity || $value < $stkQuantity)){
 
 			$response = [
@@ -133,19 +136,18 @@
 			return;	
 
 		}
-
-		if($value > $stkQuantity){
+		
+		if($new > $old){
 			$difference = $optionQuantity*$value;
-			$difference = $difference - $stkQuantity;
+			$difference = $difference - $stkQuantity*$optionQuantity;
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '".$salescaseref."'
 			AND stockid='".$stockid."'
 			AND salesman='".$salesman."'";
-
-            $result = mysqli_query($db, $SQL);
+			$result = mysqli_query($db, $SQL);
 		
 		}
-		if($value < $stkQuantity){
-			$difference = $stkQuantity-$value;
+		if($new < $old){
+			$difference = $old-$new;
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '".$salescaseref."'
 			AND stockid='".$stockid."'
 			AND salesman='".$salesman."'";
@@ -404,5 +406,3 @@
 
 	echo json_encode($response);
 	return;
-
-?>

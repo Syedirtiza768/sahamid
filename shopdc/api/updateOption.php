@@ -102,16 +102,23 @@
 			$stockid = $stock['stkcode'];
 			$stkQuantity = $stock['quantity'];
 
-			$SQL = "SELECT issued,dc FROM stockissuance WHERE stockid='".$stockid."'AND salesperson='".$salesman."'";
+			$SQL = "SELECT quantity FROM ogpsalescaseref 
+			WHERE stockid='".$stockid."'
+			AND salesman='".$salesman."'
+			AND salescaseref = '".$salescaseref."'";
 			$result = mysqli_query($db, $SQL);
 			$quant = mysqli_fetch_assoc($result);
 
-			$issuedQuantity = $quant['issued'];
-			$dcQuantity = $quant['dc'];
+			$SQL = "SELECT issued,dc FROM stockissuance WHERE stockid='".$stockid."'AND salesperson='".$salesman."'";
+			$result = mysqli_query($db, $SQL);
+			$quant1 = mysqli_fetch_assoc($result);
+
+			$issuedQuantity = $quant['quantity'];
+			$dcQuantity = $quant1['dc'];
 
 			$quantityDifference = ($row['quantity']*$value) - ($row['quantity']*$optionQuantity);
 
-			if($issuedQuantity < ($quantityDifference)){
+			if($issuedQuantity < ($quantityDifferenc  && ($row['quantity']*$value > $issuedQuantity || $value < $stkQuantity)){
 
 				$response = [
 					'status'  => 'alert',
@@ -122,6 +129,29 @@
 				echo json_encode($response);
 				return;	
 
+			}
+
+			$new = $row['quantity']*$value ;
+		$old = $row['quantity']*$optionQuantity;
+
+			if($new > $old){
+				
+				$difference = $new;
+				$difference = $difference - $old;
+				$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '".$salescaseref."'
+				AND stockid='".$stockid."'
+				AND salesman='".$salesman."'";
+				$result = mysqli_query($db, $SQL);
+			
+			}
+			if($new < $old){
+				$difference = $old-$new;
+				$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '".$salescaseref."'
+				AND stockid='".$stockid."'
+				AND salesman='".$salesman."'";
+	
+				$result = mysqli_query($db, $SQL);
+			
 			}
 
 		}
