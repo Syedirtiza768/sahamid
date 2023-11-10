@@ -330,7 +330,7 @@
 		      					 	style="color: #424242; border:1px solid #424242; border-radius: 7px; width: 100%; padding:5px; font-size: .6em;"> 
 									<option value="">Select SalesPerson</option>
 									<option value="Ashfaq Ahmad">Ashfaq Ahmad</option>
-									<option value="Ashfaq Ahmad">Ashfaq Ahmad (N)</option>
+									<option value="Ashfaq Ahmad (N)">Ashfaq Ahmad (N)</option>
                                     <option value="Adnan Karim Baksh">Adnan Karim Baksh	</option>
                                     <option value="Mohsin Iqbal">Mohsin Iqbal</option>
                                     <option value="Yasir Mehfooz">Yasir Mehfooz</option>
