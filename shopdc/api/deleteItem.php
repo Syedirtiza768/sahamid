@@ -88,6 +88,14 @@
 
 	mysqli_query($db, $SQL);
 
+	
+	$SQL = "UPDATE `ogpsalescaseref` SET quantity= quantity + ".$blablaQuantity."
+	WHERE salesman='".$salesman."'
+	AND stockid='".$item['stkcode']."'
+	AND salescaseref = '".$dc['salescaseref']."'";
+
+mysqli_query($db, $SQL);
+
 	$stockid = $item['stkcode'];
 	$orderno = $item['orderno'];
 	$fromstkloc = $dc['fromstkloc'];

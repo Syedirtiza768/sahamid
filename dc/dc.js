@@ -711,7 +711,6 @@
 		    data: {itemIndex: index,FormID:formID},
 		    dataType: "json",
 		    success: function(response) { 
-
 		    	if(response.status == "success"){
 
 		    		$('#l'+line+'o'+option+'i'+response.data.index).remove();

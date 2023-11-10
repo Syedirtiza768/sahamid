@@ -114,7 +114,7 @@
 			$quant1 = mysqli_fetch_assoc($result);
 
 			$issuedQuantity = $quant['quantity'];
-			$dcQuantity = $quant1['dc'];
+			$dcQuantity = $quant['dc'];
 
 			$quantityDifference = ($row['quantity']*$value) - ($row['quantity']*$optionQuantity);
 
@@ -130,8 +130,9 @@
 				return;	
 
 			}
+			
 			$new = $row['quantity']*$value ;
-		$old = $row['quantity']*$optionQuantity;
+			$old = $row['quantity']*$optionQuantity;
 
 			if($new > $old){
 				

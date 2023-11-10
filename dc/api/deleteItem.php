@@ -75,6 +75,12 @@
 	$newIssued = $issuedQuantity + $blablaQuantity;
 	$newDCVal  = $dcQuantity - $blablaQuantity;
 	$stockid = $item['stkcode'];
+
+	
+
+			
+
+
     if(isset($_POST['grbno'])) {
 
         $SQL = "INSERT INTO `grbdetails`(`orderno`,`stkcode`,`quantity`)
@@ -86,6 +92,13 @@
 	$SQL = "UPDATE `stockissuance` SET issued='".$newIssued."',dc='".$newDCVal."' 
 			WHERE salesperson='".$salesman."'
 			AND stockid='".$item['stkcode']."'";
+
+	mysqli_query($db, $SQL);
+	
+	$SQL = "UPDATE `ogpsalescaseref` SET quantity= quantity + ".$blablaQuantity."
+			WHERE salesman='".$salesman."'
+			AND stockid='".$item['stkcode']."'
+			AND salescaseref = '".$dc['salescaseref']."'";
 
 	mysqli_query($db, $SQL);
 

@@ -83,7 +83,7 @@
 
 		$quant = mysqli_fetch_assoc($result);
 
-		$issuedQuantity = $quant['issued'];
+		$issuedQuantity = $quant['quantity'];
 		$dcQuantity = $quant['dc'];
 
 		if($value <= 0){
