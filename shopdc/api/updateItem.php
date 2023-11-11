@@ -75,16 +75,22 @@
 		$optionQuantity = $row['quantity'];
 
 		$SQL = "SELECT quantity FROM ogpsalescaseref 
-		WHERE stockid='".$stockid."'
-		AND salesman='".$salesman."'
-		AND salescaseref = '".$salescaseref."'";
+				WHERE stockid='" . $stockid . "'
+				AND salesman='" . $salesman . "'
+				AND salescaseref = '" . $salescaseref . "'";
 
-		$result = mysqli_query($db, $SQL);
+	$result = mysqli_query($db, $SQL);
 
-		$quant = mysqli_fetch_assoc($result);
+	$quant = mysqli_fetch_assoc($result);
 
-		$issuedQuantity = $quant['quantity'];
-		$dcQuantity = $quant['dc'];
+	$issuedQuantityref = $quant['quantity'];
+
+	$SQL = "SELECT issued,dc FROM stockissuance WHERE stockid='" . $stockid . "'AND salesperson='" . $salesman . "'";
+	$result = mysqli_query($db, $SQL);
+	$quant = mysqli_fetch_assoc($result);
+
+	$issuedQuantity = $quant['issued'];
+	$dcQuantity = $quant['dc'];
 
 		if($value <= 0){
 
@@ -109,7 +115,7 @@
 
 		}
 
-		if($issuedQuantity < 1 && $quantityDifference > 0){
+		if($issuedQuantityref < 1 && $quantityDifference > 0){
 
 			$response = [
 				'status' => 'alert',
@@ -121,7 +127,7 @@
 			return;	
 		}
 
-		if($issuedQuantity < $quantityDifference  && ($optionQuantity*$value > $issuedQuantity || $value < $stkQuantity)){
+		if($issuedQuantityref < $quantityDifference  && ($optionQuantity*$value > $issuedQuantityref || $value < $stkQuantity)){
 
 			$response = [
 				'status'  => 'alert',

@@ -101,19 +101,27 @@ if ($name == "quantity") {
 		$stkQuantity = $stock['quantity'];
 
 		$SQL = "SELECT quantity FROM ogpsalescaseref 
-			WHERE stockid='" . $stockid . "'
-			AND salesman='" . $salesman . "'
-			AND salescaseref = '" . $salescaseref . "'";
+				WHERE stockid='" . $stockid . "'
+				AND salesman='" . $salesman . "'
+				AND salescaseref = '" . $salescaseref . "'";
+
+		$result = mysqli_query($db, $SQL);
+
+		$quant = mysqli_fetch_assoc($result);
+
+		$issuedQuantityref = $quant['quantity'];
+
+		$SQL = "SELECT issued,dc FROM stockissuance WHERE stockid='" . $stockid . "'AND salesperson='" . $salesman . "'";
 		$result = mysqli_query($db, $SQL);
 		$quant = mysqli_fetch_assoc($result);
 
-		$issuedQuantity = $quant['quantity'];
+		$issuedQuantity = $quant['issued'];
 		$dcQuantity = $quant['dc'];
 
 		$quantityDifference = ($row['quantity'] * $value) - ($row['quantity'] * $optionQuantity);
 
 
-		if ($issuedQuantity < $quantityDifference && ($row['quantity'] * $value > $issuedQuantity || $value < $stkQuantity)) {
+		if ($issuedQuantityref < $quantityDifference && ($row['quantity'] * $value > $issuedQuantityref || $value < $stkQuantity)) {
 
 			$response = [
 				'status'  => 'alert',
