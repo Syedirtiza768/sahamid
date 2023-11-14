@@ -415,9 +415,14 @@ include_once("../v2/config.php");
             }
 
             var totalItems = Number(new_sales_q) + Number(new_csv_q) + Number(new_crv_q) + Number(new_mpo_q);
+            
             if (totalItems > old_quantity) {
                 alert("Your seleced quantities are greater. Please select in range of " + old_quantity);
-            } else {
+            }
+            else if (totalItems < old_quantity) {
+                alert("Your seleced quantities are in negative. Please select in range of " + old_quantity);
+            }
+             else {
                 $("#btnSubmit").prop("disabled", true);
                 $.ajax({
                     type: 'POST',
