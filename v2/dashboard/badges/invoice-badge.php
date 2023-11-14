@@ -120,7 +120,7 @@ $acheiveRatio = round($acheiveRatio, 2);
         <?php if ($targetAcheived == NULL) { ?>
             <div class="font-semibold text-md mt-2"><span> 0 </span></div>
         <?php } else { ?>
-            <div class="font-semibold text-md mt-2"><span id="actualTarget"> <?php echo $totalTarget ?> </span></div>
+            <div class="font-semibold text-md mt-2"><span id="actualTarget"> <?php echo $SQL ?> </span></div>
         <?php } ?>
 
     </div>

@@ -17,13 +17,10 @@ include_once("../v2/config.php");
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.0.0-rc.4/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.0.0-rc.4/dist/js/tom-select.complete.min.js"></script>
 
 </head>
-<script>
-    $(document).ready(function() {
-        $(".js-example-basic-single").select2();
-    });
-</script>
 <style>
     body {
         background: #ecf0f5;
@@ -271,35 +268,36 @@ include_once("../v2/config.php");
             foreach ($merged_results as $row) {
             ?>
                 <?php if ($checkStock != $row['stockid']) {
-                     if ($row['quantity'] != "0") { ?>
-                    <tr>
-                        <td><?php echo $row['stockid'] ?></td>
-                        <td><?php echo $row['quantity'] ?></td>
-                        <td><?php echo $row['salescaseref'] ?></td>
-                        <td><?php echo $row['csv'] ?></td>
-                        <td><?php echo $row['crv'] ?></td>
-                        <td><?php echo $row['mpo'] ?></td>
-                        <td>
-                            <?php if ($row['salescaseref']) { ?>
-                                <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'salescase' , '<?php echo $row['salescaseref'] ?>')" class="tbutton">Change Ref</button>
-                        </td>
-                    <?php } else if ($row['csv']) { ?>
-                        <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'CSV' , '<?php echo $row['csv'] ?>')" class="tbutton">Change Ref</button></td>
+                    if ($row['quantity'] != "0") { ?>
+                        <tr>
+                            <td><?php echo $row['stockid'] ?></td>
+                            <td><?php echo $row['quantity'] ?></td>
+                            <td><?php echo $row['salescaseref'] ?></td>
+                            <td><?php echo $row['csv'] ?></td>
+                            <td><?php echo $row['crv'] ?></td>
+                            <td><?php echo $row['mpo'] ?></td>
+                            <td>
+                                <?php if ($row['salescaseref']) { ?>
+                                    <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'salescase' , '<?php echo $row['salescaseref'] ?>')" class="tbutton">Change Ref</button>
+                            </td>
+                        <?php } else if ($row['csv']) { ?>
+                            <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'CSV' , '<?php echo $row['csv'] ?>')" class="tbutton">Change Ref</button></td>
 
-                    <?php } else if ($row['crv']) { ?>
-                        <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'CRV' , '<?php echo $row['crv'] ?>')" class="tbutton">Change Ref</button></td>
+                        <?php } else if ($row['crv']) { ?>
+                            <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'CRV' , '<?php echo $row['crv'] ?>')" class="tbutton">Change Ref</button></td>
 
-                    <?php } else if ($row['mpo']) { ?>
-                        <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'MPO' , '<?php echo $row['mpo'] ?>')" class="tbutton">Change Ref</button></td>
-                    <?php } else { ?>
-                        <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'NOT' , '')" class="tbutton">Change Ref</button></td>
-                    <?php } ?>
-                    <?php if (!$row['salescaseref'] && !$row['csv'] && !$row['crv'] && !$row['mpo']) {
-                        $checkStock = $row['stockid'];
-                    }
-                    ?>
-                    </tr>
-            <?php }}
+                        <?php } else if ($row['mpo']) { ?>
+                            <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'MPO' , '<?php echo $row['mpo'] ?>')" class="tbutton">Change Ref</button></td>
+                        <?php } else { ?>
+                            <button type="button" data-toggle="modal" data-target="#myModal" onclick="myFunction('<?php echo $row['stockid'] ?>', <?php echo $row['quantity'] ?>, 'NOT' , '')" class="tbutton">Change Ref</button></td>
+                        <?php } ?>
+                        <?php if (!$row['salescaseref'] && !$row['csv'] && !$row['crv'] && !$row['mpo']) {
+                            $checkStock = $row['stockid'];
+                        }
+                        ?>
+                        </tr>
+            <?php }
+                }
             } ?>
         </tbody>
         <tfoot class="header">
@@ -347,7 +345,6 @@ include_once("../v2/config.php");
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('.js-example-basic-single').select2();
         new DataTable('#example', {
             columns: [{
                     data: 'item_code'
@@ -415,14 +412,12 @@ include_once("../v2/config.php");
             }
 
             var totalItems = Number(new_sales_q) + Number(new_csv_q) + Number(new_crv_q) + Number(new_mpo_q);
-            
+
             if (totalItems > old_quantity) {
                 alert("Your seleced quantities are greater. Please select in range of " + old_quantity);
-            }
-            else if (totalItems < old_quantity) {
+            } else if (totalItems < 0) {
                 alert("Your seleced quantities are in negative. Please select in range of " + old_quantity);
-            }
-             else {
+            } else {
                 $("#btnSubmit").prop("disabled", true);
                 $.ajax({
                     type: 'POST',
@@ -521,7 +516,7 @@ include_once("../v2/config.php");
         }
         htmlStr += '<div class="form-group new_reference">';
         htmlStr += ' <label for="email1">New Salescase</label>';
-        htmlStr += '<select class="js-example-basic-single" id="new_sales">';
+        htmlStr += '<select class="select_state" id="new_sales" >';
         htmlStr += '<option value="">--- Choose Salescase ---</option>';
         <?php
         $sql = "select salescaseref from salescase WHERE salesman = '" . $_SESSION['UsersRealName'] . "' AND closed = '0' ";
@@ -535,11 +530,11 @@ include_once("../v2/config.php");
         htmlStr += ' </div>';
         htmlStr += '<div class="form-group">';
         htmlStr += '<label for="password1">Item Qty</label>';
-        htmlStr += '<input type="number" id="new_sales_q" style="margin-left:40px;">';
+        htmlStr += '<input type="number" id="new_sales_q" style="margin-left:60px;">';
         htmlStr += '</div><br>';
         htmlStr += '<div class="form-group new_reference">';
         htmlStr += ' <label for="email1">New CSV</label>';
-        htmlStr += '<select class="js-example-basic-single" id="new_csv" style="margin-left:37px;" id="csv">';
+        htmlStr += '<select class="select_state1" id="new_csv" style="margin-left:37px;" id="csv">';
         htmlStr += '<option value="">--- Choose CSV ---</option>';
         <?php
         $sql = "select orderno from shopsale WHERE salesman = '" . $_SESSION['UsersRealName'] . "' AND 
@@ -558,7 +553,7 @@ include_once("../v2/config.php");
         htmlStr += '</div><br>';
         htmlStr += '<div class="form-group new_reference">';
         htmlStr += ' <label for="email1">New CRV</label>';
-        htmlStr += '<select class="js-example-basic-single" id="new_crv" style="margin-left:35px;" id="crv">';
+        htmlStr += '<select class="select_state2" id="new_crv" style="margin-left:35px;" id="crv">';
         htmlStr += '<option value="">--- Choose CRV ---</option>';
         <?php
         $sql = "select orderno from shopsale WHERE salesman = '" . $_SESSION['UsersRealName'] . "' AND 
@@ -577,7 +572,7 @@ include_once("../v2/config.php");
         htmlStr += '</div> <br>';
         htmlStr += '<div class="form-group new_reference">';
         htmlStr += ' <label for="email1">New MPO</label>';
-        htmlStr += '<select class="js-example-basic-single" id="new_mpo" style="margin-left:30px;" id="mpo">';
+        htmlStr += '<select class="select_state3" id="new_mpo" style="margin-left:30px;" id="mpo">';
         htmlStr += '<option value="">--- Choose MPO ---</option>';
         <?php
         $sql = "SELECT * FROM `bazar_parchi` WHERE `on_behalf_of` = = '" . $_SESSION['UsersRealName'] . "' AND `inprogress` = '1' ";
@@ -599,9 +594,42 @@ include_once("../v2/config.php");
         // alert(htmlStr);
         // adding the data to the modal
         $('.modal-body').html(htmlStr);
+        new TomSelect(".select_state",{
+        create: false,
+        sortField: {
+            field: "text",
+            direction: "asc"
+        }
+    });
+        new TomSelect(".select_state1",{
+        create: false,
+        sortField: {
+            field: "text",
+            direction: "asc"
+        }
+    });
+        new TomSelect(".select_state2",{
+        create: false,
+        sortField: {
+            field: "text",
+            direction: "asc"
+        }
+    });
+        new TomSelect(".select_state3",{
+        create: false,
+        sortField: {
+            field: "text",
+            direction: "asc"
+        }
+    });
+        //         $('.js-example-basic-single').select2({
+        //     dropdownParent: $('.modal-body', '#myModal')
+        //   });
         // $('.modal-body input').text(title);
         // $('#quantity').text(qty);
     }
+
+    
 </script>
 
 </html>
