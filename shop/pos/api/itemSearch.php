@@ -22,7 +22,7 @@ if ($csv != NULL) {
 					stockmaster.mnfcode,
 					stockmaster.mnfpno,
 					stockmaster.description,
-					(SELECT SUM(quantity) FROM ogpcsvref WHERE crv = '" . $orderNo . "') AS qoh,
+					(SELECT SUM(quantity) FROM ogpcsvref WHERE crv = '" . $orderNo . "' AND stockid =  stockmaster.stockid) AS qoh,
 					ogpcsvref.stockid,
 					manufacturers.manufacturers_name as mname
 			FROM stockmaster 
@@ -62,7 +62,7 @@ if ($csv != NULL) {
 					stockmaster.mnfcode,
 					stockmaster.mnfpno,
 					stockmaster.description,
-					(SELECT SUM(quantity) FROM ogpcrvref WHERE crv = '" . $orderNo . "') AS qoh,
+					(SELECT SUM(quantity) FROM ogpcrvref WHERE crv = '" . $orderNo . "' AND stockid =  stockmaster.stockid) AS qoh,
 					ogpcrvref.stockid,
 					manufacturers.manufacturers_name as mname
 			FROM stockmaster 
