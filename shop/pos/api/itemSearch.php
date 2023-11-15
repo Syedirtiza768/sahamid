@@ -22,7 +22,7 @@ if ($csv != NULL) {
 					stockmaster.mnfcode,
 					stockmaster.mnfpno,
 					stockmaster.description,
-					ogpcsvref.quantity AS qoh,
+					(SELECT SUM(quantity) FROM ogpcsvref WHERE crv = '" . $orderNo . "') AS qoh,
 					ogpcsvref.stockid,
 					manufacturers.manufacturers_name as mname
 			FROM stockmaster 
@@ -62,7 +62,7 @@ if ($csv != NULL) {
 					stockmaster.mnfcode,
 					stockmaster.mnfpno,
 					stockmaster.description,
-					ogpcrvref.quantity AS qoh,
+					(SELECT SUM(quantity) FROM ogpcrvref WHERE crv = '" . $orderNo . "') AS qoh,
 					ogpcrvref.stockid,
 					manufacturers.manufacturers_name as mname
 			FROM stockmaster 
@@ -89,7 +89,6 @@ if ($csv != NULL) {
 	$res = mysqli_query($db, $SQL);
 
 	$response = [];
-
 	while ($row = mysqli_fetch_assoc($res)) {
 		$row['action'] = "<button class='btn btn-success' onclick='attachSKU(\"" . $selectedItem . "\",\"" . $row['stockid'] . "\")'>Attach</button>";
 		$response[] = $row;
