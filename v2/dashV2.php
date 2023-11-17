@@ -192,7 +192,7 @@ if (mysqli_num_rows($res) != 1) {
     <script src="asset/vendor/libs/jquery/jquery.js"></script>
     <script src="asset/vendor/js/bootstrap.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
-    <script src="dashboard/assets/js/dV2javascript.js"></script>
+    <script src="dashboard/assets/js/dV2javascriptz.js"></script>
 </body>
 
 </html>

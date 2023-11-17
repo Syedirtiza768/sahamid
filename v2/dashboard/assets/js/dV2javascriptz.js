@@ -46,7 +46,7 @@ $(document).ready(function () {
                 data: { salesman: salesman, from: from, to: to },
                 success: function (response) {
 
-                    // alert(response);
+                    console.log(response);
                     var result = $.parseJSON(response);
                     var pdcCount = (result.pdcCount).toLocaleString(
                         undefined,
@@ -96,7 +96,6 @@ $(document).ready(function () {
                     startMonth: startMonth, endMonth: endMonth
                 },
                 success: function (response) {
-                    // alert(response);
                     var result = $.parseJSON(response);
 
                     var targetAcheived = (result.acheivedTarget).toLocaleString(

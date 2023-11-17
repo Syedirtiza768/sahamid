@@ -78,6 +78,49 @@ for ($i = 1; $i <= 12; $i++) {
     $sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
 
     $acheived[]  = ($i > (int)(date('m'))) ? null : ((int)($sale ?: 0));
+
+    // $SQL = "SELECT SUM((((invoicedetails.unitprice / 100) * ((1-invoicedetails.discountpercent)*100))
+    //         *invoicedetails.quantity)*invoiceoptions.quantity) as price,custbranch.salesman,
+    //         invoice.services,invoice.gst
+    //         FROM invoice 
+    //         INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode
+    //         INNER JOIN invoiceoptions ON invoice.invoiceno = invoiceoptions.invoiceno
+    //         INNER JOIN invoicedetails ON (invoice.invoiceno = invoicedetails.invoiceno
+    //             AND invoicedetails.invoicelineno = invoiceoptions.invoicelineno
+    //             AND invoicedetails.invoiceoptionno = invoiceoptions.invoiceoptionno)
+    //         INNER JOIN salesman ON salesman.salesmancode = custbranch.salesman
+    //         WHERE salesman.salesmanname IN( $salesman)
+    //         AND invoice.returned = 0
+    //             AND invoice.inprogress = 0
+    //             AND invoiceoptions.invoiceoptionno = 0
+    //                     AND invoice.invoicesdate >= '" . $startDate . "'
+    //                     AND invoice.invoicesdate <= '" . $endDate . "'
+    //                     GROUP BY invoice.invoiceno";
+
+    // $result = mysqli_query($db, $SQL);
+    // if ($result === FALSE) {
+    //     $acheived[] = 0;
+    // } else {
+    //     $res = mysqli_query($db, $SQL);
+
+    //     $saleValue = 0;
+
+    //     while ($row = mysqli_fetch_assoc($res)) {
+
+    //         $percent = $row['services'] == 1 ? 1.17 : 1.18;
+
+    //         if ($row['gst'] == "inclusive") {
+    //             $saleValue += $row['price'] / $percent;
+    //         } else {
+    //             $saleValue += $row['price'];
+    //         }
+    //     }
+
+    //     $acheived[] = ($saleValue ? round($saleValue) : 0);
+    // }
+
+    // // $sale = mysqli_fetch_assoc(mysqli_query($db, $SQL))['price'];
+    // // $acheived[]  = ($i > (int)(date('m'))) ? n
     $months[] = date("M", strtotime($startDate));
 }
 
@@ -145,7 +188,7 @@ $acheiveRatio = round($acheiveRatio, 2);
         <?php } else { ?>
             <div class="font-semibold text-md mt-2"><span id="acheiveRatio"> <?php echo $acheiveRatio ?>%</span></div>
         <?php } ?>
-        
+
     </div>
 </div>
 
