@@ -567,7 +567,17 @@ if (isset($_POST['Submit']) and $InputError == False) {
 				$requestedby = $row["requestedby"];
 			}
 
-			$HeaderSQL = "INSERT INTO ogpsalescaseref (dispatchid,
+			$itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $_SESSION['salescaseref'] . "'	
+					AND stockid = '" . $item . "' AND salesman = '" . $_SESSION['tosalesperson'] . "'";
+			$Result = DB_query($itemcode, $db);
+
+			if (DB_num_rows($Result) == 1) {
+				$itemcode = "UPDATE ogpsalescaseref SET quantity =quantity +'" . $quantity . "' WHERE salescaseref= '" . $_SESSION['salescaseref'] . "'
+							AND stockid = '" . $item . "' AND  salesman = '" . $_SESSION['tosalesperson'] . "'";
+				$Result = DB_query($itemcode, $db);
+			} else {
+
+				$HeaderSQL = "INSERT INTO ogpsalescaseref (dispatchid,
 											salescaseref,
 											requestedby,
 											quantity,
@@ -581,9 +591,10 @@ if (isset($_POST['Submit']) and $InputError == False) {
 											'" . $quantity . "',
 											'" . $item . "',
 											'" . $_SESSION['tosalesperson'] . "')";
-			$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-			$DbgMsg = _('The following SQL to insert the request header record was used');
-			$Result = DB_query($HeaderSQL, $db, $ErrMsg, $DbgMsg, true);
+				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+				$DbgMsg = _('The following SQL to insert the request header record was used');
+				$Result = DB_query($HeaderSQL, $db, $ErrMsg, $DbgMsg, true);
+			}
 		}
 	}
 	for ($i = 0; $i < $_POST['LinesCounter']; $i++) {
