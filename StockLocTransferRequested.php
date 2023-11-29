@@ -33,7 +33,7 @@ if (isset($_POST['authorizer' . $_POST['slct']])) {
 	$_SESSION['tosalesperson'] = $salesman;
 }
 foreach ($_POST as $key => $value) {
-	// if (strpos($key, $RequestID) !== false) {
+	if (strpos($key, $RequestID) !== false) {
 		//		echo $_POST[$RequestID.'maxdispatchitemid'];
 		for ($ind = 0; $ind <= $_POST[$RequestID . 'maxdispatchitemid']; $ind++) {
 			$LineID = $ind;
@@ -64,7 +64,7 @@ foreach ($_POST as $key => $value) {
 				}
 			}
 		}
-	// }
+	}
 }
 
 
