@@ -15,9 +15,9 @@ echo '<p class="page_title_text"><img src="' . $RootPath . '/css/' . $Theme . '/
 
 if (isset($_POST['UpdateAll'])) {
 	foreach ($_POST as $key => $value) {
-		if (mb_strpos($key, 'Qty')) {
-			$RequestID = mb_substr($key, 0, mb_strpos($key, 'Qty'));
-			$LineID = mb_substr($key, mb_strpos($key, 'Qty') + 3);
+		if (@mb_strpos($key, 'Qty')) {
+			$RequestID = mb_substr($key, 0, @mb_strpos($key, 'Qty'));
+			$LineID = mb_substr($key, @mb_strpos($key, 'Qty') + 3);
 			$Quantity = filter_number_format($_POST[$RequestID . 'Qty' . $LineID]);
 			$StockID = $_POST[$RequestID . 'StockID' . $LineID];
 			$Location = $_POST[$RequestID . 'Location' . $LineID];

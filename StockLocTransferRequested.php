@@ -108,9 +108,9 @@ foreach ($_POST as $key => $value) {
 if (isset($_POST['UpdateAll'])) {
 
 	foreach ($_POST as $key => $value) {
-		if (mb_strpos($key, 'Qty')) {
-			$RequestID = mb_substr($key, 0, mb_strpos($key, 'Qty'));
-			$LineID = mb_substr($key, mb_strpos($key, 'Qty') + 3);
+		if (@mb_strpos($key, 'Qty')) {
+			$RequestID = mb_substr($key, 0, @mb_strpos($key, 'Qty'));
+			$LineID = mb_substr($key, @mb_strpos($key, 'Qty') + 3);
 			$Quantity = filter_number_format($_POST[$RequestID . 'Qty' . $LineID]);
 			$StockID = $_POST[$RequestID . 'StockID' . $LineID];
 			$Location = $_POST[$RequestID . 'Location' . $LineID];
@@ -188,34 +188,34 @@ if (isset($_POST['UpdateAll'])) {
 				$DbgMsg =  _('The following SQL to insert the stock movement record was used');
 				$Result = DB_query($SQL, $db, $ErrMsg, $DbgMsg, true);
 */
-// 				for ($i = 0; $i < count($LineRow); $i++) {
+				for ($i = 0; $i < count($LineRow); $i++) {
 
-// 					if ($_POST['StockID' . $i] != '') {
-// 						$DecimalsSql = "SELECT decimalplaces
-// 							FROM stockmaster
-// 							WHERE stockid='" . $_POST['StockID' . $i] . "'";
-// 						$DecimalResult = DB_Query($DecimalsSql, $db);
-// 						$DecimalRow = DB_fetch_array($DecimalResult);
-// 						/*		echo	$sql = "INSERT INTO stockrequestitems (dispatchid,
-// 								stockid,
-// 								quantity,
-// 								shipdate)
-// 						VALUES ('" . $_POST['Trf_ID'] . "',
-// 							'" . $_POST['StockID' . $i] . "',
-// 							'" . round(filter_number_format($_POST['StockQTY' . $i]), $DecimalRow['decimalplaces']) . "',
-// 							'" . Date('Y-m-d H-i-s') . "')";
-// 			$ErrMsg = _('CRITICAL ERROR') . '! ' . _('Unable to enter Location Transfer record for'). ' '.$_POST['StockID' . $i];
-// 			$resultLocShip = DB_query($sql,$db, $ErrMsg);
-// */			/*$SQL = "UPDATE locstock
-// 					SET quantity = quantity - '" . round(filter_number_format($_POST['StockQTY' . $i]), $DecimalRow['decimalplaces']) ."'
-// 					WHERE stockid='" . $_POST['StockID' . $i] ."'
-// 					AND loccode='" . $_POST['fromloc'.$_POST['slct']]  ."'";
-// 					$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
-// 				$DbgMsg =  _('The following SQL to update the stock record was used');
-// 				$Result = DB_query($SQL, $db, $ErrMsg, $DbgMsg, true);
-// 				*/
-// 					}
-// 				}
+					if ($_POST['StockID' . $i] != '') {
+						$DecimalsSql = "SELECT decimalplaces
+							FROM stockmaster
+							WHERE stockid='" . $_POST['StockID' . $i] . "'";
+						$DecimalResult = DB_Query($DecimalsSql, $db);
+						$DecimalRow = DB_fetch_array($DecimalResult);
+						/*		echo	$sql = "INSERT INTO stockrequestitems (dispatchid,
+								stockid,
+								quantity,
+								shipdate)
+						VALUES ('" . $_POST['Trf_ID'] . "',
+							'" . $_POST['StockID' . $i] . "',
+							'" . round(filter_number_format($_POST['StockQTY' . $i]), $DecimalRow['decimalplaces']) . "',
+							'" . Date('Y-m-d H-i-s') . "')";
+			$ErrMsg = _('CRITICAL ERROR') . '! ' . _('Unable to enter Location Transfer record for'). ' '.$_POST['StockID' . $i];
+			$resultLocShip = DB_query($sql,$db, $ErrMsg);
+*/			/*$SQL = "UPDATE locstock
+					SET quantity = quantity - '" . round(filter_number_format($_POST['StockQTY' . $i]), $DecimalRow['decimalplaces']) ."'
+					WHERE stockid='" . $_POST['StockID' . $i] ."'
+					AND loccode='" . $_POST['fromloc'.$_POST['slct']]  ."'";
+					$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
+				$DbgMsg =  _('The following SQL to update the stock record was used');
+				$Result = DB_query($SQL, $db, $ErrMsg, $DbgMsg, true);
+				*/
+					}
+				}
 
 				$SQL = "UPDATE stockrequest
 				SET closed=1
