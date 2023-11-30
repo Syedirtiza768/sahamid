@@ -571,7 +571,7 @@ if (isset($_POST['Submit']) and $InputError == False) {
 					AND stockid = '" . $item . "' AND salesman = '" . $_SESSION['tosalesperson'] . "'";
 			$Result = DB_query($itemcode, $db);
 
-			if (DB_num_rows($Result) == 1) {
+			if (DB_num_rows($Result) >= 1) {
 				$itemcode = "UPDATE ogpsalescaseref SET quantity =quantity +'" . $quantity . "' WHERE salescaseref= '" . $_SESSION['salescaseref'] . "'
 							AND stockid = '" . $item . "' AND  salesman = '" . $_SESSION['tosalesperson'] . "'";
 				$Result = DB_query($itemcode, $db);
