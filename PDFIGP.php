@@ -55,7 +55,7 @@ If (DB_num_rows($result)!=0){
  $query = "INNER JOIN ogpmporef ON igp.dispatchid=ogpmporef.dispatchid";
 }
 
-echo $sql = "SELECT
+echo $sql = "SELECT DISTINCT
 igp.receivedfrom, 
 igp.storemanager,
 igp.loccode,
