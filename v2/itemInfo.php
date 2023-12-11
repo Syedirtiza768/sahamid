@@ -2,7 +2,7 @@
 include_once("../v2/config.php");
 if (isset($_POST['clientID']) && isset($_POST['Item'])) {
     $arr = [];
-    $sql = "select salescaseref,quantity from ogpsalescaseref WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "' ";
+    $sql = "select salescaseref,quantity from ogpsalescaseref WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "' AND quantity != 0 ";
     $result = mysqli_query($db, $sql);
     if ($result != NULL) {
         while ($row = mysqli_fetch_assoc($result)) {
@@ -10,7 +10,7 @@ if (isset($_POST['clientID']) && isset($_POST['Item'])) {
             $arr['salescase'][] = $row['quantity'];
         }
     }
-    $sql = "select csv,quantity from ogpcsvref WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "' ";
+    $sql = "select csv,quantity from ogpcsvref WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "'  AND quantity != 0 ";
     $result = mysqli_query($db, $sql);
     if ($result != NULL) {
         while ($row = mysqli_fetch_assoc($result)) {
@@ -18,7 +18,7 @@ if (isset($_POST['clientID']) && isset($_POST['Item'])) {
             $arr['csv'][] = $row['quantity'];
         }
     }
-    $sql = "select crv,quantity from ogpcrvref WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "' ";
+    $sql = "select crv,quantity from ogpcrvref WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "' AND quantity != 0 ";
     $result = mysqli_query($db, $sql);
     if ($result != NULL) {
         while ($row = mysqli_fetch_assoc($result)) {
@@ -26,7 +26,7 @@ if (isset($_POST['clientID']) && isset($_POST['Item'])) {
             $arr['crv'][] = $row['quantity'];
         }
     }
-    $sql = "select mpo,quantity from ogpmporef WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "' ";
+    $sql = "select mpo,quantity from ogpmporef WHERE salesman = '"  . $_POST['clientID'] . "' AND stockid = '"  . $_POST['Item'] . "' AND quantity != 0 ";
     $result = mysqli_query($db, $sql);
     if ($result != NULL) {
         while ($row = mysqli_fetch_assoc($result)) {
