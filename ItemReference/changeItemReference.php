@@ -201,44 +201,51 @@ include_once("../v2/config.php");
             $row4 = [];
             $row5 = [];
             $sql = "SELECT  ogpsalescaseref.stockid,
-                ogpsalescaseref.quantity,
+                SUM(ogpsalescaseref.quantity) as quantity,
                 ogpsalescaseref.dispatchid,
                 ogpsalescaseref.salescaseref
                 FROM ogpsalescaseref
-                WHERE salesman = '" . $_SESSION['UsersRealName'] . "'";
+                WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
+                AND quantity != '0'
+                GROUP BY ogpsalescaseref.stockid";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row1[] = $row;
             }
-            $sql = "SELECT  ogpcsvref.stockid,
-                ogpcsvref.quantity,
+
+            
+            $sql = "SELECT ogpcsvref.stockid,
+                SUM(ogpcsvref.quantity) as quantity,
                 ogpcsvref.dispatchid,
                 ogpcsvref.csv
                 FROM ogpcsvref
                 WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
-                AND quantity != '0'";
+                AND quantity != '0'
+                GROUP BY ogpcsvref.stockid";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row2[] = $row;
             }
             $sql = "SELECT  ogpcrvref.stockid,
-                ogpcrvref.quantity,
+                SUM(ogpcrvref.quantity) as quantity,
                 ogpcrvref.dispatchid,
                 ogpcrvref.crv
                 FROM ogpcrvref
                 WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
-                AND quantity != '0'";
+                AND quantity != '0'
+                GROUP BY ogpcrvref.stockid";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row3[] = $row;
             }
             $sql = "SELECT  ogpmporef.stockid,
-                ogpmporef.quantity,
+                SUM(ogpmporef.quantity) as quantity,
                 ogpmporef.dispatchid,
                 ogpmporef.mpo
                 FROM ogpmporef
                 WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
-                AND quantity != '0'";
+                AND quantity != '0'
+                GROUP BY ogpmporef.stockid";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row4[] = $row;
