@@ -20,7 +20,8 @@ $salesman = $_POST['salesman'];
 
 if ($new_sales != "") {
 	if ($old_sales != "") {
-		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_sales_q WHERE salescaseref='$old_sales' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_sales_q WHERE salescaseref='$old_sales' AND 
+			stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -29,7 +30,8 @@ if ($new_sales != "") {
 		}
 	}
 	if ($old_csv != "") {
-		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_sales_q WHERE csv='$old_csv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_sales_q WHERE csv='$old_csv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -38,7 +40,8 @@ if ($new_sales != "") {
 		}
 	}
 	if ($old_crv != "") {
-		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_sales_q WHERE crv='$old_crv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_sales_q WHERE crv='$old_crv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -47,7 +50,8 @@ if ($new_sales != "") {
 		}
 	}
 	if ($old_mpo != "") {
-		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_sales_q WHERE mpo='$old_mpo' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_sales_q WHERE mpo='$old_mpo' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -89,7 +93,8 @@ if ($new_sales != "") {
 if ($new_csv != "") {
 
 	if ($old_sales != "") {
-		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_csv_q WHERE salescaseref='$old_sales' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_csv_q WHERE salescaseref='$old_sales' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -98,7 +103,8 @@ if ($new_csv != "") {
 		}
 	}
 	if ($old_csv != "") {
-		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_csv_q WHERE csv='$old_csv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_csv_q WHERE csv='$old_csv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -107,7 +113,8 @@ if ($new_csv != "") {
 		}
 	}
 	if ($old_crv != "") {
-		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_csv_q WHERE crv='$old_crv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_csv_q WHERE crv='$old_crv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -116,7 +123,8 @@ if ($new_csv != "") {
 		}
 	}
 	if ($old_mpo != "") {
-		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_csv_q WHERE mpo='$old_mpo' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_csv_q WHERE mpo='$old_mpo' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -157,7 +165,8 @@ if ($new_csv != "") {
 
 if ($new_crv != "") {
 	if ($old_sales != "") {
-		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_crv_q WHERE salescaseref='$old_sales' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_crv_q WHERE salescaseref='$old_sales' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -166,7 +175,8 @@ if ($new_crv != "") {
 		}
 	}
 	if ($old_csv != "") {
-		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_crv_q WHERE csv='$old_csv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_crv_q WHERE csv='$old_csv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -175,7 +185,8 @@ if ($new_crv != "") {
 		}
 	}
 	if ($old_crv != "") {
-		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_crv_q WHERE crv='$old_crv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_crv_q WHERE crv='$old_crv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -184,7 +195,8 @@ if ($new_crv != "") {
 		}
 	}
 	if ($old_mpo != "") {
-		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_crv_q WHERE mpo='$old_mpo' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_crv_q WHERE mpo='$old_mpo' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -225,7 +237,8 @@ if ($new_crv != "") {
 
 if ($new_mpo != "") {
 	if ($old_sales != "") {
-		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_mpo_q WHERE salescaseref='$old_sales' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpsalescaseref SET quantity=quantity-$new_mpo_q WHERE salescaseref='$old_sales' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -234,7 +247,8 @@ if ($new_mpo != "") {
 		}
 	}
 	if ($old_csv != "") {
-		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_mpo_q WHERE csv='$old_csv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcsvref SET quantity=quantity-$new_mpo_q WHERE csv='$old_csv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -243,7 +257,8 @@ if ($new_mpo != "") {
 		}
 	}
 	if ($old_crv != "") {
-		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_mpo_q WHERE crv='$old_crv' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpcrvref SET quantity=quantity-$new_mpo_q WHERE crv='$old_crv' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";
@@ -252,7 +267,8 @@ if ($new_mpo != "") {
 		}
 	}
 	if ($old_mpo != "") {
-		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_mpo_q WHERE mpo='$old_mpo' AND salesman = '$salesman'";
+		$sql = "UPDATE ogpmporef SET quantity=quantity-$new_mpo_q WHERE mpo='$old_mpo' AND 
+		stockid='$item' AND salesman = '$salesman'";
 
 		if (mysqli_query($db, $sql)) {
 			echo "New record created successfully";

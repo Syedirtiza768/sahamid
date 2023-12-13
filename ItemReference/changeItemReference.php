@@ -207,7 +207,7 @@ include_once("../v2/config.php");
                 FROM ogpsalescaseref
                 WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
                 AND quantity != '0'
-                GROUP BY ogpsalescaseref.stockid";
+                GROUP BY ogpsalescaseref.stockid,ogpsalescaseref.salescaseref";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row1[] = $row;
@@ -221,7 +221,7 @@ include_once("../v2/config.php");
                 FROM ogpcsvref
                 WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
                 AND quantity != '0'
-                GROUP BY ogpcsvref.stockid";
+                GROUP BY ogpcsvref.stockid,ogpcsvref.csv";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row2[] = $row;
@@ -233,7 +233,7 @@ include_once("../v2/config.php");
                 FROM ogpcrvref
                 WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
                 AND quantity != '0'
-                GROUP BY ogpcrvref.stockid";
+                GROUP BY ogpcrvref.stockid,ogpcrvref.crv";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row3[] = $row;
@@ -245,7 +245,7 @@ include_once("../v2/config.php");
                 FROM ogpmporef
                 WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
                 AND quantity != '0'
-                GROUP BY ogpmporef.stockid";
+                GROUP BY ogpmporef.stockid,ogpmporef.mpo";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row4[] = $row;
