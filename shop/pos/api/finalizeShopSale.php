@@ -107,21 +107,24 @@ while ($row = mysqli_fetch_assoc($res)) {
 	$SQL = "SELECT quantity
 	FROM ogpcsvref 
 	WHERE stockid='$stockid'
-	AND salesman='$salesman'";
+	AND salesman='$salesman'
+	AND csv= '$orderno'";
 	$result = mysqli_query($db, $SQL);
 	$num_rows = mysqli_num_rows($result);
 	if ($num_rows > 0) {
 		$SQL = "SELECT SUM(quantity) as quantity
 				FROM ogpcsvref 
 				WHERE stockid='$stockid'
-				AND salesman='$salesman'";
+				AND salesman='$salesman'
+	AND csv= '$orderno'";
 		$issuedQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
 		$issuedQuantity = ($issuedQuantity != "") ? $issuedQuantity : 0;
 	} else {
 		$SQL = "SELECT SUM(quantity) as quantity
 				FROM ogpcrvref 
 				WHERE stockid='$stockid'
-				AND salesman='$salesman'";
+				AND salesman='$salesman'
+	AND crv= '$orderno'";
 		$issuedQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
 		$issuedQuantity = ($issuedQuantity != "") ? $issuedQuantity : 0;
 	}
