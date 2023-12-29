@@ -28,12 +28,6 @@ if (isset($_POST['salespersonOgpType'])) {
 	$_POST['salespersonOgpType'] = $_SESSION['Request']->salespersonOgpType;
 }
 
-if (isset($_POST['deliveredto'])) {
-
-	$_SESSION['Request']->deliveredto = $_POST['deliveredto'];
-}
-
-
 if (isset($_POST['salescaseref']))
 	$_SESSION['Request']->salescaseref = $_POST['salescaseref'];
 $_POST['salescaseref'] = $_SESSION['Request']->salescaseref;
@@ -50,7 +44,9 @@ if (isset($_POST['csv']))
 	$_SESSION['Request']->csv = $_POST['csv'];
 $_POST['csv'] = $_SESSION['Request']->csv;
 
+if (isset($_POST['deliveredto']))
 
+	$_SESSION['Request']->deliveredto = $_POST['deliveredto'];
 
 if (isset($_POST['brand']))
 	$_SESSION['brand'] = $_POST['brand'];
@@ -209,22 +205,6 @@ if (isset($_POST['Submit']) and $count > 0) {
 		prnMsg(_('You must select a Location to request the items from'), 'error');
 		$InputError = 1;
 	}
-
-	if ($_SESSION['Request']->salespersonOgpType == '') {
-		prnMsg(_('You must select a Salescaseperson OGP type as well'), 'error');
-		$InputError = 1;
-	}
-
-	if ($_SESSION['Request']->salespersonOgpType == 'D') {
-	$SQL = "select salescaseref,salescaseindex from salescase WHERE salesman = '" . $_SESSION['Request']->deliveredto . "' AND salescaseref = '" . $_SESSION['Request']->salescaseref . "'";
-	$result = DB_query($SQL, $db);
-	$matchFound = DB_num_rows($result) > 0 ? 'yes' : 'no';
-	if ($matchFound == 'no') {
-		prnMsg(_('You must select a Salescase reference as well and Update first'), 'error');
-		$InputError = 1;
-	}
-}
-
 	if ($InputError == 0) {
 		$RequestNo = GetNextTransNo(38, $db);
 		$PeriodNo = GetPeriod(Date($_SESSION['DefaultDateFormat']), $db);
@@ -251,7 +231,7 @@ if (isset($_POST['Submit']) and $count > 0) {
 		$DbgMsg = _('The following SQL to insert the request header record was used');
 		$Result = DB_query($HeaderSQL, $db, $ErrMsg, $DbgMsg, true);
 
-		if ($_SESSION['Request']->salescaseref != NULL) {
+		if ($_SESSION['Request']->salescaseref) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
 				$itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'	
@@ -546,15 +526,15 @@ if (isset($_POST['Submit']) and $count > 0) {
 				$Result = DB_query($SQL, $db, $ErrMsg, $DbgMsg, true);
 			}
 		}
-		DB_Txn_Commit($db);
-		echo '<p><a href="' . $RootPath . '/PDFOGP.php?RequestNo=' . $RequestNo . '">' .  _('Print the OGP') . '</a></p>';
-
-		prnMsg(_('The internal stock request has been entered and now needs to be authorized'), 'success');
-		echo '<br /><div class="centre"><a href="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?New=Yes">' . _('Create another request') . '</a></div>';
-		include('includes/footer.inc');
-		unset($_SESSION['Request']);
-		exit;
 	}
+	DB_Txn_Commit($db);
+	echo '<p><a href="' . $RootPath . '/PDFOGP.php?RequestNo=' . $RequestNo . '">' .  _('Print the OGP') . '</a></p>';
+
+	prnMsg(_('The internal stock request has been entered and now needs to be authorized'), 'success');
+	echo '<br /><div class="centre"><a href="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?New=Yes">' . _('Create another request') . '</a></div>';
+	include('includes/footer.inc');
+	unset($_SESSION['Request']);
+	exit;
 }
 
 ?>
@@ -693,27 +673,27 @@ if (isset($_POST['Submit']) and $count > 0) {
 		echo '<td><select name="salespersonOgpType" onchange="ReloadForm(formA.UpdateForm)">';
 
 		echo '<option value="">' . _('Salesperson OGP Type') . '</option>';
-		if ((isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "A") || $_SESSION['Request']->salespersonOgpType == 'A')
+		if (isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "A")
 
 			echo '<option value="A" selected = "selected">' . _('CSV') . '</option>';
 		else echo '<option value="A">' . _('CSV') . '</option>';
 
-		if ((isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "B") || $_SESSION['Request']->salespersonOgpType == 'B')
+		if (isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "B")
 
 			echo '<option value="B" selected = "selected">' . _('CRV') . '</option>';
 		else echo '<option value="B">' . _('CRV') . '</option>';
 
 
-		if ((isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "C") || $_SESSION['Request']->salespersonOgpType == 'C')
+		if (isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "C")
 
 			echo '<option value="C" selected = "selected">' . _('MPO') . '</option>';
 		else echo '<option value="C">' . _('MPO') . '</option>';
 
-		if ((isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "D") || $_SESSION['Request']->salespersonOgpType == 'D')
+		if (isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "D")
 			echo '<option value="D" selected = "selected">' . _('Salescase') . '</option>';
 		else echo '<option value="D">' . _('Salescase') . '</option>';
 
-		if ((isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "E") || $_SESSION['Request']->salespersonOgpType == 'E')
+		if (isset($_POST['salespersonOgpType']) and $_POST['salespersonOgpType'] == "E")
 			echo '<option value="E" selected = "selected">' . _('Cart') . '</option>';
 		else echo '<option value="E">' . _('Cart') . '</option>';
 
@@ -726,10 +706,8 @@ if (isset($_POST['Submit']) and $count > 0) {
 		<td>' . _('Issue agaist salescase ') . ':</td>';
 			$sql = "select salescaseref,salescaseindex from salescase WHERE salesman = '" . $_SESSION['Request']->deliveredto . "' AND closed = '0' ";
 			$result = DB_query($sql, $db);
-			echo '<td><select class="js-example-basic-single" name="salescaseref" onchange="ReloadForm(formA.UpdateForm)">';
-			if (!isset($_SESSION['Request']->salescaseref)) {
-				echo '<option value="">' . _('Select a Salescase') . '</option>';
-			}
+			echo '<td><select class="js-example-basic-single" name="salescaseref">
+			<option value="">' . _('Select a Salescase') . '</option>';
 			while ($myrow = DB_fetch_array($result)) {
 				if (isset($_SESSION['Request']->salescaseref) and $_SESSION['Request']->salescaseref == $myrow['salescaseref']) {
 					echo '<option selected="True" value="' . $myrow['salescaseref'] . '">' . htmlspecialchars($myrow['salescaseref'], ENT_QUOTES, 'UTF-8') . '</option>';
