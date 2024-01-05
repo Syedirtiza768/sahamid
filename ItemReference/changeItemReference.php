@@ -278,7 +278,7 @@ include_once("../v2/config.php");
                     if ($row['quantity'] != "0") { ?>
                         <tr>
                             <td><?php echo $row['stockid'] ?></td>
-                            <td><?php echo $row['quantity'] ?></td>
+                            <td><?php echo abs($row['quantity']) ?></td>
                             <td><?php echo $row['salescaseref'] ?></td>
                             <td><?php echo $row['csv'] ?></td>
                             <td><?php echo $row['crv'] ?></td>
