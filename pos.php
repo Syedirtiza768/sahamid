@@ -424,7 +424,7 @@ if (isset($_POST['Submit']) and $count > 0) {
 
 
 
-			if ($_SESSION['Request']->ogp == "A") {
+			if ($_SESSION['Request']->ogp == "A" or $_SESSION['Request']->ogp == "D") {
 				$SQL = "select stockid, salesperson from stockissuance where stockid = '" . $LineItems->StockID . "'
 	
 	and salesperson = '" . $_SESSION['Request']->deliveredto . "'
