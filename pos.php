@@ -1109,7 +1109,7 @@ if (isset($_POST['Keywords'])) {
 						FROM stockmaster INNER JOIN locstock
 						ON stockmaster.stockid=locstock.stockid
 						WHERE (stockmaster.mnfCode " . LIKE . " '%" . $SearchString2 . "%'
-					or stockmaster.stockid " . LIKE . " '%" . $SearchString2 . "%')
+					or stockmaster.stockid  " . LIKE . " '%" . $SearchString2 . "%')
 					and locstock.loccode = '" . $_SESSION['UserStockLocation'] . "'
 					AND stockmaster.stockid NOT LIKE '%\t%'
 						GROUP BY stockmaster.stockid,
@@ -1432,13 +1432,14 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 
 			//end of while loop
 			echo '</table>
+			
               </div>
               </form>
               <br />';
 		}
 	}
 	/* end display list if there is more than one record */
-
+	
 	if (isset($SearchResult)) {
 		$j = 1;
 		echo '<br />

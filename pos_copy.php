@@ -1,180 +1,375 @@
-
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Multi step Sign up form</title>
-    <link
-      href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-  </head>
+<?php include('configg.php'); ?>
 
-  <body>
-    <div class="flex items-center min-h-screen bg-gray-50">
-      <div
-        class="flex-1 h-full max-w-4xl mx-auto bg-white rounded-lg shadow-xl"
-      >
-        <div class="flex flex-col md:flex-row">
-          <div class="h-32 md:h-auto md:w-1/2">
-            <img
-              class="object-cover w-full h-full"
-              src="https://cdn.pixabay.com/photo/2021/01/15/17/01/green-5919790__340.jpg"
-              alt="img"
-            />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <!-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js" defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="ogp/tailwindOgpsss.css">
+  <title>SAHamid ERP</title>
+</head>
+
+<body style="background-color: #dddddd">
+  <nav style="background-color: #cccce5" class="block w-full max-w-screen-xl px-6 py-1 mx-auto text-white border shadow-md rounded-xl border-white/80 bg-opacity-80 backdrop-blur-2xl backdrop-saturate-200">
+    <div class="flex items-center justify-between text-blue-gray-900">
+      <a href="#" class="mr-4 block cursor-pointer py-1.5 font-sans text-base font-semibold leading-relaxed tracking-normal text-gray-700  antialiased">
+        <b class="text-orange-500">SA Hamid ERP </b></a>
+      <h1 class="text-lg font-bold text-gray-700 leading-tight text-center">Outward Gate Pass - OGP</h1>
+      <div class="hidden lg:block">
+        <ul class="flex flex-col gap-2 my-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
+          <li class="block p-1 font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
+            <button type="button" onClick="document.location.href='/sahamid/'" class="relative rounded-full p-1 text-black hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+              <span class="absolute -inset-1.5"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M2 13.5V7h1v6.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7h1v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5zm11-11V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z" />
+                <path fill-rule="evenodd" d="M7.293 1.5a1 1 0 0 1 1.414 0l6.647 6.646a.5.5 0 0 1-.708.708L8 2.207 1.354 8.854a.5.5 0 1 1-.708-.708L7.293 1.5z" />
+              </svg>
+            </button>
+          </li>
+          <li class="block p-1 font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
+            <button type="button" onClick="logout()" class="relative rounded-full p-1 text-black hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+              <span class="absolute -inset-1.5"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </li>
+        </ul>
+      </div>
+      <button class="relative ml-auto h-6 max-h-[40px] w-6 max-w-[40px] select-none rounded-lg text-center align-middle font-sans text-xs font-medium uppercase  transition-all hover:bg-transparent focus:bg-transparent active:bg-transparent disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none lg:hidden" type="button">
+        <span class="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true" class="w-6 h-6 text-gray-600">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </nav>
+  <div>
+    <form id="signUpForm" class="p-12 w-80 shadow-md rounded-2xl mx-auto border-solid border-2 border-transparent mb-8" style="margin-top: 10px; background-color: #cccce5" action="#!">
+      <!-- start step indicators -->
+      <div class="form-header flex gap-3 mb-4 text-xs text-center ">
+        <span class="stepIndicator flex-1 pb-8 relative">OGP Information</span>
+        <span class="stepIndicator flex-1 pb-8 relative">Add Inventory Items</span>
+        <span class="stepIndicator flex-1 pb-8 relative">Finalize OGP</span>
+      </div>
+      <!-- end step indicators -->
+
+      <!-- step one -->
+      <div class="flex justify-center">
+        <div class="step" style="width:400px">
+          <!-- <p class="text-md text-gray-700 leading-tight text-center mt-4 mb-4">Add Your OGP Informnation</p> -->
+          <div class="mb-6 mt-4">
+            <label class="font-bold text-gray-700 text-sm ml-1">Select OGP Type</label>
+            <select id="ogp_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showDiv(this)">
+              <option selected>Select OGP Type</option>
+              <option value="s">Issue to Salesperson</option>
+              <option value="e">Issue to Employee</option>
+              <option value="l">Deleivered to store location</option>
+              <option value="d">External destination</option>
+            </select>
           </div>
-          <div class="flex items-center justify-center p-6 sm:p-12 md:w-1/2">
-            <div class="w-full">
-              <h6 class="mb-4 text-sm">Step1/3</h6>
-              <h3 class="mb-4 text-xl font-bold text-blue-600">Sign up</h3>
-              <div class="flex flex-wrap mx-auto">
-                <a
-                  class="
-                    inline-flex
-                    items-center
-                    justify-center
-                    w-1/2
-                    py-3
-                    font-medium
-                    leading-none
-                    tracking-wider
-                    text-indigo-500
-                    bg-gray-100
-                    border-b-2 border-indigo-500
-                    rounded-t
-                    sm:px-6 sm:w-auto sm:justify-start
-                  "
-                >
-                  STEP 1
-                </a>
-                <a
-                  class="
-                    inline-flex
-                    items-center
-                    justify-center
-                    w-1/2
-                    py-3
-                    font-medium
-                    leading-none
-                    tracking-wider
-                    border-b-2 border-gray-200
-                    sm:px-6 sm:w-auto sm:justify-start
-                    hover:text-gray-900
-                  "
-                >
-                  STEP 2
-                </a>
-                <a
-                  class="
-                    inline-flex
-                    items-center
-                    justify-center
-                    w-1/2
-                    py-3
-                    font-medium
-                    leading-none
-                    tracking-wider
-                    border-b-2 border-gray-200
-                    sm:px-6 sm:w-auto sm:justify-start
-                    hover:text-gray-900
-                  "
-                >
-                  STEP 3
-                </a>
+          <div id="salesperson" style="display:none;" class="m-12">
+            <div class="mb-6">
+              <?php $sql = "select salesmanname from salesman";
+              $result = mysqli_query($conn, $sql); ?>
+              <label class="font-bold text-gray-700 text-sm ml-1">Issued to Sales Person</label>
+              <select id="salesman" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="ogpSaleman(this)">
+                <option selected>Select a sales Person</option>
+                <?php while ($myrow = mysqli_fetch_array($result)) { ?>
+                  <option value="<?php echo $myrow['salesmanname'] ?>"><?php echo $myrow['salesmanname'] ?></option>
+                <?php } ?>
+              </select>
+            </div>
+            <div class="mb-6">
+              <label class="font-bold text-gray-700 text-sm ml-1">Salesperson OGP Type</label>
+              <select id="ogp_salesperson_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showOGPDiv(this)">
+                <option selected>Salesperson OGP Type</option>
+                <option value="salescase">Salescase</option>
+                <option value="csv">CSV</option>
+                <option value="crv">CRV</option>
+                <option value="mpo">MPO</option>
+                <option value="cart">CART</option>
+              </select>
+            </div>
+
+            <div id="salescase_div" style="display:none;">
+              <div class="mb-6">
+                <label class="font-bold text-gray-700 text-sm ml-1">Issue agaist salescase</label>
+                <select id="salescases" class="salescases w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSalescaseDiv(this)">
+                  <option selected>Issue Against salescase</option>
+                </select>
               </div>
-              <div class="mt-4 mb-4">
-                <label class="block text-sm"> First Name </label>
-                <input
-                  type="text"
-                  class="
-                    w-full
-                    px-4
-                    py-2
-                    text-sm
-                    border
-                    rounded-md
-                    focus:border-blue-400
-                    focus:outline-none
-                    focus:ring-1
-                    focus:ring-blue-600
-                  "
-                  placeholder="First Name"
-                />
+            </div>
+            <div id="csv_div" style="display:none;">
+              <div class="mb-6">
+                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against CSV</label>
+                <select id="csv" class="csv w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showcsvDiv(this)">
+                  <option selected>Issue Against CSV</option>
+                </select>
               </div>
-              <div class="mb-4">
-                <label class="block mb-2 text-sm"> Last Name </label>
-                <input
-                  type="text"
-                  class="
-                    w-full
-                    px-4
-                    py-2
-                    text-sm
-                    border
-                    rounded-md
-                    focus:border-blue-400
-                    focus:outline-none
-                    focus:ring-1
-                    focus:ring-blue-600
-                  "
-                  placeholder="Last Name"
-                />
+            </div>
+            <div id="crv_div" style="display:none;">
+              <div class="mb-6">
+                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against CRV</label>
+                <select id="crv" class="crv w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showcrvDiv(this)">
+                  <option selected>Issue Against CRV</option>
+                </select>
               </div>
-              <div class="mb-4">
-                <label class="block mb-2 text-sm"> Phone Number </label>
-                <input
-                  class="
-                    w-full
-                    px-4
-                    py-2
-                    text-sm
-                    border
-                    rounded-md
-                    focus:border-blue-400
-                    focus:outline-none
-                    focus:ring-1
-                    focus:ring-blue-600
-                  "
-                  placeholder="Phone Number"
-                  type="number"
-                />
+            </div>
+            <div id="mpo_div" style="display:none;">
+              <div class="mb-6">
+                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against MPO</label>
+                <select id="mpo" class="mpo w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showmpoDiv(this)">
+                  <option selected>Issue Against MPO</option>
+                </select>
               </div>
-              <div class="flex justify-end">
-                <button
-                  class="
-                    px-6
-                    py-2
-                    mt-4
-                    text-sm
-                    font-medium
-                    leading-5
-                    text-center text-white
-                    transition-colors
-                    duration-150
-                    bg-blue-600
-                    border border-transparent
-                    rounded-lg
-                    hover:bg-blue-700
-                    focus:outline-none
-                  "
-                  href="#"
-                >
-                  Next
-                </button>
+            </div>
+          </div>
+          <div id="employee_div" style="display:none;" class="m-12">
+            <div class="mb-6">
+              <?php $sql = "select realname from www_users";
+              $result = mysqli_query($conn, $sql); ?>
+              <label class="font-bold text-gray-700 text-sm ml-1">Issued to Employee </label>
+              <select id="employee" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showmemployeeDiv(this)">
+                <option selected>Select an employee</option>
+                <?php while ($myrow = mysqli_fetch_array($result)) { ?>
+                  <option value="<?php echo $myrow['realname'] ?>"><?php echo $myrow['realname'] ?></option>
+                <?php } ?>
+              </select>
+            </div>
+          </div>
+          <div id="store" style="display:none;" class="m-12">
+            <div class="mb-6">
+              <label class="font-bold text-gray-700 text-sm ml-1">To Stock Location </label>
+              <select id="store" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showStoreDiv(this)">
+                <option selected>Select a location</option>
+                <option value="HO - Head Office">HO - Head Office</option>
+                <option value="HOPS - Head Office PS">HOPS - Head Office PS</option>
+                <option value="MT - Model Town">MT - Model Town</option>
+                <option value="MTPS - Model Town PS">MTPS - Model Town PS</option>
+                <option value="OS - Offset">OS - Offset</option>
+                <option value="SR - Show Room">SR - Show Room</option>
+                <option value="SRPS - Show Room PS">SRPS - Show Room PS</option>
+                <option value="VSR - Virtual Store Show Room">VSR - Virtual Store Show Room</option>
+                <option value="WS - Wordk Shop">WS - Wordk Shop</option>
+              </select>
+            </div>
+          </div>
+          <div id="destination" style="display:none;" class="m-12">
+            <div class="mb-6">
+              <label class="font-bold text-gray-700 text-sm ml-1">External Destination</label>
+              <textarea id="message" rows="4" class="destination w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" placeholder="Write your destination's detail here..."></textarea>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="font-bold text-gray-700 text-sm ml-1">Substore</label>
+            <select id="subStore" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSubStoreDiv(this)">
+              <option value="4" selected>Flat Store</option>
+              <option value="5">Office Store</option>
+            </select>
+          </div>
+          <div class="mb-6">
+            <label class="font-bold text-gray-700 text-sm ml-1">Date</label>
+            <input id="message" type="date" value="<?php echo date('Y-m-d'); ?>" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" disabled></input>
+          </div>
+          <div class="mb-6">
+            <label class="font-bold text-gray-700 text-sm ml-1">Narrative</label>
+            <textarea id="message" rows="4" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" placeholder="Write your Narrative here..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- step two -->
+      <div class="step">
+        <div class="flex">
+          <div class="flex-1 w-24 ml-1 ...">
+            <label class="font-bold text-gray-700 text-sm ml-1">
+              In Stock Category</label>
+            <?php $SQL = "SELECT categoryid,
+				    categorydescription
+		        FROM stockcategory
+		        ORDER BY categorydescription";
+            $result1 = mysqli_query($conn, $SQL); ?>
+            <select id="StockCat" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200">
+              <option selected>All</option>
+              <?php while ($myrow1 = mysqli_fetch_array($result1)) {
+                echo '<option value="' . $myrow1['categoryid'] . '">' . $myrow1['categorydescription'] . '</option>';
+              } ?>
+            </select>
+          </div>
+          <div class="flex-1 w-24 ml-1">
+            <label class="font-bold text-gray-700 text-sm ml-1">
+              Brand</label>
+            <?php $SQL = "select * from manufacturers";
+            $result1 = mysqli_query($conn, $SQL); ?>
+            <select id="brand" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200">
+              <option selected>All</option>
+              <?php while ($myrow2 = mysqli_fetch_array($result1)) {
+                echo '<option value="' . $myrow2['manufacturers_id'] . '">' . $myrow2['manufacturers_name'] . '</option>';
+              } ?>
+            </select>
+          </div>
+          <div class="flex-1 w-32 ml-1">
+            <label class="font-bold text-gray-700 text-sm ml-1">
+              Code</label>
+            <input type="text" id="StockCode" placeholder="Insert Code Here . . ." class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" oninput="this.className = 'w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200'" />
+          </div>
+        </div>
+        <div class="flex justify-center">
+          <button type="button" class="w-56 mt-2 mb-2 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 bg-gray-100 hover:bg-green-500 hover:text-white text-lg" onclick="itemSearch()">Search Now</button>
+        </div>
+
+        <div class="overflow-x-auto mb-4 mt-4">
+          <table class="display text-sm text-left text-gray-500" id="example" style="width:100%">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-300">
+              <tr>
+                <th scope="col" class="px-6 py-3">
+                  Code
+                </th>
+                <th scope="col" class="px-6 py-3">
+                  Description
+                </th>
+                <th scope="col" class="px-6 py-3">
+                  On Hand
+                </th>
+                <th scope="col" class="px-6 py-3">
+                  On Demand
+                </th>
+                <th scope="col" class="px-6 py-3">
+                  On Order
+                </th>
+                <th scope="col" class="px-6 py-3">
+                  Available
+                </th>
+                <th scope="col" class="px-6 py-3">
+                  Quantity
+                </th>
+                <th scope="col" class="px-6 py-3">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="text-black">
+              <div id="loader" style="display:none;">
+                <img src="ogp/api/loadingERP.gif" class="loader">
               </div>
-              <div class="mt-4 text-center">
-                <p class="text-sm">
-                  Already have account
-                  <a href="#" class="text-blue-600 hover:underline">
-                    Sign in.</a
-                  >
-                </p>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- step three -->
+      <div class="step">
+        <div class="mb-6 flex justify-center">
+          <div class="p-10">
+            <div class="w-full rounded overflow-hidden shadow-lg">
+              <div class="flex justify-center">
+                <h3 class="mt-4 text-blue-500 font-bold text-lg justify-center">Detail of Items Requested:</h3>
+              </div>
+              <div class="flex justify-center">
+                <div id="salesmanDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="salesperson text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div id="salescaserefDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="salescaseref text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div id="csvDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="csv text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div id="crvDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="crv text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div id="mpoDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="mpo text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div id="EmployeeDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="employee text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div id="storeDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="store text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div id="destinationDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
+                  <h5 class="showDestination text-gray-700 text-sm ml-6"></h5>
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <div class="px-6 py-1 flex">
+                  <div class="px-6 py-1 mt-2 flex">
+                    <h5 class="text-gray-700 text-sm ml-6"><b>Date: </b><?php echo date('Y-m-d'); ?></h5>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-center">
+                <div class="px-6 py-1 flex">
+                  <div id="SubstoreDiv" class="px-6 py-1 flex" style="display:none;">
+                    <h5 class="subStore text-gray-700 text-sm ml-6"></h5>
+                  </div>
+                </div>
+              </div>
+
+              <div class="px-6 pt-4 pb-2">
+                <table class="table-fixed text-center" id="example1">
+                  <thead>
+                    <tr>
+                      <!-- <th>No.</th> -->
+                      <th>Item Code</th>
+                      <th>Item Description</th>
+                      <th>Quantity Required</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tableBody">
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </body>
+
+      <!-- start previous / next buttons -->
+      <div class="form-footer flex gap-3">
+        <button type="button" id="prevBtn" class="flex-1 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 bg-white hover:bg-gray-100 text-lg" onclick="nextPrev(-1)">Previous</button>
+        <button type="button" id="nextBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="nextPrev(1)">Next</button>
+      </div>
+      <!-- end previous / next buttons -->
+    </form>
+  </div>
+
+  <!-- tailwind css -->
+  <link rel="stylesheet" href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" />
+  <!-- google font -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="ogp/javascript.js"></script>
+
+
 </html>
