@@ -12,7 +12,9 @@
   <!-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js" defer></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="ogp/tailwindOgpsss.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
+  <link rel="stylesheet" href="ogp/tailwindOgpssss.css">
   <title>SAHamid ERP</title>
 </head>
 
@@ -63,6 +65,15 @@
         <span class="stepIndicator flex-1 pb-8 relative">Finalize OGP</span>
       </div>
       <!-- end step indicators -->
+
+
+      <!-- Success Popups -->
+      <div id="confirmationPopup" class="popup">
+        <div class="popup-content">
+          <p id="popupMessage"></p>
+        </div>
+      </div>
+      <!-- end Success Popups -->
 
       <!-- step one -->
       <div class="flex justify-center">
@@ -226,7 +237,7 @@
           </div>
         </div>
         <div class="flex justify-center">
-          <button type="button" class="w-56 mt-2 mb-2 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 bg-gray-100 hover:bg-green-500 hover:text-white text-lg" onclick="itemSearch()">Search Now</button>
+          <button type="button" class="w-64 mt-4 mr-6 mb-2 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 bg-gray-100 hover:bg-green-500 hover:text-white text-lg" onclick="itemSearch()">Search Now</button>
         </div>
 
         <div class="overflow-x-auto mb-4 mt-4">
@@ -337,10 +348,10 @@
                   <thead>
                     <tr>
                       <!-- <th>No.</th> -->
-                      <th>Item Code</th>
-                      <th>Item Description</th>
-                      <th>Quantity Required</th>
-                      <th>Action</th>
+                      <th class="text-center">Item Code</th>
+                      <th class="text-center">Description</th>
+                      <th class="text-center">Required</th>
+                      <th class="text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody id="tableBody">
@@ -369,7 +380,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascript.js"></script>
+<script src="ogp/javascriptss.js"></script>
 
 
 </html>

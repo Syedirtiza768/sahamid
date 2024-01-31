@@ -63,12 +63,19 @@ function ItemAdd(code, description, qoh) {
     var Itemcode = code;
     var Itemdescription = description;
     var Itemquantity = $('#' + code).val();
+    var qoh = parseInt(qoh);
     if (Itemquantity == "" || Itemquantity > qoh) {
-        alert("Empty or Given quantity is greater then quantity on hand");
+        alert("EMPTY OR GIVEN QUANTITY IS GREATER THEN QUANTITY ON HAND");
     }
     else {
-        items.push({ Code: Itemcode, description: Itemdescription, quantity: Itemquantity });
+        items.push({ Code: Itemcode, description: Itemdescription, quantity: Itemquantity, totalQuantity: qoh });
         showItems(items);
+        $('#confirmationPopup').fadeIn();
+        document.getElementById('popupMessage').textContent = 'Item Quantity Saved successfuly 😊';
+        // Hide the confirmation popup after 3 seconds (3000 milliseconds)
+        setTimeout(function () {
+            $('#confirmationPopup').fadeOut();
+        }, 3000);
     }
 }
 
@@ -79,11 +86,64 @@ function showItems(itemslist) {
     for (var i = 0; i < itemslist.length; i++) {
         var rowData = '<td class="text-blue-800 underline"><a href = "SelectProduct.php?Select=' + itemslist[i].Code + '" target = "_blank" > ' + itemslist[i].Code + '</a></td>';
         var rowData2 = '<td>' + itemslist[i].description + '</td>';
-        var rowData3 = '<td>' + itemslist[i].quantity + '</td>';
-        var rowData4 = '<td><button type="button" id="deleteBtn' + itemslist[i].Code + '" class="bg-red-800 w-16 h-6 border rounded-md" onclick = "deleteItem(\'' + itemslist[i].Code + '\');" > <i class="fa-solid fa-trash text-white"></i> </button></td>';
+        var rowData3 = '<td><div class="flex justify-center"><h5 id="Quantity' + itemslist[i].Code + '">' + itemslist[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + itemslist[i].Code + '" style="display:none"> </input></div> </td>';
+        var rowData4 = '<td><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + itemslist[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick = "saveItem(\'' + itemslist[i].Code + '\');" > <i class="fa-solid fas fa-save text-white"></i> </button> <button type="button" id="editBtn' + itemslist[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick = "editItem(\'' + itemslist[i].Code + '\');" > <i class="fa-solid fas fa-edit text-white"></i> </button><button type="button" id="deleteBtn' + itemslist[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick = "deleteItem(\'' + itemslist[i].Code + '\');" > <i class="fa-solid fa-trash text-white"></i> </button></div></td>';
         table.row.add([rowData, rowData2, rowData3, rowData4]).draw();
-        document.getElementById(itemslist[i].Code).style.display = "none";
-        document.getElementById("btn" + itemslist[i].Code).style.display = "none";
+        if (document.getElementById(itemslist[i].Code)) {
+            document.getElementById(itemslist[i].Code).style.display = "none";
+            document.getElementById("btn" + itemslist[i].Code).style.display = "none";
+        }
+    }
+}
+
+function editItem(code) {
+    for (var i = 0; i < items.length; i++) {
+        if (items[i].Code == code) {
+            document.getElementById("editBtn" + items[i].Code).style.display = "none";
+            document.getElementById("Quantity" + items[i].Code).style.display = "none";
+            document.getElementById("newQuantity" + items[i].Code).style.display = "block";
+            document.getElementById("saveBtn" + items[i].Code).style.display = "block";
+        }
+    }
+}
+
+function saveItem(code) {
+    var newQuantity = $('#newQuantity' + code).val();
+    for (var i = 0; i < items.length; i++) {
+        if (items[i].Code == code) {
+            if (items[i].totalQuantity < newQuantity || newQuantity == "") {
+                alert("EMPTY OR GIVEN QUANTITY IS GREATER.  PLEASE SELECT IN A RANGE OF " + items[i].totalQuantity);
+            }
+            else {
+                console.log(items[i]);
+                items[i].quantity = newQuantity;
+                console.log(items[i]);
+                document.getElementById("editBtn" + items[i].Code).style.display = "block";
+                document.getElementById("Quantity" + items[i].Code).style.display = "block";
+                document.getElementById("newQuantity" + items[i].Code).style.display = "none";
+                document.getElementById("saveBtn" + items[i].Code).style.display = "none";
+
+                $('#example1 tbody').empty();
+                var table = $('#example1').DataTable();
+                table.clear().draw();
+                for (var i = 0; i < items.length; i++) {
+                    var rowData = '<td class="text-blue-800 underline"><a href = "SelectProduct.php?Select=' + items[i].Code + '" target = "_blank" > ' + items[i].Code + '</a></td>';
+                    var rowData2 = '<td>' + items[i].description + '</td>';
+                    var rowData3 = '<td><div class="flex justify-center"><h5 id="Quantity' + items[i].Code + '">' + items[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + items[i].Code + '" style="display:none"> </input></div> </td>';
+                    var rowData4 = '<td><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + items[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick = "saveItem(\'' + items[i].Code + '\');" > <i class="fa-solid fas fa-save text-white"></i> </button> <button type="button" id="editBtn' + items[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick = "editItem(\'' + items[i].Code + '\');" > <i class="fa-solid fas fa-edit text-white"></i> </button><button type="button" id="deleteBtn' + items[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick = "deleteItem(\'' + items[i].Code + '\');" > <i class="fa-solid fa-trash text-white"></i> </button></div></td>';
+                    table.row.add([rowData, rowData2, rowData3, rowData4]).draw();
+                    document.getElementById(items[i].Code).style.display = "none";
+                    document.getElementById("btn" + items[i].Code).style.display = "none";
+
+                    $('#confirmationPopup').fadeIn();
+                    document.getElementById('popupMessage').textContent = 'Edited Quantity Saved successfuly 😊';
+                    // Hide the confirmation popup after 3 seconds (3000 milliseconds)
+                    setTimeout(function () {
+                        $('#confirmationPopup').fadeOut();
+                    }, 3000);
+                }
+            }
+        }
     }
 }
 
@@ -92,10 +152,17 @@ function deleteItem(itemCode) {
     for (var i = 0; i < items.length; i++) {
         if (items[i].Code === itemCode) {
             if (confirm('Are you sure?')) { // Check if the array meets the condition
-                document.getElementById(items[i].Code).style.display = "block";
-                document.getElementById("btn" + items[i].Code).style.display = "block";
+                // document.getElementById(items[i].Code).style.display = "block";
+                // document.getElementById("btn" + items[i].Code).style.display = "block";
                 items.splice(i, 1); // Delete the array at index i
+                $('#confirmationPopup').fadeIn();
+                document.getElementById('popupMessage').textContent = 'Item deleted successfuly 🗑️';
+                // Hide the confirmation popup after 3 seconds (3000 milliseconds)
+                setTimeout(function () {
+                    $('#confirmationPopup').fadeOut();
+                }, 3000);
                 break; // Break the loop once the array is deleted
+
             }
         }
     }

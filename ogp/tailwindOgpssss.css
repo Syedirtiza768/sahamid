@@ -2,7 +2,7 @@ body{
     font-family: 'Open Sans', sans-serif;
 }
 #signUpForm {
-    max-width: 930px;
+    max-width: 960px;
 }
 #signUpForm .form-header .stepIndicator.active {
     font-weight: 600;
@@ -205,4 +205,34 @@ select {
     position: relative;
     display : 'none';
 }
+
+/* Popup styles */
+.popup {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 30px; /* Increase padding for more space inside the popup */
+    width: 350px; /* Increase max-width for a wider popup */
+    height: 100px; /* Increase max-height for a taller popup */
+    overflow-y: auto; /* Enable vertical scrolling if content exceeds the height */
+    text-align: center; 
+    
+}
+
+
+.popup-content {
+    display: flex; /* Enable flexbox layout */
+    flex-direction: column; /* Stack content vertically */
+    justify-content: center; /* Center align content horizontally */
+    align-items: center;
+}
+
+
+
 

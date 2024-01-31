@@ -1,6 +1,8 @@
 <?php
 include('../../configg.php');
-$StockCat = $_POST['StockCat'];
+session_start();
+$_SESSION['UsersRealName'];
+$StockCat = "All";
 $StockCode =  $_POST['StockCode'];
 $brand = $_POST['brand'];
 $subStore = 'MT';
@@ -27,15 +29,20 @@ if (isset($StockCode)) {
 						stockmaster.mnfpno,
 						stockmaster.mbflag,
 						stockmaster.discontinued,
-						locstock.quantity AS qohand,
+						sum(substorestock.quantity) AS qoh,
 						stockmaster.units,
 						stockmaster.decimalplaces
 						FROM stockmaster INNER JOIN locstock
 						ON stockmaster.stockid=locstock.stockid
+                        INNER JOIN substorestock
+						ON stockmaster.stockid=substorestock.stockid
 						WHERE (stockmaster.mnfCode  LIKE  '%" . $SearchString2 . "%'
 					or stockmaster.stockid LIKE  '%" . $SearchString2 . "%')
 					and locstock.loccode = '" . $subStore . "'
 					AND stockmaster.stockid NOT LIKE '%\t%'
+                    and substorestock.loccode = '" . $subStore . "'
+                    and substorestock.substoreid = '" . $realsubStore . "'
+                    and substorestock.quantity !=0
 						GROUP BY stockmaster.stockid,
 							stockmaster.description,
 							stockmaster.longdescription,
@@ -43,7 +50,7 @@ if (isset($StockCode)) {
 							stockmaster.mbflag,
 							stockmaster.discontinued,
 							stockmaster.decimalplaces
-						ORDER BY locstock.quantity desc";
+						ORDER BY substorestock.quantity desc";
             $result = mysqli_query($conn, $SQLA);
             $results = array();
             $ItemData = array();
@@ -55,15 +62,7 @@ if (isset($StockCode)) {
                 $data[$i]['Description'] = $myrow['description'];
 
                 // Quantity On hand
-                $QOHSQL = "SELECT sum(substorestock.quantity) AS qoh
-							   FROM substorestock
-							   WHERE substorestock.stockid='" . $myrow['stockid'] . "' AND
-							   loccode = '" . $subStore . "'
-							    AND
-							   substoreid = '" . $realsubStore ."'";
-                $QOHResult =  mysqli_query($conn, $QOHSQL);
-                $QOHRow = mysqli_fetch_array($QOHResult);
-                $QOH = $QOHRow['qoh'];
+                $QOH = $myrow['qoh'];
                 $data[$i]['QOH'] = $QOH;
                 // for OnDemand
                 $QOHSQL = "SELECT SUM(salesorderdetails.quantity-salesorderdetails.qtyinvoiced) AS dem
@@ -117,7 +116,7 @@ if (isset($StockCode)) {
                 $data[$i]['OnOrder'] = "$OnOrder";
 
                 // for available
-                $Available = $myrow['qohand'] - $DemandQty + $OnOrder;
+                $Available = $QOH;
                 $data[$i]['Available'] = $Available;
 
 
