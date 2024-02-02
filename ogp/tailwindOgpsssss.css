@@ -233,6 +233,11 @@ select {
     align-items: center;
 }
 
+.printDiv{
+    width: 400px;
+    height: 200px;
+}
+
 
 
 

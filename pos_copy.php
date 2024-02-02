@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
-  <link rel="stylesheet" href="ogp/tailwindOgpssss.css">
+  <link rel="stylesheet" href="ogp/tailwindOgpsssss.css">
   <title>SAHamid ERP</title>
 </head>
 
@@ -23,11 +23,11 @@
     <div class="flex items-center justify-between text-blue-gray-900">
       <a href="#" class="mr-4 block cursor-pointer py-1.5 font-sans text-base font-semibold leading-relaxed tracking-normal text-gray-700  antialiased">
         <b class="text-orange-500">SA Hamid ERP </b></a>
-      <h1 class="text-lg font-bold text-gray-700 leading-tight text-center">Outward Gate Pass - OGP</h1>
+      <h1 class="text-lg font-bold text-gray-700 leading-tight text-center"><b>Outward Gate Pass - OGP</b></h1>
       <div class="hidden lg:block">
         <ul class="flex flex-col gap-2 my-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
           <li class="block p-1 font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
-            <button type="button" onClick="document.location.href='/sahamid/'" class="relative rounded-full p-1 text-black hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+            <button type="button" onClick="document.location.href='/sahamid/'" class="relative rounded-full p-1 text-orange-600 hover:text-black focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
               <span class="absolute -inset-1.5"></span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M2 13.5V7h1v6.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7h1v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5zm11-11V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z" />
@@ -36,7 +36,7 @@
             </button>
           </li>
           <li class="block p-1 font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
-            <button type="button" onClick="logout()" class="relative rounded-full p-1 text-black hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+            <button type="button" onClick="logout()" class="relative rounded-full p-1 text-orange-600 hover:text-black focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
               <span class="absolute -inset-1.5"></span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -63,6 +63,7 @@
         <span class="stepIndicator flex-1 pb-8 relative">OGP Information</span>
         <span class="stepIndicator flex-1 pb-8 relative">Add Inventory Items</span>
         <span class="stepIndicator flex-1 pb-8 relative">Finalize OGP</span>
+        <span class="stepIndicator flex-1 pb-8 relative">Print OGP</span>
       </div>
       <!-- end step indicators -->
 
@@ -162,24 +163,24 @@
           <div id="store" style="display:none;" class="m-12">
             <div class="mb-6">
               <label class="font-bold text-gray-700 text-sm ml-1">To Stock Location </label>
-              <select id="store" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showStoreDiv(this)">
-                <option selected>Select a location</option>
-                <option value="HO - Head Office">HO - Head Office</option>
-                <option value="HOPS - Head Office PS">HOPS - Head Office PS</option>
-                <option value="MT - Model Town">MT - Model Town</option>
-                <option value="MTPS - Model Town PS">MTPS - Model Town PS</option>
-                <option value="OS - Offset">OS - Offset</option>
-                <option value="SR - Show Room">SR - Show Room</option>
-                <option value="SRPS - Show Room PS">SRPS - Show Room PS</option>
-                <option value="VSR - Virtual Store Show Room">VSR - Virtual Store Show Room</option>
-                <option value="WS - Wordk Shop">WS - Wordk Shop</option>
+              <select id="stock_location" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showStoreDiv(this)">
+                <option selected value="">Select a location</option>
+                <option value="HO">HO - Head Office</option>
+                <option value="HOPS">HOPS - Head Office PS</option>
+                <option value="MT">MT - Model Town</option>
+                <option value="MTPS">MTPS - Model Town PS</option>
+                <option value="OS">OS - Offset</option>
+                <option value="SR">SR - Show Room</option>
+                <option value="SRPS">SRPS - Show Room PS</option>
+                <option value="VSR">VSR - Virtual Store Show Room</option>
+                <option value="WS">WS - Wordk Shop</option>
               </select>
             </div>
           </div>
           <div id="destination" style="display:none;" class="m-12">
             <div class="mb-6">
               <label class="font-bold text-gray-700 text-sm ml-1">External Destination</label>
-              <textarea id="message" rows="4" class="destination w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" placeholder="Write your destination's detail here..."></textarea>
+              <textarea id="desti" rows="4" class="destination w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" placeholder="Write your destination's detail here..."></textarea>
             </div>
           </div>
           <div class="mb-6">
@@ -191,11 +192,11 @@
           </div>
           <div class="mb-6">
             <label class="font-bold text-gray-700 text-sm ml-1">Date</label>
-            <input id="message" type="date" value="<?php echo date('Y-m-d'); ?>" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" disabled></input>
+            <input id="date" type="date" value="<?php echo date('Y-m-d'); ?>" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" disabled></input>
           </div>
           <div class="mb-6">
             <label class="font-bold text-gray-700 text-sm ml-1">Narrative</label>
-            <textarea id="message" rows="4" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" placeholder="Write your Narrative here..."></textarea>
+            <textarea id="narative" rows="4" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" placeholder="Write your Narrative here..."></textarea>
           </div>
         </div>
       </div>
@@ -292,6 +293,10 @@
                   <h5 class="salesperson text-gray-700 text-sm ml-6"></h5>
                 </div>
               </div>
+              <input type="text" id="salescaseref" hidden>
+              <input type="text" id="csvref" hidden>
+              <input type="text" id="crvref" hidden>
+              <input type="text" id="mporef" hidden>
               <div class="flex justify-center">
                 <div id="salescaserefDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
                   <h5 class="salescaseref text-gray-700 text-sm ml-6"></h5>
@@ -362,6 +367,22 @@
           </div>
         </div>
       </div>
+      <div class="step">
+        <div class="mb-6 flex justify-center">
+          <div class="p-44">
+            <div class="printDiv rounded overflow-hidden shadow-lg">
+              <div class="flex justify-center mt-6">
+                <h3 class="mt-4 text-gray-700 font-semibold text-lg justify-center">Print The OGP:</h3>
+              </div>
+              <div class="flex justify-center mt-2">
+                <button type="button" class="py-3 px-8 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-500 text-white hover:bg-blue-600">
+                  Print
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- start previous / next buttons -->
       <div class="form-footer flex gap-3">
@@ -380,7 +401,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptss.js"></script>
+<script src="ogp/javascriptsss.js"></script>
 
 
 </html>

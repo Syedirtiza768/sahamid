@@ -230,7 +230,7 @@ if (isset($_POST['Submit']) and $count > 0) {
 		$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 		$DbgMsg = _('The following SQL to insert the request header record was used');
 		$Result = DB_query($HeaderSQL, $db, $ErrMsg, $DbgMsg, true);
-
+ 
 		if ($_SESSION['Request']->salescaseref) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
@@ -554,7 +554,6 @@ if (isset($_POST['Submit']) and $count > 0) {
 </script>
 
 <body>
-
 	<?php
 	echo '<p class="page_title_text"><img src="' . $RootPath . '/css/' . $Theme . '/images/supplier.png" title="' . _('Dispatch') .
 		'" alt="" />' . ' ' . $Title . '</p>';

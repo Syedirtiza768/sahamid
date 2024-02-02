@@ -1,0 +1,414 @@
+<?php
+include('../../configg.php');
+session_start();
+
+$currentUser = $_SESSION['UsersRealName'];
+$ogp_type = $_POST['ogp_type'];
+$salesperson = $_POST['salesperson'];
+$salesperson_ogp_type = $_POST['salesperson_ogp_type'];
+$salescase = $_POST['salescase'];
+$csv = $_POST['csv'];
+$crv = $_POST['crv'];
+$mpo = $_POST['mpo'];
+$employee = $_POST['employee'];
+$stock_location = $_SESSION['UserStockLocation'];
+$destination = $_POST['destination'];
+$substore = $_POST['substore'];
+$narative = $_POST['narative'];
+$items = $_POST['items'];
+$date = $_POST['date'];
+
+
+$RequestNo = GetNextTransNos(38, $conn);
+function GetNextTransNos($TransType, $db)
+{
+
+    $SQL = "SELECT typeno FROM systypes WHERE typeid = '" . $TransType . "'";
+    $GetTransNoResult = mysqli_query($db, $SQL);
+
+    $myrow = mysqli_fetch_array($GetTransNoResult);
+
+    $SQL = "UPDATE systypes SET typeno = '" . ($myrow[0] + 1) . "' WHERE typeid = '" . $TransType . "'";
+    $UpdTransNoResult = mysqli_query($db, $SQL);
+
+    mysqli_query($db, "UNLOCK TABLES");
+
+    return $myrow[0] + 1;
+}
+
+
+$PeriodNo = GetPeriod(Date($_SESSION['DefaultDateFormat']), $conn);
+function GetPeriod($TransDate, &$db, $UseProhibit = true)
+{
+
+    /* Convert the transaction date into a unix time stamp.*/
+
+    if (mb_strpos($TransDate, '/')) {
+        $Date_Array = explode('/', $TransDate);
+    } elseif (mb_strpos($TransDate, '-')) {
+        $Date_Array = explode('-', $TransDate);
+    } elseif (mb_strpos($TransDate, '.')) {
+        $Date_Array = explode('.', $TransDate);
+    }
+
+    if (($_SESSION['DefaultDateFormat'] == 'd/m/Y') or ($_SESSION['DefaultDateFormat'] == 'd.m.Y')) {
+        $TransDate = mktime(0, 0, 0, $Date_Array[1], $Date_Array[0], $Date_Array[2]);
+    } elseif ($_SESSION['DefaultDateFormat'] == 'm/d/Y') {
+        $TransDate = mktime(0, 0, 0, $Date_Array[0], $Date_Array[1], $Date_Array[2]);
+    } elseif ($_SESSION['DefaultDateFormat'] == 'Y/m/d' or $_SESSION['DefaultDateFormat'] == 'Y-m-d') {
+        $TransDate = mktime(0, 0, 0, $Date_Array[1], $Date_Array[2], $Date_Array[0]);
+    }
+
+    if (Is_Date(ConvertSQLDate($_SESSION['ProhibitPostingsBefore'])) and $UseProhibit) { //then the ProhibitPostingsBefore configuration is set
+        $Date_Array = explode('-', $_SESSION['ProhibitPostingsBefore']); //its in ANSI SQL format
+        $ProhibitPostingsBefore = mktime(0, 0, 0, $Date_Array[1], $Date_Array[2], $Date_Array[0]);
+
+        /* If transaction date is in a closed period use the month end of that period */
+        if ($TransDate < $ProhibitPostingsBefore) {
+            $TransDate = $ProhibitPostingsBefore;
+        }
+    }
+    /* Find the unix timestamp of the last period end date in periods table */
+    $sql = "SELECT MAX(lastdate_in_period), MAX(periodno) from periods";
+    $result = mysqli_query($db, $sql);
+    $myrow = mysqli_fetch_array($result);
+
+    if (is_null($myrow[0])) { //then no periods are currently defined - so set a couple up starting at 0
+        $InsertFirstPeriodResult = mysqli_query($db, "INSERT INTO periods VALUES (0,'" . Date('Y-m-d', mktime(0, 0, 0, Date('m') + 1, 0, Date('Y'))) . "')", _('Could not insert first period'));
+        $InsertFirstPeriodResult = mysqli_query($db, "INSERT INTO periods VALUES (1,'" . Date('Y-m-d', mktime(0, 0, 0, Date('m') + 2, 0, Date('Y'))) . "')", _('Could not insert second period'));
+        $LastPeriod = 1;
+        $LastPeriodEnd = mktime(0, 0, 0, Date('m') + 2, 0, Date('Y'));
+    } else {
+        $Date_Array = explode('-', $myrow[0]);
+        $LastPeriodEnd = mktime(0, 0, 0, $Date_Array[1] + 1, 0, (int)$Date_Array[0]);
+        $LastPeriod = $myrow[1];
+    }
+    /* Find the unix timestamp of the first period end date in periods table */
+    $sql = "SELECT MIN(lastdate_in_period), MIN(periodno) from periods";
+    $result = mysqli_query($db, $sql);
+    $myrow = mysqli_fetch_array($result);
+    $Date_Array = explode('-', $myrow[0]);
+    $FirstPeriodEnd = mktime(0, 0, 0, $Date_Array[1], 0, (int)$Date_Array[0]);
+    $FirstPeriod = $myrow[1];
+
+    /* If the period number doesn't exist */
+    if (!PeriodExists($TransDate, $db)) {
+        /* if the transaction is after the last period */
+
+        if ($TransDate > $LastPeriodEnd) {
+
+            $PeriodEnd = mktime(0, 0, 0, Date('m', $TransDate) + 1, 0, Date('Y', $TransDate));
+
+            while ($PeriodEnd >= $LastPeriodEnd) {
+                if (Date('m', $LastPeriodEnd) <= 13) {
+                    $LastPeriodEnd = mktime(0, 0, 0, Date('m', $LastPeriodEnd) + 2, 0, Date('Y', $LastPeriodEnd));
+                } else {
+                    $LastPeriodEnd = mktime(0, 0, 0, 2, 0, Date('Y', $LastPeriodEnd) + 1);
+                }
+                $LastPeriod++;
+                CreatePeriod($LastPeriod, $LastPeriodEnd, $db);
+            }
+        } else {
+            /* The transaction is before the first period */
+            $PeriodEnd = mktime(0, 0, 0, Date('m', $TransDate), 0, Date('Y', $TransDate));
+            $Period = $FirstPeriod - 1;
+            while ($FirstPeriodEnd > $PeriodEnd) {
+                CreatePeriod($Period, $FirstPeriodEnd, $db);
+                $Period--;
+                if (Date('m', $FirstPeriodEnd) > 0) {
+                    $FirstPeriodEnd = mktime(0, 0, 0, Date('m', $FirstPeriodEnd), 0, Date('Y', $FirstPeriodEnd));
+                } else {
+                    $FirstPeriodEnd = mktime(0, 0, 0, 13, 0, Date('Y', $FirstPeriodEnd));
+                }
+            }
+        }
+    } else if (!PeriodExists(mktime(0, 0, 0, Date('m', $TransDate) + 1, Date('d', $TransDate), Date('Y', $TransDate)), $db)) {
+        /* Make sure the following months period exists */
+        $sql = "SELECT MAX(lastdate_in_period), MAX(periodno) from periods";
+        $result = mysqli_query($db, $sql);
+        $myrow = mysqli_fetch_array($result);
+        $Date_Array = explode('-', $myrow[0]);
+        $LastPeriodEnd = mktime(0, 0, 0, $Date_Array[1] + 2, 0, (int)$Date_Array[0]);
+        $LastPeriod = $myrow[1];
+        CreatePeriod($LastPeriod + 1, $LastPeriodEnd, $db);
+    }
+
+    /* Now return the period number of the transaction */
+
+    $MonthAfterTransDate = Mktime(0, 0, 0, Date('m', $TransDate) + 1, Date('d', $TransDate), Date('Y', $TransDate));
+    $GetPrdSQL = "SELECT periodno
+					FROM periods
+					WHERE lastdate_in_period < '" . Date('Y-m-d', $MonthAfterTransDate) . "'
+					AND lastdate_in_period >= '" . Date('Y-m-d', $TransDate) . "'";
+
+    $ErrMsg = _('An error occurred in retrieving the period number');
+    $GetPrdResult = mysqli_query($db, $GetPrdSQL);
+    $myrow = mysqli_fetch_array($GetPrdResult);
+
+    return $myrow[0];
+}
+
+function ConvertSQLDate($DateEntry)
+{
+
+    //for MySQL dates are in the format YYYY-mm-dd
+
+
+    if (mb_strpos($DateEntry, '/')) {
+        $Date_Array = explode('/', $DateEntry);
+    } elseif (mb_strpos($DateEntry, '-')) {
+        $Date_Array = explode('-', $DateEntry);
+    } elseif (mb_strpos($DateEntry, '.')) {
+        $Date_Array = explode('.', $DateEntry);
+    } else {
+        prnMsg(_('The date does not appear to be in a valid format. The date being converted from SQL format was:') . ' ' . $DateEntry, 'error');
+        switch ($_SESSION['DefaultDateFormat']) {
+            case 'd/m/Y':
+                return '0/0/000';
+                break;
+            case 'd.m.Y':
+                return '0.0.000';
+                break;
+            case 'm/d/Y':
+                return '0/0/0000';
+                break;
+            case 'Y/m/d':
+                return '0000/0/0';
+                break;
+            case 'Y-m-d':
+                return '0000-0-0';
+                break;
+        }
+    }
+
+    if (mb_strlen($Date_Array[2]) > 4) {  /*chop off the time stuff */
+        $Date_Array[2] = mb_substr($Date_Array[2], 0, 2);
+    }
+
+    if ($_SESSION['DefaultDateFormat'] == 'd/m/Y') {
+        return $Date_Array[2] . '/' . $Date_Array[1] . '/' . $Date_Array[0];
+    } elseif ($_SESSION['DefaultDateFormat'] == 'd.m.Y') {
+        return $Date_Array[2] . '.' . $Date_Array[1] . '.' . $Date_Array[0];
+    } elseif ($_SESSION['DefaultDateFormat'] == 'm/d/Y') {
+        return $Date_Array[1] . '/' . $Date_Array[2] . '/' . $Date_Array[0];
+    } elseif ($_SESSION['DefaultDateFormat'] == 'Y/m/d') {
+        return $Date_Array[0] . '/' . $Date_Array[1] . '/' . $Date_Array[2];
+    } elseif ($_SESSION['DefaultDateFormat'] == 'Y-m-d') {
+        return $Date_Array[0] . '-' . $Date_Array[1] . '-' . $Date_Array[2];
+    }
+} // end function ConvertSQLDate
+
+function Is_date($DateEntry)
+{
+
+    $DateEntry = Trim($DateEntry);
+
+    //echo '<BR>The date entered is ' . $DateEntry;
+
+    if (mb_strpos($DateEntry, '/')) {
+        $Date_Array = explode('/', $DateEntry);
+    } elseif (mb_strpos($DateEntry, '-')) {
+        $Date_Array = explode('-', $DateEntry);
+    } elseif (mb_strpos($DateEntry, '.')) {
+        $Date_Array = explode('.', $DateEntry);
+    } elseif (mb_strlen($DateEntry) == 6) {
+        $Date_Array[0] = mb_substr($DateEntry, 0, 2);
+        $Date_Array[1] = mb_substr($DateEntry, 2, 2);
+        $Date_Array[2] = mb_substr($DateEntry, 4, 2);
+    } elseif (mb_strlen($DateEntry) == 8) {
+        $Date_Array[0] = mb_substr($DateEntry, 0, 2);
+        $Date_Array[1] = mb_substr($DateEntry, 2, 2);
+        $Date_Array[2] = mb_substr($DateEntry, 4, 4);
+    }
+
+    if (!isset($Date_Array) or sizeof($Date_Array) < 3) {
+        return 0;
+    }
+
+    if ((int)$Date_Array[2] > 9999) {
+        return 0;
+    }
+
+
+    if (is_long((int)$Date_Array[0]) and is_long((int)$Date_Array[1]) and is_long((int)$Date_Array[2])) {
+
+        if (($_SESSION['DefaultDateFormat'] == 'd/m/Y') or ($_SESSION['DefaultDateFormat'] == 'd.m.Y')) {
+
+            if (checkdate((int)$Date_Array[1], (int)$Date_Array[0], (int)$Date_Array[2])) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } elseif ($_SESSION['DefaultDateFormat'] == 'm/d/Y') {
+
+            if (checkdate((int)$Date_Array[0], (int)$Date_Array[1], (int)$Date_Array[2])) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } elseif ($_SESSION['DefaultDateFormat'] == 'Y/m/d') {
+
+            if (checkdate((int)$Date_Array[1], (int)$Date_Array[2], (int)$Date_Array[0])) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } elseif ($_SESSION['DefaultDateFormat'] == 'Y-m-d') {
+            if (checkdate((int)$Date_Array[1], (int)$Date_Array[2], (int)$Date_Array[0])) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } else { /*Can't be in an appropriate DefaultDateFormat */
+            return 0;
+        }
+    }
+}
+
+function CreatePeriod($PeriodNo, $PeriodEnd, &$db)
+{
+    $GetPrdSQL = "INSERT INTO periods (periodno,
+                                        lastdate_in_period)
+                                    VALUES (
+                                        '" . $PeriodNo . "',
+                                        '" . Date('Y-m-d', $PeriodEnd) . "')";
+    $ErrMsg = _('An error occurred in adding a new period number');
+    $GetPrdResult = mysqli_query($db, $GetPrdSQL);
+}
+
+function PeriodExists($TransDate, &$db)
+{
+
+    /* Find the date a month on */
+    $MonthAfterTransDate = Mktime(0, 0, 0, Date('m', $TransDate) + 1, Date('d', $TransDate), Date('Y', $TransDate));
+
+    $GetPrdSQL = "SELECT periodno FROM periods WHERE lastdate_in_period < '" . Date('Y/m/d', $MonthAfterTransDate) . "' AND lastdate_in_period >= '" . Date('Y/m/d', $TransDate) . "'";
+
+    $ErrMsg = _('An error occurred in retrieving the period number');
+    $GetPrdResult = mysqli_query($db, $GetPrdSQL);
+
+    if (mysqli_num_rows($GetPrdResult) == 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+function FormatDateForSQL($DateEntry)
+{
+
+    /* takes a date in a the format specified in $_SESSION['DefaultDateFormat']
+    and converts to a yyyy/mm/dd format */
+    $Date_Array = array();
+    $DateEntry = trim($DateEntry);
+
+    if (mb_strpos($DateEntry, '/')) {
+        $Date_Array = explode('/', $DateEntry);
+    } elseif (mb_strpos($DateEntry, '-')) {
+        $Date_Array = explode('-', $DateEntry);
+    } elseif (mb_strpos($DateEntry, '.')) {
+        $Date_Array = explode('.', $DateEntry);
+    } elseif (mb_strlen($DateEntry) == 6) {
+        $Date_Array[0] = mb_substr($DateEntry, 0, 2);
+        $Date_Array[1] = mb_substr($DateEntry, 2, 2);
+        $Date_Array[2] = mb_substr($DateEntry, 4, 2);
+    } elseif (mb_strlen($DateEntry) == 8) {
+        $Date_Array[0] = mb_substr($DateEntry, 0, 4);
+        $Date_Array[1] = mb_substr($DateEntry, 4, 2);
+        $Date_Array[2] = mb_substr($DateEntry, 6, 2);
+    }
+
+    if ($_SESSION['DefaultDateFormat'] == 'Y/m/d' or $_SESSION['DefaultDateFormat'] == 'Y-m-d') {
+        if (mb_strlen($Date_Array[0]) == 2) {
+            if ((int)$Date_Array[0] <= 60) {
+                $Date_Array[0] = '20' . $Date_Array[2];
+            } elseif ((int)$Date_Array[0] > 60 and (int)$Date_Array[2] < 100) {
+                $Date_Array[0] = '19' . $Date_Array[2];
+            }
+        }
+        return $Date_Array[0] . '-' . $Date_Array[1] . '-' . $Date_Array[2];
+    } elseif (($_SESSION['DefaultDateFormat'] == 'd/m/Y')
+        or $_SESSION['DefaultDateFormat'] == 'd.m.Y'
+    ) {
+        if (mb_strlen($Date_Array[2]) == 2) {
+            if ((int)$Date_Array[2] <= 60) {
+                $Date_Array[2] = '20' . $Date_Array[2];
+            } elseif ((int)$Date_Array[2] > 60 and (int)$Date_Array[2] < 100) {
+                $Date_Array[2] = '19' . $Date_Array[2];
+            }
+        }
+        /* echo '<BR>The date returned is ' . $Date_Array[2].'/'.$Date_Array[1].'/'.$Date_Array[0]; */
+        return $Date_Array[2] . '-' . $Date_Array[1] . '-' . $Date_Array[0];
+    } elseif ($_SESSION['DefaultDateFormat'] == 'm/d/Y') {
+        if (mb_strlen($Date_Array[2]) == 2) {
+            if ((int)$Date_Array[2] <= 60) {
+                $Date_Array[2] = '20' . $Date_Array[2];
+            } elseif ((int)$Date_Array[2] > 60 and (int)$Date_Array[2] < 100) {
+                $Date_Array[2] = '19' . $Date_Array[2];
+            }
+        }
+        return $Date_Array[2] . '-' . $Date_Array[0] . '-' . $Date_Array[1];
+    }
+}
+echo $RequestNo;
+$HeaderSQL = "INSERT INTO posdispatch (dispatchid,
+											loccode,
+											despatchdate,
+											deliveredto,
+											storemanager,											
+											narrative
+											)
+										VALUES(
+											'" . $RequestNo . "',
+											
+											'" . $stock_location . "',
+											'" . $date . "',
+											
+											'" . $salesperson . "',
+											'" . $currentUser . "',
+											
+											'" . $narative . "')";
+
+$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+$DbgMsg = _('The following SQL to insert the request header record was used');
+$Result = mysqli_query($conn, $HeaderSQL);
+
+
+if ($salescase != "") {
+    $selectedItemsCode = NULL;
+    foreach ($items as $LineItems) {
+        $itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $salescase . "'	
+            AND stockid = '" . $LineItems['Code'] . "' AND salesman = '" . $salesperson . "'";
+        $Result = mysqli_query( $conn, $itemcode);
+
+        if (mysqli_num_rows($Result) == 1) {
+            $itemcode = "UPDATE ogpsalescaseref SET quantity =quantity +'" . $LineItems['quantity'] . "' WHERE salescaseref= '" . $salescase . "'
+                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "'";
+            $Result = mysqli_query($conn , $itemcode);
+        } else {
+
+            $HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
+                                        salescaseref,
+                                        requestedby,
+                                        stockid,
+                                        salesman,
+                                        quantity
+                                        )
+                                    VALUES (
+                                        '" . $RequestNo . "',
+                                        '" . $salescase . "',
+                                        '" . $_SESSION['UsersRealName'] . "',
+                                        '" . $LineItems['Code'] . "',
+                                        '" . $salesperson . "',
+                                        '" . $LineItems['quantity'] . "')";
+
+            $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+            $DbgMsg = _('The following SQL to insert the request header record was used');
+            $Result = mysqli_query( $conn ,$HeaderSalescaserefSQL);
+        }
+    }
+}
+
+echo "done";
+// echo $RequestNo;
+// echo $PeriodNo;

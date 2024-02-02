@@ -1,11 +1,11 @@
 <?php
 include('../../configg.php');
 session_start();
-$_SESSION['UsersRealName'];
+// $_SESSION['UsersRealName'];
 $StockCat = "All";
 $StockCode =  $_POST['StockCode'];
 $brand = $_POST['brand'];
-$subStore = 'MT';
+$subStore = $_SESSION['UserStockLocation'];
 $realsubStore = $_POST['subStore'];
 
 

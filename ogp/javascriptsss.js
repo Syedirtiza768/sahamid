@@ -27,9 +27,7 @@ function itemSearch() {
         },
         success: function (response) {
             try {
-                console.log(response);
                 var jsonData = JSON.parse(response);
-                console.log(jsonData);
                 populateTable(jsonData);
 
                 // Now you can work with the parsed JSON data
@@ -195,7 +193,7 @@ function showTab(n) {
     } else {
         document.getElementById("prevBtn").style.display = "inline";
     }
-    if (n == (x.length - 1)) {
+    if (n == (x.length - 2)) {
         document.getElementById("nextBtn").innerHTML = "Submit";
     } else {
         document.getElementById("nextBtn").innerHTML = "Next";
@@ -237,10 +235,11 @@ function nextPrev(n) {
     // Increase or decrease the current tab by 1:
     currentTab = currentTab + n;
     // if you have reached the end of the form...
-    if (currentTab >= x.length) {
+    if (currentTab >= x.length - 1) {
+        submitForm();
         // ... the form gets submitted:
-        document.getElementById("signUpForm").submit();
-        return false;
+        // document.getElementById("signUpForm").submit();
+        // return false;
     }
     // Otherwise, display the correct tab:
     showTab(currentTab);
@@ -344,6 +343,7 @@ function showSalescaseDiv(name) {
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
     $('.salescaseref').html("<b>Salescase Reference:     </b>" + salescase);
+    document.getElementById('salescaseref').value = salescase;
 }
 
 function showcsvDiv(name) {
@@ -356,6 +356,7 @@ function showcsvDiv(name) {
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
     $('.csv').html("<b>CSV Refrence:     </b>" + salescase);
+    document.getElementById('csvref').value = salescase;
 }
 
 function showcrvDiv(name) {
@@ -368,6 +369,7 @@ function showcrvDiv(name) {
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
     $('.crv').html("<b>CRV Refrence:     </b>" + salescase);
+    document.getElementById('crveref').value = salescase;
 }
 
 function showmpoDiv(name) {
@@ -380,6 +382,7 @@ function showmpoDiv(name) {
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
     $('.mpo').html("<b>MPO Refrence:     </b>" + salescase);
+    document.getElementById('mporef').value = salescase;
 }
 
 function showmemployeeDiv(name) {
@@ -405,9 +408,6 @@ function showStoreDiv(name) {
     document.getElementById('destinationDiv').style.display = 'none';
     $('.store').html("<b>Store:     </b>" + store)
 }
-
-
-
 
 function ogpSaleman(name) {
     var salesman = name.value;
@@ -500,6 +500,46 @@ function ogpSaleman(name) {
             for (var i in dataList) {
                 $('#mpo').append(new Option(dataList[i], dataList[i]));
             }
+        }
+    });
+}
+
+function submitForm() {
+    var ogp_type = $('#ogp_type').val();
+    var salesperson = $('#salesman').val();
+    var salesperson_ogp_type = $('#ogp_salesperson_type').val();
+    var salescase = $('#salescaseref').val();
+    var csv = $('#csvref').val();
+    var crv = $('#crvref').val();
+    var mpo = $('#mporef').val();
+    var employee = $('#employee').val();
+    var stock_location = $('#stock_location').val();
+    var destination = $('#desti').val();
+    var substore = $('#subStore').val();
+    var narative = $('#narative').val();
+    var date = $('#date').val();
+    $.ajax({
+        type: "POST",
+        url: "ogp/api/submitOgpData.php",
+        data: {
+            ogp_type: ogp_type,
+            salesperson: salesperson,
+            date: date,
+            salesperson_ogp_type: salesperson_ogp_type,
+            salescase: salescase,
+            csv: csv,
+            crv: crv,
+            mpo: mpo,
+            employee: employee,
+            stock_location: stock_location,
+            destination: destination,
+            substore: substore,
+            narative: narative,
+            items:items
+        },
+        success: function (data) {
+            console.log(data);
+            
         }
     });
 }

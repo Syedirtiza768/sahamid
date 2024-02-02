@@ -235,7 +235,7 @@ if (isset($_POST['CloseContract']) AND $_SESSION['Contract'.$identifier]->Status
 //Compare actual costs to original budgeted contract costs - if actual > budgeted - CR WIP and DR usage variance
 	$Variance =  ($OtherReqtsBudget+$ContractBOMBudget)-($OtherReqtsActual+$ContractBOMActual);
 
-	$ContractCloseNo = GetNextTransNo( 32  ,$db);
+	$ContractCloseNo = ( 32  ,$db);
 	$PeriodNo = GetPeriod(Date($_SESSION['DefaultDateFormat']), $db);
 
 	DB_Txn_Begin($db);
