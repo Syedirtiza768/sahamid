@@ -520,7 +520,7 @@ function submitForm() {
     var date = $('#date').val();
     $.ajax({
         type: "POST",
-        url: "ogp/api/submitOgpData.php",
+        url: "ogp/api/submitOgpDatas.php",
         data: {
             ogp_type: ogp_type,
             salesperson: salesperson,

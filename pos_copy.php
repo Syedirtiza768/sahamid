@@ -164,7 +164,7 @@
             <div class="mb-6">
               <label class="font-bold text-gray-700 text-sm ml-1">To Stock Location </label>
               <select id="stock_location" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showStoreDiv(this)">
-                <option selected value="">Select a location</option>
+                <option value="">Select a location</option>
                 <option value="HO">HO - Head Office</option>
                 <option value="HOPS">HOPS - Head Office PS</option>
                 <option value="MT">MT - Model Town</option>
@@ -401,7 +401,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptsss.js"></script>
+<script src="ogp/javascriptssss.js"></script>
 
 
 </html>
