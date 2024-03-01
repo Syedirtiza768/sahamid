@@ -188,6 +188,7 @@ function showTab(n) {
     var x = document.getElementsByClassName("step");
     x[n].style.display = "block";
     //... and fix the Previous/Next buttons:
+    document.getElementById("newOGPBtn").style.display = "none";
     if (n == 0) {
         document.getElementById("prevBtn").style.display = "none";
     } else {
@@ -197,6 +198,12 @@ function showTab(n) {
         document.getElementById("nextBtn").innerHTML = "Submit";
     } else {
         document.getElementById("nextBtn").innerHTML = "Next";
+    }
+    if(n == 3){
+        document.getElementById("nextBtn").style.display = "none";
+        document.getElementById("prevBtn").style.display = "none";
+
+        document.getElementById("newOGPBtn").style.display = "inline";
     }
     //... and run a function that will display the correct step indicator:
     fixStepIndicator(n)
@@ -539,7 +546,8 @@ function submitForm() {
         },
         success: function (data) {
             console.log(data);
-            
+            var PrintOGP = document.getElementById("PrintOGP");
+            PrintOGP.href = "/sahamid/PDFOGP.php?RequestNo="+ data;
         }
     });
 }

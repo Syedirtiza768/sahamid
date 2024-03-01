@@ -376,7 +376,7 @@
               </div>
               <div class="flex justify-center mt-2">
                 <button type="button" class="py-3 px-8 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-500 text-white hover:bg-blue-600">
-                  Print
+                <a id="PrintOGP" href="#">Print the OGP</a>
                 </button>
               </div>
             </div>
@@ -388,6 +388,7 @@
       <div class="form-footer flex gap-3">
         <button type="button" id="prevBtn" class="flex-1 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 bg-white hover:bg-gray-100 text-lg" onclick="nextPrev(-1)">Previous</button>
         <button type="button" id="nextBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="nextPrev(1)">Next</button>
+        <button type="button" id="newOGPBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="window.location.reload()">Create New OGP</button>
       </div>
       <!-- end previous / next buttons -->
     </form>
@@ -401,7 +402,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptssss.js"></script>
+<script src="ogp/javascriptsssss.js"></script>
 
 
 </html>

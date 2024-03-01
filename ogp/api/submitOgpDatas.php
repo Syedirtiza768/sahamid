@@ -17,10 +17,9 @@ $substore = $_POST['substore'];
 $narative = $_POST['narative'];
 $items = $_POST['items'];
 $date = date('Y-m-d');
-if(empty($stock_location)){
+if (empty($stock_location)) {
     $stock_location = $_SESSION['UserStockLocation'];
 }
-echo $date;
 
 
 $RequestNo = GetNextTransNos(38, $conn);
@@ -380,12 +379,12 @@ if ($salescase != "") {
     foreach ($items as $LineItems) {
         $itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $salescase . "'	
             AND stockid = '" . $LineItems['Code'] . "' AND salesman = '" . $salesperson . "'";
-        $Result = mysqli_query( $conn, $itemcode);
+        $Result = mysqli_query($conn, $itemcode);
 
         if (mysqli_num_rows($Result) == 1) {
             $itemcode = "UPDATE ogpsalescaseref SET quantity =quantity +'" . $LineItems['quantity'] . "' WHERE salescaseref= '" . $salescase . "'
                     AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "'";
-            $Result = mysqli_query($conn , $itemcode);
+            $Result = mysqli_query($conn, $itemcode);
         } else {
 
             $HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
@@ -405,48 +404,56 @@ if ($salescase != "") {
 
             $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
             $DbgMsg = _('The following SQL to insert the request header record was used');
-            $Result = mysqli_query( $conn ,$HeaderSalescaserefSQL);
+            $Result = mysqli_query($conn, $HeaderSalescaserefSQL);
         }
     }
 }
 
 
 
-$i=0;
+$i = 0;
 foreach ($items as $LineItems) {
-$LineSQL = "INSERT INTO posdispatchitems (dispatchitemsid,
-													dispatchid,
-													stockid,
-													quantity,
-													comments,
-													decimalplaces,
-													uom)
-												VALUES(
-													'" . $i . "',
-													'" . $RequestNo . "',
-													'" . $LineItems['Code'] . "',
-													'" . $LineItems['quantity'] . "',
-													'',
-													'0',
-													''";
-            $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-            $DbgMsg = _('The following SQL to insert the request header record was used');
-            $Result = mysqli_query( $conn ,$LineSQL);
-			$SQL = "SELECT locstock.quantity
+
+    $LineSQL = " INSERT INTO posdispatchitems (
+        dispatchitemsid,
+        dispatchid,
+        stockid,
+        quantity,
+        comments,
+        decimalplaces,
+        uom,
+        rate,
+        brand,
+        mnfCode
+    ) VALUES (
+        '" . $i . "',
+		'" . $RequestNo . "',
+		'" . $LineItems['Code'] . "',
+		'" . $LineItems['quantity'] . "',
+        '',
+        '0',
+        '',
+        '0',        
+        '',         
+        '' )";
+    $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+    $DbgMsg = _('The following SQL to insert the request header record was used');
+    $Result = mysqli_query($conn, $LineSQL);
+    $SQL = "SELECT locstock.quantity
 						FROM locstock
 						WHERE locstock.stockid='" . $LineItems['Code'] . "'
 						AND loccode= '" . $_SESSION['UserStockLocation'] . "'";
 
-			$ResultQ = mysqli_query( $conn ,$SQL);
-			if (mysqli_num_rows($ResultQ) == 1) {
-				$LocQtyRow = mysqli_fetch_row($ResultQ);
-				$QtyOnHandPrior = $LocQtyRow[0];
-			} else {
-				// There must actually be some error this should never happen
-				$QtyOnHandPrior = 0;
-			}
+    $ResultQ = mysqli_query($conn, $SQL);
+    if (mysqli_num_rows($ResultQ) == 1) {
+        $LocQtyRow = mysqli_fetch_row($ResultQ);
+        $QtyOnHandPrior = $LocQtyRow[0];
+    } else {
+        // There must actually be some error this should never happen
+        $QtyOnHandPrior = 0;
+    }
 
-			$SQL = "INSERT INTO stockmoves (stockid,
+    $SQL = "INSERT INTO stockmoves (stockid,
 												type,
 												transno,
 												loccode,
@@ -470,70 +477,69 @@ $LineSQL = "INSERT INTO posdispatchitems (dispatchitemsid,
 						,'" . round($QtyOnHandPrior - $LineItems['quantity'], 0) . "'
 						)";
 
-			$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
-			$DbgMsg =  _('The following SQL to insert the stock movement record was used');
-			$Result = mysqli_query( $conn , $SQL);
+    $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
+    $DbgMsg =  _('The following SQL to insert the stock movement record was used');
+    $Result = mysqli_query($conn, $SQL);
 
 
 
-			if ($ogp_type == "s" or $ogp_type == "e") {
-				$SQL = "select stockid, salesperson from stockissuance where stockid = '" . $LineItems['Code'] . "'
+    if ($ogp_type == "s" or $ogp_type == "e") {
+        $SQL = "select stockid, salesperson from stockissuance where stockid = '" . $LineItems['Code'] . "'
 	
 	and salesperson = '" . $salesperson . "'
 	
 	";
-				$Result = mysqli_query($conn , $SQL);
-				if (mysqli_num_rows($Result) > 0) {
-					$SQL = "UPDATE stockissuance
+        $Result = mysqli_query($conn, $SQL);
+        if (mysqli_num_rows($Result) > 0) {
+            $SQL = "UPDATE stockissuance
 					SET issued = issued + '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
 					AND salesperson='" . $salesperson . "'";
-					$Result = mysqli_query($conn , $SQL);
-				} else {
+            $Result = mysqli_query($conn, $SQL);
+        } else {
 
-					$SQL = "insert into stockissuance(salesperson,stockid,issued) values
+            $SQL = "insert into stockissuance(salesperson,stockid,issued) values
 					('" . $salesperson . "','" . $LineItems['Code'] . "'
 					,'" . round($LineItems['quantity'], 0) . "')";
-					$Result = mysqli_query($conn , $SQL);
-				}
+            $Result = mysqli_query($conn, $SQL);
+        }
 
 
-				$SQL = "UPDATE locstock
+        $SQL = "UPDATE locstock
 					SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
 					AND loccode='" . $stock_location . "'";
-				$Result = mysqli_query($conn , $SQL);
+        $Result = mysqli_query($conn, $SQL);
 
-				$SQL = "UPDATE substorestock
+        $SQL = "UPDATE substorestock
 					SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
 					AND substoreid='" .  $substore . "'";
 
-				$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
-				$DbgMsg =  _('The following SQL to update the stock record was used');
-				$Result = mysqli_query($conn , $SQL);
-			}
+        $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
+        $DbgMsg =  _('The following SQL to update the stock record was used');
+        $Result = mysqli_query($conn, $SQL);
+    }
 
-			if ($ogp_type == "l" or $ogp_type == "d") {
+    if ($ogp_type == "l" or $ogp_type == "d") {
 
-				$SQL = "UPDATE locstock
+        $SQL = "UPDATE locstock
 					SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
 					AND loccode='" . $stock_location . "'";
 
-				$Result = mysqli_query($conn , $SQL);
+        $Result = mysqli_query($conn, $SQL);
 
-				$SQL = "UPDATE substorestock
+        $SQL = "UPDATE substorestock
 					SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
 					AND substoreid='" . $substore . "'";
 
-				$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
-				$DbgMsg =  _('The following SQL to update the stock record was used');
-				$Result = mysqli_query($conn , $SQL);
-			}
-
-        }
-echo "done";
+        $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
+        $DbgMsg =  _('The following SQL to update the stock record was used');
+        $Result = mysqli_query($conn, $SQL);
+    }
+    $i++;
+}
 // echo $RequestNo;
 // echo $PeriodNo;
