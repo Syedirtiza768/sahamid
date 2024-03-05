@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
-  <link rel="stylesheet" href="ogp/tailwindOgpsssss.css">
+  <link rel="stylesheet" href="ogp/tailwindOgp.css">
   <title>SAHamid ERP</title>
 </head>
 
@@ -83,7 +83,7 @@
           <div class="mb-6 mt-4">
             <label class="font-bold text-gray-700 text-sm ml-1">Select OGP Type</label>
             <select id="ogp_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showDiv(this)">
-              <option selected>Select OGP Type</option>
+              <option selected value="">Select OGP Type</option>
               <option value="s">Issue to Salesperson</option>
               <option value="e">Issue to Employee</option>
               <option value="l">Deleivered to store location</option>
@@ -105,7 +105,7 @@
             <div class="mb-6">
               <label class="font-bold text-gray-700 text-sm ml-1">Salesperson OGP Type</label>
               <select id="ogp_salesperson_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showOGPDiv(this)">
-                <option selected>Salesperson OGP Type</option>
+                <option value="" selected>Salesperson OGP Type</option>
                 <option value="salescase">Salescase</option>
                 <option value="csv">CSV</option>
                 <option value="crv">CRV</option>
@@ -386,7 +386,7 @@
 
       <!-- start previous / next buttons -->
       <div class="form-footer flex gap-3">
-        <button type="button" id="prevBtn" class="flex-1 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 bg-white hover:bg-gray-100 text-lg" onclick="nextPrev(-1)">Previous</button>
+        <button type="button" id="prevBtn" class="flex-1 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 text-lg" onclick="nextPrev(-1)">Previous</button>
         <button type="button" id="nextBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="nextPrev(1)">Next</button>
         <button type="button" id="newOGPBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="window.location.reload()">Create New OGP</button>
       </div>
@@ -402,7 +402,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptsssss.js"></script>
+<script src="ogp/javascriptssssss.js"></script>
 
 
 </html>

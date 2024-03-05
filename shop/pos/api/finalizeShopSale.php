@@ -174,17 +174,19 @@ while ($item = mysqli_fetch_assoc($res)) {
 
 	$SQL = "SELECT quantity
 	FROM ogpcsvref 
-	WHERE stockid='$stockid'
+	WHERE stockid='" . $item['stockid'] . "'
 	AND salesman='$salesman'";
 	$result = mysqli_query($db, $SQL);
 	$num_rows = mysqli_num_rows($result);
 	if ($num_rows > 0) {
 		$SQL = "SELECT SUM(quantity) as quantity
 				FROM ogpcsvref 
-				WHERE stockid='$stockid'
+				WHERE stockid='" . $item['stockid'] . "'
 				AND salesman='$salesman'";
 		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
-		$oldQuantity = ($oldQuantity != "") ? $oldQuantity : 0;
+		if($oldQuantity == "" || $oldQuantity == NULL){
+			$oldQuantity = 0;
+		}
 		$quantit 	= $oldQuantity - $item['required'];
 
 		$SQL = "UPDATE `ogpcsvref` SET quantity='0' 
@@ -193,15 +195,17 @@ while ($item = mysqli_fetch_assoc($res)) {
 		DB_query($SQL, $db);
 
 		$SQL = "INSERT INTO ogpcsvref (stockid,csv,salesman,quantity) 
-		VALUES ('$stockid','$orderno','$salesman','$quantit')";
+		VALUES ('" . $item['stockid'] . "','$orderno','$salesman','$quantit')";
 		DB_query($SQL, $db);
 	} else {
 		$SQL = "SELECT SUM(quantity) as quantity
 				FROM ogpcrvref 
-				WHERE stockid='$stockid'
+				WHERE stockid='" . $item['stockid'] . "'
 				AND salesman='$salesman'";
 		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
-		$oldQuantity = ($oldQuantity != "") ? $oldQuantity : 0;
+		if($oldQuantity == "" || $oldQuantity == NULL){
+			$oldQuantity = 0;
+		}
 		$quantit 	= $oldQuantity - $item['required'];
 		$SQL = "UPDATE `ogpcrvref` SET quantity='0' 
 		WHERE salesman='" . $salesman . "'
@@ -209,7 +213,7 @@ while ($item = mysqli_fetch_assoc($res)) {
 		DB_query($SQL, $db);
 
 		$SQL = "INSERT INTO ogpcrvref (stockid,crv,salesman,quantity) 
-		VALUES ('$stockid','$orderno','$salesman','$quantit')";
+		VALUES ('" . $item['stockid'] . "','$orderno','$salesman','$quantit')";
 		DB_query($SQL, $db);
 	}
 

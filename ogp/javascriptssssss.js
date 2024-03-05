@@ -8,7 +8,7 @@ $(document).ready(function () {
     $('#StockCat').select2();
     $('#brand').select2();
 });
-
+var globelVariable = 0;
 // search item function
 function itemSearch() {
     var subStore = $('#subStore').val();
@@ -74,6 +74,8 @@ function ItemAdd(code, description, qoh) {
         setTimeout(function () {
             $('#confirmationPopup').fadeOut();
         }, 3000);
+        globelVariable = 1;
+        document.getElementById("nextBtn").style.display = "inline";
     }
 }
 
@@ -149,9 +151,8 @@ function saveItem(code) {
 function deleteItem(itemCode) {
     for (var i = 0; i < items.length; i++) {
         if (items[i].Code === itemCode) {
-            if (confirm('Are you sure?')) { // Check if the array meets the condition
-                // document.getElementById(items[i].Code).style.display = "block";
-                // document.getElementById("btn" + items[i].Code).style.display = "block";
+            if (confirm('Are you sure?')) { 
+                globelVariable = 0;
                 items.splice(i, 1); // Delete the array at index i
                 $('#confirmationPopup').fadeIn();
                 document.getElementById('popupMessage').textContent = 'Item deleted successfuly 🗑️';
@@ -160,6 +161,7 @@ function deleteItem(itemCode) {
                     $('#confirmationPopup').fadeOut();
                 }, 3000);
                 break; // Break the loop once the array is deleted
+                
 
             }
         }
@@ -190,6 +192,7 @@ function showTab(n) {
     //... and fix the Previous/Next buttons:
     document.getElementById("newOGPBtn").style.display = "none";
     if (n == 0) {
+        document.getElementById("nextBtn").style.display = "inline";
         document.getElementById("prevBtn").style.display = "none";
     } else {
         document.getElementById("prevBtn").style.display = "inline";
@@ -199,6 +202,15 @@ function showTab(n) {
     } else {
         document.getElementById("nextBtn").innerHTML = "Next";
     }
+
+    if(n == 1){
+        document.getElementById("nextBtn").style.display = "none";
+    }
+    
+    if(n == 2){
+        document.getElementById("nextBtn").style.display = "inline";
+    }
+    
     if(n == 3){
         document.getElementById("nextBtn").style.display = "none";
         document.getElementById("prevBtn").style.display = "none";
@@ -245,7 +257,7 @@ function nextPrev(n) {
     if (currentTab >= x.length - 1) {
         submitForm();
         // ... the form gets submitted:
-        // document.getElementById("signUpForm").submit();
+        // document.getElementById("signUpForm").submit();globelVariablei9nline
         // return false;
     }
     // Otherwise, display the correct tab:
