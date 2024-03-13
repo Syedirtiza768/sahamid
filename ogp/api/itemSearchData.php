@@ -128,6 +128,7 @@ if (isset($StockCode)) {
             $jsonStrings = array();
 
             // Loop through each subarray and convert to JSON string
+            
             foreach ($data as $subArray) {
                 // Convert subarray to JSON string
                 $jsonString = json_encode($subArray);

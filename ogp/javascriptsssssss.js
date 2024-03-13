@@ -26,6 +26,7 @@ function itemSearch() {
             StockCode: StockCode
         },
         success: function (response) {
+            console.log(response);
             try {
                 var jsonData = JSON.parse(response);
                 populateTable(jsonData);
@@ -151,7 +152,7 @@ function saveItem(code) {
 function deleteItem(itemCode) {
     for (var i = 0; i < items.length; i++) {
         if (items[i].Code === itemCode) {
-            if (confirm('Are you sure?')) { 
+            if (confirm('Are you sure?')) {
                 globelVariable = 0;
                 items.splice(i, 1); // Delete the array at index i
                 $('#confirmationPopup').fadeIn();
@@ -161,7 +162,7 @@ function deleteItem(itemCode) {
                     $('#confirmationPopup').fadeOut();
                 }, 3000);
                 break; // Break the loop once the array is deleted
-                
+
 
             }
         }
@@ -203,15 +204,15 @@ function showTab(n) {
         document.getElementById("nextBtn").innerHTML = "Next";
     }
 
-    if(n == 1){
+    if (n == 1) {
         document.getElementById("nextBtn").style.display = "none";
     }
-    
-    if(n == 2){
+
+    if (n == 2) {
         document.getElementById("nextBtn").style.display = "inline";
     }
-    
-    if(n == 3){
+
+    if (n == 3) {
         document.getElementById("nextBtn").style.display = "none";
         document.getElementById("prevBtn").style.display = "none";
 
@@ -251,14 +252,37 @@ function nextPrev(n) {
     if (n == 1 && !validateForm()) return false;
     // Hide the current tab:
     x[currentTab].style.display = "none";
-    // Increase or decrease the current tab by 1:
-    currentTab = currentTab + n;
+    if (currentTab == '0') {
+        var ogp_type = $('#ogp_type').val();
+        if (ogp_type != "") {
+            if(ogp_type == 's'){
+                var salesman = $('#salesman').val();
+                var ogp_salesperson_type = $('#ogp_salesperson_type').val();
+                if (salesman !== "" && ogp_salesperson_type !== "" && ogp_salesperson_type !== "Salesperson OGP Type") {
+                    currentTab = currentTab + n;
+                } else {
+                    alert("Please select sales person related all information first.");
+                }
+            }
+        }
+        else {
+            alert("Please select All values first");
+        }
+    }
+    else {
+        // Increase or decrease the current tab by 1:
+        currentTab = currentTab + n;
+    }
     // if you have reached the end of the form...
     if (currentTab >= x.length - 1) {
-        submitForm();
-        // ... the form gets submitted:
-        // document.getElementById("signUpForm").submit();globelVariablei9nline
-        // return false;
+
+        // Check if tbody is empty
+        if (items == "") {
+            currentTab = currentTab - n;
+            alert('Please Add Items to proceed . .');
+        } else {
+            submitForm();
+        }
     }
     // Otherwise, display the correct tab:
     showTab(currentTab);
@@ -554,12 +578,12 @@ function submitForm() {
             destination: destination,
             substore: substore,
             narative: narative,
-            items:items
+            items: items
         },
         success: function (data) {
             console.log(data);
             var PrintOGP = document.getElementById("PrintOGP");
-            PrintOGP.href = "/sahamid/PDFOGP.php?RequestNo="+ data;
+            PrintOGP.href = "/sahamid/PDFOGP.php?RequestNo=" + data;
         }
     });
 }

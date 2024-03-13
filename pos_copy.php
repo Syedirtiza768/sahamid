@@ -96,14 +96,14 @@
               $result = mysqli_query($conn, $sql); ?>
               <label class="font-bold text-gray-700 text-sm ml-1">Issued to Sales Person</label>
               <select id="salesman" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="ogpSaleman(this)">
-                <option selected>Select a sales Person</option>
+                <option selected value="">Select a sales Person</option>
                 <?php while ($myrow = mysqli_fetch_array($result)) { ?>
                   <option value="<?php echo $myrow['salesmanname'] ?>"><?php echo $myrow['salesmanname'] ?></option>
                 <?php } ?>
               </select>
             </div>
             <div class="mb-6">
-              <label class="font-bold text-gray-700 text-sm ml-1">Salesperson OGP Type</label>
+              <label class="font-bold text-gray-700 text-sm ml-1" >Salesperson OGP Type</label>
               <select id="ogp_salesperson_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showOGPDiv(this)">
                 <option value="" selected>Salesperson OGP Type</option>
                 <option value="salescase">Salescase</option>
@@ -367,6 +367,7 @@
           </div>
         </div>
       </div>
+
       <div class="step">
         <div class="mb-6 flex justify-center">
           <div class="p-44">
@@ -402,7 +403,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptssssss.js"></script>
+<script src="ogp/javascriptsssssss.js"></script>
 
 
 </html>
