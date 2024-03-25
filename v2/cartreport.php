@@ -30,10 +30,14 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
 						stockmaster.mnfCode,
 						stockmaster.mnfpno,
 						manufacturers.manufacturers_name,
-						stockissuance.issued- (SELECT IFNULL(SUM(quantity),0) FROM `ogpsalescaseref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid)- 
-            (SELECT IFNULL(SUM(quantity),0) FROM `ogpcsvref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid)-
-            (SELECT IFNULL(SUM(quantity),0) FROM `ogpcrvref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid)-
-            (SELECT IFNULL(SUM(quantity),0) FROM `ogpmporef` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid) as issued,
+						stockissuance.issued- (SELECT IFNULL(SUM(quantity),0) FROM `ogpsalescaseref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
+                        AND dispatchid != '')- 
+            (SELECT IFNULL(SUM(quantity),0) FROM `ogpcsvref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
+            AND dispatchid != '')- 
+            (SELECT IFNULL(SUM(quantity),0) FROM `ogpcrvref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
+            AND dispatchid != '')- 
+            (SELECT IFNULL(SUM(quantity),0) FROM `ogpmporef` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
+            AND dispatchid != '')  as issued,
 						stockissuance.returned as returned,
 						stockissuance.dc as dc,
 						stockmaster.materialcost,
@@ -87,6 +91,8 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
         $response[$row['stockid']]['totalValue'] = $row['issued'] * $row['materialcost'] * (1 - ($response[$row['stockid']]['discount'] / 100));
         $sum = $sum + $response[$row['stockid']]['totalValue'];
         $response[$row['stockid']]['totalValue'] = locale_number_format($response[$row['stockid']]['totalValue']);
+        
+        
     }
 
 
@@ -122,6 +128,8 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
 						
 							
                         AND ogpsalescaseref.stockid = stockissuance.stockid	
+                        AND ogpsalescaseref.quantity > 0
+                        AND ogpsalescaseref.dispatchid != ''
 					AND stockmaster.brand like '%%'
 					AND stockmaster.categoryid = stockcategory.categoryid
                     AND ogpsalescaseref.salesman = '" . $_GET['clientID'] . "'
@@ -139,7 +147,7 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
             $response[$row['issued']]['discount'] = 50;
         $response[$row['issued']]['totalValue'] = $row['issued'] * $row['materialcost'] * (1 - ($response[$row['issued']]['discount'] / 100));
         $sum = $sum + $response[$row['issued']]['totalValue'];
-        $response[$row['issued']]['totalValue'] = locale_number_format($response[$row['issued']]['totalValue']);
+        $response[$row['issued']]['totalValue'] = round($response[$row['issued']]['totalValue'], 2);
     }
 
     $sqlthird = "SELECT DISTINCT stockissuance.stockid,
@@ -172,6 +180,8 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
 						AND (stockmaster.mbflag='B' OR stockmaster.mbflag='M')
 						
                         AND ogpcsvref.quantity != ''
+                        AND ogpcsvref.quantity > 0
+                        AND ogpcsvref.dispatchid != NULL
                         AND ogpcsvref.stockid = stockissuance.stockid	
 					AND stockmaster.brand like '%%'
 					AND stockmaster.categoryid = stockcategory.categoryid
@@ -225,6 +235,8 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
 							
                         AND ogpcrvref.stockid = stockissuance.stockid
                         AND ogpcrvref.quantity != ''	
+                        AND ogpcrvref.quantity > 0	
+                        AND ogpcrvref.dispatchid != NULL
 					AND stockmaster.brand like '%%'
 					AND stockmaster.categoryid = stockcategory.categoryid
                     AND ogpcrvref.salesman = '" . $_GET['clientID'] . "'
@@ -277,6 +289,8 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
 							
                         AND ogpmporef.stockid = stockissuance.stockid	
                         AND ogpmporef.quantity != ''
+                        AND ogpmporef.quantity > 0
+                        AND ogpmporef.dispatchid != NULL
 					AND stockmaster.brand like '%%'
 					AND stockmaster.categoryid = stockcategory.categoryid
                     AND ogpmporef.salesman = '" . $_GET['clientID'] . "'

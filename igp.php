@@ -1935,6 +1935,9 @@ if ($_SESSION['Request']->igp == 'A') {
 
 				$QOH[$i] = $QOH[$i] - $_POST[$q];
 				$QOH[$i] = $QOH[$i] - $otherOGPTypeCount;
+				if ($QOH[$i] < 0) {
+					$QOH[$i] = 0; 
+				}
 
 
 
