@@ -1881,7 +1881,9 @@ if ($_SESSION['Request']->igp == 'A') {
 					$QOHSQL = "SELECT SUM(quantity) AS qoh
 							   FROM ogpsalescaseref
 							   WHERE ogpsalescaseref.stockid='" . $myrow['stockid'] . "' AND
-							   ogpsalescaseref.salesman = '" . $_SESSION['Request']->receivedfrom . "'";
+							   ogpsalescaseref.salesman = '" . $_SESSION['Request']->receivedfrom . "'
+							   ogpsalescaseref.quantity > 0
+							   ";
 					$salescaseResult =  DB_query($QOHSQL, $db);
 					$row = DB_fetch_array($salescaseResult);
 					$salescase = $row['qoh'];
@@ -1889,6 +1891,7 @@ if ($_SESSION['Request']->igp == 'A') {
 					$QOHSQL = "SELECT SUM(quantity) AS qoh
 							   FROM ogpcsvref
 							   WHERE ogpcsvref.stockid='" . $myrow['stockid'] . "' AND
+							   ogpcsvref.quantity > 0 AND
 							   ogpcsvref.salesman = '" . $_SESSION['Request']->receivedfrom . "'";
 					$salescaseResult =  DB_query($QOHSQL, $db);
 					$row = DB_fetch_array($salescaseResult);
@@ -1897,6 +1900,7 @@ if ($_SESSION['Request']->igp == 'A') {
 					$QOHSQL = "SELECT SUM(quantity) AS qoh
 							   FROM ogpcrvref
 							   WHERE ogpcrvref.stockid='" . $myrow['stockid'] . "' AND
+							   ogpcrvref.quantity > 0 AND
 							   ogpcrvref.salesman = '" . $_SESSION['Request']->receivedfrom . "'";
 					$salescaseResult =  DB_query($QOHSQL, $db);
 					$row = DB_fetch_array($salescaseResult);
@@ -1905,6 +1909,7 @@ if ($_SESSION['Request']->igp == 'A') {
 					$QOHSQL = "SELECT SUM(quantity) AS qoh
 							   FROM ogpmporef
 							   WHERE ogpmporef.stockid='" . $myrow['stockid'] . "' AND
+							   ogpmporef.quantity > 0 AND
 							   ogpmporef.salesman = '" . $_SESSION['Request']->receivedfrom . "'";
 					$salescaseResult =  DB_query($QOHSQL, $db);
 					$row = DB_fetch_array($salescaseResult);
