@@ -1881,7 +1881,7 @@ if ($_SESSION['Request']->igp == 'A') {
 					$QOHSQL = "SELECT SUM(quantity) AS qoh
 							   FROM ogpsalescaseref
 							   WHERE ogpsalescaseref.stockid='" . $myrow['stockid'] . "' AND
-							   ogpsalescaseref.salesman = '" . $_SESSION['Request']->receivedfrom . "'
+							   ogpsalescaseref.salesman = '" . $_SESSION['Request']->receivedfrom . "' AND
 							   ogpsalescaseref.quantity > 0
 							   ";
 					$salescaseResult =  DB_query($QOHSQL, $db);
@@ -1927,7 +1927,6 @@ if ($_SESSION['Request']->igp == 'A') {
 				$p = 'ItemDescription' . $i;
 				$QOH[$i] = $QOHRow['qoh'];
 				for ($foo = 0; $foo <= count($_SESSION['Request']->LineItems); $foo++) {
-
 					//echo $_SESSION['Request']->LineItems[$Index]->StockID;
 					if ($_SESSION['Request']->LineItems[$foo]->ItemDescription == $_POST[$p]) {
 						$QOH[$i] = $QOHRow['qoh'] - $_SESSION['Request']->LineItems[$foo]->Quantity - $_POST[$q];
@@ -1936,7 +1935,6 @@ if ($_SESSION['Request']->igp == 'A') {
 
 				$QOH[$i] = $QOH[$i] - $_POST[$q];
 				$QOH[$i] = $QOH[$i] - $otherOGPTypeCount;
-
 
 
 
