@@ -9,6 +9,7 @@ $(document).ready(function () {
     $('#brand').select2();
 });
 var globelVariable = 0;
+var nxtBtnVariable = 0;
 // search item function
 function itemSearch() {
     var subStore = $('#subStore').val();
@@ -77,23 +78,23 @@ function ItemAdd(code, description, qoh) {
         }, 3000);
         globelVariable = 1;
         document.getElementById("nextBtn").style.display = "inline";
+        document.getElementById("btn"+code).style.display = "none";
     }
 }
 
 function showItems(itemslist) {
-    $('#example1 tbody').empty();
-    var table = $('#example1').DataTable();
-    table.clear().draw();
+    var tbody = document.getElementById('example1').getElementsByTagName('tbody')[0];
+    tbody.innerHTML = ''; // Clear table body
+
     for (var i = 0; i < itemslist.length; i++) {
-        var rowData = '<td class="text-blue-800 underline"><a href = "SelectProduct.php?Select=' + itemslist[i].Code + '" target = "_blank" > ' + itemslist[i].Code + '</a></td>';
-        var rowData2 = '<td>' + itemslist[i].description + '</td>';
-        var rowData3 = '<td><div class="flex justify-center"><h5 id="Quantity' + itemslist[i].Code + '">' + itemslist[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + itemslist[i].Code + '" style="display:none"> </input></div> </td>';
-        var rowData4 = '<td><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + itemslist[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick = "saveItem(\'' + itemslist[i].Code + '\');" > <i class="fa-solid fas fa-save text-white"></i> </button> <button type="button" id="editBtn' + itemslist[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick = "editItem(\'' + itemslist[i].Code + '\');" > <i class="fa-solid fas fa-edit text-white"></i> </button><button type="button" id="deleteBtn' + itemslist[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick = "deleteItem(\'' + itemslist[i].Code + '\');" > <i class="fa-solid fa-trash text-white"></i> </button></div></td>';
-        table.row.add([rowData, rowData2, rowData3, rowData4]).draw();
-        if (document.getElementById(itemslist[i].Code)) {
-            document.getElementById(itemslist[i].Code).style.display = "none";
-            document.getElementById("btn" + itemslist[i].Code).style.display = "none";
-        }
+        var rowData = '<td class="border border-gray-400 text-blue-800 underline"><a href="SelectProduct.php?Select=' + itemslist[i].Code + '" target="_blank">' + itemslist[i].Code + '</a></td>';
+        var rowData2 = '<td class="border border-gray-400">' + itemslist[i].description + '</td>';
+        var rowData3 = '<td class="border border-gray-400"><div class="flex justify-center"><h5 id="Quantity' + itemslist[i].Code + '">' + itemslist[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + itemslist[i].Code + '" style="display:none"></input></div></td>';
+        var rowData4 = '<td class="border border-gray-400"><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + itemslist[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick="saveItem(\'' + itemslist[i].Code + '\');"><i class="fa-solid fas fa-save text-white"></i></button><button type="button" id="editBtn' + itemslist[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick="editItem(\'' + itemslist[i].Code + '\');"><i class="fa-solid fas fa-edit text-white"></i></button><button type="button" id="deleteBtn' + itemslist[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick="deleteItem(\'' + itemslist[i].Code + '\');"><i class="fa-solid fa-trash text-white"></i></button></div></td>';
+
+        var row = document.createElement('tr');
+        row.innerHTML = rowData + rowData2 + rowData3 + rowData4;
+        tbody.appendChild(row);
     }
 }
 
@@ -116,7 +117,6 @@ function saveItem(code) {
                 alert("EMPTY OR GIVEN QUANTITY IS GREATER.  PLEASE SELECT IN A RANGE OF " + items[i].totalQuantity);
             }
             else {
-                console.log(items[i]);
                 items[i].quantity = newQuantity;
                 console.log(items[i]);
                 document.getElementById("editBtn" + items[i].Code).style.display = "block";
@@ -124,17 +124,21 @@ function saveItem(code) {
                 document.getElementById("newQuantity" + items[i].Code).style.display = "none";
                 document.getElementById("saveBtn" + items[i].Code).style.display = "none";
 
-                $('#example1 tbody').empty();
-                var table = $('#example1').DataTable();
-                table.clear().draw();
+                var tbody = document.getElementById('example1').getElementsByTagName('tbody')[0];
+                tbody.innerHTML = ''; // Clear table body
                 for (var i = 0; i < items.length; i++) {
                     var rowData = '<td class="text-blue-800 underline"><a href = "SelectProduct.php?Select=' + items[i].Code + '" target = "_blank" > ' + items[i].Code + '</a></td>';
                     var rowData2 = '<td>' + items[i].description + '</td>';
                     var rowData3 = '<td><div class="flex justify-center"><h5 id="Quantity' + items[i].Code + '">' + items[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + items[i].Code + '" style="display:none"> </input></div> </td>';
                     var rowData4 = '<td><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + items[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick = "saveItem(\'' + items[i].Code + '\');" > <i class="fa-solid fas fa-save text-white"></i> </button> <button type="button" id="editBtn' + items[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick = "editItem(\'' + items[i].Code + '\');" > <i class="fa-solid fas fa-edit text-white"></i> </button><button type="button" id="deleteBtn' + items[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick = "deleteItem(\'' + items[i].Code + '\');" > <i class="fa-solid fa-trash text-white"></i> </button></div></td>';
-                    table.row.add([rowData, rowData2, rowData3, rowData4]).draw();
-                    document.getElementById(items[i].Code).style.display = "none";
-                    document.getElementById("btn" + items[i].Code).style.display = "none";
+
+                    var row = document.createElement('tr');
+                    row.innerHTML = rowData + rowData2 + rowData3 + rowData4;
+                    tbody.appendChild(row);
+
+                    // table.row.add([rowData, rowData2, rowData3, rowData4]).draw();
+                    // document.getElementById(items[i].Code).style.display = "none";
+                    // document.getElementById("btn" + items[i].Code).style.display = "none";
 
                     $('#confirmationPopup').fadeIn();
                     document.getElementById('popupMessage').textContent = 'Edited Quantity Saved successfuly 😊';
@@ -153,7 +157,6 @@ function deleteItem(itemCode) {
     for (var i = 0; i < items.length; i++) {
         if (items[i].Code === itemCode) {
             if (confirm('Are you sure?')) {
-                globelVariable = 0;
                 items.splice(i, 1); // Delete the array at index i
                 $('#confirmationPopup').fadeIn();
                 document.getElementById('popupMessage').textContent = 'Item deleted successfuly 🗑️';
@@ -161,24 +164,26 @@ function deleteItem(itemCode) {
                 setTimeout(function () {
                     $('#confirmationPopup').fadeOut();
                 }, 3000);
-                break; // Break the loop once the array is deleted
-
-
+                
+                document.getElementById("btn"+itemCode).style.display = "inline";
+                
+                break; 
             }
         }
     }
-    $('#example1 tbody').empty();
-    var table = $('#example1').DataTable();
-    table.clear().draw();
+    var tbody = document.getElementById('example1').getElementsByTagName('tbody')[0];
+    tbody.innerHTML = ''; // Clear table body
     for (var i = 0; i < items.length; i++) {
-        var rowData = '<td class="text-blue-800 underline"><a href = "SelectProduct.php?Select=' + items[i].Code + '" target = "_blank" > ' + items[i].Code + '</a></td>';
-        var rowData2 = '<td>' + items[i].description + '</td>';
-        var rowData3 = '<td>' + items[i].quantity + '</td>';
-        var rowData4 = '<td><button type="button" id="deleteBtn' + items[i].Code + '" class="bg-red-800 w-16 h-6 border rounded-md" onclick = "deleteItem(\'' + items[i].Code + '\');" > <i class="fa-solid fa-trash text-white"></i> </button></td>';
-        table.row.add([rowData, rowData2, rowData3, rowData4]).draw();
-        document.getElementById(items[i].Code).style.display = "none";
-        document.getElementById("btn" + items[i].Code).style.display = "none";
+        var rowData = '<td class="border border-gray-400 text-blue-800 underline"><a href="SelectProduct.php?Select=' + items[i].Code + '" target="_blank">' + items[i].Code + '</a></td>';
+        var rowData2 = '<td class="border border-gray-400">' + items[i].description + '</td>';
+        var rowData3 = '<td class="border border-gray-400"><div class="flex justify-center"><h5 id="Quantity' + items[i].Code + '">' + items[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + items[i].Code + '" style="display:none"></input></div></td>';
+        var rowData4 = '<td class="border border-gray-400"><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + items[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick="saveItem(\'' + items[i].Code + '\');"><i class="fa-solid fas fa-save text-white"></i></button><button type="button" id="editBtn' + items[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick="editItem(\'' + items[i].Code + '\');"><i class="fa-solid fas fa-edit text-white"></i></button><button type="button" id="deleteBtn' + items[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick="deleteItem(\'' + items[i].Code + '\');"><i class="fa-solid fa-trash text-white"></i></button></div></td>';
+
+        var row = document.createElement('tr');
+        row.innerHTML = rowData + rowData2 + rowData3 + rowData4;
+        tbody.appendChild(row);
     }
+    
 }
 
 
@@ -205,7 +210,12 @@ function showTab(n) {
     }
 
     if (n == 1) {
-        document.getElementById("nextBtn").style.display = "none";
+        if (items.length > 0) {
+            document.getElementById("nextBtn").style.display = "inline";
+        }
+        else{
+            document.getElementById("nextBtn").style.display = "none";
+        }
     }
 
     if (n == 2) {
@@ -255,13 +265,37 @@ function nextPrev(n) {
     if (currentTab == '0') {
         var ogp_type = $('#ogp_type').val();
         if (ogp_type != "") {
-            if(ogp_type == 's'){
+            if (ogp_type == 's') {
                 var salesman = $('#salesman').val();
                 var ogp_salesperson_type = $('#ogp_salesperson_type').val();
                 if (salesman !== "" && ogp_salesperson_type !== "" && ogp_salesperson_type !== "Salesperson OGP Type") {
                     currentTab = currentTab + n;
                 } else {
                     alert("Please select sales person related all information first.");
+                }
+            }
+            else if (ogp_type == 'e') {
+                var employee = $('#employee').val();
+                if (employee !== "") {
+                    currentTab = currentTab + n;
+                } else {
+                    alert("Please select Employee related all information first.");
+                }
+            }
+            else if (ogp_type == 'l') {
+                var stock_location = $('#stock_location').val();
+                if (stock_location !== "") {
+                    currentTab = currentTab + n;
+                } else {
+                    alert("Please select Stock Location related all information first.");
+                }
+            }
+            else if (ogp_type == 'd') {
+                var desti = $('#desti').val();
+                if (desti !== "") {
+                    currentTab = currentTab + n;
+                } else {
+                    alert("Please Add External Destination Information First.");
                 }
             }
         }
@@ -273,6 +307,7 @@ function nextPrev(n) {
         // Increase or decrease the current tab by 1:
         currentTab = currentTab + n;
     }
+
     // if you have reached the end of the form...
     if (currentTab >= x.length - 1) {
 

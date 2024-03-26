@@ -34,7 +34,7 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
                         AND dispatchid != '')- 
             (SELECT IFNULL(SUM(quantity),0) FROM `ogpcsvref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
             AND dispatchid != '')- 
-            (SELECT IFNULL(SUM(quantity),0) FROM `ogpcrvref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
+            (SELECT IFNULL(MIN(quantity),0) FROM `ogpcrvref` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
             AND dispatchid != '')- 
             (SELECT IFNULL(SUM(quantity),0) FROM `ogpmporef` WHERE salesman = '" . $_GET['clientID'] . "' AND stockid =  stockissuance.stockid
             AND dispatchid != '')  as issued,

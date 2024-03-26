@@ -103,7 +103,7 @@
               </select>
             </div>
             <div class="mb-6">
-              <label class="font-bold text-gray-700 text-sm ml-1" >Salesperson OGP Type</label>
+              <label class="font-bold text-gray-700 text-sm ml-1">Salesperson OGP Type</label>
               <select id="ogp_salesperson_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showOGPDiv(this)">
                 <option value="" selected>Salesperson OGP Type</option>
                 <option value="salescase">Salescase</option>
@@ -278,6 +278,25 @@
             </tbody>
           </table>
         </div>
+
+        <div class="px-6 pt-4 pb-2">
+          <div class="flex justify-center items-center">
+            <h3 class="m-2 font-bold text-4">Items Selected</h3>
+          </div>
+          <table class="table-fixed text-center" id="example1">
+            <thead>
+              <tr>
+                <!-- <th>No.</th> -->
+                <th class="text-center">Item Code</th>
+                <th class="text-center">Description</th>
+                <th class="text-center">Required</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- step three -->
@@ -348,21 +367,7 @@
                 </div>
               </div>
 
-              <div class="px-6 pt-4 pb-2">
-                <table class="table-fixed text-center" id="example1">
-                  <thead>
-                    <tr>
-                      <!-- <th>No.</th> -->
-                      <th class="text-center">Item Code</th>
-                      <th class="text-center">Description</th>
-                      <th class="text-center">Required</th>
-                      <th class="text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tableBody">
-                  </tbody>
-                </table>
-              </div>
+
             </div>
           </div>
         </div>
@@ -377,7 +382,7 @@
               </div>
               <div class="flex justify-center mt-2">
                 <button type="button" class="py-3 px-8 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-500 text-white hover:bg-blue-600">
-                <a id="PrintOGP" href="#">Print the OGP</a>
+                  <a id="PrintOGP" href="#">Print the OGP</a>
                 </button>
               </div>
             </div>
@@ -403,7 +408,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptsssssss.js"></script>
+<script src="ogp/javascriptssssssss.js"></script>
 
 
 </html>
