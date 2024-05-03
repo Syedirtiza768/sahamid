@@ -51,6 +51,10 @@ $html2.= '<tr><td>MPO NO.</td>
 <td>Requested By</td>
 <td>'.$TransferRow['requestedby'].'</td></tr>';
 }
+if($TransferRow['narrative'] != ""){
+$html2.= '<tr><td>Narrative.</td>
+<td style="width:180px">'.$TransferRow['narrative'].'</td></tr>';
+}
 $html2.= '</table></div>
 <div style = "height:520px;"></div>';
 

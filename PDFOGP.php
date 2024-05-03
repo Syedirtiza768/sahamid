@@ -62,6 +62,7 @@ posdispatch.deliveredto,
 posdispatch.loccode,
 posdispatch.despatchdate,
 posdispatch.storemanager,
+posdispatch.narrative,
 locations.locationname,
 ". $query1 ."
 ". $query2 ."

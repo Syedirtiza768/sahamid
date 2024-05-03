@@ -104,6 +104,8 @@ while ($row = mysqli_fetch_assoc($res)) {
 	$requiredQuantity = ($requiredQuantity != "") ? $requiredQuantity : 0;
 
 	$issuedQuantity = 0;
+
+	
 	$SQL = "SELECT quantity
 	FROM ogpcsvref 
 	WHERE stockid='$stockid'
@@ -175,14 +177,16 @@ while ($item = mysqli_fetch_assoc($res)) {
 	$SQL = "SELECT quantity
 	FROM ogpcsvref 
 	WHERE stockid='" . $item['stockid'] . "'
-	AND salesman='$salesman'";
+	AND salesman='$salesman'
+	AND csv = '$orderno'";
 	$result = mysqli_query($db, $SQL);
 	$num_rows = mysqli_num_rows($result);
 	if ($num_rows > 0) {
 		$SQL = "SELECT SUM(quantity) as quantity
 				FROM ogpcsvref 
 				WHERE stockid='" . $item['stockid'] . "'
-				AND salesman='$salesman'";
+				AND salesman='$salesman'
+				AND csv = '$orderno'";
 		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
 		if($oldQuantity == "" || $oldQuantity == NULL){
 			$oldQuantity = 0;
@@ -191,7 +195,8 @@ while ($item = mysqli_fetch_assoc($res)) {
 
 		$SQL = "UPDATE `ogpcsvref` SET quantity='0' 
 		WHERE salesman='" . $salesman . "'
-		AND stockid='" . $item['stockid'] . "'";
+		AND stockid='" . $item['stockid'] . "'
+		AND csv = '$orderno'";
 		DB_query($SQL, $db);
 
 		$SQL = "INSERT INTO ogpcsvref (stockid,csv,salesman,quantity) 
@@ -201,7 +206,8 @@ while ($item = mysqli_fetch_assoc($res)) {
 		$SQL = "SELECT SUM(quantity) as quantity
 				FROM ogpcrvref 
 				WHERE stockid='" . $item['stockid'] . "'
-				AND salesman='$salesman'";
+				AND salesman='$salesman'
+				AND crv = '$orderno'";
 		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
 		if($oldQuantity == "" || $oldQuantity == NULL){
 			$oldQuantity = 0;
@@ -209,7 +215,8 @@ while ($item = mysqli_fetch_assoc($res)) {
 		$quantit 	= $oldQuantity - $item['required'];
 		$SQL = "UPDATE `ogpcrvref` SET quantity='0' 
 		WHERE salesman='" . $salesman . "'
-		AND stockid='" . $item['stockid'] . "'";
+		AND stockid='" . $item['stockid'] . "'
+		AND crv = '$orderno'";
 		DB_query($SQL, $db);
 
 		$SQL = "INSERT INTO ogpcrvref (stockid,crv,salesman,quantity) 
