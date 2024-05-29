@@ -1,6 +1,9 @@
+<?php include_once("../v2/config.php");
+include('../v2/config1.php');
+?>
+
 <!DOCTYPE html>
 <html lang="en">
-<?php include('configg.php'); ?>
 
 <head>
   <meta charset="UTF-8">
@@ -23,7 +26,7 @@
     <div class="flex items-center justify-between text-blue-gray-900">
       <a href="#" class="mr-4 block cursor-pointer py-1.5 font-sans text-base font-semibold leading-relaxed tracking-normal text-gray-700  antialiased">
         <b class="text-orange-500">SA Hamid ERP </b></a>
-      <h1 class="text-lg font-bold text-gray-700 leading-tight text-center"><b>Outward Gate Pass - OGP</b></h1>
+      <h1 class="text-lg font-bold text-gray-700 leading-tight text-center"><b>Inward Gate Pass - IGP</b></h1>
       <div class="hidden lg:block">
         <ul class="flex flex-col gap-2 my-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
           <li class="block p-1 font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
@@ -60,10 +63,10 @@
     <form id="signUpForm" class="p-12 w-80 shadow-md rounded-2xl mx-auto border-solid border-2 border-transparent mb-8" style="margin-top: 10px; background-color: #cccce5" action="#!">
       <!-- start step indicators -->
       <div class="form-header flex gap-3 mb-4 text-xs text-center ">
-        <span class="stepIndicator flex-1 pb-8 relative">OGP Information</span>
-        <span class="stepIndicator flex-1 pb-8 relative">Add Inventory Items</span>
-        <span class="stepIndicator flex-1 pb-8 relative">Finalize OGP</span>
-        <span class="stepIndicator flex-1 pb-8 relative">Print OGP</span>
+        <span class="stepIndicator flex-1 pb-8 relative">IGP Information</span>
+        <span class="stepIndicator flex-1 pb-8 relative">Added Inventory Items</span>
+        <span class="stepIndicator flex-1 pb-8 relative">Finalize IGP</span>
+        <span class="stepIndicator flex-1 pb-8 relative">Print IGP</span>
       </div>
       <!-- end step indicators -->
 
@@ -81,31 +84,32 @@
         <div class="step" style="width:400px">
           <!-- <p class="text-md text-gray-700 leading-tight text-center mt-4 mb-4">Add Your OGP Informnation</p> -->
           <div class="mb-6 mt-4">
-            <label class="font-bold text-gray-700 text-sm ml-1">Select OGP Type</label>
-            <select id="ogp_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showDiv(this)">
-              <option selected value="">Select OGP Type</option>
-              <option value="s">Issue to Salesperson</option>
-              <option value="e">Issue to Employee</option>
-              <option value="l">Deleivered to store location</option>
-              <option value="d">External destination</option>
+            <label class="font-bold text-gray-700 text-sm ml-1">Select IGP Type</label>
+            <select id="igp_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showDiv(this)">
+              <option selected value="">Select IGP Type</option>
+              <option value="s">Return From Salesperson</option>
+              <option value="e">Return From Employee</option>
+              <option value="l">Return From store location</option>
+              <option value="d">Returned From External destination</option>
             </select>
           </div>
+
           <div id="salesperson" style="display:none;" class="m-12">
             <div class="mb-6">
               <?php $sql = "select salesmanname from salesman";
               $result = mysqli_query($conn, $sql); ?>
-              <label class="font-bold text-gray-700 text-sm ml-1">Issued to Sales Person</label>
+              <label class="font-bold text-gray-700 text-sm ml-1">Return From Sales Person</label>
               <select id="salesman" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="ogpSaleman(this)">
-                <option selected value="">Select a sales Person</option>
+                <option selected value="">Select Salesperson</option>
                 <?php while ($myrow = mysqli_fetch_array($result)) { ?>
                   <option value="<?php echo $myrow['salesmanname'] ?>"><?php echo $myrow['salesmanname'] ?></option>
                 <?php } ?>
               </select>
             </div>
             <div class="mb-6">
-              <label class="font-bold text-gray-700 text-sm ml-1">Salesperson OGP Type</label>
-              <select id="ogp_salesperson_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showOGPDiv(this)">
-                <option value="" selected>Salesperson OGP Type</option>
+              <label class="font-bold text-gray-700 text-sm ml-1">Salesperson IGP Type</label>
+              <select id="igp_salesperson_type" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showOGPDiv(this)">
+                <option value="" selected>Salesperson IGP Type</option>
                 <option value="salescase">Salescase</option>
                 <option value="csv">CSV</option>
                 <option value="crv">CRV</option>
@@ -116,53 +120,55 @@
 
             <div id="salescase_div" style="display:none;">
               <div class="mb-6">
-                <label class="font-bold text-gray-700 text-sm ml-1">Issue agaist salescase</label>
+                <label class="font-bold text-gray-700 text-sm ml-1">Return From salescase</label>
                 <select id="salescases" class="salescases w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSalescaseDiv(this)">
-                  <option selected>Issue Against salescase</option>
+                  <option value="" selected>Return From salescase</option>
                 </select>
               </div>
             </div>
             <div id="csv_div" style="display:none;">
               <div class="mb-6">
-                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against CSV</label>
+                <label class="font-bold text-gray-700 text-sm ml-1">Return From CSV</label>
                 <select id="csv" class="csv w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showcsvDiv(this)">
-                  <option selected>Issue Against CSV</option>
+                  <option value="" selected>Return From CSV</option>
                 </select>
               </div>
             </div>
             <div id="crv_div" style="display:none;">
               <div class="mb-6">
-                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against CRV</label>
+                <label class="font-bold text-gray-700 text-sm ml-1">Return From CRV</label>
                 <select id="crv" class="crv w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showcrvDiv(this)">
-                  <option selected>Issue Against CRV</option>
+                  <option value="" selected>Return From CRV</option>
                 </select>
               </div>
             </div>
             <div id="mpo_div" style="display:none;">
               <div class="mb-6">
-                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against MPO</label>
+                <label class="font-bold text-gray-700 text-sm ml-1">Return From MPO</label>
                 <select id="mpo" class="mpo w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showmpoDiv(this)">
-                  <option selected>Issue Against MPO</option>
+                  <option value="" selected>Return From MPO</option>
                 </select>
               </div>
             </div>
           </div>
+
           <div id="employee_div" style="display:none;" class="m-12">
             <div class="mb-6">
               <?php $sql = "select realname from www_users";
               $result = mysqli_query($conn, $sql); ?>
-              <label class="font-bold text-gray-700 text-sm ml-1">Issued to Employee </label>
+              <label class="font-bold text-gray-700 text-sm ml-1">Return From Employee </label>
               <select id="employee" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showmemployeeDiv(this)">
-                <option selected>Select an employee</option>
+                <option value="" selected>Select an employee</option>
                 <?php while ($myrow = mysqli_fetch_array($result)) { ?>
                   <option value="<?php echo $myrow['realname'] ?>"><?php echo $myrow['realname'] ?></option>
                 <?php } ?>
               </select>
             </div>
           </div>
+
           <div id="store" style="display:none;" class="m-12">
             <div class="mb-6">
-              <label class="font-bold text-gray-700 text-sm ml-1">To Stock Location </label>
+              <label class="font-bold text-gray-700 text-sm ml-1">From Stock Location </label>
               <select id="stock_location" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showStoreDiv(this)">
                 <option value="">Select a location</option>
                 <option value="HO">HO - Head Office</option>
@@ -177,12 +183,14 @@
               </select>
             </div>
           </div>
+
           <div id="destination" style="display:none;" class="m-12">
             <div class="mb-6">
               <label class="font-bold text-gray-700 text-sm ml-1">External Destination</label>
               <textarea id="desti" rows="4" class="destination w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" placeholder="Write your destination's detail here..."></textarea>
             </div>
           </div>
+
           <div class="mb-6">
             <label class="font-bold text-gray-700 text-sm ml-1">Substore</label>
             <select id="subStore" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSubStoreDiv(this)">
@@ -203,44 +211,6 @@
 
       <!-- step two -->
       <div class="step">
-        <div class="flex">
-          <div class="flex-1 w-24 ml-1 ...">
-            <label class="font-bold text-gray-700 text-sm ml-1">
-              In Stock Category</label>
-            <?php $SQL = "SELECT categoryid,
-				    categorydescription
-		        FROM stockcategory
-		        ORDER BY categorydescription";
-            $result1 = mysqli_query($conn, $SQL); ?>
-            <select id="StockCat" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200">
-              <option selected>All</option>
-              <?php while ($myrow1 = mysqli_fetch_array($result1)) {
-                echo '<option value="' . $myrow1['categoryid'] . '">' . $myrow1['categorydescription'] . '</option>';
-              } ?>
-            </select>
-          </div>
-          <div class="flex-1 w-24 ml-1">
-            <label class="font-bold text-gray-700 text-sm ml-1">
-              Brand</label>
-            <?php $SQL = "select * from manufacturers";
-            $result1 = mysqli_query($conn, $SQL); ?>
-            <select id="brand" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200">
-              <option selected>All</option>
-              <?php while ($myrow2 = mysqli_fetch_array($result1)) {
-                echo '<option value="' . $myrow2['manufacturers_id'] . '">' . $myrow2['manufacturers_name'] . '</option>';
-              } ?>
-            </select>
-          </div>
-          <div class="flex-1 w-32 ml-1">
-            <label class="font-bold text-gray-700 text-sm ml-1">
-              Code</label>
-            <input type="text" id="StockCode" placeholder="Insert Code Here . . ." class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" oninput="this.className = 'w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200'" />
-          </div>
-        </div>
-        <div class="flex justify-center">
-          <button type="button" class="w-64 mt-4 mr-6 mb-2 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 bg-gray-100 hover:bg-green-500 hover:text-white text-lg" onclick="itemSearch()">Search Now</button>
-        </div>
-
         <div class="overflow-x-auto mb-4 mt-4">
           <table class="display text-sm text-left text-gray-500" id="example" style="width:100%">
             <thead class="text-xs text-gray-700 uppercase bg-gray-300">
@@ -252,16 +222,10 @@
                   Description
                 </th>
                 <th scope="col" class="px-6 py-3">
+                  Model No.
+                </th>
+                <th scope="col" class="px-6 py-3">
                   On Hand
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  On Demand
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  On Order
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  Available
                 </th>
                 <th scope="col" class="px-6 py-3">
                   Quantity
@@ -382,7 +346,7 @@
               </div>
               <div class="flex justify-center mt-2">
                 <button type="button" class="py-3 px-8 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-500 text-white hover:bg-blue-600">
-                  <a id="PrintOGP" href="#">Print the OGP</a>
+                  <a id="PrintOGP" href="#">Print the IGP</a>
                 </button>
               </div>
             </div>
@@ -394,7 +358,7 @@
       <div class="form-footer flex gap-3">
         <button type="button" id="prevBtn" class="flex-1 focus:outline-none border border-gray-300 py-1 px-5 rounded-lg shadow-sm text-center text-gray-700 text-lg" onclick="nextPrev(-1)">Previous</button>
         <button type="button" id="nextBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="nextPrev(1)">Next</button>
-        <button type="button" id="newOGPBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="window.location.reload()">Create New OGP</button>
+        <button type="button" id="newOGPBtn" class="flex-1 border border-transparent focus:outline-none p-3 rounded-md text-center text-white bg-indigo-600 hover:bg-indigo-700 text-lg" onclick="window.location.reload()">Create New IGP</button>
       </div>
       <!-- end previous / next buttons -->
     </form>
@@ -408,7 +372,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptssssssss.js"></script>
-
+<script src="igp/javascriptsCodessss.js"></script>
 
 </html>

@@ -1,5 +1,5 @@
 <?php
-include('../../configg.php');
+include('../../config1.php');
 session_start();
 // $_SESSION['UsersRealName'];
 $igp_type = $_POST['igp_type'];
@@ -180,11 +180,11 @@ if ($igp_type == "s" || $igp_type == "e") {
     }
     // Fom Cart
     if ($igp_salesperson_type == "cart") {
-        $SQL5 = "SELECT stockmaster.stockid,
+        $SQL5 = "SELECT * FROM (
+            SELECT stockmaster.stockid,
             stockmaster.description,
             stockmaster.mnfCode,
             stockmaster.longdescription,
-            stockmaster.mnfCode,
             stockmaster.mnfpno,
             stockmaster.mbflag,
             stockmaster.discontinued,
@@ -220,7 +220,9 @@ if ($igp_type == "s" || $igp_type == "e") {
         where stockissuance.salesperson = '" . $salesman . "'
         and stockissuance.issued > 0
         AND stockmaster.stockid NOT LIKE '%\t%'
-        order by qoh desc
+        ) AS derived
+        WHERE derived.qoh > 0
+        ORDER BY derived.qoh DESC
         ";
         $UpdateResult = mysqli_query($conn, $SQL5);
         if ($UpdateResult) {
@@ -241,14 +243,14 @@ if ($igp_type == "s" || $igp_type == "e") {
             }
         }
     }
-    
+
     // Fom Employee Cart
     if ($employee != NULL) {
-        $SQL5 = "SELECT stockmaster.stockid,
+        $SQL5 = "SELECT * FROM (
+            SELECT stockmaster.stockid,
             stockmaster.description,
             stockmaster.mnfCode,
             stockmaster.longdescription,
-            stockmaster.mnfCode,
             stockmaster.mnfpno,
             stockmaster.mbflag,
             stockmaster.discontinued,
@@ -284,9 +286,11 @@ if ($igp_type == "s" || $igp_type == "e") {
         where stockissuance.salesperson = '" . $employee . "'
         and stockissuance.issued > 0
         AND stockmaster.stockid NOT LIKE '%\t%'
-        order by qoh desc
+        ) AS derived
+        WHERE derived.qoh > 0
+        ORDER BY derived.qoh DESC
         ";
-        
+
         $UpdateResult = mysqli_query($conn, $SQL5);
         if ($UpdateResult) {
             $resultArray = array();

@@ -4,7 +4,6 @@ $db_host = 'localhost';
 $db_username = 'irtiza';
 $db_password = 'netetech321';
 $db_name = 'sahamid';
-
 //Create connection and select DB
 $conn = mysqli_connect($db_host, $db_username, $db_password, $db_name);
 if (mysqli_connect_errno()) {

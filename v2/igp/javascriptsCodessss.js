@@ -94,7 +94,7 @@ function ItemAdd(code, description, qoh) {
         }, 3000);
         globelVariable = 1;
         document.getElementById("nextBtn").style.display = "inline";
-        document.getElementById("btn"+code).style.display = "none";
+        document.getElementById("btn" + code).style.display = "none";
     }
 }
 
@@ -180,10 +180,10 @@ function deleteItem(itemCode) {
                 setTimeout(function () {
                     $('#confirmationPopup').fadeOut();
                 }, 3000);
-                
-                document.getElementById("btn"+itemCode).style.display = "inline";
-                
-                break; 
+
+                document.getElementById("btn" + itemCode).style.display = "inline";
+
+                break;
             }
         }
     }
@@ -199,7 +199,7 @@ function deleteItem(itemCode) {
         row.innerHTML = rowData + rowData2 + rowData3 + rowData4;
         tbody.appendChild(row);
     }
-    
+
 }
 
 
@@ -229,7 +229,7 @@ function showTab(n) {
         if (items.length > 0) {
             document.getElementById("nextBtn").style.display = "inline";
         }
-        else{
+        else {
             document.getElementById("nextBtn").style.display = "none";
         }
     }
@@ -324,7 +324,7 @@ function nextPrev(n) {
         }
     }
     else {
-        
+
         // Increase or decrease the current tab by 1:
         currentTab = currentTab + n;
     }
@@ -525,13 +525,12 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "ogp/api/salesmanData.php",
+        url: "igp/api/salesmanDatas.php",
         data: {
             salesmans: salesman
         },
         success: function (data) {
             var dataList = JSON.parse(data);
-
             $('#salescases')
                 .find('option')
                 .remove()
@@ -546,7 +545,7 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "ogp/api/CSVData.php",
+        url: "igp/api/CSVData.php",
         data: {
             salesmans: salesman
         },
@@ -565,7 +564,7 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "ogp/api/CRVData.php",
+        url: "igp/api/CRVData.php",
         data: {
             salesmans: salesman
         },
@@ -585,7 +584,7 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "ogp/api/MPOData.php",
+        url: "igp/api/MPOData.php",
         data: {
             salesmans: salesman
         },
@@ -641,7 +640,7 @@ function submitForm(items) {
         success: function (data) {
             console.log(data);
             var PrintOGP = document.getElementById("PrintOGP");
-            PrintOGP.href = "/sahamid/PDFIGP.php?RequestNo="+data;
+            PrintOGP.href = "/sahamid/PDFIGP.php?RequestNo=" + data;
         }
     });
 }

@@ -1,8 +1,8 @@
 <?php
-include('../../configg.php');
+include('../../config1.php');
 $Salesman = $_POST['salesmans'];
 $sql = "select orderno from shopsale WHERE salesman = '" . $Salesman . "' AND 
-payment = 'csv'  AND complete = '0' ";
+payment = 'crv'  AND complete = '0' ";
 $result = mysqli_query($conn, $sql); 
 $results = [];
 while ($myrow = mysqli_fetch_array($result)){

@@ -1,5 +1,5 @@
 <?php
-include('../../configg.php');
+include('../../config1.php');
 session_start();
 // $_SESSION['UsersRealName'];
 $StockCat = "All";

@@ -129,7 +129,7 @@ if ($name == "quantity") {
 
 			$response = [
 				'status'  => 'alert',
-				'message' => 'cannot give more quantity then assigned.',
+				'message' => 'cannot give more quantity then assigned of "' . $stockid . '".',
 				'minimum' => $stkQuantity,
 			];
 
