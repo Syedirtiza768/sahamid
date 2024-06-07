@@ -29,7 +29,10 @@ if (!isset($_POST['BeforeDate']) or !Is_Date($_POST['BeforeDate'])) {
 	$_POST['BeforeDate'] = Date($_SESSION['DefaultDateFormat']);
 }
 if (!isset($_POST['AfterDate']) or !Is_Date($_POST['AfterDate'])) {
-	$_POST['AfterDate'] = Date($_SESSION['DefaultDateFormat']);
+	$date = new DateTime();
+	$date->modify('-3 months');
+	$formattedDate = $date->format($_SESSION['DefaultDateFormat']);
+	$_POST['AfterDate'] = $formattedDate;
 }
 echo '<br /> 
 		<table class="selection">';
@@ -119,33 +122,33 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 	$sql = "SELECT salescaseref from ogpsalescaseref where dispatchid = '" . $myrow['transno'] . "'  ";
 	$result = mysqli_query($db, $sql);
 	if ($result != NULL) {
-		while($row = mysqli_fetch_assoc($result)) {
+		while ($row = mysqli_fetch_assoc($result)) {
 			$salescaseref = $row["salescaseref"];
-		  }
+		}
 	}
 	$csvref = NULL;
 	$sql = "SELECT csv from ogpcsvref where dispatchid = '" . $myrow['transno'] . "'  ";
 	$result = mysqli_query($db, $sql);
 	if ($result != NULL) {
-		while($row = mysqli_fetch_assoc($result)) {
+		while ($row = mysqli_fetch_assoc($result)) {
 			$csvref = $row["csv"];
-		  }
+		}
 	}
 	$crvref = NULL;
 	$sql = "SELECT crv from ogpcrvref where dispatchid = '" . $myrow['transno'] . "'  ";
 	$result = mysqli_query($db, $sql);
 	if ($result != NULL) {
-		while($row = mysqli_fetch_assoc($result)) {
+		while ($row = mysqli_fetch_assoc($result)) {
 			$crvref = $row["crv"];
-		  }
+		}
 	}
 	$mporef = NULL;
 	$sql = "SELECT mpo from ogpmporef where dispatchid = '" . $myrow['transno'] . "'  ";
 	$result = mysqli_query($db, $sql);
 	if ($result != NULL) {
-		while($row = mysqli_fetch_assoc($result)) {
+		while ($row = mysqli_fetch_assoc($result)) {
 			$mporef = $row["mpo"];
-		  }
+		}
 	}
 
 	if ($k == 1) {
