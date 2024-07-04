@@ -195,7 +195,7 @@
                     </div>
                                 <div class="col-md-12"  style="margin-bottom: 15px; background-color: #424242;">
                                     <div class="row" style="background-color: #424242; margin-bottom: 15px; padding-bottom: 15px" >
-                                        <?php if(userHasPermission($db,"advance_voucher_payment")){
+                                        <?php if(userHasPermission($db,"advance_payment_voucher")){
                                         ?>
                                         <div class="col-md-6" align="center">
 
