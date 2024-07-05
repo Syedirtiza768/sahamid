@@ -10,6 +10,30 @@ if (!userHasPermission($db, "pending_dcs")) {
 	return;
 }
 
+// Fetch the can_access values for the given user
+$SQL = "SELECT can_access FROM salescase_permissions WHERE user = '" . $_SESSION['UserID'] . "'";
+$res = mysqli_query($db, $SQL);
+
+$can_access = [];
+
+while ($row = mysqli_fetch_assoc($res)) {
+	// Fetch the real names for each can_access value
+	$SQL_realname = "SELECT realname FROM www_users WHERE userid = '" . $row['can_access'] . "'";
+	$res_realname = mysqli_query($db, $SQL_realname);
+
+	// Fetch the realname from the result and store it in the array
+	if ($row_realname = mysqli_fetch_assoc($res_realname)) {
+		$can_access[] = $row_realname['realname'];
+	}
+}
+
+// Combine the results into the desired format: "Aamir Obaid","Maddy"
+$can_access_string = '"' . implode('","', $can_access) . '"';
+
+// Output or use $can_access_string as needed
+
+
+
 
 if (isset($_POST['to'])) {
 
@@ -20,24 +44,44 @@ if (isset($_POST['to'])) {
 		$from 	= $_POST['from'];
 		$to 	= $_POST['to'];
 
-		$SQL = 'SELECT dcs.orderno as dcno,dcs.orddate as date,dcs.salescaseref,debtorsmaster.name as client,
-			salescase.salesman,debtorsmaster.dba,SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
-		 	) as totalamount,dcs.gst, CASE  WHEN  dcs.gst LIKE "%inclusive%" THEN SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
-		 	)*0.83 ELSE SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity
-		 	)   END as exclusivegsttotalamount from dcdetails INNER JOIN dcoptions on (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno) 
-		INNER JOIN dcs on dcs.orderno = dcdetails.orderno
-		INNER JOIN salescase on salescase.salescaseref=dcs.salescaseref
-		INNER JOIN debtorsmaster on debtorsmaster.debtorno=salescase.debtorno
-		WHERE dcdetails.lineoptionno = 0  
-		AND dcoptions.optionno = 0 
-		AND salescase.salesman = "' . $_SESSION['UsersRealName'] . ' "
-		AND dcs.orddate >= "' . $from . '"' . '
-		AND dcs.orddate <= "' . $to . '"' . '
-		AND dcs.courierslipdate = "0000-00-00 00:00:00" AND dcs.invoicedate="0000-00-00 00:00:00" 
-		AND dcs.grbdate="0000-00-00 00:00:00"
-		AND dcs.invoicegroupid is null
-		GROUP BY dcs.orderno
-		';
+
+		$SQL = 'SELECT 
+dcs.orderno AS dcno,
+dcs.orddate AS date,
+dcs.salescaseref,
+debtorsmaster.name AS client,
+salescase.salesman,
+debtorsmaster.dba,
+SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * dcdetails.quantity * dcoptions.quantity) AS totalamount,
+dcs.gst,
+CASE
+	WHEN dcs.gst LIKE "%inclusive%" THEN 
+		SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * dcdetails.quantity * dcoptions.quantity) * 0.83
+	ELSE 
+		SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * dcdetails.quantity * dcoptions.quantity)
+END AS exclusivegsttotalamount
+FROM 
+dcdetails
+INNER JOIN 
+dcoptions ON (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno)
+INNER JOIN 
+dcs ON dcs.orderno = dcdetails.orderno
+INNER JOIN 
+salescase ON salescase.salescaseref = dcs.salescaseref
+INNER JOIN 
+debtorsmaster ON debtorsmaster.debtorno = salescase.debtorno
+WHERE 
+dcdetails.lineoptionno = 0
+AND dcoptions.optionno = 0
+AND salescase.salesman IN ("' . $_SESSION['UsersRealName'] . ' ",' . $can_access_string . ')
+AND dcs.courierslipdate = "0000-00-00 00:00:00"
+AND dcs.invoicedate = "0000-00-00 00:00:00"
+AND dcs.grbdate = "0000-00-00 00:00:00"
+AND dcs.invoicegroupid IS NULL
+GROUP BY 
+dcs.orderno;
+';
+
 
 		$res = mysqli_query($db, $SQL);
 
@@ -51,6 +95,7 @@ if (isset($_POST['to'])) {
 			//echo $rowdcnos['dcnos'];
 			$dcnos[] = explode(",", $rowdcnos['dcnos']);
 		}
+
 		$dclist = [];
 		foreach ($dcnos as $key => $value) {
 			$dclist[] = $value;
@@ -63,8 +108,7 @@ if (isset($_POST['to'])) {
 
 		echo json_encode($response);
 		return;
-	
- } else {
+	} else {
 
 		$from 	= $_POST['from'];
 		$to 	= $_POST['to'];
