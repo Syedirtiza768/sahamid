@@ -1559,11 +1559,13 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 				
 				<td>' . $myrow['description'] . '</td>
 				<td>' . $myrow['stockunits'] . '</td>
-				<td class="number">' . $QOH . '</td>
+				<td class="number">' . $QOH . '
+				<input type="hidden" id="QOH' . $i . '" value="' . $QOH . '" />
+				</td>
 				<td class="number">' . locale_number_format($DemandQty, $DecimalPlaces) . '</td>
 				<td class="number">' . locale_number_format($OnOrder, $DecimalPlaces) . '</td>
 				<td class="number">' . locale_number_format($Available, $DecimalPlaces) . '</td>
-				<td><input class="number" ' . ($i == 0 ? 'autofocus="autofocus"' : '') . ' tabindex="' . ($j + 7) . '" type="text" size="6" name="Quantity' . $i . '" value="0" />
+				<td><input class="number" ' . ($i == 0 ? 'autofocus="autofocus"' : '') . ' tabindex="' . ($j + 7) . '" i onchange="quantityChanged(this, ' . $i . ')" type="text" size="6" name="Quantity' . $i . '" value="0" />
 				<input type="hidden" name="StockID' . $i . '" value="' . $myrow['stockid'] . '" />
 				</td>
 			</tr>';
@@ -1579,7 +1581,7 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 			<td style="text-align:center" colspan="6"><input type="hidden" name="order_items" value="1" />
 				<input tabindex="' . ($j + 8) . '" type="submit" value="' . _('Add to Requisition') . '" /></td>
 			<td><input type="hidden" name="NextList" value="' . ($Offset + 1) . '" />
-				<input tabindex="' . ($j + 9) . '" type="submit" name="Next" value="' . _('Next') . '" /></td>\
+				<input tabindex="' . ($j + 9) . '" type="submit" name="Next" value="' . _('Next') . '" /></td>
 		<tr/>
 		</table>
        </div>
@@ -1588,6 +1590,23 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 
 	?>
 
+<script>
+	function quantityChanged(input, rowIndex) {
+        // Get the current value of the input
+        var quantity = parseFloat(input.value);
+
+        // Get the QOH value from the hidden input field
+        var qoh = parseFloat(document.getElementById('QOH' + rowIndex).value);
+
+        // Perform the check
+        if (quantity <= qoh) {
+            // Perform additional actions if needed
+        } else {
+            alert("Quantity exceeds available stock! Please select quantity less or equal to QOH.");
+            input.value = 0; // or any default value
+        }
+    }
+</script>
 </body>
 
 </html>
