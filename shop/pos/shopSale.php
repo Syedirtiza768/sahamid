@@ -352,7 +352,8 @@ $salesman = mysqli_query($db, $SQL);
 							</div>
 							<!---->
 							<?php
-							$sql = "SELECT salesmancode,
+							$sql = "SELECT 
+							salesmancode,
 							salesmanname,
 							smantel,
 							smanfax,
@@ -360,7 +361,23 @@ $salesman = mysqli_query($db, $SQL);
 							breakpoint,
 							commissionrate2,
 							current
-						FROM salesman";
+						FROM 
+							salesman
+						WHERE 
+							salesmanname NOT IN (
+								'Rao Saeed Islam',
+								'Syed Nadeem Mazhar',
+								'Mubashar Tahir',
+								'Zohaib Ahmed',
+								'Muhammad Zunnurain',
+								'Fan Nasar',
+								'Muhammad Shehzad',
+								'Muhammad Ali',
+								'Problem Sales Case Clinit',
+								'Management Officer Test',
+								'Ashfaq Ahmad',
+								'Sultan Mahmood'
+							)";
 							$result = DB_query($sql, $db);
 							?>
 							<label class="col-md-4" style="color: white; padding-bottom: 15px">
