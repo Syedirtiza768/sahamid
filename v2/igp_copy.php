@@ -89,7 +89,7 @@ include('../v2/config1.php');
               <option selected value="">Select IGP Type</option>
               <option value="s">Return From Salesperson</option>
               <option value="e">Return From Employee</option>
-              <option value="l">Return From store location</option>
+              <option value="l">Received From store location</option>
               <option value="d">Returned From External destination</option>
             </select>
           </div>
