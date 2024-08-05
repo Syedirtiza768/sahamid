@@ -313,49 +313,39 @@ if ($igp_type == "s" || $igp_type == "e") {
 }
 if ($igp_type == "l" || $igp_type == "d") {
 
-    $SQL5 = "SELECT * FROM (
-        SELECT stockmaster.stockid,
-        stockmaster.description,
-        stockmaster.mnfCode,
-        stockmaster.longdescription,
-        stockmaster.mnfpno,
-        stockmaster.mbflag,
-        stockmaster.discontinued,
-        stockissuance.issued - (
-        SELECT IFNULL(SUM(quantity), 0) 
-        FROM `ogpsalescaseref` 
-        WHERE salesman = '" . $salesman . "' 
-            AND stockid = stockissuance.stockid
-            AND dispatchid != ''
-    ) - (
-        SELECT IFNULL(SUM(quantity), 0) 
-        FROM `ogpcsvref` 
-        WHERE salesman = '" . $salesman . "' 
-            AND stockid = stockissuance.stockid
-            AND dispatchid != ''
-    ) - (
-        SELECT IFNULL(MIN(quantity), 0) 
-        FROM `ogpcrvref` 
-        WHERE salesman = '" . $salesman . "' 
-            AND stockid = stockissuance.stockid
-            AND dispatchid != ''
-    ) - (
-        SELECT IFNULL(SUM(quantity), 0) 
-        FROM `ogpmporef` 
-        WHERE salesman = '" . $salesman . "' 
-            AND stockid = stockissuance.stockid
-            AND dispatchid != ''
-    ) AS qoh,
-        stockmaster.units,
-        stockmaster.decimalplaces
-    FROM stockmaster INNER JOIN stockissuance
-    ON stockmaster.stockid=stockissuance.stockid
-    where stockissuance.salesperson = '" . $salesman . "'
-    and stockissuance.issued > 0
-    AND stockmaster.stockid NOT LIKE '%\t%'
-    ) AS derived
-    WHERE derived.qoh > 0
-    ORDER BY derived.qoh DESC
+    $SQL5 = "SELECT 
+    stockmaster.stockid, 
+    stockmaster.description, 
+    stockmaster.longdescription, 
+    stockmaster.mnfCode, 
+    stockmaster.mnfpno, 
+    stockmaster.mbflag, 
+    stockmaster.discontinued, 
+    locstock.quantity AS qoh, 
+    stockmaster.units, 
+    stockmaster.decimalplaces 
+FROM 
+    stockmaster 
+INNER JOIN 
+    locstock ON stockmaster.stockid = locstock.stockid 
+WHERE 
+    (stockmaster.mnfCode LIKE '%" . $stock_location . "%' OR stockmaster.stockid LIKE '%" . $stock_location . "%') 
+    AND locstock.loccode = '" . $_SESSION['UserStockLocation'] . "'
+    AND stockmaster.stockid NOT LIKE '% %' 
+    AND locstock.quantity > 0 
+GROUP BY 
+    stockmaster.stockid, 
+    stockmaster.description, 
+    stockmaster.longdescription, 
+    stockmaster.mnfCode, 
+    stockmaster.mnfpno, 
+    stockmaster.mbflag, 
+    stockmaster.discontinued, 
+    locstock.quantity, 
+    stockmaster.units, 
+    stockmaster.decimalplaces 
+ORDER BY 
+    locstock.quantity DESC
     ";
     $UpdateResult = mysqli_query($conn, $SQL5);
     if ($UpdateResult) {

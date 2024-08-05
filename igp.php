@@ -1936,7 +1936,7 @@ if ($_SESSION['Request']->igp == 'A') {
 				$QOH[$i] = $QOH[$i] - $_POST[$q];
 				$QOH[$i] = $QOH[$i] - $otherOGPTypeCount;
 				if ($QOH[$i] < 0) {
-					$QOH[$i] = 0; 
+					$QOH[$i] = 0;
 				}
 
 
@@ -1951,9 +1951,10 @@ if ($_SESSION['Request']->igp == 'A') {
 					echo '<tr class="OddTableRows">';
 					$k = 1;
 				}
-				$OnOrder = $PurchQty + $WoQty;
-				$Available = $QOH[$i] - $DemandQty + $OnOrder;
-				echo '<td><a href = "SelectProduct.php?Select=' . $myrow['stockid'] . '" target = "_blank" >' . $myrow['stockid'] . '</a></td>
+				if ($QOH[$i] != 0) {
+					$OnOrder = $PurchQty + $WoQty;
+					$Available = $QOH[$i] - $DemandQty + $OnOrder;
+					echo '<td><a href = "SelectProduct.php?Select=' . $myrow['stockid'] . '" target = "_blank" >' . $myrow['stockid'] . '</a></td>
 				
 				<td>' . $myrow['description'] . '</td>
 				<td>' . $myrow['mnfCode'] . '</td>
@@ -1967,10 +1968,11 @@ if ($_SESSION['Request']->igp == 'A') {
 				<input type="hidden" name="StockID' . $i . '" value="' . $myrow['stockid'] . '" />
 				</td>
 			</tr>';
-				echo '<input type="hidden" name="DecimalPlaces' . $i . '" value="' . $myrow['decimalplaces'] . '" />';
-				echo '<input type="hidden" name="ItemDescription' . $i . '" value="' . $myrow['description'] . '" />';
-				echo '<input type="hidden" name="Units' . $i . '" value="' . $myrow['stockunits'] . '" />';
-				$i++;
+					echo '<input type="hidden" name="DecimalPlaces' . $i . '" value="' . $myrow['decimalplaces'] . '" />';
+					echo '<input type="hidden" name="ItemDescription' . $i . '" value="' . $myrow['description'] . '" />';
+					echo '<input type="hidden" name="Units' . $i . '" value="' . $myrow['stockunits'] . '" />';
+					$i++;
+				}
 			}
 			#end of while loop
 			echo '<tr>
@@ -2108,6 +2110,7 @@ if (isset($_POST['Keywords'])) {
 
 
 			if (isset($_POST['StockCode'])) {
+
 				//insert wildcard characters in spaces
 				$SearchString2 = '%' . str_replace(' ', '%', $_POST['StockCode']) . '%';
 				if ($_POST['StockCat'] == 'All') {
@@ -2128,14 +2131,15 @@ if (isset($_POST['Keywords'])) {
 					or stockmaster.stockid " . LIKE . " '%" . $SearchString2 . "%')
 					and locstock.loccode = '" . $_SESSION['UserStockLocation'] . "'
 					AND stockmaster.stockid NOT LIKE '%\t%'
-						GROUP BY stockmaster.stockid,
-							stockmaster.description,
-							stockmaster.longdescription,
-							stockmaster.units,
-							stockmaster.mbflag,
-							stockmaster.discontinued,
-							stockmaster.decimalplaces
-						ORDER BY locstock.quantity desc";
+					GROUP BY stockmaster.stockid,
+					stockmaster.description,
+					stockmaster.longdescription,
+					stockmaster.units,
+					stockmaster.mbflag,
+					stockmaster.discontinued,
+					stockmaster.decimalplaces
+					ORDER BY locstock.quantity desc";
+						echo $SQLA;
 					} else
 						$SQLA = "SELECT stockmaster.stockid,
 						stockmaster.description,
@@ -2216,6 +2220,7 @@ if (isset($_POST['Keywords'])) {
 					}
 				}
 			} elseif (isset($_POST['StockCode'])) {
+
 				$_POST['StockCode'] = mb_strtoupper($_POST['StockCode']);
 
 				$SQLA = "SELECT stockmaster.stockid,
