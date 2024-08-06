@@ -1939,10 +1939,7 @@ if ($_SESSION['Request']->igp == 'A') {
 					$QOH[$i] = 0;
 				}
 
-
-
 				// Find the quantity on outstanding sales orders
-
 
 				if ($k == 1) {
 					echo '<tr class="EvenTableRows">';
