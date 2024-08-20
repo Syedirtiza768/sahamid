@@ -1555,6 +1555,9 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 			}
 			$OnOrder = $PurchQty + $WoQty;
 			$Available = $QOH - $DemandQty + $OnOrder;
+			if($_SESSION['UserStockLocation'] == 'WS'){
+				$QOH = $myrow['qohand'];
+				$Available = $QOH - $DemandQty + $OnOrder;
 			echo '<td><a href = "SelectProduct.php?Select=' . $myrow['stockid'] . '" target = "_blank" >' . $myrow['stockid'] . '</a></td>
 				
 				<td>' . $myrow['description'] . '</td>
@@ -1569,6 +1572,23 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 				<input type="hidden" name="StockID' . $i . '" value="' . $myrow['stockid'] . '" />
 				</td>
 			</tr>';
+			}
+			else{
+				echo '<td><a href = "SelectProduct.php?Select=' . $myrow['stockid'] . '" target = "_blank" >' . $myrow['stockid'] . '</a></td>
+				
+				<td>' . $myrow['description'] . '</td>
+				<td>' . $myrow['stockunits'] . '</td>
+				<td class="number">' . $QOH . '
+				<input type="hidden" id="QOH' . $i . '" value="' . $QOH . '" />
+				</td>
+				<td class="number">' . locale_number_format($DemandQty, $DecimalPlaces) . '</td>
+				<td class="number">' . locale_number_format($OnOrder, $DecimalPlaces) . '</td>
+				<td class="number">' . locale_number_format($Available, $DecimalPlaces) . '</td>
+				<td><input class="number" ' . ($i == 0 ? 'autofocus="autofocus"' : '') . ' tabindex="' . ($j + 7) . '" i onchange="quantityChanged(this, ' . $i . ')" type="text" size="6" name="Quantity' . $i . '" value="0" />
+				<input type="hidden" name="StockID' . $i . '" value="' . $myrow['stockid'] . '" />
+				</td>
+			</tr>';
+			}
 			echo '<input type="hidden" name="DecimalPlaces' . $i . '" value="' . $myrow['decimalplaces'] . '" />';
 			echo '<input type="hidden" name="ItemDescription' . $i . '" value="' . $myrow['description'] . '" />';
 			echo '<input type="hidden" name="Units' . $i . '" value="' . $myrow['stockunits'] . '" />';
