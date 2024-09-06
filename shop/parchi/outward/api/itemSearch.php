@@ -6,6 +6,7 @@
 
 	$SearchString = '%' . $_POST['term'] . '%';
 	$selectedItem = $_POST['itemIndex'];
+	$parchi = $_POST['parchi'];
 	$obo = $_POST['obo'];
 
 	$SQL = "SELECT stockid FROM ogpmporef 
@@ -37,6 +38,7 @@ if (mysqli_num_rows($result1) > 0) {
 			OR stockmaster.description IN ($searchid))
 			AND stockmaster.mbflag <>'G'
 			AND ogpmporef.salesman = '$obo'
+			AND ogpmporef.mpo = '$parchi'
 			AND stockissuance.salesperson='$obo'
 			AND stockmaster.discontinued=0
 			AND stockissuance.issued > 0

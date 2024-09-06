@@ -230,7 +230,7 @@ if (isset($_POST['Submit']) and $count > 0) {
 		$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 		$DbgMsg = _('The following SQL to insert the request header record was used');
 		$Result = DB_query($HeaderSQL, $db, $ErrMsg, $DbgMsg, true);
- 
+
 		if ($_SESSION['Request']->salescaseref) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
@@ -423,8 +423,8 @@ if (isset($_POST['Submit']) and $count > 0) {
 			$Result = DB_query($SQL, $db, $ErrMsg, $DbgMsg, true);
 
 
-
 			if ($_SESSION['Request']->ogp == "A" or $_SESSION['Request']->ogp == "D") {
+				echo "<script>console.log('PHP code executed: OGP is A or D');</script>";
 				$SQL = "select stockid, salesperson from stockissuance where stockid = '" . $LineItems->StockID . "'
 	
 	and salesperson = '" . $_SESSION['Request']->deliveredto . "'
@@ -1438,7 +1438,7 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 		}
 	}
 	/* end display list if there is more than one record */
-	
+
 	if (isset($SearchResult)) {
 		$j = 1;
 		echo '<br />
@@ -1555,10 +1555,10 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 			}
 			$OnOrder = $PurchQty + $WoQty;
 			$Available = $QOH - $DemandQty + $OnOrder;
-			if($_SESSION['UserStockLocation'] == 'WS'){
+			if ($_SESSION['UserStockLocation'] == 'WS') {
 				$QOH = $myrow['qohand'];
 				$Available = $QOH - $DemandQty + $OnOrder;
-			echo '<td><a href = "SelectProduct.php?Select=' . $myrow['stockid'] . '" target = "_blank" >' . $myrow['stockid'] . '</a></td>
+				echo '<td><a href = "SelectProduct.php?Select=' . $myrow['stockid'] . '" target = "_blank" >' . $myrow['stockid'] . '</a></td>
 				
 				<td>' . $myrow['description'] . '</td>
 				<td>' . $myrow['stockunits'] . '</td>
@@ -1572,8 +1572,7 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 				<input type="hidden" name="StockID' . $i . '" value="' . $myrow['stockid'] . '" />
 				</td>
 			</tr>';
-			}
-			else{
+			} else {
 				echo '<td><a href = "SelectProduct.php?Select=' . $myrow['stockid'] . '" target = "_blank" >' . $myrow['stockid'] . '</a></td>
 				
 				<td>' . $myrow['description'] . '</td>
@@ -1610,23 +1609,23 @@ and 		CAST(stockitemproperties.value as integer) > '" . intval($_POST['PropValue
 
 	?>
 
-<script>
-	function quantityChanged(input, rowIndex) {
-        // Get the current value of the input
-        var quantity = parseFloat(input.value);
+	<script>
+		function quantityChanged(input, rowIndex) {
+			// Get the current value of the input
+			var quantity = parseFloat(input.value);
 
-        // Get the QOH value from the hidden input field
-        var qoh = parseFloat(document.getElementById('QOH' + rowIndex).value);
+			// Get the QOH value from the hidden input field
+			var qoh = parseFloat(document.getElementById('QOH' + rowIndex).value);
 
-        // Perform the check
-        if (quantity <= qoh) {
-            // Perform additional actions if needed
-        } else {
-            alert("Quantity exceeds available stock! Please select quantity less or equal to QOH.");
-            input.value = 0; // or any default value
-        }
-    }
-</script>
+			// Perform the check
+			if (quantity <= qoh) {
+				// Perform additional actions if needed
+			} else {
+				alert("Quantity exceeds available stock! Please select quantity less or equal to QOH.");
+				input.value = 0; // or any default value
+			}
+		}
+	</script>
 </body>
 
 </html>

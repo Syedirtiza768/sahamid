@@ -160,6 +160,14 @@
 				WHERE salesperson='".$salesperson."'
 				AND stockid='".$stockid."'";
 		DB_query($SQL, $db);
+		
+		$SQL = "UPDATE `ogpmporef` 
+				SET quantity=(quantity-$quantity_received)
+				WHERE salesman='".$salesperson."'
+				AND stockid='".$stockid."'
+				AND mpo = '". $parchi ."'";
+		DB_query($SQL, $db);
+		
         $SQL = "SELECT locstock.quantity FROM locstock
 						WHERE locstock.stockid='".$stockid."' 
 						AND loccode='".$_SESSION['UserStockLocation']."'";

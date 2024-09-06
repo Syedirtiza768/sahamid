@@ -750,11 +750,12 @@
 				
 				let term = $(".itemsearchterm").val();
 				let itemIndex = $("#selecteditemindex").html();
-
+				var parchi = '<?php echo trim($_GET['parchi']); ?>';
 				$.post("api/itemSearch.php", {
 					FormID: '<?php echo $_SESSION['FormID']; ?>',
 					term: term,
 					itemIndex: itemIndex,
+					parchi: parchi,
 					obo: '<?php echo $parchiDetails['on_behalf_of']; ?>'
 				}, function(res, status, something){
 					res = JSON.parse(res);
