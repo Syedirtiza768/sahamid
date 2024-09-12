@@ -271,6 +271,11 @@ if (isset($_POST['Submit']) and $count > 0) {
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
 				$itemcode = "SELECT * FROM ogpmporef WHERE mpo= '" . $_SESSION['Request']->parchino . "'";
 				$Result = DB_query($itemcode, $db);
+				if (DB_num_rows($Result) == 1) {
+					$itemcode = "UPDATE ogpmporef SET quantity =quantity +'" . $LineItems->Quantity . "' WHERE mpo= '" . $_SESSION['Request']->parchino . "'
+							AND stockid = '" . $LineItems->StockID . "' AND  salesman = '" . $_SESSION['Request']->deliveredto . "'";
+					$Result = DB_query($itemcode, $db);
+				} else {
 
 				$HeaderSalescaserefSQL = "INSERT INTO ogpmporef (dispatchid,
 												mpo,
@@ -286,10 +291,12 @@ if (isset($_POST['Submit']) and $count > 0) {
 												'" . $LineItems->StockID . "',
 												'" . $_SESSION['Request']->deliveredto . "',
 												'" . $LineItems->Quantity . "')";
+												
 
 				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 				$DbgMsg = _('The following SQL to insert the request header record was used');
 				$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				}
 			}
 		}
 
@@ -347,19 +354,6 @@ if (isset($_POST['Submit']) and $count > 0) {
 				$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 			}
 		}
-
-
-		// foreach ($_SESSION['Request']->LineItems as $LineItems) {
-		// 	$itemcode = "SELECT stockid FROM ogpsalescaseref WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'";
-		// 	$Result = DB_query($itemcode, $db);
-
-		// 	if (DB_num_rows($Result) == 1) {
-		// 		$Stockid = DB_fetch_row($Result);
-		// 		$selectedItems = $Stockid + "," + $LineItems->StockID;
-		// 		$itemcode = "UPDATE ogpsalescaseref SET stockid ='$selectedItems' WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'";
-		// 		$Result = DB_query($itemcode, $db);
-		// 	}
-		// }
 
 		foreach ($_SESSION['Request']->LineItems as $LineItems) {
 			$LineSQL = "INSERT INTO posdispatchitems (dispatchitemsid,
@@ -728,7 +722,7 @@ if (isset($_POST['Submit']) and $count > 0) {
 			echo '<td><select class="js-example-basic-single" name="parchino">
 <option value="">' . _('Select a Parchi No') . '</option>';
 			while ($myrow = DB_fetch_array($result)) {
-				if (isset($_SESSION['Request']->salescaseref) and $_SESSION['Request']->salescaseref == $myrow['parchino']) {
+				if (isset($_SESSION['Request']->parchino) and $_SESSION['Request']->parchino == $myrow['parchino']) {
 					echo '<option selected="True" value="' . $myrow['parchino'] . '">' . htmlspecialchars($myrow['parchino'], ENT_QUOTES, 'UTF-8') . '</option>';
 				} else {
 					echo '<option value="' . $myrow['parchino'] . '">' . htmlspecialchars($myrow['parchino'], ENT_QUOTES, 'UTF-8') . '</option>';
