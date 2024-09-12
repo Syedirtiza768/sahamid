@@ -37,12 +37,8 @@ AND stockmaster.categoryid = stockcategory.categoryid
 AND stockissuance.issued>0
 AND stockcategory.categorydescription like '%%'
 AND stockissuance.salesperson='" . $_POST['clientID'] . "'
-
-";
-
-    $sql .= 'AND stockissuance.salesperson IN 
-(SELECT can_access FROM cart_report_access WHERE user = "' . $_SESSION['UserID'] . '"' . ') 
-';
+AND stockissuance.salesperson IN 
+(SELECT can_access FROM cart_report_access WHERE user = '" . $_SESSION['UserID'] . "') ";
 
     $res = mysqli_query($db, $sql);
     $SQLdiscount = "SELECT stkcode,AVG(discountpercent) as discount from dcdetails GROUP by stkcode";
