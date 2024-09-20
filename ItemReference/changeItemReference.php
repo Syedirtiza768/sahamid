@@ -584,17 +584,15 @@ include_once("../v2/config.php");
         <?php
         $sql = "SELECT * FROM `bazar_parchi` WHERE `on_behalf_of` = '" . $_SESSION['UsersRealName'] . "' AND `inprogress` = '1' ";
         $result = mysqli_query($db, $sql);
-        if ($result != "") {
             while ($row = mysqli_fetch_assoc($result)) { ?>
-                htmlStr += '<option value="<?php echo $row["bazar_parchi"] ?>"><?php echo htmlspecialchars($row["bazar_parchi"], ENT_QUOTES, 'UTF-8') ?></option>';
+                htmlStr += '<option value="<?php echo $row["parchino"] ?>"><?php echo htmlspecialchars($row["parchino"], ENT_QUOTES, 'UTF-8') ?></option>';
         <?php
-            }
         }
         ?>
         htmlStr += '</select>';
         htmlStr += ' </div>';
         htmlStr += '<div class="form-group">';
-        htmlStr += '<label for="password1">Item Qty</label>';
+        htmlStr += '<label for="password1"></label>';
         htmlStr += '<input type="number" id="new_mpo_q" style="margin-left:40px">';
         htmlStr += '</div>';
 
