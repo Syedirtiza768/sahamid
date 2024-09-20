@@ -582,7 +582,7 @@ include_once("../v2/config.php");
         htmlStr += '<select class="select_state3" id="new_mpo" style="margin-left:30px;" id="mpo">';
         htmlStr += '<option value="">--- Choose MPO ---</option>';
         <?php
-        $sql = "SELECT * FROM `bazar_parchi` WHERE `on_behalf_of` = = '" . $_SESSION['UsersRealName'] . "' AND `inprogress` = '1' ";
+        $sql = "SELECT * FROM `bazar_parchi` WHERE `on_behalf_of` = '" . $_SESSION['UsersRealName'] . "' AND `inprogress` = '1' ";
         $result = mysqli_query($db, $sql);
         if ($result != "") {
             while ($row = mysqli_fetch_assoc($result)) { ?>
