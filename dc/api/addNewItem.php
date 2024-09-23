@@ -194,6 +194,16 @@
 	$qohResult = mysqli_fetch_assoc($result);
 
 	$qoh = $qohResult['quantity'];
+	
+	
+	$SQL = "SELECT quantity as quantity FROM ogpsalescaseref WHERE stockid='".$item_id."'
+			AND salesman='".$salesman."' AND salescaseref = '".$salescaseref."'";
+
+	$result = mysqli_query($db, $SQL);
+
+	$qohResult = mysqli_fetch_assoc($result);
+
+	$salescase_quant = $qohResult['quantity'];
 
 	closeDBConnection($db);
 
@@ -210,6 +220,7 @@
 		'part'		=>	$item['mnfpno'],
 		'desc'		=>	$item['description'],
 		'qoh'		=>	$qoh,
+		'salescase_quant'		=>	$salescase_quant ,
 		'price'		=>	$unitprice,
 		'discount'	=>	0,
 		'quantity'	=>	0,

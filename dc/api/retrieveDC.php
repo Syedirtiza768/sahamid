@@ -1,38 +1,37 @@
-<?php 
+<?php
 
-	include('../misc.php');
+include('../misc.php');
 
-	$response = [];
+$response = [];
 
-	if(!validHeaders()){
+if (!validHeaders()) {
 
-		$response = [
-			'status' => 'error',
-			'message' => 'Refresh or ReLogin Required.'
-		];
+	$response = [
+		'status' => 'error',
+		'message' => 'Refresh or ReLogin Required.'
+	];
 
-		echo json_encode($response);
-		return;		
+	echo json_encode($response);
+	return;
+}
 
-	}
+if (!isset($_POST['orderno']) || !isset($_POST['salesref'])) {
 
-	if(!isset($_POST['orderno'])){
+	$response = [
+		'status' => 'error',
+		'message' => 'Missing Parameters.'
+	];
 
-		$response = [
-			'status' => 'error',
-			'message' => 'Missing Parameters.'
-		];
+	echo json_encode($response);
+	return;
+}
 
-		echo json_encode($response);
-		return;	
+$orderno = $_POST['orderno'];
+$salesref = $_POST['salesref'];
 
-	}
+$db = createDBConnection();
 
-	$orderno = $_POST['orderno'];
-
-	$db = createDBConnection();
-
-	$SQL = "SELECT dcs.debtorno,
+$SQL = "SELECT dcs.debtorno,
  				   debtorsmaster.name,
 				   dcs.orderno,
 				   dcs.salescaseref,
@@ -96,24 +95,23 @@
 				ON debtorsmaster.currcode=currencies.currabrev
 				WHERE dcs.orderno = '" . $orderno . "'";
 
-	$result = mysqli_query($db, $SQL);
+$result = mysqli_query($db, $SQL);
 
-	if(mysqli_num_rows($result) != 1){
+if (mysqli_num_rows($result) != 1) {
 
-		$response = [
-			'status' => 'error',
-			'message' => 'Quotation Not Found!!!'
-		];
+	$response = [
+		'status' => 'error',
+		'message' => 'Quotation Not Found!!!'
+	];
 
-		echo json_encode($response);
-		return;	
+	echo json_encode($response);
+	return;
+}
 
-	}
+$details = mysqli_fetch_assoc($result);
 
-	$details = mysqli_fetch_assoc($result);
-
-	//Items
-	$SQL = "SELECT  dcdetails.internalitemno,
+//Items
+$SQL = "SELECT  dcdetails.internalitemno,
 					dcdetails.dcdetailsindex,
 					dcdetails.orderlineno,
 					dcdetails.lineoptionno,
@@ -147,7 +145,14 @@
 					stockmaster.categoryid,
 					manufacturers.manufacturers_name as manu_name,
 					stockmaster.materialcost+stockmaster.labourcost+stockmaster.overheadcost AS standardcost,
-					dcdetails.completed
+					dcdetails.completed,
+					 (
+        SELECT SUM(ogpsalescaseref.quantity)
+        FROM ogpsalescaseref
+        WHERE ogpsalescaseref.salescaseref = '" . $salesref . "'
+        AND ogpsalescaseref.stockid = dcdetails.stkcode
+        AND ogpsalescaseref.salesman = '" . $details['salesmann'] . "'
+    ) AS salescase_quant
 				FROM dcdetails 
 				INNER JOIN stockmaster
 				ON dcdetails.stkcode = stockmaster.stockid
@@ -156,76 +161,69 @@
 				INNER JOIN locstock ON locstock.stockid = stockmaster.stockid
 				INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id
 				WHERE  locstock.loccode = '" . $details['fromstkloc'] . "'
-				AND stockissuance.salesperson = '".$details['salesmann']."'
+				AND stockissuance.salesperson = '" . $details['salesmann'] . "'
 				AND dcdetails.orderno ='" . $orderno . "'
 				ORDER BY dcdetails.orderlineno";
+$result = mysqli_query($db, $SQL);
 
-	$result = mysqli_query($db, $SQL);
+$items = [];
 
-	$items = [];
+while ($row = mysqli_fetch_assoc($result)) {
 
-	while($row = mysqli_fetch_assoc($result)){
+	$line 	= $row['orderlineno'];
+	$option = $row['lineoptionno'];
 
-		$line 	= $row['orderlineno'];
-		$option = $row['lineoptionno'];
+	if (!(array_key_exists($line, $items))) {
 
-		if(!(array_key_exists($line, $items))){
-
-			$items[$line] = [];			
-
-		}
-
-		if(!(array_key_exists($option, $items[$line]))){
-
-			$items[$line][$option] = [];
-
-		}
-
-		$items[$line][$option][] = $row;
-
+		$items[$line] = [];
 	}
 
-	//Options
-	$SQL = "SELECT * FROM dcoptions 
+	if (!(array_key_exists($option, $items[$line]))) {
+
+		$items[$line][$option] = [];
+	}
+
+	$items[$line][$option][] = $row;
+}
+
+//Options
+$SQL = "SELECT * FROM dcoptions 
 			WHERE  dcoptions.orderno ='" . $orderno . "'";
 
-	$result = mysqli_query($db, $SQL);
+$result = mysqli_query($db, $SQL);
 
-	$options = [];
+$options = [];
 
-	while($row = mysqli_fetch_assoc($result)){
+while ($row = mysqli_fetch_assoc($result)) {
 
-		$line 		 = $row['lineno'];
-		$optionindex = $row['optionno'];
+	$line 		 = $row['lineno'];
+	$optionindex = $row['optionno'];
 
-		$options[$line][$optionindex] = $row;
+	$options[$line][$optionindex] = $row;
 
-		$options[$line][$optionindex]['items'] = 
-			((isset($items[$line]) && isset($items[$line][$optionindex]))
+	$options[$line][$optionindex]['items'] =
+		((isset($items[$line]) && isset($items[$line][$optionindex]))
 			? $items[$line][$optionindex] : []);
+}
 
-
-	}
-
-	//Lines
-	$SQL = "SELECT * FROM dclines 
+//Lines
+$SQL = "SELECT * FROM dclines 
 			WHERE  dclines.orderno ='" . $orderno . "'";
 
-	$result = mysqli_query($db, $SQL);
+$result = mysqli_query($db, $SQL);
 
-	$lines = [];
+$lines = [];
 
-	while($row = mysqli_fetch_assoc($result)){
+while ($row = mysqli_fetch_assoc($result)) {
 
-		$lineindex = $row['lineno'];
-		
-		$lines[$lineindex] = $row;
+	$lineindex = $row['lineno'];
 
-		$lines[$lineindex]['options'] = (isset($options[$lineindex])) ? $options[$lineindex] : [];
+	$lines[$lineindex] = $row;
 
-	}
+	$lines[$lineindex]['options'] = (isset($options[$lineindex])) ? $options[$lineindex] : [];
+}
 
-	$SQL = "SELECT SUM(
+$SQL = "SELECT SUM(
 						CASE WHEN GSTwithhold = 0 AND WHT = 0 
 							THEN ovamount - alloc
 						WHEN GSTwithhold = 0 AND WHT = 1 
@@ -240,30 +238,27 @@
 			WHERE reversed = 0 
 			AND settled = 0
 			AND type = 10
-			AND debtorno = '".$details['debtorno']."'";
-	$res = mysqli_query($db, $SQL);
-	$credit = mysqli_fetch_assoc($res)['credit'] ?:0;
+			AND debtorno = '" . $details['debtorno'] . "'";
+$res = mysqli_query($db, $SQL);
+$credit = mysqli_fetch_assoc($res)['credit'] ?: 0;
 
 
 
-	$details['lines'] = $lines;
+$details['lines'] = $lines;
 
-	$response['status'] = "success";
-	$response['formid'] = $_SESSION['FormID'];
-	$response['credit'] = $credit;
-    $SQL='SELECT debtorsmaster.debtorno FROM debtorsmaster WHERE debtorsmaster.debtorno IN 
-                        (SELECT can_access FROM statement_access WHERE user = "'.$_SESSION['UserID'].'"'.') 
-                        AND debtorsmaster.debtorno="'.$details['debtorno'].'"';
-    $result=mysqli_query($db,$SQL);
-    if (mysqli_num_rows($result)>=1) {
-        $response['flag'] = "on";
-    }
+$response['status'] = "success";
+$response['formid'] = $_SESSION['FormID'];
+$response['credit'] = $credit;
+$SQL = 'SELECT debtorsmaster.debtorno FROM debtorsmaster WHERE debtorsmaster.debtorno IN 
+                        (SELECT can_access FROM statement_access WHERE user = "' . $_SESSION['UserID'] . '"' . ') 
+                        AND debtorsmaster.debtorno="' . $details['debtorno'] . '"';
+$result = mysqli_query($db, $SQL);
+if (mysqli_num_rows($result) >= 1) {
+	$response['flag'] = "on";
+}
 
-    $response['data']	= $details;
-    closeDBConnection($db);
-	utf8_encode_deep($response);
-	echo json_encode($response);
-	return;
-
-
-?>
+$response['data']	= $details;
+closeDBConnection($db);
+utf8_encode_deep($response);
+echo json_encode($response);
+return;

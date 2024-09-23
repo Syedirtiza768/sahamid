@@ -17,7 +17,7 @@
 		$.ajax({
 			type: 'POST',
 		    url: rootpath+"/shopdc/api/retrieveDC.php",
-		    data: {orderno: order},
+		    data: {orderno: order, salesref: salesref},
 		    dataType: "json",
 		    success: function(response) { 
 		    	var status = response.status;
@@ -176,6 +176,7 @@
 							    var sprice = items[itemIndex].standardcost;
 							    //var uprice = items[itemIndex].unitprice;
 							    var qohal = items[itemIndex].qohatloc;
+								var salescase_quant = items[itemIndex].salescase_quant;
 							    var dis = items[itemIndex].discountpercent;
 							    var ud = items[itemIndex].lastcostupdate;
 							    var ub = items[itemIndex].lastupdatedby;
@@ -196,7 +197,7 @@
 
 							    pricetot += tot;
 
-							    additemCallback(indx,ln,on,stkc,bname,des,qty,sprice,uprice,tot,qohal,dis,update,modal,part);
+							    additemCallback(indx,ln,on,stkc,bname,des,qty,sprice,uprice,tot,salescase_quant,qohal,dis,update,modal,part);
 
 							}
 
@@ -554,7 +555,7 @@
     
     }
 
-    function additemCallback(indx,line,option,stkc,bname,description,quantity,sprice,uprice,tot,qoh,dis,update,modal,part){
+    function additemCallback(indx,line,option,stkc,bname,description,quantity,sprice,uprice,tot,salescase_quant,qoh,dis,update,modal,part){
 
 		var item = items[line+","+option] += 1;
 
@@ -602,10 +603,18 @@
         html+='</div>';
         html+='<div id="item'+indx+'" class="col-md-6">';
         html+='<div class="col-md-2">';
-        html+='QOH:';
+        html+='Salesman QOH:';
         html+='</div>';
         html+='<div class="col-md-4">';
         html+='<input class="qohabc" type="number" value="'+qoh+'" disabled>';
+        html+='</div>';
+		html+='<br>';
+        html+='<br>';
+        html+='<div class="col-md-2">';
+        html+='Salescase QOH:';
+        html+='</div>';
+        html+='<div class="col-md-4">';
+        html+='<input class="qohabcd" type="number" value="'+salescase_quant+'" disabled>';
         html+='</div>';
         html+='<div class="col-md-2">';
         html+='Price:';
@@ -1266,6 +1275,7 @@
 		    		$("#"+item+"").find("input.quantity").css("border","2px green solid");
 		    		$("#"+item+"").find("input.quantity").val(response.data.value);
 		    		$("#"+item+"").find("input.qohabc").val(response.data.qoh);
+		    		$("#"+item+"").find("input.qohabcd").val(response.data.salesqoh);
 		    		var id = item.split("item")[1];
 		    		$("#opdcd"+id+"").find(".quantity").html(response.data.value);
 		    		$("#"+item+"").find("input.quantity").prop("disabled", false);
@@ -1449,7 +1459,7 @@
 
 		    		var d = response.data;
 					
-					additemCallback(d.id,d.line,d.option,d.title,brand,d.desc,d.quantity,d.price,d.price,d.total,d.qoh,d.discount,d.update,d.model,d.part);
+					additemCallback(d.id,d.line,d.option,d.title,brand,d.desc,d.quantity,d.price,d.price,d.total, d.salescase_quant ,d.qoh,d.discount,d.update,d.model,d.part);
 
 					var html = "<tr>";
 		    		html += "<td>";

@@ -161,6 +161,7 @@
 		}
 
 		$newIssued = $issuedQuantity - $quantityDifference;
+		$salescaseIssued = $issuedQuantityref - $quantityDifference;
 		$newDCVal  = $dcQuantity + $quantityDifference;
         //GRB
         if($newIssued>$issuedQuantity && isset($_POST['grbno'])) {
@@ -394,6 +395,7 @@
 		return;	
 
 	}
+	
 
 	$response = [
 
@@ -406,6 +408,7 @@
 			'discount' 		=> isset($discount) ? $discount : "nan",
 			'minimum'		=> $minimum,
 			'qoh'			=> isset($newIssued) ? $newIssued : "nan",
+			'salesqoh'			=> isset($salescaseIssued) ? $salescaseIssued : "nan",
 			'stkcode'		=> isset($stockid) ? $stockid : "nan",
 		]
 

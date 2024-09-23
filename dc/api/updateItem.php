@@ -1,80 +1,80 @@
 <?php
 
-$PathPrefix = '../../';
+	$PathPrefix='../../';
+	
+	include('../misc.php');
+	include('../../includes/session.inc');
+	include('../../includes/SQL_CommonFunctions.inc');
 
-include('../misc.php');
-include('../../includes/session.inc');
-include('../../includes/SQL_CommonFunctions.inc');
+	$response = [];
 
-$response = [];
+	if(!validHeaders()){
 
-if (!validHeaders()) {
+		$response = [
+			'status' => 'error',
+			'message' => 'Refresh or ReLogin Required.'
+		];
 
-	$response = [
-		'status' => 'error',
-		'message' => 'Refresh or ReLogin Required.'
-	];
+		echo json_encode($response);
+		return;		
 
-	echo json_encode($response);
-	return;
-}
+	}
 
-if (
-	!isset($_POST['salescaseref']) || !isset($_POST['orderno'])
-	|| !isset($_POST['item']) || !isset($_POST['name'])
-	|| !isset($_POST['value'])
-) {
+	if(!isset($_POST['salescaseref']) || !isset($_POST['orderno']) 
+		|| !isset($_POST['item']) || !isset($_POST['name']) 
+		|| !isset($_POST['value'])){
 
-	$response = [
-		'status' => 'error',
-		'message' => 'Missing Parameters.'
-	];
+		$response = [
+			'status' => 'error',
+			'message' => 'Missing Parameters.'
+		];
 
-	echo json_encode($response);
-	return;
-}
+		echo json_encode($response);
+		return;	
 
-$salescaseref 	= $_POST['salescaseref'];
-$orderno 		= $_POST['orderno'];
-$grbno 		    = $_POST['grbno'];
-$item 			= explode("item", $_POST['item'])[1];
-$name 			= $_POST['name'];
-$value 			= $_POST['value'];
-$minimum		= 1;
+	}
 
-$db = createDBConnection();
+	$salescaseref 	= $_POST['salescaseref'];
+	$orderno 		= $_POST['orderno'];
+    $grbno 		    = $_POST['grbno'];
+	$item 			= explode("item", $_POST['item'])[1];
+	$name 			= $_POST['name'];
+	$value 			= $_POST['value'];
+	$minimum		= 1;
 
-if ($name == "quantity") {
+	$db = createDBConnection();
 
-	$SQL = "SELECT salesman FROM salescase 
-				WHERE salescaseref='" . $salescaseref . "'";
+	if($name == "quantity"){
 
-	$result = mysqli_query($db, $SQL);
+		$SQL = "SELECT salesman FROM salescase 
+				WHERE salescaseref='".$salescaseref."'";
 
-	$salesman = mysqli_fetch_assoc($result)['salesman'];
+		$result = mysqli_query($db, $SQL);
 
-	$SQL = "SELECT stkcode,quantity,orderlineno,lineoptionno FROM dcdetails 
-				WHERE dcdetailsindex='" . $item . "'";
+		$salesman = mysqli_fetch_assoc($result)['salesman'];
 
-	$result = mysqli_query($db, $SQL);
+		$SQL = "SELECT stkcode,quantity,orderlineno,lineoptionno FROM dcdetails 
+				WHERE dcdetailsindex='".$item."'";
 
-	$stock = mysqli_fetch_assoc($result);
+		$result = mysqli_query($db, $SQL);
 
-	$stockid = $stock['stkcode'];
-	$stkQuantity = $stock['quantity'];
-	$orderlineno = $stock['orderlineno'];
-	$lineoptionno = $stock['lineoptionno'];
+		$stock = mysqli_fetch_assoc($result);
 
-	$SQL = "SELECT * FROM dcoptions WHERE orderno='" . $orderno . "' 
-				AND lineno='" . $orderlineno . "' 
-				AND optionno='" . $lineoptionno . "'";
+		$stockid = $stock['stkcode'];
+		$stkQuantity = $stock['quantity'];
+		$orderlineno = $stock['orderlineno'];
+		$lineoptionno = $stock['lineoptionno'];
 
-	$res = mysqli_query($db, $SQL);
-	$row = mysqli_fetch_assoc($res);
+		$SQL = "SELECT * FROM dcoptions WHERE orderno='".$orderno."' 
+				AND lineno='".$orderlineno."' 
+				AND optionno='".$lineoptionno."'";
 
-	$optionQuantity = $row['quantity'];
+		$res = mysqli_query($db, $SQL);
+		$row = mysqli_fetch_assoc($res);
 
-	$SQL = "SELECT quantity FROM ogpsalescaseref 
+		$optionQuantity = $row['quantity'];
+
+		$SQL = "SELECT quantity FROM ogpsalescaseref 
 				WHERE stockid='" . $stockid . "'
 				AND salesman='" . $salesman . "'
 				AND salescaseref = '" . $salescaseref . "'";
@@ -92,246 +92,277 @@ if ($name == "quantity") {
 	$issuedQuantity = $quant['issued'];
 	$dcQuantity = $quant['dc'];
 
-	if ($value <= 0) {
+		if($value <= 0){
 
-		$response = [
-			'status' => 'alert',
-			'message' => 'Quantity cannot be 0 or less.',
-			'minimum' => $stkQuantity,
-		];
+			$response = [
+				'status' => 'alert',
+				'message' => 'Quantity cannot be 0 or less.',
+				'minimum' => $stkQuantity,
+			];
 
-		echo json_encode($response);
-		return;
-	}
-
-	$minimum = 0;
-
-	$quantityDifference = ($optionQuantity * $value) - ($stkQuantity * $optionQuantity);
-
-	if (($optionQuantity * $value) == 0) {
-
-		$quantityDifference = 0;
-	}
-
-	if ($issuedQuantityref < 1 && $quantityDifference > 0) {
-
-		$response = [
-			'status' => 'alert',
-			'message' => 'Issued Quantity is 0 or less.',
-			'minimum' => $stkQuantity,
-		];
-
-		echo json_encode($response);
-		return;
-	}
-
-	$new = $optionQuantity * $value;
-	$old = $optionQuantity * $stkQuantity;
-
-	if ($issuedQuantityref < $quantityDifference && ($optionQuantity * $value > $issuedQuantityref || $value < $stkQuantity)) {
-
-		$response = [
-			'status'  => 'alert',
-			'message' => 'cannot give more quantity then assigned.',
-			'minimum' => $stkQuantity,
-		];
-
-		echo json_encode($response);
-		return;
-	}
-
-	if ($new > $old) {
-		$difference = $optionQuantity * $value;
-		$difference = $difference - $stkQuantity * $optionQuantity;
-		$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '" . $salescaseref . "'
-			AND stockid='" . $stockid . "'
-			AND salesman='" . $salesman . "'";
-		$result = mysqli_query($db, $SQL);
-	}
-	if ($new < $old) {
-		$difference = $old - $new;
-		$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
-			AND stockid='" . $stockid . "'
-			AND salesman='" . $salesman . "'";
-
-		$result = mysqli_query($db, $SQL);
-	}
-
-
-	$newIssued = $issuedQuantity - $quantityDifference;
-	$newDCVal  = $dcQuantity + $quantityDifference;
-	//GRB
-	if ($newIssued > $issuedQuantity && isset($_POST['grbno'])) {
-
-		$SQL = "INSERT INTO `grbdetails`(`orderno`,`stkcode`,`quantity`)
-			VALUES ('" . $grbno . "','" . $stockid . "','" . -1 * $quantityDifference . "')";
-
-		$result = mysqli_query($db, $SQL);
-	} else if (isset($_POST['grbno']))
-		return;
-
-
-	$SQL = "UPDATE `stockissuance` SET issued='" . $newIssued . "',dc='" . $newDCVal . "' 
-				WHERE salesperson='" . $salesman . "'
-				AND stockid='" . $stockid . "'";
-
-	mysqli_query($db, $SQL);
-
-	//Calculate Total Item Quantity In DC
-	$totalItemQuantityInDC = 0;
-
-	// echo "Initial: ".$totalItemQuantityInDC." : TOTAL DC<br>";
-
-	$SQL = "SELECT * FROM dcdetails WHERE stkcode='" . $stockid . "' AND orderno='" . $orderno . "'";
-
-	$result = mysqli_query($db, $SQL);
-	while ($row = mysqli_fetch_assoc($result)) {
-
-		// echo "Line NO: ".$row['orderlineno']." : LINE NO<br>";
-		// echo "Option NO: ".$row['lineoptionno']." : Option NO<br>";
-
-		if ($row['orderlineno'] == $orderlineno && $row['lineoptionno'] == $lineoptionno) {
-
-			$SQLOptionQuantity = "SELECT * FROM dcoptions 
-									WHERE orderno='" . $orderno . "' 
-									AND lineno='" . $row['orderlineno'] . "'
-									AND optionno='" . $row['lineoptionno'] . "'";
-			$optionQuantityResult = mysqli_query($db, $SQLOptionQuantity);
-			$optionQuantityRow	  = mysqli_fetch_assoc($optionQuantityResult);
-			$optionQuantity		  =	$optionQuantityRow['quantity'];
-
-			$totalItemQuantityInDC += $optionQuantity * $value;
-
-			// echo "Option: ".$optionQuantity." : Option Quantity<br>";
-			// echo "Value: ".$value." : Item Quantity<br>";
-			// echo "Initial: ".$optionQuantity*$value." : Option TOTAL<br>";
-			// echo "Initial: ".$totalItemQuantityInDC." : TOTAL DC<br>";
-
-		} else {
-
-
-
-			$SQLOptionQuantity = "SELECT * FROM dcoptions 
-									WHERE orderno='" . $orderno . "' 
-									AND lineno='" . $row['orderlineno'] . "'
-									AND optionno='" . $row['lineoptionno'] . "'";
-			$optionQuantityResult = mysqli_query($db, $SQLOptionQuantity);
-			$optionQuantityRow	  = mysqli_fetch_assoc($optionQuantityResult);
-			$optionQuantity		  =	$optionQuantityRow['quantity'];
-
-			$itemQuantityForOption = $optionQuantity * $row['quantity'];
-
-			$totalItemQuantityInDC += $itemQuantityForOption;
-
-			// echo "Option: ".$optionQuantity." : Option Quantity<br>";
-			// echo "Stock Quantity: ".$row['quantity']." : Item Quantity<br>";
-			// echo "Initial: ".$itemQuantityForOption." : Option TOTAL<br>";
-			// echo "Iteration: ".$totalItemQuantityInDC." : OTHER TOTAL DC<br>";
+			echo json_encode($response);
+			return;		
 
 		}
-	}
 
-	//Fetch Item Movements latest DC #
-	$SQL = "SELECT stkmoveno as max,transno,stockid FROM stockmoves 
-				WHERE stockid='" . $stockid . "' ORDER BY stkmoveno DESC";
+		$minimum = 0;
 
-	$result = mysqli_query($db, $SQL);
-	$row = mysqli_fetch_assoc($result);
-	$transNo = $row['transno'];
-	$movementID = $row['max'];
+		$quantityDifference = ($optionQuantity*$value) - ($stkQuantity*$optionQuantity);
 
-	$SQL = "SELECT * FROM stockmoves 
-				WHERE transno='" . $orderno . "' AND stockid='" . $stockid . "' ORDER BY stkmoveno DESC";
+		if(($optionQuantity*$value) == 0){
 
-	$result = mysqli_query($db, $SQL);
-	$quantityStockMovementDC = mysqli_num_rows($result);
+			$quantityDifference = 0;
 
-	$PeriodNo = GetPeriod(Date($_SESSION['DefaultDateFormat']), $db);
+		}
 
-	$topTransNo = "";
-	$period = "";
-	$stkmoveno = 0;
+		if($issuedQuantityref < 1 && $quantityDifference > 0){
 
-	if ($quantityStockMovementDC == 0)
-		$quantityToSave = $totalItemQuantityInDC;
-	else {
+			$response = [
+				'status' => 'alert',
+				'message' => 'Issued Quantity is 0 or less.',
+				'minimum' => $stkQuantity,
+			];
 
-		$topQuantityStockMoves = 0;
-		$totalQuantityInMovement = 0;
+			echo json_encode($response);
+			return;	
+		}
 
-		while ($row = mysqli_fetch_assoc($result)) {
+		if($issuedQuantityref < $quantityDifference  && ($optionQuantity*$value > $issuedQuantityref || $value < $stkQuantity)){
 
-			if ($topTransNo == "" && $period == "") {
-				$topTransNo = $row['transno'];
-				$period = $row['prd'];
-				$topQuantityStockMoves = $row['qty'];
-				$stkmoveno = $row['stkmoveno'];
+			$response = [
+				'status'  => 'alert',
+				'message' => 'cannot give more quantity then assigned.',
+				'minimum' => $stkQuantity,
+			];
+
+			echo json_encode($response);
+			return;	
+
+		}
+
+		if($value > $stkQuantity){
+			$difference = $optionQuantity*$value;
+			$difference = $difference - $stkQuantity;
+			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '".$salescaseref."'
+			AND stockid='".$stockid."'
+			AND salesman='".$salesman."'";
+
+            $result = mysqli_query($db, $SQL);
+		
+		}
+		if($value < $stkQuantity){
+			$difference = $stkQuantity-$value;
+			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '".$salescaseref."'
+			AND stockid='".$stockid."'
+			AND salesman='".$salesman."'";
+
+            $result = mysqli_query($db, $SQL);
+		
+		}
+
+		$newIssued = $issuedQuantity - $quantityDifference;
+		$salescaseIssued = $issuedQuantityref - $quantityDifference;
+		$newDCVal  = $dcQuantity + $quantityDifference;
+        //GRB
+        if($newIssued>$issuedQuantity && isset($_POST['grbno'])) {
+
+            $SQL = "INSERT INTO `grbdetails`(`orderno`,`stkcode`,`quantity`)
+			VALUES ('" . $grbno . "','" . $stockid . "','" . -1*$quantityDifference . "')";
+
+            $SQL = "UPDATE `stockissuance` SET issued='".$newIssued."',dc='".$newDCVal."'";
+            $result = mysqli_query($db, $SQL);
+        }
+        else if(isset($_POST['grbno']))
+            return;
+
+
+
+
+
+		$SQL = "UPDATE `stockissuance` SET issued='".$newIssued."',dc='".$newDCVal."' 
+				WHERE salesperson='".$salesman."'
+				AND stockid='".$stockid."'";
+
+		mysqli_query($db, $SQL);
+
+		//Calculate Total Item Quantity In DC
+		$totalItemQuantityInDC = 0;
+
+		// echo "Initial: ".$totalItemQuantityInDC." : TOTAL DC<br>";
+
+		$SQL = "SELECT * FROM dcdetails WHERE stkcode='".$stockid."' AND orderno='".$orderno."'"; 
+
+		$result = mysqli_query($db, $SQL);
+		while($row = mysqli_fetch_assoc($result)){
+
+			// echo "Line NO: ".$row['orderlineno']." : LINE NO<br>";
+			// echo "Option NO: ".$row['lineoptionno']." : Option NO<br>";
+
+			if($row['orderlineno'] == $orderlineno && $row['lineoptionno'] == $lineoptionno){
+
+				$SQLOptionQuantity = "SELECT * FROM dcoptions 
+									WHERE orderno='".$orderno."' 
+									AND lineno='".$row['orderlineno']."'
+									AND optionno='".$row['lineoptionno']."'";
+				$optionQuantityResult = mysqli_query($db, $SQLOptionQuantity);
+				$optionQuantityRow	  = mysqli_fetch_assoc($optionQuantityResult);
+				$optionQuantity		  =	$optionQuantityRow['quantity'];
+				
+				$totalItemQuantityInDC += $optionQuantity*$value;
+				
+				// echo "Option: ".$optionQuantity." : Option Quantity<br>";
+				// echo "Value: ".$value." : Item Quantity<br>";
+				// echo "Initial: ".$optionQuantity*$value." : Option TOTAL<br>";
+				// echo "Initial: ".$totalItemQuantityInDC." : TOTAL DC<br>";
+
+			}else{
+
+
+
+				$SQLOptionQuantity = "SELECT * FROM dcoptions 
+									WHERE orderno='".$orderno."' 
+									AND lineno='".$row['orderlineno']."'
+									AND optionno='".$row['lineoptionno']."'";
+				$optionQuantityResult = mysqli_query($db, $SQLOptionQuantity);
+				$optionQuantityRow	  = mysqli_fetch_assoc($optionQuantityResult);
+				$optionQuantity		  =	$optionQuantityRow['quantity'];
+
+				$itemQuantityForOption = $optionQuantity * $row['quantity'];
+
+				$totalItemQuantityInDC += $itemQuantityForOption;
+
+				// echo "Option: ".$optionQuantity." : Option Quantity<br>";
+				// echo "Stock Quantity: ".$row['quantity']." : Item Quantity<br>";
+				// echo "Initial: ".$itemQuantityForOption." : Option TOTAL<br>";
+				// echo "Iteration: ".$totalItemQuantityInDC." : OTHER TOTAL DC<br>";
+
 			}
 
-			$totalQuantityInMovement += $row['qty'];
 		}
 
-		$quantityDifferenceSM = $totalItemQuantityInDC - $totalQuantityInMovement;
+		//Fetch Item Movements latest DC #
+		$SQL = "SELECT stkmoveno as max,transno,stockid FROM stockmoves 
+				WHERE stockid='".$stockid."' ORDER BY stkmoveno DESC";
+				
+		$result = mysqli_query($db, $SQL);
+		$row = mysqli_fetch_assoc($result);
+		$transNo = $row['transno'];
+		$movementID = $row['max'];
 
-		if (($transNo == $topTransNo && $period == $PeriodNo) || isset($_POST['grbno'])) {
-			$quantityToSave = $topQuantityStockMoves + $quantityDifferenceSM;
-		} else {
-			$quantityToSave = $quantityDifferenceSM;
+		$SQL = "SELECT * FROM stockmoves 
+				WHERE transno='".$orderno."' AND stockid='".$stockid."' ORDER BY stkmoveno DESC";
+
+		$result = mysqli_query($db, $SQL);
+		$quantityStockMovementDC = mysqli_num_rows($result);
+
+		$PeriodNo = GetPeriod (Date($_SESSION['DefaultDateFormat']), $db);
+
+		$topTransNo = "";
+		$period = "";
+		$stkmoveno = 0;
+		
+		if($quantityStockMovementDC == 0)
+			$quantityToSave = $totalItemQuantityInDC;
+		else{
+
+			$topQuantityStockMoves = 0;
+			$totalQuantityInMovement = 0;
+
+			while($row = mysqli_fetch_assoc($result)){
+
+				if($topTransNo == "" && $period == ""){
+					$topTransNo = $row['transno'];
+					$period = $row['prd'];
+					$topQuantityStockMoves = $row['qty'];
+					$stkmoveno = $row['stkmoveno'];
+				}
+
+				$totalQuantityInMovement += $row['qty'];
+
+			}
+
+			$quantityDifferenceSM = $totalItemQuantityInDC - $totalQuantityInMovement;
+
+            if(($transNo == $topTransNo && $period == $PeriodNo)|| isset($_POST['grbno'])){
+
+                $quantityToSave = $topQuantityStockMoves + $quantityDifferenceSM;
+			}else{
+				$quantityToSave = $quantityDifferenceSM;
+			}
+
 		}
-	}
 
-	$SQL = "SELECT fromstkloc,deliverto FROM dcs WHERE orderno='" . $orderno . "'";
-	$result = mysqli_query($db, $SQL);
-	$row = mysqli_fetch_assoc($result);
-	$fromstkloc = $row['fromstkloc'];
-	$deliverto = $row['deliverto'];
+		$SQL = "SELECT fromstkloc,deliverto FROM dcs WHERE orderno='".$orderno."'";
+		$result = mysqli_query($db, $SQL);
+		$row = mysqli_fetch_assoc($result);
+		$fromstkloc = $row['fromstkloc'];
+		$deliverto = $row['deliverto'];
 
-	$SQL = "SELECT locstock.quantity FROM locstock
+		$SQL = "SELECT locstock.quantity FROM locstock
 				WHERE locstock.stockid='" . $stockid . "'
 				AND loccode= '" . $fromstkloc . "'";
 
-	$ResultQ = DB_query($SQL, $db);
-	if (DB_num_rows($ResultQ) == 1) {
-		$LocQtyRow = DB_fetch_row($ResultQ);
-		$QtyOnHandPrior = $LocQtyRow[0];
-	} else {
-		$QtyOnHandPrior = 0;
-	}
+		$ResultQ = DB_query($SQL, $db);
+		if (DB_num_rows($ResultQ)==1){
+			$LocQtyRow = DB_fetch_row($ResultQ);
+			$QtyOnHandPrior = $LocQtyRow[0];
+		} else {
+			$QtyOnHandPrior = 0;
+		}
 
-	if ($movementID == null || $quantityStockMovementDC == 0 || $period != $PeriodNo || $topTransNo != $transNo || isset($_POST['grbno'])) {
-		if (isset($_POST['grbno'])) {
-			$SQL = "INSERT INTO stockmoves(stockid,type,transno,loccode,trandate,reference,qty,prd,newqoh)
+		if($movementID == null || $quantityStockMovementDC == 0 || $period != $PeriodNo || $topTransNo != $transNo || isset($_POST['grbno'])) {
+            if(isset($_POST['grbno'])) {
+                $SQL = "INSERT INTO stockmoves(stockid,type,transno,loccode,trandate,reference,qty,prd,newqoh)
 					VALUES ('" . $stockid . "','514','" . $grbno . "','" . $fromstkloc . "','" . Date('Y-m-d') . "',
-					'" . _('GRB') . ' ' . DB_escape_string($grbno . ' Against DC#' . $orderno) . "','" . $quantityToSave . "',
+						'" . _('GRB') . ' ' . DB_escape_string($grbno . ' Against DC#' . $orderno) . "','" . $quantityToSave . "',
 						'" . $PeriodNo . "','" . $QtyOnHandPrior . "')";
 
-			mysqli_query($db, $SQL);
-		} else {
-			$SQL = "INSERT INTO stockmoves(stockid,type,transno,loccode,trandate,reference,qty,prd,newqoh)
-			VALUES ('" . $stockid . "','512','" . $orderno . "','" . $fromstkloc . "','" . Date('Y-m-d') . "',
-							'" . _('Delivered To') . ' ' . DB_escape_string($deliverto) . "','" . $quantityToSave . "',
-			'" . $PeriodNo . "','" . $QtyOnHandPrior . "')";
+                mysqli_query($db, $SQL);
+            }
+            else {
+                $SQL = "INSERT INTO stockmoves(stockid,type,transno,loccode,trandate,reference,qty,prd,newqoh)
+			VALUES ('".$stockid."','512','".$orderno."','".$fromstkloc."','".Date('Y-m-d')."',
+							'"._('Delivered To').' '.DB_escape_string($deliverto)."','".$quantityToSave."',
+					'" . $PeriodNo . "','" . $QtyOnHandPrior . "')";
+
+                mysqli_query($db, $SQL);
+            }
+
+		}else{
+
+			$SQL = "UPDATE stockmoves SET qty='".$quantityToSave."' 
+					WHERE stockid='".$stockid."' 
+					AND transno='".$topTransNo."'
+					AND stkmoveno='".$stkmoveno."'"; 
 
 			mysqli_query($db, $SQL);
+
 		}
-	} else {
 
-		$SQL = "UPDATE stockmoves SET qty='" . $quantityToSave . "' 
-					WHERE stockid='" . $stockid . "' 
-					AND transno='" . $topTransNo . "'
-					AND stkmoveno='" . $stkmoveno . "'";
+		$SQL = "UPDATE `dcdetails` 
+				SET `quantity`='".$value."'
+				WHERE `dcdetailsindex`=".$item."";
 
-		mysqli_query($db, $SQL);
-	}
+	}else{
 
-	$SQL = "UPDATE `dcdetails` 
-				SET `quantity`='" . $value . "'
-				WHERE `dcdetailsindex`=" . $item . "";
-} else {
+		if($name == "uprice"){
 
-	if ($name == "uprice") {
+			if(!isset($_POST['discount'])){
 
-		if (!isset($_POST['discount'])) {
+				$response = [
+					'status' => 'error',
+					'message' => 'Invalid Parameters.'
+				];
+
+				echo json_encode($response);
+				return;	
+
+			}
+
+			$uprice = $value;
+			$discount = $_POST['discount']/100;
+
+		}else{
 
 			$response = [
 				'status' => 'error',
@@ -339,57 +370,51 @@ if ($name == "quantity") {
 			];
 
 			echo json_encode($response);
-			return;
+			return;	
+
 		}
 
-		$uprice = $value;
-		$discount = $_POST['discount'] / 100;
-	} else {
+		$SQL = "UPDATE `dcdetails` 
+				SET `discountpercent`='".$discount."'
+				WHERE `dcdetailsindex`=".$item."";
+
+	}
+
+	$result = mysqli_query($db, $SQL);
+
+	closeDBConnection($db);
+
+	if(!$result){
 
 		$response = [
 			'status' => 'error',
-			'message' => 'Invalid Parameters.'
+			'message' => 'Save Failed.'
 		];
 
 		echo json_encode($response);
-		return;
+		return;	
+
 	}
-
-	$SQL = "UPDATE `dcdetails` 
-				SET `discountpercent`='" . $discount . "'
-				WHERE `dcdetailsindex`=" . $item . "";
-}
-
-$result = mysqli_query($db, $SQL);
-
-closeDBConnection($db);
-
-if (!$result) {
+	
 
 	$response = [
-		'status' => 'error',
-		'message' => 'Save Failed.'
+
+		'status' => 'success',
+		'data' => [
+			'salescaseref'	=> $salescaseref,
+			'orderno'		=> $orderno,
+			'name' 			=> $name,
+			'value' 		=> $value,
+			'discount' 		=> isset($discount) ? $discount : "nan",
+			'minimum'		=> $minimum,
+			'qoh'			=> isset($newIssued) ? $newIssued : "nan",
+			'salesqoh'			=> isset($salescaseIssued) ? $salescaseIssued : "nan",
+			'stkcode'		=> isset($stockid) ? $stockid : "nan",
+		]
+
 	];
 
 	echo json_encode($response);
 	return;
-}
 
-$response = [
-
-	'status' => 'success',
-	'data' => [
-		'salescaseref'	=> $salescaseref,
-		'orderno'		=> $orderno,
-		'name' 			=> $name,
-		'value' 		=> $value,
-		'discount' 		=> isset($discount) ? $discount : "nan",
-		'minimum'		=> $minimum,
-		'qoh'			=> isset($newIssued) ? $newIssued : "nan",
-		'stkcode'		=> isset($stockid) ? $stockid : "nan",
-	]
-
-];
-
-echo json_encode($response);
-return;
+?>
