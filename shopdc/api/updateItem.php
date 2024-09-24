@@ -164,7 +164,7 @@
 		$salescaseIssued = $issuedQuantityref - $quantityDifference;
 		$newDCVal  = $dcQuantity + $quantityDifference;
         //GRB
-        if($newIssued>$issuedQuantity && isset($_POST['grbno'])) {
+        if($newIssued>$salescaseIssued && isset($_POST['grbno'])) {
 
             $SQL = "INSERT INTO `grbdetails`(`orderno`,`stkcode`,`quantity`)
 			VALUES ('" . $grbno . "','" . $stockid . "','" . -1*$quantityDifference . "')";
@@ -395,7 +395,14 @@
 		return;	
 
 	}
-	
+	$SQL = "SELECT quantity FROM ogpsalescaseref 
+				WHERE stockid='" . $stockid . "'
+				AND salesman='" . $salesman . "'
+				AND salescaseref = '" . $salescaseref . "'";
+
+$result = mysqli_query($db, $SQL);
+
+$salescaseIssued = mysqli_fetch_assoc($result)['quantity'];
 
 	$response = [
 

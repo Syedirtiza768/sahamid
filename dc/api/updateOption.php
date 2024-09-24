@@ -200,6 +200,7 @@ if ($name == "quantity") {
 		$quantityDifference = ($row['quantity'] * $value) - ($row['quantity'] * $optionQuantity);
 
 		$newIssued = $issuedQuantity - $quantityDifference;
+		$salescaseIssued = $issuedQuantityref - $quantityDifference;
 		$newDCVal  = $dcQuantity + $quantityDifference;
 		//GRB
 		if ($newIssued > $issuedQuantity && isset($_POST['grbno'])) {
@@ -221,7 +222,7 @@ if ($name == "quantity") {
 
 			'stkcode' => $stockid,
 			'qoh' => $newIssued,
-
+			'salesqoh' => $salescaseIssued
 		];
 
 		$SQL = "SELECT * FROM dcdetails 

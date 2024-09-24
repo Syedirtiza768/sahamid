@@ -1630,6 +1630,7 @@
 							$("."+response.data.items[i].stkcode+"").each(function(){
 
 								$(this).find(".qohabc").val(response.data.items[i].qoh);
+								$(this).find(".qohabcd").val(response.data.items[i].salesqoh);
 		    					$(this).find(".quabc").html(response.data.items[i].qoh);
 
 							});
