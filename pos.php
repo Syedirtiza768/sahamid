@@ -265,11 +265,12 @@ if (isset($_POST['Submit']) and $count > 0) {
 				}
 			}
 		}
-
 		if ($_SESSION['Request']->parchino) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
-				$itemcode = "SELECT * FROM ogpmporef WHERE mpo= '" . $_SESSION['Request']->parchino . "'";
+				echo $_POST['parchino'];
+				$itemcode = "SELECT * FROM ogpmporef WHERE mpo= '" . $_SESSION['Request']->parchino . "'
+				AND stockid = '" . $LineItems->StockID . "' AND salesman = '" . $_SESSION['Request']->deliveredto . "'";
 				$Result = DB_query($itemcode, $db);
 				if (DB_num_rows($Result) == 1) {
 					$itemcode = "UPDATE ogpmporef SET quantity =quantity +'" . $LineItems->Quantity . "' WHERE mpo= '" . $_SESSION['Request']->parchino . "'
