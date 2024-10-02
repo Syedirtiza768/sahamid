@@ -1202,7 +1202,6 @@
 		var rootpath = $('#rootpath').val();
 		var salesref = $('#salesref').val();
 		var grbno = $('#grbno').val();
-
 		$.ajax({
 			type: 'POST',
 		    url: rootpath+"/shopdc/api/updateItem.php",
@@ -1210,9 +1209,7 @@
 		    dataType: "json",
 		    success: function(response) { 
 		    	var status = response.status;
-		    	
 		    	if(status == "success"){
-
 		    		$("#"+item+"").find("input.quantity").css("border","2px green solid");
 		    		$("#"+item+"").find("input.quantity").val(response.data.value);
 		    		$("#"+item+"").find("input.qohabc").val(response.data.qoh);
@@ -1244,7 +1241,6 @@
 
 		    },
 		    error: function(){
-
 		    	$("#"+item+"").find("input.quantity").css("border","2px red solid");
 	    		$("#"+item+"").find("input.quantity").prop("disabled", false);
 		    
@@ -1553,6 +1549,7 @@
 		    data: {orderno: order,grbno, salescaseref: salesref, name:name, value:value, option:option,FormID:formID},
 		    dataType: "json",
 		    success: function(response) { 
+				console.log(response);
 
 		    	var status = response.status;   	
 

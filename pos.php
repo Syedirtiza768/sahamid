@@ -265,6 +265,7 @@ if (isset($_POST['Submit']) and $count > 0) {
 				}
 			}
 		}
+		
 		if ($_SESSION['Request']->parchino) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
