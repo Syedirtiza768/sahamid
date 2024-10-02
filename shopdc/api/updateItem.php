@@ -169,20 +169,14 @@ if ($name == "quantity") {
 				AND stockid='" . $stockid . "'";
 		$result = mysqli_query($db, $SQL);
 	} else if (isset($_POST['grbno'])) {
-		$SQL = "UPDATE `stockissuance` SET issued='" . $newIssued . "',dc='" . $newDCVal . "' 
-				WHERE salesperson='" . $salesman . "'
-				AND stockid='" . $stockid . "'";
-		mysqli_query($db, $SQL);
-
-		$response = [
-			'status'  => 'alert',
-			'message' => 'Salescase QOH cannot be more then salesman QOH. Please contact admin for better solution',
-			'minimum' => $stkQuantity,
-		];
-
-		echo json_encode($response);
+		
 		return;
 	}
+	
+	$SQL = "UPDATE `stockissuance` SET issued='" . $newIssued . "',dc='" . $newDCVal . "' 
+			WHERE salesperson='" . $salesman . "'
+			AND stockid='" . $stockid . "'";
+	mysqli_query($db, $SQL);
 
 	//Calculate Total Item Quantity In DC
 	$totalItemQuantityInDC = 0;
