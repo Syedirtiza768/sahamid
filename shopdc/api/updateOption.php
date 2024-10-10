@@ -224,7 +224,7 @@ if ($name == "quantity") {
 
 			'stkcode' => $stockid,
 			'qoh' => $newIssued,
-			'salesqoh'=>  $salescaseIssue
+			'salesqoh'=>  $salescaseIssued
 
 		];
 

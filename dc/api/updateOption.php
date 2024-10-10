@@ -218,6 +218,7 @@ if ($name == "quantity") {
 
 		mysqli_query($db, $SQL);
 
+
 		$itemss[] = [
 
 			'stkcode' => $stockid,
