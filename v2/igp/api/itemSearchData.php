@@ -15,7 +15,10 @@ $desti = $_POST['desti'];
 $subStore = $_POST['subStore'];
 $date = $_POST['date'];
 $narative = $_POST['narative'];
-$subStore = $_SESSION['UserStockLocation'];
+
+if (empty($stock_location)) {
+    $stock_location = $_SESSION['UserStockLocation'];
+}
 
 if ($igp_type == "s" || $igp_type == "e") {
     if ($igp_salesperson_type == "salescase") {

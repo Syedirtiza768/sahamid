@@ -186,10 +186,13 @@ include('../v2/config1.php');
             </div>
           </div>
           <div class="mb-6">
+          <?php $sql = "SELECT substoreid , description FROM substores WHERE locid = '" . $_SESSION['UserStockLocation'] . "'";
+            $result = mysqli_query($conn, $sql); ?>
             <label class="font-bold text-gray-700 text-sm ml-1">Substore</label>
             <select id="subStore" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSubStoreDiv(this)">
-              <option value="4" selected>Flat Store</option>
-              <option value="5">Office Store</option>
+              <?php while ($myrow = mysqli_fetch_array($result)) { ?>
+                <option value="<?php echo $myrow['substoreid'] ?>"><?php echo $myrow['description'] ?></option>
+              <?php } ?>
             </select>
           </div>
           <div class="mb-6">
