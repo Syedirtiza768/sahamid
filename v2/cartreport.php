@@ -267,50 +267,54 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
         $response[$row['issued']]['totalValue'] = locale_number_format($response[$row['issued']]['totalValue']);
     }
 
-    $sqlthird = "SELECT DISTINCT si.stockid,
-                sm.description,
-                sm.mnfCode,
-                sm.mnfpno,
-                mf.manufacturers_name,
-                ogp.quantity AS issued,
-                si.returned AS returned,
-                si.dc AS dc,
-                sm.materialcost,
-                si.salesperson,
-                sm.discount,
-                ogp.quantity * sm.materialcost * (1 - sm.discount) AS totalValue,
-                sm.decimalplaces,
-                sm.serialised,
-                sm.controlled,
-                ogp.mpo,
-                '' AS csv,
-                '' AS crv,
-                '' AS salescaseref
-FROM stockissuance si
-JOIN stockmaster sm ON si.stockid = sm.stockid
-JOIN manufacturers mf ON sm.brand = mf.manufacturers_id
-JOIN stockcategory sc ON sm.categoryid = sc.categoryid
-JOIN ogpmporef ogp ON ogp.stockid = si.stockid
-WHERE (sm.mbflag = 'B' OR sm.mbflag = 'M')
-  AND ogp.quantity IS NOT NULL
-  AND ogp.quantity > 0
-  AND ogp.dispatchid IS NOT NULL
-  AND ogp.salesman = '" . $_GET['clientID'] . "'
-  AND si.issued > 0
-  AND si.salesperson = '" . $_GET['clientID'] . "';
+    $sqlfourth = "SELECT DISTINCT 
+    si.stockid,
+    sm.description,
+    sm.mnfCode,
+    sm.mnfpno,
+    mf.manufacturers_name,
+    ogp.quantity AS issued,
+    si.returned AS returned,
+    si.dc AS dc,
+    sm.materialcost,
+    si.salesperson,
+    sm.discount,
+    ogp.quantity * sm.materialcost * (1 - sm.discount) AS totalValue,
+    sm.decimalplaces,
+    sm.serialised,
+    sm.controlled,
+    ogp.mpo,
+    '' AS csv,
+    '' AS crv,
+    '' AS salescaseref
+FROM 
+    stockissuance si,
+    stockmaster sm,
+    manufacturers mf,
+    stockcategory sc,
+    ogpmporef ogp
+WHERE 
+    si.stockid = sm.stockid
+    AND sm.brand = mf.manufacturers_id
+    AND sm.mbflag IN ('B', 'M')
+    AND ogp.stockid = si.stockid
+    AND ogp.quantity IS NOT NULL
+    AND ogp.quantity > 0
+    AND ogp.dispatchid IS NOT NULL
+    AND ogp.salesman = '" . $_GET['clientID'] . "'
+    AND si.issued > 0
+    AND si.salesperson = '" . $_GET['clientID'] . "' ";
 
-					";
-
-    $res = mysqli_query($db, $sqlthird);
+    $res = mysqli_query($db, $sqlfourth);
     while ($row = mysqli_fetch_assoc($res)) {
-        $response[$row['issued']] = $row;
-        if ($responsediscount[$row['issued']]['discount'] > 0)
-            $response[$row['issued']]['discount'] = round($responsediscount[$row['issued']]['discount'] * 100, 2);
+        $response[$row['mpo']] = $row;
+        if ($responsediscount[$row['mpo']]['discount'] > 0)
+            $response[$row['mpo']]['discount'] = round($responsediscount[$row['issued']]['discount'] * 100, 2);
         else
-            $response[$row['issued']]['discount'] = 50;
-        $response[$row['issued']]['totalValue'] = $row['issued'] * $row['materialcost'] * (1 - ($response[$row['issued']]['discount'] / 100));
-        $sum = $sum + $response[$row['issued']]['totalValue'];
-        $response[$row['issued']]['totalValue'] = locale_number_format($response[$row['issued']]['totalValue']);
+            $response[$row['mpo']]['discount'] = 50;
+        $response[$row['mpo']]['totalValue'] = $row['issued'] * $row['materialcost'] * (1 - ($response[$row['mpo']]['discount'] / 100));
+        $sum = $sum + $response[$row['mpo']]['totalValue'];
+        $response[$row['mpo']]['totalValue'] = locale_number_format($response[$row['mpo']]['totalValue']);
     }
 
     $resFinal = [];
