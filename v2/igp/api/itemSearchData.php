@@ -10,7 +10,8 @@ $csv = $_POST['csv'];
 $crv = $_POST['crv'];
 $mpo = $_POST['mpo'];
 $employee = $_POST['employee'];
-$stock_location = $_POST['stock_location'];
+// $stock_location = $_POST['stock_location'];
+$stock_location = $_SESSION['UserStockLocation'];
 $desti = $_POST['desti'];
 $subStore = $_POST['subStore'];
 $date = $_POST['date'];
@@ -332,7 +333,7 @@ FROM
 INNER JOIN 
     locstock ON stockmaster.stockid = locstock.stockid 
 WHERE 
-    (stockmaster.mnfCode LIKE '%" . $stock_location . "%' OR stockmaster.stockid LIKE '%" . $stock_location . "%') 
+    (stockmaster.mnfCode LIKE '%%' OR stockmaster.stockid LIKE '%%') 
     AND locstock.loccode = '" . $_SESSION['UserStockLocation'] . "'
     AND stockmaster.stockid NOT LIKE '% %' 
     AND locstock.quantity > 0 
