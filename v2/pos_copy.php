@@ -155,7 +155,7 @@ include('../v2/config1.php');
               $result = mysqli_query($conn, $sql); ?>
               <label class="font-bold text-gray-700 text-sm ml-1">Issued to Employee </label>
               <select id="employee" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showmemployeeDiv(this)">
-                <option selected>Select an employee</option>
+                <option value="" selected>Select an employee</option>
                 <?php while ($myrow = mysqli_fetch_array($result)) { ?>
                   <option value="<?php echo $myrow['realname'] ?>"><?php echo $myrow['realname'] ?></option>
                 <?php } ?>

@@ -13,6 +13,7 @@ $mpo = $_POST['mpo'];
 $employee = $_POST['employee'];
 // $stock_location = $_POST['stock_location'];
 $stock_location = $_SESSION['UserStockLocation'];
+$stock_location1 = $_POST['stock_location'];
 $destination = $_POST['destination'];
 $substore = $_POST['substore'];
 $narative = $_POST['narative'];
@@ -20,6 +21,42 @@ $items = $_POST['items'];
 $date = date('Y-m-d');
 if (empty($stock_location)) {
     $stock_location = $_SESSION['UserStockLocation'];
+}
+
+$location_code = $stock_location1; // Example location code
+$stock_location1 = "";
+
+switch ($location_code) {
+    case "HO":
+        $stock_location1 = "HO - Head Office";
+        break;
+    case "HOPS":
+        $stock_location1 = "HOPS - Head Office PS";
+        break;
+    case "MT":
+        $stock_location1 = "MT - Model Town";
+        break;
+    case "MTPS":
+        $stock_location1 = "MTPS - Model Town PS";
+        break;
+    case "OS":
+        $stock_location1 = "OS - Offset";
+        break;
+    case "SR":
+        $stock_location1 = "SR - Show Room";
+        break;
+    case "SRPS":
+        $stock_location1 = "SRPS - Show Room PS";
+        break;
+    case "VSR":
+        $stock_location1 = "VSR - Virtual Store Show Room";
+        break;
+    case "WS":
+        $stock_location1 = "WS - Workshop";
+        break;
+    default:
+        $stock_location1 = "Unknown Location";
+        break;
 }
 
 
@@ -360,6 +397,8 @@ if ($salesperson != "") {
     $deliveredto = $salesperson;
 } elseif ($employee != "") {
     $deliveredto = $employee;
+} elseif ($stock_location1 != "") {
+    $deliveredto = $stock_location1;
 }
 $HeaderSQL = "INSERT INTO posdispatch (dispatchid,
 											loccode,
