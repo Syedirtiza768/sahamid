@@ -594,7 +594,7 @@ VALUES(
 						'" . $RequestNo . "',
 						'" . $stock_location . "',
 							'" . $date . "',
-						'" . _('From') . ' ' . $salesperson . "'
+						'" . _('From') . ' ' . $receivedfrom . "'
 						,'" . round($LineItems['quantity'], 0) . "'
 						,'" . $PeriodNo . "'
 						

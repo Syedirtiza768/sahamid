@@ -393,6 +393,7 @@ function FormatDateForSQL($DateEntry)
 }
 echo $RequestNo;
 
+$deliveredto = "";
 if ($salesperson != "") {
     $deliveredto = $salesperson;
 } elseif ($employee != "") {
@@ -618,7 +619,7 @@ foreach ($items as $LineItems) {
 						'" . $RequestNo . "',
 						'" . $stock_location . "',
 							'" . $date . "',
-						'" . _('To') . ' ' . $salesperson . "'
+						'" . _('To') . ' ' . $deliveredto . "'
 						,'" . round($LineItems['quantity'], 0) . "'
 						,'" . $PeriodNo . "'
 						
