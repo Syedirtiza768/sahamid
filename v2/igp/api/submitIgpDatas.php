@@ -598,7 +598,7 @@ VALUES(
 						,'" . round($LineItems['quantity'], 0) . "'
 						,'" . $PeriodNo . "'
 						
-						,'" . round($QtyOnHandPrior - $LineItems['quantity'], 0) . "'
+						,'" . round($QtyOnHandPrior + $LineItems['quantity'], 0) . "'
 						)";
 
     $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');

@@ -413,7 +413,7 @@ include('../v2/config1.php');
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptDatas.js"></script>
+<script src="ogp/javascriptDatassss.js"></script>
 
 
 </html>
