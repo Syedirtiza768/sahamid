@@ -656,37 +656,37 @@ VALUES(
         $DbgMsg =  _('The following SQL to update the stock record was used');
         $Result = mysqli_query($conn, $SQL);
 
-        if ($request_fulfil == "yes") {
+        // if ($request_fulfil == "yes") {
 
-            $updateStatusSQL = "UPDATE submitted_ogp_items 
-                       SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
-                       WHERE stockcode = '" . $LineItems['Code'] . "' 
-                        AND notification_id = '" . $requestid . "' ";
-            $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
+        //     $updateStatusSQL = "UPDATE submitted_ogp_items 
+        //                SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
+        //                WHERE stockcode = '" . $LineItems['Code'] . "' 
+        //                 AND notification_id = '" . $requestid . "' ";
+        //     $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
 
-            // making notification detial page status changed
-            $updateStatusSQL = "UPDATE ogp_notifications 
-                       SET status = 'in_progress'
-                       WHERE id = '" . $requestid . "' ";
-            $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
+        //     // making notification detial page status changed
+        //     $updateStatusSQL = "UPDATE ogp_notifications 
+        //                SET status = 'in_progress'
+        //                WHERE id = '" . $requestid . "' ";
+        //     $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
 
 
 
-            $checkSQL = "SELECT quantity FROM submitted_ogp_items 
-            WHERE stockcode = '" . $LineItems['Code'] . "' 
-            AND notification_id = '" . $requestid . "' AND quantity = 0";
+        //     $checkSQL = "SELECT quantity FROM submitted_ogp_items 
+        //     WHERE stockcode = '" . $LineItems['Code'] . "' 
+        //     AND notification_id = '" . $requestid . "' AND quantity = 0";
 
-            $checkResult = mysqli_query($conn, $checkSQL);
+        //     $checkResult = mysqli_query($conn, $checkSQL);
 
-            // If the quantity is zero, update the status to 'approved'
-            if (mysqli_num_rows($checkResult) > 0) {
-                $updateStatusSQL = "UPDATE submitted_ogp_items 
-                       SET status = 'approved' 
-                       WHERE stockcode = '" . $LineItems['Code'] . "' 
-                        AND notification_id = '" . $requestid . "' AND quantity = 0";
-                $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
-            }
-        }
+        //     // If the quantity is zero, update the status to 'approved'
+        //     if (mysqli_num_rows($checkResult) > 0) {
+        //         $updateStatusSQL = "UPDATE submitted_ogp_items 
+        //                SET status = 'approved' 
+        //                WHERE stockcode = '" . $LineItems['Code'] . "' 
+        //                 AND notification_id = '" . $requestid . "' AND quantity = 0";
+        //         $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
+        //     }
+        // }
     }
     $i++;
 }

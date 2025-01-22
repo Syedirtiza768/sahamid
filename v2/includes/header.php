@@ -324,7 +324,7 @@ session_start();
 
         <!-- Notifications -->
         <?php if ($fullaccess == "12" || $fullaccess == "22" || $fullaccess == "10") { ?>
-          <li class="dropdown notifications-menu" style="list-style: none; position: relative;">
+          <!-- <li class="dropdown notifications-menu" style="list-style: none; position: relative;">
             <a href="#" id="notification-icon" class="dropdown-toggle" style="position: relative;">
               <i class="glyphicon glyphicon-bell" style="font-size:18px;"></i>
               <span id="notification-badge" class="badge badge-warning blink">0</span>
@@ -334,7 +334,7 @@ session_start();
               <ul></ul>
               <div class="no-notifications">No new notifications</div>
             </div>
-          </li>
+          </li> -->
         <?php } ?>
 
         <!-- Logout -->

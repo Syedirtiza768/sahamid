@@ -707,30 +707,30 @@ foreach ($items as $LineItems) {
         $DbgMsg =  _('The following SQL to update the stock record was used');
         $Result = mysqli_query($conn, $SQL);
 
-        if ($ogp_type == "l" ){
-            $SQL = " INSERT INTO submitted_ogp_items(
-                notification_id,
-                stockcode,
-                storeid,
-                substoreid,
-                quantity
-            ) VALUES (
-                '" . $ogp_notification_id . "',
-                '" . $LineItems['Code'] . "',
-                '" . $location_code . "',
-                '" . $substore . "',
-                '" . $LineItems['quantity'] . "')";
-            $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-            $DbgMsg = _('The following SQL to insert the request header record was used');
-            // Execute query
-            if (!$Result = mysqli_query($conn, $SQL)) {
-                // Display error
-                echo $ErrMsg . "<br>";
-                echo $DbgMsg . "<br>";
-                echo "Error: " . mysqli_error($conn) . "<br>";
-                echo "SQL: " . $SQL . "<br>";
-            }
-        }
+        // if ($ogp_type == "l" ){
+        //     $SQL = " INSERT INTO submitted_ogp_items(
+        //         notification_id,
+        //         stockcode,
+        //         storeid,
+        //         substoreid,
+        //         quantity
+        //     ) VALUES (
+        //         '" . $ogp_notification_id . "',
+        //         '" . $LineItems['Code'] . "',
+        //         '" . $location_code . "',
+        //         '" . $substore . "',
+        //         '" . $LineItems['quantity'] . "')";
+        //     $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+        //     $DbgMsg = _('The following SQL to insert the request header record was used');
+        //     // Execute query
+        //     if (!$Result = mysqli_query($conn, $SQL)) {
+        //         // Display error
+        //         echo $ErrMsg . "<br>";
+        //         echo $DbgMsg . "<br>";
+        //         echo "Error: " . mysqli_error($conn) . "<br>";
+        //         echo "SQL: " . $SQL . "<br>";
+        //     }
+        // }
     }
     $i++;
 }
