@@ -5,6 +5,6 @@ $sql = "SELECT * FROM `bazar_parchi` WHERE `on_behalf_of` = '" . $Salesman . "' 
 $result = mysqli_query($conn, $sql); 
 $results = [];
 while ($myrow = mysqli_fetch_array($result)){
-    $results[] = $myrow['bazar_parchi'];
+    $results[] = $myrow['parchino'];
 }
 echo json_encode($results);

@@ -558,7 +558,27 @@ if ($mpo != "") {
     }
 }
 
-
+$ogp_notification_id = 0;
+if ($ogp_type == "l") {
+    $SQL = " INSERT INTO ogp_notifications (
+        defaultlocation,
+        message,
+        to_location,
+        request_no
+    ) VALUES (
+        '" . $stock_location . "',
+		' New OGP " . $RequestNo . " is submitted. Please have a review',
+		'" . $location_code . "',
+		'" . $RequestNo . "')";
+    $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+    $DbgMsg = _('The following SQL to insert the request header record was used');
+    // Execute query
+    if (!$Result = mysqli_query($conn, $SQL)) {
+    } else {
+        // Retrieve the last inserted ID
+        $ogp_notification_id = mysqli_insert_id($conn);
+    }
+}
 
 $i = 0;
 foreach ($items as $LineItems) {
@@ -671,7 +691,6 @@ foreach ($items as $LineItems) {
     }
 
     if ($ogp_type == "l" or $ogp_type == "d") {
-
         $SQL = "UPDATE locstock
 					SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
@@ -687,6 +706,31 @@ foreach ($items as $LineItems) {
         $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
         $DbgMsg =  _('The following SQL to update the stock record was used');
         $Result = mysqli_query($conn, $SQL);
+
+        if ($ogp_type == "l" ){
+            $SQL = " INSERT INTO submitted_ogp_items(
+                notification_id,
+                stockcode,
+                storeid,
+                substoreid,
+                quantity
+            ) VALUES (
+                '" . $ogp_notification_id . "',
+                '" . $LineItems['Code'] . "',
+                '" . $location_code . "',
+                '" . $substore . "',
+                '" . $LineItems['quantity'] . "')";
+            $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+            $DbgMsg = _('The following SQL to insert the request header record was used');
+            // Execute query
+            if (!$Result = mysqli_query($conn, $SQL)) {
+                // Display error
+                echo $ErrMsg . "<br>";
+                echo $DbgMsg . "<br>";
+                echo "Error: " . mysqli_error($conn) . "<br>";
+                echo "SQL: " . $SQL . "<br>";
+            }
+        }
     }
     $i++;
 }

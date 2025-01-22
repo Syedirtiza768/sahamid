@@ -290,6 +290,16 @@
             </a>
           </li>
           <?php } ?>
+          <?php
+            $PageSecurity = $_SESSION['PageSecurityArray']['pos.php'];
+            if(in_array($PageSecurity, $_SESSION['AllowedPageSecurityTokens'])){ 
+          ?>
+          <!-- <li>
+            <a href="<?php echo $NewRootPath; ?>v2/ogp_request.php">
+              <i class="fa fa-arrow-left"></i> OGP Requests
+            </a>
+          </li> -->
+          <?php } ?>
           <li>
             <a target="_blank" href="<?php echo $NewRootPath; ?>ItemReference/changeItemReference.php">
               <i class="fa fa-arrow-left"></i> Change Item Reference

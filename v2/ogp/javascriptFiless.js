@@ -1,3 +1,4 @@
+
 var items = [];
 $(document).ready(function () {
     $('#employee').select2();
@@ -12,46 +13,35 @@ var globelVariable = 0;
 var nxtBtnVariable = 0;
 // search item function
 function itemSearch() {
-    var igp_type = $('#igp_type').val();
-    var salesman = $('#salesman').val();
-    var igp_salesperson_type = $('#igp_salesperson_type').val();
-    var salescase = $('#salescases').val();
-    var csv = $('#csv').val();
-    var crv = $('#crv').val();
-    var mpo = $('#mpo').val();
-    var employee = $('#employee').val();
-    var stock_location = $('#stock_location').val();
-    var desti = $('#desti').val();
     var subStore = $('#subStore').val();
-    var date = $('#date').val();
-    var narative = $('#narative').val();
+    var brand = $('#brand').val();
+    var StockCat = $('#StockCat').val();
+    var StockCode = $('#StockCode').val();
     document.getElementById("loader").style.display = "block";
     $.ajax({
         type: "POST",
-        url: "igp/api/itemSearchData.php",
+        url: "ogp/api/itemSearchData.php",
         data: {
-            igp_type: igp_type,
-            salesman: salesman,
-            igp_salesperson_type: igp_salesperson_type,
-            salescase: salescase,
-            csv: csv,
-            crv: crv,
-            mpo: mpo,
-            employee: employee,
-            stock_location: stock_location,
-            desti: desti,
             subStore: subStore,
-            date: date,
-            narative: narative
+            brand: brand,
+            StockCat: StockCat,
+            StockCode: StockCode
         },
         success: function (response) {
             console.log(response);
             try {
                 var jsonData = JSON.parse(response);
+                // Clear the table by resetting it with an empty array
+                var table = $('#example').DataTable();
+                table.clear().draw(); // Clears the table completely
+
+                // Populate the table with new data
                 populateTable(jsonData);
 
                 // Now you can work with the parsed JSON data
             } catch (error) {
+                var table = $('#example').DataTable();
+                table.clear().draw(); // Clears the table completely
                 console.error("Error parsing JSON:", error);
             }
             document.getElementById("loader").style.display = "none";
@@ -60,20 +50,34 @@ function itemSearch() {
 }
 
 function populateTable(data) {
-    $('#example tbody').empty();
     var table = $('#example').DataTable();
-    table.clear().draw();
+
+    // Clear existing data without redrawing
+    table.clear().draw(false);
+
+    // Create an array to hold the rows
+    var rows = [];
+
+    // Loop through the data and prepare each row
     for (var i = 0; i < data.length; i++) {
-        // var rowData = '<tr class="text-gray-800"><td class="text-blue-800 underline"><a href = "../SelectProduct.php?Select=' + data[i].Code + '" target = "_blank" > ' + data[i].Code + '</a></td><td>' + data[i].Description + '</td><td>' + data[i].QOH + '</td><td>' + data[i].OnDemand + '</td><td>' + data[i].OnOrder + '</td><td>' + data[i].Available + '</td></tr>';
-        var rowData = '<td class="text-blue-800 underline"><a href = "../SelectProduct.php?Select=' + data[i].stockid + '" target = "_blank" > ' + data[i].stockid + '</a></td>';
-        var rowData2 = '<td>' + data[i].description + '</td>';
-        var rowData3 = '<td>' + data[i].mnfCode + '</td>';
-        var rowData4 = '<td>' + data[i].qoh + '</td>';
-        var rowData5 = '<td> <input class="w-16 h-6 text-center" id="' + data[i].stockid + '"> </input> </td>';
-        var rowData6 = '<td> <button type="button" id="btn' + data[i].stockid + '" class="bg-green-500 w-16 h-6 border rounded-md" onclick = "ItemAdd((\'' + data[i].stockid + '\') , (\'' + data[i].description + '\'), (\'' + data[i].qoh + '\'));" > <i class="fa-solid fa-check text-white"></i> </button></td>';
-        table.row.add([rowData, rowData2, rowData3, rowData4, rowData5, rowData6]).draw();
+        var rowData = [
+            '<td class="text-blue-800 underline"><a href="../SelectProduct.php?Select=' + data[i].Code + '" target="_blank">' + data[i].Code + '</a></td>',
+            '<td>' + data[i].Description + '</td>',
+            '<td>' + data[i].QOH + '</td>',
+            '<td>' + data[i].OnDemand + '</td>',
+            '<td>' + data[i].OnOrder + '</td>',
+            '<td>' + data[i].Available + '</td>',
+            '<td><input class="w-16 h-6 text-center" id="' + data[i].Code + '"></input></td>',
+            '<td><button type="button" id="btn' + data[i].Code + '" class="bg-green-500 w-16 h-6 border rounded-md" onclick="ItemAdd(\'' + data[i].Code + '\', \'' + data[i].Description + '\', \'' + data[i].QOH + '\');"><i class="fa-solid fa-check text-white"></i></button></td>'
+        ];
+
+        rows.push(rowData);
     }
+
+    // Add the rows in bulk
+    table.rows.add(rows).draw();
 }
+
 
 function ItemAdd(code, description, qoh) {
     var Itemcode = code;
@@ -266,20 +270,20 @@ function nextPrev(n) {
         var table = $('#example').DataTable();
         $('#example tbody').empty();
         table.clear().draw(); // Clears the table completely
+
         var tbody = document.getElementById('example1').getElementsByTagName('tbody')[0];
         tbody.innerHTML = ''; // Clear table body
         items = [];
     }
+
     window.subStore = $('#subStore').val();
+
     Substore = $('#subStore').val();
     if (Substore == '4') {
         Substore = 'Flat Store'
     }
     if (Substore == '5') {
         Substore = 'Office Store'
-    }
-    if (Substore == '4') {
-        Substore = 'Flat Store'
     }
     if (Substore == '6') {
         Substore = 'Umar Market Store'
@@ -326,6 +330,7 @@ function nextPrev(n) {
     if (Substore == '20') {
         Substore = 'OffsetS'
     }
+
     document.getElementById('SubstoreDiv').style.display = 'block';
     $('.subStore').html("<b>Sub Store:     </b>" + Substore)
 
@@ -336,52 +341,56 @@ function nextPrev(n) {
     // Hide the current tab:
     x[currentTab].style.display = "none";
     if (currentTab == '0') {
-        var igp_type = $('#igp_type').val();
-        if (igp_type != "") {
-            if (igp_type == 's') {
-                var salesman = $('#salesman').val();
-                var ogp_salesperson_type = $('#ogp_salesperson_type').val();
-                if (salesman !== "" && ogp_salesperson_type !== "" && ogp_salesperson_type !== "Salesperson OGP Type") {
-                    itemSearch();
-                    currentTab = currentTab + n;
-                } else {
-                    alert("Please select sales person related all information first.");
+
+        var subStore = $('#subStore').val();
+        if (subStore != "") {
+
+            var ogp_type = $('#ogp_type').val();
+            if (ogp_type != "") {
+                if (ogp_type == 's') {
+                    var salesman = $('#salesman').val();
+                    var ogp_salesperson_type = $('#ogp_salesperson_type').val();
+                    if (salesman !== "" && ogp_salesperson_type !== "" && ogp_salesperson_type !== "Salesperson OGP Type") {
+                        currentTab = currentTab + n;
+                    } else {
+                        alert("Please select sales person related all information first.");
+                    }
+                }
+                else if (ogp_type == 'e') {
+                    var employee = $('#employee').val();
+                    if (employee !== "") {
+                        currentTab = currentTab + n;
+                    } else {
+                        alert("Please select Employee related all information first.");
+                    }
+                }
+                else if (ogp_type == 'l') {
+                    var stock_location = $('#stock_location').val();
+                    if (stock_location !== "") {
+                        currentTab = currentTab + n;
+                    } else {
+                        alert("Please select Stock Location related all information first.");
+                    }
+                }
+                else if (ogp_type == 'd') {
+                    var desti = $('#desti').val();
+                    if (desti !== "") {
+                        currentTab = currentTab + n;
+                    } else {
+                        alert("Please Add External Destination Information First.");
+                    }
                 }
             }
-            else if (igp_type == 'e') {
-                var employee = $('#employee').val();
-                if (employee !== "") {
-                    itemSearch();
-                    currentTab = currentTab + n;
-                } else {
-                    alert("Please select Employee related all information first.");
-                }
+            else {
+                alert("Please select All values first");
             }
-            else if (igp_type == 'l') {
-                var stock_location = $('#stock_location').val();
-                if (stock_location !== "") {
-                    itemSearch();
-                    currentTab = currentTab + n;
-                } else {
-                    alert("Please select Stock Location related all information first.");
-                }
-            }
-            else if (igp_type == 'd') {
-                var desti = $('#desti').val();
-                if (desti !== "") {
-                    itemSearch();
-                    currentTab = currentTab + n;
-                } else {
-                    alert("Please Add External Destination Information First.");
-                }
-            }
+
         }
         else {
-            alert("Please select All values first");
+            alert("Please select sub store and all value first.");
         }
     }
     else {
-
         // Increase or decrease the current tab by 1:
         currentTab = currentTab + n;
     }
@@ -394,7 +403,7 @@ function nextPrev(n) {
             currentTab = currentTab - n;
             alert('Please Add Items to proceed . .');
         } else {
-            submitForm(items);
+            submitForm();
         }
     }
     // Otherwise, display the correct tab:
@@ -435,23 +444,23 @@ function fixStepIndicator(n) {
 
 function showDiv(divId) {
     // document.getElementById(divId).style.display = element.value == 1 ? 'block' : 'none';
-    var igp_type = divId.value;
-    if (igp_type == 's') {
+    var ogp_type = divId.value;
+    if (ogp_type == 's') {
         document.getElementById('salesperson').style.display = 'block';
         document.getElementById('employee_div').style.display = 'none';
         document.getElementById('store').style.display = 'none';
         document.getElementById('destination').style.display = 'none';
-    } else if (igp_type == 'e') {
+    } else if (ogp_type == 'e') {
         document.getElementById('salesperson').style.display = 'none';
         document.getElementById('employee_div').style.display = 'block';
         document.getElementById('store').style.display = 'none';
         document.getElementById('destination').style.display = 'none';
-    } else if (igp_type == 'l') {
+    } else if (ogp_type == 'l') {
         document.getElementById('salesperson').style.display = 'none';
         document.getElementById('employee_div').style.display = 'none';
         document.getElementById('store').style.display = 'block';
         document.getElementById('destination').style.display = 'none';
-    } else if (igp_type == 'd') {
+    } else if (ogp_type == 'd') {
         document.getElementById('salesperson').style.display = 'none';
         document.getElementById('employee_div').style.display = 'none';
         document.getElementById('store').style.display = 'none';
@@ -582,17 +591,18 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "igp/api/salesmanDatas.php",
+        url: "ogp/api/salesmanData.php",
         data: {
             salesmans: salesman
         },
         success: function (data) {
             var dataList = JSON.parse(data);
+
             $('#salescases')
                 .find('option')
                 .remove()
                 .end()
-                .append('<option value="" selected>select one salescase </option>');
+                .append('<option selected>select one salescase </option>');
             for (var i in dataList) {
                 $('#salescases').append(new Option(dataList[i], dataList[i]));
             }
@@ -602,7 +612,7 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "igp/api/CSVData.php",
+        url: "ogp/api/CSVData.php",
         data: {
             salesmans: salesman
         },
@@ -612,7 +622,7 @@ function ogpSaleman(name) {
                 .find('option')
                 .remove()
                 .end()
-                .append('<option value="" selected>select one csv </option>');
+                .append('<option selected>select one csv </option>');
             for (var i in dataList) {
                 $('#csv').append(new Option(dataList[i], dataList[i]));
             }
@@ -621,7 +631,7 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "igp/api/CRVData.php",
+        url: "ogp/api/CRVData.php",
         data: {
             salesmans: salesman
         },
@@ -632,7 +642,7 @@ function ogpSaleman(name) {
                 .find('option')
                 .remove()
                 .end()
-                .append('<option value="" selected>select one crv </option>');
+                .append('<option selected>select one crv </option>');
             for (var i in dataList) {
                 $('#crv').append(new Option(dataList[i], dataList[i]));
             }
@@ -641,7 +651,7 @@ function ogpSaleman(name) {
 
     $.ajax({
         type: "POST",
-        url: "igp/api/MPOData.php",
+        url: "ogp/api/MPOData.php",
         data: {
             salesmans: salesman
         },
@@ -651,7 +661,7 @@ function ogpSaleman(name) {
                 .find('option')
                 .remove()
                 .end()
-                .append('<option value="" selected>select one mpo </option>');
+                .append('<option selected>select one mpo </option>');
             for (var i in dataList) {
                 $('#mpo').append(new Option(dataList[i], dataList[i]));
             }
@@ -659,10 +669,10 @@ function ogpSaleman(name) {
     });
 }
 
-function submitForm(items) {
-    var igp_type = $('#igp_type').val();
+function submitForm() {
+    var ogp_type = $('#ogp_type').val();
     var salesperson = $('#salesman').val();
-    var salesperson_igp_type = $('#igp_salesperson_type').val();
+    var salesperson_ogp_type = $('#ogp_salesperson_type').val();
     var salescase = $('#salescaseref').val();
     var csv = $('#csvref').val();
     var crv = $('#crvref').val();
@@ -673,16 +683,15 @@ function submitForm(items) {
     var substore = $('#subStore').val();
     var narative = $('#narative').val();
     var date = $('#date').val();
-    var items = items;
 
     $.ajax({
         type: "POST",
-        url: "igp/api/submitIgpDatas.php",
+        url: "ogp/api/submitOgpDatas.php",
         data: {
-            igp_type: igp_type,
+            ogp_type: ogp_type,
             salesperson: salesperson,
             date: date,
-            salesperson_igp_type: salesperson_igp_type,
+            salesperson_ogp_type: salesperson_ogp_type,
             salescase: salescase,
             csv: csv,
             crv: crv,
@@ -697,7 +706,7 @@ function submitForm(items) {
         success: function (data) {
             console.log(data);
             var PrintOGP = document.getElementById("PrintOGP");
-            PrintOGP.href = "/sahamid/PDFIGP.php?RequestNo=" + data;
+            PrintOGP.href = "/sahamid/PDFOGP.php?RequestNo=" + data;
         }
     });
 }

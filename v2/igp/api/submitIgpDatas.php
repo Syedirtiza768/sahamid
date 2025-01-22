@@ -3,22 +3,23 @@ include('../../config1.php');
 session_start();
 
 $currentUser = $_SESSION['UsersRealName'];
-$igp_type = $_POST['igp_type'];
-$salesperson = $_POST['salesperson'];
-$salesperson_igp_type = $_POST['salesperson_igp_type'];
-$salescase = $_POST['salescase'];
-$csv = $_POST['csv'];
-$crv = $_POST['crv'];
-$mpo = $_POST['mpo'];
-$employee = $_POST['employee'];
-
+$igp_type = $_POST['igp_type'] ?? null;
+$salesperson = $_POST['salesperson'] ?? null;
+$salesperson_igp_type = $_POST['salesperson_igp_type'] ?? null;
+$salescase = $_POST['salescase'] ?? null;
+$csv = $_POST['csv'] ?? null;
+$crv = $_POST['crv'] ?? null;
+$mpo = $_POST['mpo'] ?? null;
+$employee = $_POST['employee'] ?? null;
 
 // $stock_location = $_POST['stock_location'];
-$stock_location = $_SESSION['UserStockLocation'];
-$destination = $_POST['destination'];
-$substore = $_POST['substore'];
-$narative = $_POST['narative'];
-$items = $_POST['items'];
+$stock_location = $_SESSION['UserStockLocation'] ?? null;
+$destination = $_POST['destination'] ?? null;
+$substore = $_POST['substore'] ?? null;
+$narative = $_POST['narative'] ?? null;
+$request_fulfil = $_POST['request_fulfil'] ?? null;
+$requestid = $_POST['requestid'] ?? null;
+$items = $_POST['items'] ?? [];
 $date = date('Y-m-d');
 if (empty($stock_location)) {
     $stock_location = $_SESSION['UserStockLocation'];
@@ -562,7 +563,7 @@ VALUES(
     $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
     $DbgMsg = _('The following SQL to insert the request header record was used');
     $Result = mysqli_query($conn, $LineSQL);
-    
+
     $SQL = "SELECT locstock.quantity
 						FROM locstock
 						WHERE locstock.stockid='" . $LineItems['Code'] . "'
@@ -609,16 +610,16 @@ VALUES(
 
     if ($igp_type == "s" or $igp_type == "e") {
 
-            $SQL = "UPDATE stockissuance
+        $SQL = "UPDATE stockissuance
 					SET issued = issued - '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
 					AND salesperson='" . $salesperson . "'";
-            $Result = mysqli_query($conn, $SQL);
-            $SQL = "UPDATE stockissuance
+        $Result = mysqli_query($conn, $SQL);
+        $SQL = "UPDATE stockissuance
 					SET returned = returned + '" . round($LineItems['quantity'], 0) . "'
 					WHERE stockid='" . $LineItems['Code'] . "'
 					AND salesperson='" . $salesperson . "'";
-            $Result = mysqli_query($conn, $SQL);
+        $Result = mysqli_query($conn, $SQL);
 
 
         $SQL = "UPDATE locstock
@@ -635,7 +636,6 @@ VALUES(
         $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
         $DbgMsg =  _('The following SQL to update the stock record was used');
         $Result = mysqli_query($conn, $SQL);
-        
     }
 
     if ($igp_type == "l" or $igp_type == "d") {
@@ -655,8 +655,41 @@ VALUES(
         $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The location stock record could not be updated because');
         $DbgMsg =  _('The following SQL to update the stock record was used');
         $Result = mysqli_query($conn, $SQL);
+
+        if ($request_fulfil == "yes") {
+
+            $updateStatusSQL = "UPDATE submitted_ogp_items 
+                       SET quantity = quantity - '" . round($LineItems['quantity'], 0) . "'
+                       WHERE stockcode = '" . $LineItems['Code'] . "' 
+                        AND notification_id = '" . $requestid . "' ";
+            $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
+
+            // making notification detial page status changed
+            $updateStatusSQL = "UPDATE ogp_notifications 
+                       SET status = 'in_progress'
+                       WHERE id = '" . $requestid . "' ";
+            $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
+
+
+
+            $checkSQL = "SELECT quantity FROM submitted_ogp_items 
+            WHERE stockcode = '" . $LineItems['Code'] . "' 
+            AND notification_id = '" . $requestid . "' AND quantity = 0";
+
+            $checkResult = mysqli_query($conn, $checkSQL);
+
+            // If the quantity is zero, update the status to 'approved'
+            if (mysqli_num_rows($checkResult) > 0) {
+                $updateStatusSQL = "UPDATE submitted_ogp_items 
+                       SET status = 'approved' 
+                       WHERE stockcode = '" . $LineItems['Code'] . "' 
+                        AND notification_id = '" . $requestid . "' AND quantity = 0";
+                $updateStatusResult = mysqli_query($conn, $updateStatusSQL);
+            }
+        }
     }
     $i++;
 }
+
 // echo $RequestNo;
 // echo $PeriodNo;

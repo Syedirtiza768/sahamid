@@ -189,7 +189,8 @@ include('../v2/config1.php');
           <?php $sql = "SELECT substoreid , description FROM substores WHERE locid = '" . $_SESSION['UserStockLocation'] . "'";
             $result = mysqli_query($conn, $sql); ?>
             <label class="font-bold text-gray-700 text-sm ml-1">Substore</label>
-            <select id="subStore" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSubStoreDiv(this)">
+            <select id="subStore" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200">
+              <option value="">Select Substore</option>
               <?php while ($myrow = mysqli_fetch_array($result)) { ?>
                 <option value="<?php echo $myrow['substoreid'] ?>"><?php echo $myrow['description'] ?></option>
               <?php } ?>
@@ -413,7 +414,7 @@ include('../v2/config1.php');
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptDatassss.js"></script>
+<script src="ogp/javascriptFiless.js"></script>
 
 
 </html>
