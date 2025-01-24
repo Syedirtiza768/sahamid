@@ -1,5 +1,6 @@
 <?php
 include('../../config1.php');
+ini_set('memory_limit', '512M'); 
 session_start();
 // $_SESSION['UsersRealName'];
 $igp_type = $_POST['igp_type'];
@@ -43,11 +44,9 @@ if ($igp_type == "s" || $igp_type == "e") {
             AND ogpsalescaseref.salescaseref = '" . $salescase . "'
             AND ogpsalescaseref.quantity != ''
             AND ogpsalescaseref.quantity != '0'
-            and stockissuance.issued>0
             AND stockmaster.stockid NOT LIKE '%\t%'
             order by stockissuance.issued desc
             ";
-
         $UpdateResult = mysqli_query($conn, $SQL5);
 
 
@@ -84,11 +83,9 @@ if ($igp_type == "s" || $igp_type == "e") {
         AND ogpcsvref.csv = '" . $csv . "'
         AND ogpcsvref.quantity != ''
         AND ogpcsvref.quantity != '0'
-        and stockissuance.issued>0
         AND stockmaster.stockid NOT LIKE '%\t%'
         order by stockissuance.issued desc
         ";
-
         $UpdateResult = mysqli_query($conn, $SQL5);
 
 
@@ -124,7 +121,6 @@ if ($igp_type == "s" || $igp_type == "e") {
         AND ogpcrvref.crv = '" . $crv . "'
         AND ogpcrvref.quantity != ''
         AND ogpcrvref.quantity != '0'
-        and stockissuance.issued>0
         AND stockmaster.stockid NOT LIKE '%\t%'
         order by stockissuance.issued desc
         ";
@@ -164,11 +160,9 @@ if ($igp_type == "s" || $igp_type == "e") {
         AND ogpmporef.mpo = '" . $mpo . "'
         AND ogpmporef.quantity != ''
         AND ogpmporef.quantity != '0'
-        and stockissuance.issued>0
         AND stockmaster.stockid NOT LIKE '%\t%'
         order by stockissuance.issued desc
         ";
-
         $UpdateResult = mysqli_query($conn, $SQL5);
 
 
@@ -222,10 +216,8 @@ if ($igp_type == "s" || $igp_type == "e") {
         FROM stockmaster INNER JOIN stockissuance
         ON stockmaster.stockid=stockissuance.stockid
         where stockissuance.salesperson = '" . $salesman . "'
-        and stockissuance.issued > 0
         AND stockmaster.stockid NOT LIKE '%\t%'
         ) AS derived
-        WHERE derived.qoh > 0
         ORDER BY derived.qoh DESC
         ";
         $UpdateResult = mysqli_query($conn, $SQL5);
@@ -288,10 +280,8 @@ if ($igp_type == "s" || $igp_type == "e") {
         FROM stockmaster INNER JOIN stockissuance
         ON stockmaster.stockid=stockissuance.stockid
         where stockissuance.salesperson = '" . $employee . "'
-        and stockissuance.issued > 0
         AND stockmaster.stockid NOT LIKE '%\t%'
         ) AS derived
-        WHERE derived.qoh > 0
         ORDER BY derived.qoh DESC
         ";
 
@@ -335,8 +325,7 @@ INNER JOIN
 WHERE 
     (stockmaster.mnfCode LIKE '%%' OR stockmaster.stockid LIKE '%%') 
     AND locstock.loccode = '" . $_SESSION['UserStockLocation'] . "'
-    AND stockmaster.stockid NOT LIKE '% %' 
-    AND locstock.quantity > 0 
+    AND stockmaster.stockid NOT LIKE '% %'
 GROUP BY 
     stockmaster.stockid, 
     stockmaster.description, 

@@ -3,6 +3,7 @@ var items = [];
 $(document).ready(function () {
     $('#employee').select2();
     $('#salescases').select2();
+    $('#salesman').select2();
     $('#csv').select2();
     $('#crv').select2();
     $('#mpo').select2();
@@ -82,9 +83,9 @@ function populateTable(data) {
 function ItemAdd(code, description, qoh) {
     var Itemcode = code;
     var Itemdescription = description;
-    var Itemquantity = $('#' + code).val();
+    var Itemquantity = document.getElementById(code).value;
     var qoh = parseInt(qoh);
-    if (Itemquantity == "" || Itemquantity > qoh) {
+    if (Itemquantity == "" || Itemquantity < 1 || Itemquantity > qoh) {
         alert("EMPTY OR GIVEN QUANTITY IS GREATER THEN QUANTITY ON HAND");
     }
     else {
@@ -349,9 +350,27 @@ function nextPrev(n) {
             if (ogp_type != "") {
                 if (ogp_type == 's') {
                     var salesman = $('#salesman').val();
+                    var salescases = $('#salescases').val();
+                    var csv = $('#csv').val();
+                    var crv = $('#crv').val();
+                    var mpo = $('#mpo').val();
                     var ogp_salesperson_type = $('#ogp_salesperson_type').val();
-                    if (salesman !== "" && ogp_salesperson_type !== "" && ogp_salesperson_type !== "Salesperson OGP Type") {
-                        currentTab = currentTab + n;
+
+                    console.log('salesman:', salesman);
+console.log('salescases:', salescases);
+console.log('csv:', csv);
+console.log('crv:', crv);
+console.log('mpo:', mpo);
+console.log('ogp_salesperson_type:', ogp_salesperson_type);
+
+
+                    if (salesman && ogp_salesperson_type && ogp_salesperson_type !== "Salesperson OGP Type") {
+                        // Check if any of the OGP related fields (salescases, csv, crv, mpo) are selected
+                        if (salescases !== "select one salescase" || csv !== "select one csv" || crv !== "select one crv" || mpo !== "select one mpo") {
+                            currentTab = currentTab + n;
+                        } else {
+                            alert("Please select OGP related all information first.");
+                        }
                     } else {
                         alert("Please select sales person related all information first.");
                     }
@@ -500,6 +519,8 @@ function showOGPDiv(divId) {
 
 function showSalescaseDiv(name) {
     var salescase = name.value;
+
+    // Hide and show relevant divs
     document.getElementById('salescaserefDiv').style.display = 'block';
     document.getElementById('csvDiv').style.display = 'none';
     document.getElementById('crvDiv').style.display = 'none';
@@ -507,12 +528,19 @@ function showSalescaseDiv(name) {
     document.getElementById('EmployeeDiv').style.display = 'none';
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
-    $('.salescaseref').html("<b>Salescase Reference:     </b>" + salescase);
+
+    // Safely update the content of the salescaseref div
+    $('.salescaseref').text("Salescase Reference: " + salescase);
+
+    // Update the hidden input value
     document.getElementById('salescaseref').value = salescase;
 }
 
+
 function showcsvDiv(name) {
     var salescase = name.value;
+
+    // Hide and show relevant divs
     document.getElementById('salescaserefDiv').style.display = 'none';
     document.getElementById('csvDiv').style.display = 'block';
     document.getElementById('crvDiv').style.display = 'none';
@@ -520,12 +548,24 @@ function showcsvDiv(name) {
     document.getElementById('EmployeeDiv').style.display = 'none';
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
-    $('.csv').html("<b>CSV Refrence:     </b>" + salescase);
+
+    // Instead of injecting raw HTML, set the value directly or update the <select> element
+    $('#csv').val(salescase); // Set the selected value of the <select>
+    
+    // If you want to add a new option dynamically, do it like this:
+    if (!$('#csv option[value="' + salescase + '"]').length) {
+        $('#csv').append(new Option(salescase, salescase)); // Add option safely
+    }
+
+    // Update the value of the hidden input
     document.getElementById('csvref').value = salescase;
 }
 
+
 function showcrvDiv(name) {
     var salescase = name.value;
+
+    // Hide and show relevant divs
     document.getElementById('salescaserefDiv').style.display = 'none';
     document.getElementById('csvDiv').style.display = 'none';
     document.getElementById('crvDiv').style.display = 'block';
@@ -533,12 +573,21 @@ function showcrvDiv(name) {
     document.getElementById('EmployeeDiv').style.display = 'none';
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
-    $('.crv').html("<b>CRV Refrence:     </b>" + salescase);
+
+    // Update the <select> element safely
+    if (!$('#crv option[value="' + salescase + '"]').length) {
+        $('#crv').append(new Option(salescase, salescase)); // Add option if not exists
+    }
+    $('#crv').val(salescase); // Set the selected value
+
+    // Update the hidden input value
     document.getElementById('crveref').value = salescase;
 }
 
 function showmpoDiv(name) {
     var salescase = name.value;
+
+    // Hide and show relevant divs
     document.getElementById('salescaserefDiv').style.display = 'none';
     document.getElementById('csvDiv').style.display = 'none';
     document.getElementById('crvDiv').style.display = 'none';
@@ -546,9 +595,17 @@ function showmpoDiv(name) {
     document.getElementById('EmployeeDiv').style.display = 'none';
     document.getElementById('storeDiv').style.display = 'none';
     document.getElementById('destinationDiv').style.display = 'none';
-    $('.mpo').html("<b>MPO Refrence:     </b>" + salescase);
+
+    // Update the <select> element safely
+    if (!$('#mpo option[value="' + salescase + '"]').length) {
+        $('#mpo').append(new Option(salescase, salescase)); // Add option if not exists
+    }
+    $('#mpo').val(salescase); // Set the selected value
+
+    // Update the hidden input value
     document.getElementById('mporef').value = salescase;
 }
+
 
 function showmemployeeDiv(name) {
     var employee = name.value;

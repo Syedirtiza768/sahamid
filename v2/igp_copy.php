@@ -17,7 +17,7 @@ include('../v2/config1.php');
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
-  <link rel="stylesheet" href="ogp/tailwindOgp.css">
+  <link rel="stylesheet" href="ogp/tailwindOgps.css">
   <title>SAHamid ERP</title>
 </head>
 
@@ -99,7 +99,7 @@ include('../v2/config1.php');
               <?php $sql = "select salesmanname from salesman";
               $result = mysqli_query($conn, $sql); ?>
               <label class="font-bold text-gray-700 text-sm ml-1">Return From Sales Person</label>
-              <select id="salesman" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="ogpSaleman(this)">
+              <select class="salesman w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" id="salesman" onchange="ogpSaleman(this)">
                 <option selected value="">Select Salesperson</option>
                 <?php while ($myrow = mysqli_fetch_array($result)) { ?>
                   <option value="<?php echo $myrow['salesmanname'] ?>"><?php echo $myrow['salesmanname'] ?></option>
@@ -195,7 +195,7 @@ include('../v2/config1.php');
             <?php $sql = "SELECT substoreid , description FROM substores WHERE locid = '" . $_SESSION['UserStockLocation'] . "'";
             $result = mysqli_query($conn, $sql); ?>
             <label class="font-bold text-gray-700 text-sm ml-1">Substore</label>
-            <select id="subStore" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSubStoreDiv(this)">
+            <select id="subStore" class="w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200">
             <option value="">Select Substore</option>
               <?php while ($myrow = mysqli_fetch_array($result)) { ?>
                 <option value="<?php echo $myrow['substoreid'] ?>"><?php echo $myrow['description'] ?></option>
@@ -376,6 +376,6 @@ include('../v2/config1.php');
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="igp/javascriptingFilesss.js"></script>
+<script src="igp/javascriptjsFile.js"></script>
 
 </html>
