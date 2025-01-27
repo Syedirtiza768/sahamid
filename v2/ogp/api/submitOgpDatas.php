@@ -401,7 +401,28 @@ if ($salesperson != "") {
 } elseif ($stock_location1 != "") {
     $deliveredto = $stock_location1;
 }
-$HeaderSQL = "INSERT INTO posdispatch (dispatchid,
+
+if ($ogp_type == "d") {
+    $HeaderSQL = "INSERT INTO posdispatch (dispatchid,
+											loccode,
+											despatchdate,
+											deliveredto,
+											storemanager,											
+											narrative
+											)
+										VALUES(
+											'" . $RequestNo . "',
+											'" . $stock_location . "',
+											'" . $date . "',
+											'" . $destination . "',
+											'" . $currentUser . "',
+											'" . $narative . "')";
+
+    $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+    $DbgMsg = _('The following SQL to insert the request header record was used');
+    $Result = mysqli_query($conn, $HeaderSQL);
+} else {
+    $HeaderSQL = "INSERT INTO posdispatch (dispatchid,
 											loccode,
 											despatchdate,
 											deliveredto,
@@ -416,10 +437,10 @@ $HeaderSQL = "INSERT INTO posdispatch (dispatchid,
 											'" . $currentUser . "',
 											'" . $narative . "')";
 
-$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-$DbgMsg = _('The following SQL to insert the request header record was used');
-$Result = mysqli_query($conn, $HeaderSQL);
-
+    $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+    $DbgMsg = _('The following SQL to insert the request header record was used');
+    $Result = mysqli_query($conn, $HeaderSQL);
+}
 
 if ($salescase != "") {
     $selectedItemsCode = NULL;
@@ -622,7 +643,36 @@ foreach ($items as $LineItems) {
         $QtyOnHandPrior = 0;
     }
 
-    $SQL = "INSERT INTO stockmoves (stockid,
+    if ($ogp_type == 'd') {
+        $SQL = "INSERT INTO stockmoves (stockid,
+												type,
+												transno,
+												loccode,
+												trandate,
+												reference,
+												qty,
+												prd,
+												newqoh
+												)
+					
+					VALUES (
+						'" . $LineItems['Code'] . "',
+						511,
+						'" . $RequestNo . "',
+						'" . $stock_location . "',
+							'" . $date . "',
+						'" . _('To') . ' ' . $destination . "'
+						,'" . round($LineItems['quantity'], 0) . "'
+						,'" . $PeriodNo . "'
+						
+						,'" . round($QtyOnHandPrior - $LineItems['quantity'], 0) . "'
+						)";
+
+        $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
+        $DbgMsg =  _('The following SQL to insert the stock movement record was used');
+        $Result = mysqli_query($conn, $SQL);
+    } else {
+        $SQL = "INSERT INTO stockmoves (stockid,
 												type,
 												transno,
 												loccode,
@@ -646,10 +696,10 @@ foreach ($items as $LineItems) {
 						,'" . round($QtyOnHandPrior - $LineItems['quantity'], 0) . "'
 						)";
 
-    $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
-    $DbgMsg =  _('The following SQL to insert the stock movement record was used');
-    $Result = mysqli_query($conn, $SQL);
-
+        $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
+        $DbgMsg =  _('The following SQL to insert the stock movement record was used');
+        $Result = mysqli_query($conn, $SQL);
+    }
 
 
     if ($ogp_type == "s" or $ogp_type == "e") {
