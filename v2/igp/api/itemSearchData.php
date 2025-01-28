@@ -1,6 +1,6 @@
 <?php
 include('../../config1.php');
-ini_set('memory_limit', '512M'); 
+ini_set('memory_limit', '512M');
 session_start();
 // $_SESSION['UsersRealName'];
 $igp_type = $_POST['igp_type'];
@@ -71,33 +71,39 @@ if ($igp_type == "s" || $igp_type == "e") {
     stockmaster.mnfpno,
     stockmaster.mbflag,
     stockmaster.discontinued,
-    stockissuance.issued  AS qoh,
+    stockissuance.issued AS qoh,
     stockmaster.units,
     stockmaster.decimalplaces,
     ogpcsvref.csv
-        FROM stockmaster INNER JOIN stockissuance
-        ON stockmaster.stockid=stockissuance.stockid
-        INNER JOIN ogpcsvref
-        ON stockmaster.stockid=ogpcsvref.stockid
-        where stockissuance.salesperson = '" . $salesman . "'
-        AND ogpcsvref.csv = '" . $csv . "'
-        AND ogpcsvref.quantity != ''
-        AND ogpcsvref.quantity != '0'
-        AND stockmaster.stockid NOT LIKE '%\t%'
-        order by stockissuance.issued desc
-        ";
+FROM stockmaster 
+INNER JOIN stockissuance ON stockmaster.stockid = stockissuance.stockid
+INNER JOIN ogpcsvref ON stockmaster.stockid = ogpcsvref.stockid
+WHERE stockissuance.salesperson = '" . $salesman . "'
+AND ogpcsvref.csv = '" . $csv . "'
+AND ogpcsvref.quantity != ''
+AND ogpcsvref.quantity != '0'
+AND stockmaster.stockid NOT LIKE '%\t%'
+ORDER BY stockissuance.issued DESC";
+
         $UpdateResult = mysqli_query($conn, $SQL5);
 
+        $response = []; // Response array to store results or errors
 
         if ($UpdateResult) {
-            $resultArray = array();
+            $resultArray = [];
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
                 $resultArray[] = $row;
             }
-            echo json_encode($resultArray);  // Convert the result array to JSON format
+            $response['status'] = 'success';
+            $response['data'] = $resultArray;
         } else {
-            echo "Error: " . mysqli_error($conn);  // Output error if query fails
+            // Include error message in JSON response if query fails
+            $response['status'] = 'error';
+            $response['message'] = mysqli_error($conn);
         }
+
+        header('Content-Type: application/json');
+        echo json_encode($response);
     }
     // From crv 
     if ($igp_salesperson_type == "crv") {

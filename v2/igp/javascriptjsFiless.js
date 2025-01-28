@@ -46,16 +46,16 @@ function itemSearch() {
             narative: narative
         },
         success: function (response) {
-            try {
-                var jsonData = JSON.parse(response);
-                populateTable(jsonData);
-
-                // Now you can work with the parsed JSON data
-            } catch (error) {
-                console.error("Error parsing JSON:", error);
+            if (response.status === 'success') {
+                console.log(response.data);
+                populateTable(response.data); // Use the parsed data array to populate your table
+            } else if (response.status === 'error') {
+                console.error("Error from the server:", response.message);
+                alert("Error fetching data: " + response.message);
             }
             document.getElementById("loader").style.display = "none";
         },
+        
     });
 }
 
@@ -92,21 +92,43 @@ function ItemAdd(code, description, qoh) {
     var Itemdescription = description;
     var Itemquantity = document.getElementById(code).value;
     var qoh = parseInt(qoh);
-    if (Itemquantity == "" || Itemquantity < 1 || Itemquantity > qoh) {
-        alert("EMPTY OR GIVEN QUANTITY IS GREATER THEN QUANTITY ON HAND");
+    var igp_type = $('#igp_type').val();
+
+    if (igp_type == 'l' || igp_type == 'd') {
+        if (Itemquantity == "") {
+            alert("EMPTY OR GIVEN QUANTITY IS GREATER THEN QUANTITY ON HAND");
+        }
+        else {
+            items.push({ Code: Itemcode, description: Itemdescription, quantity: Itemquantity, totalQuantity: qoh });
+            showItems(items);
+            $('#confirmationPopup').fadeIn();
+            document.getElementById('popupMessage').textContent = 'Item Quantity Saved successfuly 😊';
+            // Hide the confirmation popup after 3 seconds (3000 milliseconds)
+            setTimeout(function () {
+                $('#confirmationPopup').fadeOut();
+            }, 3000);
+            globelVariable = 1;
+            document.getElementById("nextBtn").style.display = "inline";
+            document.getElementById("btn" + code).style.display = "none";
+        }
     }
     else {
-        items.push({ Code: Itemcode, description: Itemdescription, quantity: Itemquantity, totalQuantity: qoh });
-        showItems(items);
-        $('#confirmationPopup').fadeIn();
-        document.getElementById('popupMessage').textContent = 'Item Quantity Saved successfuly 😊';
-        // Hide the confirmation popup after 3 seconds (3000 milliseconds)
-        setTimeout(function () {
-            $('#confirmationPopup').fadeOut();
-        }, 3000);
-        globelVariable = 1;
-        document.getElementById("nextBtn").style.display = "inline";
-        document.getElementById("btn" + code).style.display = "none";
+        if (Itemquantity == "" || Itemquantity < 1 || Itemquantity > qoh) {
+            alert("EMPTY OR GIVEN QUANTITY IS GREATER THEN QUANTITY ON HAND");
+        }
+        else {
+            items.push({ Code: Itemcode, description: Itemdescription, quantity: Itemquantity, totalQuantity: qoh });
+            showItems(items);
+            $('#confirmationPopup').fadeIn();
+            document.getElementById('popupMessage').textContent = 'Item Quantity Saved successfuly 😊';
+            // Hide the confirmation popup after 3 seconds (3000 milliseconds)
+            setTimeout(function () {
+                $('#confirmationPopup').fadeOut();
+            }, 3000);
+            globelVariable = 1;
+            document.getElementById("nextBtn").style.display = "inline";
+            document.getElementById("btn" + code).style.display = "none";
+        }
     }
 }
 
@@ -545,7 +567,7 @@ function showcsvDiv(name) {
 
     // Instead of injecting raw HTML, set the value directly or update the <select> element
     $('#csv').val(salescase); // Set the selected value of the <select>
-    
+
     // If you want to add a new option dynamically, do it like this:
     if (!$('#csv option[value="' + salescase + '"]').length) {
         $('#csv').append(new Option(salescase, salescase)); // Add option safely
@@ -669,13 +691,13 @@ function ogpSaleman(name) {
         success: function (data) {
             var dataList = JSON.parse(data);
             $('#csv')
-            .find('option')
-            .remove()
-            .end()
-            .append('<option value="" selected>select one csv </option>');
-                for (var i in dataList) {
-                    $('#csv').append(new Option(dataList[i], dataList[i]));
-                }
+                .find('option')
+                .remove()
+                .end()
+                .append('<option value="" selected>select one csv </option>');
+            for (var i in dataList) {
+                $('#csv').append(new Option(dataList[i], dataList[i]));
+            }
             $('#csv').select2();
         }
     });
