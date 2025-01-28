@@ -46,16 +46,17 @@ function itemSearch() {
             narative: narative
         },
         success: function (response) {
-            if (response.status === 'success') {
-                console.log(response.data);
-                populateTable(response.data); // Use the parsed data array to populate your table
-            } else if (response.status === 'error') {
-                console.error("Error from the server:", response.message);
-                alert("Error fetching data: " + response.message);
+            console.log(response);
+            try {
+                var jsonData = JSON.parse(response);
+                populateTable(jsonData);
+
+                // Now you can work with the parsed JSON data
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
             }
             document.getElementById("loader").style.display = "none";
         },
-        
     });
 }
 
