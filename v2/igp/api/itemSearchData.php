@@ -1,6 +1,6 @@
 <?php
 include('../../config1.php');
-ini_set('memory_limit', '512M'); 
+ini_set('memory_limit', '512M');
 session_start();
 // $_SESSION['UsersRealName'];
 $igp_type = $_POST['igp_type'];
@@ -48,13 +48,22 @@ if ($igp_type == "s" || $igp_type == "e") {
             order by stockissuance.issued desc
             ";
         $UpdateResult = mysqli_query($conn, $SQL5);
-        echo mysqli_num_rows($UpdateResult);
         if ($UpdateResult) {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
                 $resultArray[] = $row;
             }
-            echo json_encode($resultArray);  // Convert the result array to JSON format
+            $jsonResult = json_encode($resultArray);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                echo json_encode([
+                    "error" => json_last_error_msg(),
+                    "data" => $resultArray
+                ]);
+            } else {
+                echo $jsonResult;
+            }
+            // echo json_encode($resultArray);  // Convert the result array to JSON format
         } else {
             echo "Error: " . mysqli_error($conn);  // Output error if query fails
         }
