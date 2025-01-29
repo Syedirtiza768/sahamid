@@ -47,16 +47,11 @@ function itemSearch() {
         },
         success: function (response) {
             try {
-                console.log(response);
-                var jsonData = typeof response === "string" ? JSON.parse(response) : response;
-                
-                if (jsonData.error) {
-                    console.error("Backend Error:", jsonData.error);
-                    return;
-                }
-        
-                // Populate table using the parsed JSON data
+                console.log("Raw Response: ", response);
+                var jsonData = JSON.parse(response);
                 populateTable(jsonData);
+
+                // Now you can work with the parsed JSON data
             } catch (error) {
                 console.error("Error parsing JSON:", error);
             }
