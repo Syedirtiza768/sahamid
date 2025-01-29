@@ -47,15 +47,15 @@ if ($igp_type == "s" || $igp_type == "e") {
             AND stockmaster.stockid NOT LIKE '%\t%'
             order by stockissuance.issued desc
             ";
-            echo json_encode(["debug_query" => $SQL5]);
-
-            $UpdateResult = mysqli_query($conn, $SQL5);
+        $UpdateResult = mysqli_query($conn, $SQL5);
         
         if ($UpdateResult) {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
+                var_dump($row); // Inspect each row
                 $resultArray[] = $row;
             }
+            
             echo json_encode($resultArray);  // Convert the result array to JSON format
         } else {
             echo "Error: " . mysqli_error($conn);  // Output error if query fails
