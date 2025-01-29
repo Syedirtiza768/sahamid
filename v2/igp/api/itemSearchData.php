@@ -54,14 +54,9 @@ if ($igp_type == "s" || $igp_type == "e") {
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
                 $resultArray[] = $row;
             }
-        
-            // Set the content type to JSON
-            header('Content-Type: application/json');
             echo json_encode($resultArray);  // Convert the result array to JSON format
         } else {
-            // Return a JSON error response
-            header('Content-Type: application/json');
-            echo json_encode(["error" => mysqli_error($conn)]);
+            echo "Error: " . mysqli_error($conn);  // Output error if query fails
         }
     }
 
