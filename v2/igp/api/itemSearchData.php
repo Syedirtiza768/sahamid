@@ -86,10 +86,7 @@ if ($igp_type == "s" || $igp_type == "e") {
         AND stockmaster.stockid NOT LIKE '%\t%'
         order by stockissuance.issued desc
         ";
-        echo $SQL5;
         $UpdateResult = mysqli_query($conn, $SQL5);
-
-
         if ($UpdateResult) {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
@@ -165,8 +162,6 @@ if ($igp_type == "s" || $igp_type == "e") {
         order by stockissuance.issued desc
         ";
         $UpdateResult = mysqli_query($conn, $SQL5);
-
-
         if ($UpdateResult) {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {

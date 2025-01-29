@@ -46,8 +46,8 @@ function itemSearch() {
             narative: narative
         },
         success: function (response) {
-            console.log(response);
             try {
+                console.log("Raw Response: ", response);
                 var jsonData = JSON.parse(response);
                 populateTable(jsonData);
 
