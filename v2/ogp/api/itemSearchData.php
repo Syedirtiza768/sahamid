@@ -51,7 +51,6 @@ if (isset($StockCode)) {
 							stockmaster.discontinued,
 							stockmaster.decimalplaces
 						ORDER BY substorestock.quantity desc";
-                        echo $SQLA;
             $result = mysqli_query($conn, $SQLA);
             $results = array();
             $ItemData = array();
