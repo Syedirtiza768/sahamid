@@ -48,11 +48,11 @@ if ($igp_type == "s" || $igp_type == "e") {
             order by stockissuance.issued desc
             ";
         $UpdateResult = mysqli_query($conn, $SQL5);
-echo $UpdateResult;
-
+        
         if ($UpdateResult) {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
+                echo $row;
                 $resultArray[] = $row;
             }
             echo json_encode($resultArray);  // Convert the result array to JSON format
