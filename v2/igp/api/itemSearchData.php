@@ -48,7 +48,7 @@ if ($igp_type == "s" || $igp_type == "e") {
             order by stockissuance.issued desc
             ";
         $UpdateResult = mysqli_query($conn, $SQL5);
-
+echo $UpdateResult;
 
         if ($UpdateResult) {
             $resultArray = array();
