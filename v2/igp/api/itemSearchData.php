@@ -53,7 +53,7 @@ if ($igp_type == "s" || $igp_type == "e") {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
                 $resultArray[] = $row;
-                echo $resultArray;
+                echo json_encode($resultArray);
             }
             echo json_encode($resultArray);  // Convert the result array to JSON format
         } else {
