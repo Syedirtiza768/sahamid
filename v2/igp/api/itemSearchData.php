@@ -50,18 +50,10 @@ if ($igp_type == "s" || $igp_type == "e") {
         $UpdateResult = mysqli_query($conn, $SQL5);
         
         if ($UpdateResult) {
-            $resultArray = array();
-            while ($row = mysqli_fetch_assoc($UpdateResult)) {
-                $resultArray[] = $row;
-            }
-            
-            $output = ob_get_clean(); // Capture all previous output
-            if (!empty($output)) {
-                error_log("Unexpected output: " . $output);
-            }
-            echo json_encode($resultArray);  // Convert the result array to JSON format
+            $resultArray = mysqli_fetch_all($UpdateResult, MYSQLI_ASSOC);  // Fetch all rows in one step
+            echo json_encode($resultArray);  // Send JSON response directly
         } else {
-            echo "Error: " . mysqli_error($conn);  // Output error if query fails
+            echo json_encode(["error" => mysqli_error($conn)]);  // Return error as JSON
         }
     }
 
