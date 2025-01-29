@@ -52,10 +52,13 @@ if ($igp_type == "s" || $igp_type == "e") {
         if ($UpdateResult) {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
-                var_dump($row); // Inspect each row
                 $resultArray[] = $row;
             }
             
+            $output = ob_get_clean(); // Capture all previous output
+            if (!empty($output)) {
+                error_log("Unexpected output: " . $output);
+            }
             echo json_encode($resultArray);  // Convert the result array to JSON format
         } else {
             echo "Error: " . mysqli_error($conn);  // Output error if query fails
