@@ -51,8 +51,9 @@ if ($igp_type == "s" || $igp_type == "e") {
         
         if ($UpdateResult) {
             $resultArray = array();
+            $resultArray= [];
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
-                $resultArray[] = $row;
+                $resultArray = $row;
             }
             echo json_encode($resultArray);  // Convert the result array to JSON format
         } else {
