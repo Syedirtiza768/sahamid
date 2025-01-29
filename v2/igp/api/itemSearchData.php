@@ -1,6 +1,6 @@
 <?php
 include('../../config1.php');
-ini_set('memory_limit', '512M');
+ini_set('memory_limit', '512M'); 
 session_start();
 // $_SESSION['UsersRealName'];
 $igp_type = $_POST['igp_type'];
@@ -27,8 +27,6 @@ if ($igp_type == "s" || $igp_type == "e") {
         $SQL5 = "SELECT DISTINCT stockmaster.stockid,
         stockmaster.description,
         stockmaster.mnfCode,
-        stockmaster.longdescription,
-        stockmaster.mnfCode,
         stockmaster.mnfpno,
         stockmaster.mbflag,
         stockmaster.discontinued,
@@ -47,23 +45,15 @@ if ($igp_type == "s" || $igp_type == "e") {
             AND stockmaster.stockid NOT LIKE '%\t%'
             order by stockissuance.issued desc
             ";
+            
         $UpdateResult = mysqli_query($conn, $SQL5);
+
         if ($UpdateResult) {
             $resultArray = array();
             while ($row = mysqli_fetch_assoc($UpdateResult)) {
                 $resultArray[] = $row;
             }
-            $jsonResult = json_encode($resultArray);
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                echo json_encode([
-                    "error" => json_last_error_msg(),
-                    "data" => $resultArray
-                ]);
-            } else {
-                echo $jsonResult;
-            }
-            // echo json_encode($resultArray);  // Convert the result array to JSON format
+            echo json_encode($resultArray);  // Convert the result array to JSON format
         } else {
             echo "Error: " . mysqli_error($conn);  // Output error if query fails
         }
@@ -73,8 +63,6 @@ if ($igp_type == "s" || $igp_type == "e") {
     if ($igp_salesperson_type == "csv") {
         $SQL5 = "SELECT DISTINCT stockmaster.stockid,
     stockmaster.description,
-    stockmaster.mnfCode,
-    stockmaster.longdescription,
     stockmaster.mnfCode,
     stockmaster.mnfpno,
     stockmaster.mbflag,
@@ -109,8 +97,6 @@ if ($igp_type == "s" || $igp_type == "e") {
     if ($igp_salesperson_type == "crv") {
         $SQL5 = "SELECT DISTINCT stockmaster.stockid,
     stockmaster.description,
-    stockmaster.mnfCode,
-    stockmaster.longdescription,
     stockmaster.mnfCode,
     stockmaster.mnfpno,
     stockmaster.mbflag,
@@ -149,8 +135,6 @@ if ($igp_type == "s" || $igp_type == "e") {
         $SQL5 = "SELECT DISTINCT stockmaster.stockid,
     stockmaster.description,
     stockmaster.mnfCode,
-    stockmaster.longdescription,
-    stockmaster.mnfCode,
     stockmaster.mnfpno,
     stockmaster.mbflag,
     stockmaster.discontinued,
@@ -186,7 +170,6 @@ if ($igp_type == "s" || $igp_type == "e") {
             SELECT stockmaster.stockid,
             stockmaster.description,
             stockmaster.mnfCode,
-            stockmaster.longdescription,
             stockmaster.mnfpno,
             stockmaster.mbflag,
             stockmaster.discontinued,
@@ -250,7 +233,6 @@ if ($igp_type == "s" || $igp_type == "e") {
             SELECT stockmaster.stockid,
             stockmaster.description,
             stockmaster.mnfCode,
-            stockmaster.longdescription,
             stockmaster.mnfpno,
             stockmaster.mbflag,
             stockmaster.discontinued,
@@ -314,7 +296,6 @@ if ($igp_type == "l" || $igp_type == "d") {
     $SQL5 = "SELECT 
     stockmaster.stockid, 
     stockmaster.description, 
-    stockmaster.longdescription, 
     stockmaster.mnfCode, 
     stockmaster.mnfpno, 
     stockmaster.mbflag, 
@@ -332,8 +313,7 @@ WHERE
     AND stockmaster.stockid NOT LIKE '% %'
 GROUP BY 
     stockmaster.stockid, 
-    stockmaster.description, 
-    stockmaster.longdescription, 
+    stockmaster.description,
     stockmaster.mnfCode, 
     stockmaster.mnfpno, 
     stockmaster.mbflag, 
