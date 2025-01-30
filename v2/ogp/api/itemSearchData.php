@@ -23,126 +23,57 @@ if (isset($StockCode)) {
     if ($StockCat == 'All') {
         if ($brand == 'All') {
             $SQLA = "SELECT stockmaster.stockid,
-						stockmaster.description,
-						stockmaster.longdescription,
-						stockmaster.mnfCode,
-						stockmaster.mnfpno,
-						stockmaster.mbflag,
-						stockmaster.discontinued,
-						sum(substorestock.quantity) AS qoh,
-						stockmaster.units,
-						stockmaster.decimalplaces
-						FROM stockmaster INNER JOIN locstock
-						ON stockmaster.stockid=locstock.stockid
-                        INNER JOIN substorestock
-						ON stockmaster.stockid=substorestock.stockid
-						WHERE (stockmaster.mnfCode  LIKE  '%" . $SearchString2 . "%'
-					or stockmaster.stockid LIKE  '%" . $SearchString2 . "%')
-					and locstock.loccode = '" . $subStore . "'
-					AND stockmaster.stockid NOT LIKE '%\t%'
-                    and substorestock.loccode = '" . $subStore . "'
-                    and substorestock.substoreid = '" . $realsubStore . "'
-                    and substorestock.quantity !=0
-						GROUP BY stockmaster.stockid,
-							stockmaster.description,
-							stockmaster.longdescription,
-							stockmaster.units,
-							stockmaster.mbflag,
-							stockmaster.discontinued,
-							stockmaster.decimalplaces
-						ORDER BY substorestock.quantity desc";
+    stockmaster.description,
+    stockmaster.longdescription,
+    stockmaster.mnfCode,
+    stockmaster.mnfpno,
+    stockmaster.mbflag,
+    stockmaster.discontinued,
+    substorestock.quantity AS qoh,
+    stockmaster.units,
+    stockmaster.decimalplaces
+FROM stockmaster
+LEFT JOIN locstock ON stockmaster.stockid = locstock.stockid
+LEFT JOIN substorestock ON stockmaster.stockid = substorestock.stockid
+WHERE (stockmaster.mnfCode LIKE '%%" . $SearchString2 . "%%'
+   OR stockmaster.stockid LIKE '%%" . $SearchString2 . "%%')
+AND locstock.loccode = '" . $subStore . "'
+AND stockmaster.stockid NOT LIKE '%\t%'
+AND substorestock.loccode = '" . $subStore . "'
+AND substorestock.substoreid = '" . $realsubStore . "'
+AND substorestock.quantity != 0
+ORDER BY stockmaster.stockid DESC
+";
             $result = mysqli_query($conn, $SQLA);
-            $results = array();
-            $ItemData = array();
-
-            $i = 0;
+            $totalRows = mysqli_num_rows($result);
             while ($myrow = mysqli_fetch_array($result)) {
 
-                $data[$i]['Code'] = $myrow['stockid'];
-                $data[$i]['Description'] = $myrow['description'];
-
-                // Quantity On hand
-                $QOH = $myrow['qoh'];
-                $data[$i]['QOH'] = $QOH;
-                // for OnDemand
-                $QOHSQL = "SELECT SUM(salesorderdetails.quantity-salesorderdetails.qtyinvoiced) AS dem
-            FROM salesorderdetails INNER JOIN salesorders
-            ON salesorders.orderno = salesorderdetails.orderno
-            WHERE salesorders.fromstkloc='" . $subStore . "'
-            AND salesorderdetails.completed=0
-            AND salesorders.quotation=0
-            AND salesorderdetails.stkcode='" . $myrow['stockid'] . "'";
-                $DemandResult =  mysqli_query($conn, $QOHSQL);
-                $DemandRow = mysqli_fetch_array($DemandResult);
-                if ($DemandRow[0] != null) {
-                    $DemandQty =  $DemandRow[0];
-                } else {
-                    $DemandQty = '0';
-                }
-                $data[$i]['OnDemand'] = $DemandQty;
-
-                // Onorder Value
-                $sql = "SELECT SUM(purchorderdetails.quantityord-purchorderdetails.quantityrecd)*purchorderdetails.conversionfactor AS dem
-            FROM purchorderdetails LEFT JOIN purchorders
-               ON purchorderdetails.orderno=purchorders.orderno
-            WHERE purchorderdetails.completed=0
-            AND purchorders.status<>'Cancelled'
-            AND purchorders.status<>'Rejected'
-            AND purchorders.status<>'Completed'
-           AND purchorderdetails.itemcode='" . $myrow['stockid'] . "'";
-
-                $ErrMsg = _('The order details for this product cannot be retrieved because');
-                $PurchResult = mysqli_query($conn, $sql);
-
-                $PurchRow = mysqli_fetch_array($PurchResult);
-                if ($PurchRow[0] != null) {
-                    $PurchQty =  $PurchRow[0];
-                } else {
-                    $PurchQty = 0;
-                }
-                $sql = "SELECT SUM(woitems.qtyreqd - woitems.qtyrecd) AS dedm
-          FROM woitems
-          WHERE stockid='" . $myrow['stockid'] . "'";
-                $ErrMsg = _('The order details for this product cannot be retrieved because');
-                $WoResult = mysqli_query($conn, $sql);
-
-                $WoRow = mysqli_fetch_array($WoResult);
-                if ($WoRow[0] != null) {
-                    $WoQty =  $WoRow[0];
-                } else {
-                    $WoQty = 0;
-                }
-                $OnOrder = $PurchQty + $WoQty;
-                $data[$i]['OnOrder'] = "$OnOrder";
-
-                // for available
-                $Available = $QOH;
-                $data[$i]['Available'] = $Available;
-
-
-                $i++;
+                $stockId = $myrow['stockid'];
+                $QOH = $myrow['qoh']; // Handle null gracefully
+            
+                $data[] = [
+                    'Code' => $stockId,
+                    'Description' => $myrow['description'],
+                    'QOH' => $QOH,
+                    'OnDemand' => getOnDemandQuantity($conn, $subStore, $stockId),
+                    'OnOrder' => getOnOrderQuantity($conn, $stockId),
+                    'Available' => $QOH
+                ];
             }
-
 
             // Initialize an empty array to store JSON strings
             $jsonStrings = array();
 
             // Loop through each subarray and convert to JSON string
-            
-            foreach ($data as $subArray) {
-                // Convert subarray to JSON string
-                $jsonString = json_encode($subArray);
-                if ($jsonString) {
-                    // Add JSON string to the array
-                    $jsonStrings[] = $jsonString;
-                }
-            }
+            $i=0;
+            $jsonResult = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
 
+echo $jsonResult;
             // Combine JSON strings with commas
-            $result = implode(',', $jsonStrings);
+            // $result = implode(',', $jsonStrings);
 
             // Output the result
-            echo '[' . $result . ']';
+            // echo '[' . $result . ']';
 
 
             return false;
@@ -858,3 +789,48 @@ if ($StockCat == 'All') {
 
     return false;
 }
+
+            
+            /**
+             * Get OnDemand quantity from salesorderdetails
+             */
+            function getOnDemandQuantity($conn, $subStore, $stockId) {
+                $query = "SELECT SUM(salesorderdetails.quantity-salesorderdetails.qtyinvoiced) AS dem
+                          FROM salesorderdetails 
+                          INNER JOIN salesorders ON salesorders.orderno = salesorderdetails.orderno
+                          WHERE salesorders.fromstkloc='$subStore'
+                          AND salesorderdetails.completed=0
+                          AND salesorders.quotation=0
+                          AND salesorderdetails.stkcode='$stockId'";
+            
+                $result = mysqli_query($conn, $query);
+                if (!$result) return 0;
+                
+                $row = mysqli_fetch_array($result);
+                return $row[0] ?? 0;
+            }
+            
+            /**
+             * Get OnOrder quantity from purchorderdetails and woitems
+             */
+            function getOnOrderQuantity($conn, $stockId) {
+                $purchOrderQuery = "SELECT SUM(purchorderdetails.quantityord - purchorderdetails.quantityrecd) * purchorderdetails.conversionfactor AS dem
+                                    FROM purchorderdetails 
+                                    LEFT JOIN purchorders ON purchorderdetails.orderno = purchorders.orderno
+                                    WHERE purchorderdetails.completed = 0
+                                    AND purchorders.status NOT IN ('Cancelled', 'Rejected', 'Completed')
+                                    AND purchorderdetails.itemcode='$stockId'";
+            
+                $woItemsQuery = "SELECT SUM(woitems.qtyreqd - woitems.qtyrecd) AS dedm
+                                 FROM woitems
+                                 WHERE stockid='$stockId'";
+            
+                $purchResult = mysqli_query($conn, $purchOrderQuery);
+                $woResult = mysqli_query($conn, $woItemsQuery);
+            
+                $purchQty = ($purchResult && $row = mysqli_fetch_array($purchResult)) ? $row[0] : 0;
+                $woQty = ($woResult && $row = mysqli_fetch_array($woResult)) ? $row[0] : 0;
+            
+                return $purchQty + $woQty;
+            }
+            

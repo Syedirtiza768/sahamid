@@ -29,7 +29,6 @@ function itemSearch() {
             StockCode: StockCode
         },
         success: function (response) {
-            console.log(response);
             try {
                 var jsonData = JSON.parse(response);
                 // Clear the table by resetting it with an empty array
@@ -58,7 +57,6 @@ function populateTable(data) {
 
     // Create an array to hold the rows
     var rows = [];
-
     // Loop through the data and prepare each row
     for (var i = 0; i < data.length; i++) {
         var rowData = [
@@ -107,6 +105,7 @@ function showItems(itemslist) {
     var tbody = document.getElementById('example1').getElementsByTagName('tbody')[0];
     tbody.innerHTML = ''; // Clear table body
 
+    
     for (var i = 0; i < itemslist.length; i++) {
         var rowData = '<td class="border border-gray-400 text-blue-800 underline"><a href="../SelectProduct.php?Select=' + itemslist[i].Code + '" target="_blank">' + itemslist[i].Code + '</a></td>';
         var rowData2 = '<td class="border border-gray-400">' + itemslist[i].description + '</td>';
