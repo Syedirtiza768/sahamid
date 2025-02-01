@@ -105,7 +105,7 @@ function showItems(itemslist) {
     var tbody = document.getElementById('example1').getElementsByTagName('tbody')[0];
     tbody.innerHTML = ''; // Clear table body
 
-    
+
     for (var i = 0; i < itemslist.length; i++) {
         var rowData = '<td class="border border-gray-400 text-blue-800 underline"><a href="../SelectProduct.php?Select=' + itemslist[i].Code + '" target="_blank">' + itemslist[i].Code + '</a></td>';
         var rowData2 = '<td class="border border-gray-400">' + itemslist[i].description + '</td>';
@@ -355,17 +355,12 @@ function nextPrev(n) {
                     var mpo = $('#mpo').val();
                     var ogp_salesperson_type = $('#ogp_salesperson_type').val();
 
-                    console.log('salesman:', salesman);
-console.log('salescases:', salescases);
-console.log('csv:', csv);
-console.log('crv:', crv);
-console.log('mpo:', mpo);
-console.log('ogp_salesperson_type:', ogp_salesperson_type);
+                    
 
 
                     if (salesman && ogp_salesperson_type && ogp_salesperson_type !== "Salesperson OGP Type") {
                         // Check if any of the OGP related fields (salescases, csv, crv, mpo) are selected
-                        if (salescases !== "select one salescase" || csv !== "select one csv" || crv !== "select one crv" || mpo !== "select one mpo") {
+                        if (salescases !== "select one salescase" || csv !== "select one csv" || crv !== "select one crv" || mpo !== "select one mpo" || ogp_salesperson_type == "cart") {
                             currentTab = currentTab + n;
                         } else {
                             alert("Please select OGP related all information first.");
@@ -538,7 +533,7 @@ function showSalescaseDiv(name) {
 
 function showcsvDiv(name) {
     var salescase = name.value;
-
+    alert(salescase);
     // Hide and show relevant divs
     document.getElementById('salescaserefDiv').style.display = 'none';
     document.getElementById('csvDiv').style.display = 'block';
@@ -550,14 +545,15 @@ function showcsvDiv(name) {
 
     // Instead of injecting raw HTML, set the value directly or update the <select> element
     $('#csv').val(salescase); // Set the selected value of the <select>
-    
+
     // If you want to add a new option dynamically, do it like this:
     if (!$('#csv option[value="' + salescase + '"]').length) {
         $('#csv').append(new Option(salescase, salescase)); // Add option safely
     }
+    $('.csvrefs').text("CSV Reference: " + salescase);
+    document.getElementById('csvref').value = salescase;
 
     // Update the value of the hidden input
-    document.getElementById('csvref').value = salescase;
 }
 
 
@@ -580,6 +576,7 @@ function showcrvDiv(name) {
     $('#crv').val(salescase); // Set the selected value
 
     // Update the hidden input value
+    $('.crvrefs').text("CRV Reference: " + salescase);
     document.getElementById('crveref').value = salescase;
 }
 
@@ -602,6 +599,7 @@ function showmpoDiv(name) {
     $('#mpo').val(salescase); // Set the selected value
 
     // Update the hidden input value
+    $('.mporefs').text("MPO Reference: " + salescase);
     document.getElementById('mporef').value = salescase;
 }
 

@@ -379,10 +379,20 @@ function nextPrev(n) {
             if (igp_type != "") {
                 if (igp_type == 's') {
                     var salesman = $('#salesman').val();
-                    var ogp_salesperson_type = $('#ogp_salesperson_type').val();
-                    if (salesman !== "" && ogp_salesperson_type !== "" && ogp_salesperson_type !== "Salesperson OGP Type") {
-                        itemSearch();
-                        currentTab = currentTab + n;
+                    var salescases = $('#salescases').val();
+                    var csv = $('#csv').val();
+                    var crv = $('#crv').val();
+                    var mpo = $('#mpo').val();
+                    var igp_salesperson_type = $('#igp_salesperson_type').val();
+
+
+                    if (salesman !== "" && igp_salesperson_type !== "" && igp_salesperson_type !== "Salesperson OGP Type") {
+                        if (salescases !== "" || csv !== "" || crv !== "" || mpo !== "" || igp_salesperson_type == "cart") {
+                            itemSearch();
+                            currentTab = currentTab + n;
+                        } else {
+                            alert("Please select IGP related all information first.");
+                        }
                     } else {
                         alert("Please select sales person related all information first.");
                     }
@@ -575,6 +585,7 @@ function showcsvDiv(name) {
     }
 
     // Update the value of the hidden input
+    $('.csvrefs').text("CSV Reference: " + salescase);
     document.getElementById('csvref').value = salescase;
 }
 
@@ -598,6 +609,7 @@ function showcrvDiv(name) {
     $('#crv').val(salescase); // Set the selected value
 
     // Update the hidden input value
+    $('.crvrefs').text("CRV Reference: " + salescase);
     document.getElementById('crveref').value = salescase;
 }
 
@@ -620,6 +632,7 @@ function showmpoDiv(name) {
     $('#mpo').val(salescase); // Set the selected value
 
     // Update the hidden input value
+    $('.mporefs').text("MPO Reference: " + salescase);
     document.getElementById('mporef').value = salescase;
 }
 

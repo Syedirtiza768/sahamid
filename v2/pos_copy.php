@@ -329,17 +329,17 @@ include('../v2/config1.php');
               </div>
               <div class="flex justify-center">
                 <div id="csvDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
-                  <h5 class="csv text-gray-700 text-sm ml-6"></h5>
+                  <h5 class="csvrefs text-gray-700 text-sm ml-6"></h5>
                 </div>
               </div>
               <div class="flex justify-center">
                 <div id="crvDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
-                  <h5 class="crv text-gray-700 text-sm ml-6"></h5>
+                  <h5 class="crvrefs text-gray-700 text-sm ml-6"></h5>
                 </div>
               </div>
               <div class="flex justify-center">
                 <div id="mpoDiv" class="px-6 py-1 mt-2 flex" style="display:none;">
-                  <h5 class="mpo text-gray-700 text-sm ml-6"></h5>
+                  <h5 class="mporefs text-gray-700 text-sm ml-6"></h5>
                 </div>
               </div>
               <div class="flex justify-center">
@@ -414,7 +414,7 @@ include('../v2/config1.php');
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptjsFiled.js"></script>
+<script src="ogp/javascriptjsFileds.js"></script>
 
 
 </html>
