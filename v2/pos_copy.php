@@ -120,23 +120,23 @@ include('../v2/config1.php');
               <div class="mb-6">
                 <label class="font-bold text-gray-700 text-sm ml-1">Issue agaist salescase</label>
                 <select id="salescases" class="salescases w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showSalescaseDiv(this)">
-                  <option selected>Issue Against salescase</option>
+                  <option value="" selected>Issue Against salescase</option>
                 </select>
               </div>
             </div>
             <div id="csv_div" style="display:none;">
               <div class="mb-6">
-                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against CSV</label>
+                <label class="font-bold text-gray-700 text-sm ml-1">Return From CSV</label>
                 <select id="csv" class="csv w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showcsvDiv(this)">
-                  <option selected>Issue Against CSV</option>
+                  <option value="" selected>Return From CSV</option>
                 </select>
               </div>
             </div>
             <div id="crv_div" style="display:none;">
               <div class="mb-6">
-                <label class="font-bold text-gray-700 text-sm ml-1">Issue Against CRV</label>
+                <label class="font-bold text-gray-700 text-sm ml-1">Return From CRV</label>
                 <select id="crv" class="crv w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showcrvDiv(this)">
-                  <option selected>Issue Against CRV</option>
+                  <option value="" selected>Return From CRV</option>
                 </select>
               </div>
             </div>
@@ -144,7 +144,7 @@ include('../v2/config1.php');
               <div class="mb-6">
                 <label class="font-bold text-gray-700 text-sm ml-1">Issue Against MPO</label>
                 <select id="mpo" class="mpo w-full px-4 py-1 rounded-md text-gray-700 font-medium border-solid border-2 border-gray-200" onchange="showmpoDiv(this)">
-                  <option selected>Issue Against MPO</option>
+                  <option value="" selected>Issue Against MPO</option>
                 </select>
               </div>
             </div>
@@ -414,7 +414,7 @@ include('../v2/config1.php');
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="ogp/javascriptjsFileds.js"></script>
+<script src="ogp/javascriptjsFiledss.js"></script>
 
 
 </html>

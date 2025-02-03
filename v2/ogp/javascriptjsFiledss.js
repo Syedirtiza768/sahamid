@@ -66,7 +66,7 @@ function populateTable(data) {
             '<td>' + data[i].OnDemand + '</td>',
             '<td>' + data[i].OnOrder + '</td>',
             '<td>' + data[i].Available + '</td>',
-            '<td><input class="w-16 h-6 text-center" id="' + data[i].Code + '"></input></td>',
+            '<td><input type="number" class="w-16 h-6 text-center" id="' + data[i].Code + '"></input></td>',
             '<td><button type="button" id="btn' + data[i].Code + '" class="bg-green-500 w-16 h-6 border rounded-md" onclick="ItemAdd(\'' + data[i].Code + '\', \'' + data[i].Description + '\', \'' + data[i].QOH + '\');"><i class="fa-solid fa-check text-white"></i></button></td>'
         ];
 
@@ -109,7 +109,7 @@ function showItems(itemslist) {
     for (var i = 0; i < itemslist.length; i++) {
         var rowData = '<td class="border border-gray-400 text-blue-800 underline"><a href="../SelectProduct.php?Select=' + itemslist[i].Code + '" target="_blank">' + itemslist[i].Code + '</a></td>';
         var rowData2 = '<td class="border border-gray-400">' + itemslist[i].description + '</td>';
-        var rowData3 = '<td class="border border-gray-400"><div class="flex justify-center"><h5 id="Quantity' + itemslist[i].Code + '">' + itemslist[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + itemslist[i].Code + '" style="display:none"></input></div></td>';
+        var rowData3 = '<td class="border border-gray-400"><div class="flex justify-center"><h5 id="Quantity' + itemslist[i].Code + '">' + itemslist[i].quantity + '</h5> <input type="number" class="w-16 h-6 text-center" id="newQuantity' + itemslist[i].Code + '" style="display:none"></input></div></td>';
         var rowData4 = '<td class="border border-gray-400"><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + itemslist[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick="saveItem(\'' + itemslist[i].Code + '\');"><i class="fa-solid fas fa-save text-white"></i></button><button type="button" id="editBtn' + itemslist[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick="editItem(\'' + itemslist[i].Code + '\');"><i class="fa-solid fas fa-edit text-white"></i></button><button type="button" id="deleteBtn' + itemslist[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick="deleteItem(\'' + itemslist[i].Code + '\');"><i class="fa-solid fa-trash text-white"></i></button></div></td>';
 
         var row = document.createElement('tr');
@@ -149,7 +149,7 @@ function saveItem(code) {
                 for (var i = 0; i < items.length; i++) {
                     var rowData = '<td class="text-blue-800 underline"><a href = "../SelectProduct.php?Select=' + items[i].Code + '" target = "_blank" > ' + items[i].Code + '</a></td>';
                     var rowData2 = '<td>' + items[i].description + '</td>';
-                    var rowData3 = '<td><div class="flex justify-center"><h5 id="Quantity' + items[i].Code + '">' + items[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + items[i].Code + '" style="display:none"> </input></div> </td>';
+                    var rowData3 = '<td><div class="flex justify-center"><h5 id="Quantity' + items[i].Code + '">' + items[i].quantity + '</h5> <input type="number" class="w-16 h-6 text-center" id="newQuantity' + items[i].Code + '" style="display:none"> </input></div> </td>';
                     var rowData4 = '<td><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + items[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick = "saveItem(\'' + items[i].Code + '\');" > <i class="fa-solid fas fa-save text-white"></i> </button> <button type="button" id="editBtn' + items[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick = "editItem(\'' + items[i].Code + '\');" > <i class="fa-solid fas fa-edit text-white"></i> </button><button type="button" id="deleteBtn' + items[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick = "deleteItem(\'' + items[i].Code + '\');" > <i class="fa-solid fa-trash text-white"></i> </button></div></td>';
 
                     var row = document.createElement('tr');
@@ -196,7 +196,7 @@ function deleteItem(itemCode) {
     for (var i = 0; i < items.length; i++) {
         var rowData = '<td class="border border-gray-400 text-blue-800 underline"><a href="../SelectProduct.php?Select=' + items[i].Code + '" target="_blank">' + items[i].Code + '</a></td>';
         var rowData2 = '<td class="border border-gray-400">' + items[i].description + '</td>';
-        var rowData3 = '<td class="border border-gray-400"><div class="flex justify-center"><h5 id="Quantity' + items[i].Code + '">' + items[i].quantity + '</h5> <input class="w-16 h-6 text-center" id="newQuantity' + items[i].Code + '" style="display:none"></input></div></td>';
+        var rowData3 = '<td class="border border-gray-400"><div class="flex justify-center"><h5 id="Quantity' + items[i].Code + '">' + items[i].quantity + '</h5> <input type="number" class="w-16 h-6 text-center" id="newQuantity' + items[i].Code + '" style="display:none"></input></div></td>';
         var rowData4 = '<td class="border border-gray-400"><div class="flex justify-center"><button type="button" style="display:none" id="saveBtn' + items[i].Code + '" class="bg-green-800 w-10 h-6 border rounded-md" onclick="saveItem(\'' + items[i].Code + '\');"><i class="fa-solid fas fa-save text-white"></i></button><button type="button" id="editBtn' + items[i].Code + '" class="bg-orange-500 w-10 h-6 border rounded-md" onclick="editItem(\'' + items[i].Code + '\');"><i class="fa-solid fas fa-edit text-white"></i></button><button type="button" id="deleteBtn' + items[i].Code + '" class="bg-red-800 w-10 h-6 border rounded-md" onclick="deleteItem(\'' + items[i].Code + '\');"><i class="fa-solid fa-trash text-white"></i></button></div></td>';
 
         var row = document.createElement('tr');
@@ -355,12 +355,11 @@ function nextPrev(n) {
                     var mpo = $('#mpo').val();
                     var ogp_salesperson_type = $('#ogp_salesperson_type').val();
 
-                    
 
 
                     if (salesman && ogp_salesperson_type && ogp_salesperson_type !== "Salesperson OGP Type") {
                         // Check if any of the OGP related fields (salescases, csv, crv, mpo) are selected
-                        if (salescases !== "select one salescase" || csv !== "select one csv" || crv !== "select one crv" || mpo !== "select one mpo" || ogp_salesperson_type == "cart") {
+                        if (salescases !== "" || csv !== "" || crv !== "" || mpo !== "" || ogp_salesperson_type == "cart") {
                             currentTab = currentTab + n;
                         } else {
                             alert("Please select OGP related all information first.");
@@ -482,32 +481,118 @@ function showDiv(divId) {
 }
 
 function showOGPDiv(divId) {
+
+    items = [];
+
+    var table = $('#example').DataTable();
+    table.clear().draw();
+    table.page('first').draw('page');
+    
+    var tbody = document.getElementById('example1').getElementsByTagName('tbody')[0];
+    tbody.innerHTML = ''; // Clear table body
     var ogp_salesperson_type = divId.value;
     if (ogp_salesperson_type == 'salescase') {
         document.getElementById('salescase_div').style.display = 'block';
         document.getElementById('csv_div').style.display = 'none';
         document.getElementById('crv_div').style.display = 'none';
         document.getElementById('mpo_div').style.display = 'none';
+
+        $('#csv').val('').trigger('change');
+        $('#crv').val('').trigger('change');
+        $('#mpo').val('').trigger('change');
+        $('#csv, #crv, #mpo').val('');
+
+        document.getElementById('salescaserefDiv').style.display = 'block';
+        document.getElementById('csvDiv').style.display = 'none';
+        document.getElementById('crvDiv').style.display = 'none';
+        document.getElementById('mpoDiv').style.display = 'none';
+
+        $('#csvref').val('');
+        $('#crvref').val('');
+        $('#mporef').val('');
+
     } else if (ogp_salesperson_type == 'csv') {
         document.getElementById('salescase_div').style.display = 'none';
         document.getElementById('csv_div').style.display = 'block';
         document.getElementById('crv_div').style.display = 'none';
         document.getElementById('mpo_div').style.display = 'none';
+
+        $('#salescase').val('').trigger('change');
+        $('#crv').val('').trigger('change');
+        $('#mpo').val('').trigger('change');
+        $('#salescase, #crv, #mpo').val('');
+
+        document.getElementById('salescaserefDiv').style.display = 'none';
+        document.getElementById('csvDiv').style.display = 'block';
+        document.getElementById('crvDiv').style.display = 'none';
+        document.getElementById('mpoDiv').style.display = 'none';
+
+        $('#salescaseref').val('');
+        $('#crvref').val('');
+        $('#mporef').val('');
+
     } else if (ogp_salesperson_type == 'crv') {
         document.getElementById('salescase_div').style.display = 'none';
         document.getElementById('csv_div').style.display = 'none';
         document.getElementById('crv_div').style.display = 'block';
         document.getElementById('mpo_div').style.display = 'none';
+
+        $('#salescase').val('').trigger('change');
+        $('#csv').val('').trigger('change');
+        $('#mpo').val('').trigger('change');
+        $('#salescase, #csv, #mpo').val('');
+
+        document.getElementById('salescaserefDiv').style.display = 'none';
+        document.getElementById('csvDiv').style.display = 'none';
+        document.getElementById('crvDiv').style.display = 'block';
+        document.getElementById('mpoDiv').style.display = 'none';
+
+        $('#salescaseref').val('');
+        $('#csvref').val('');
+        $('#mporef').val('');
+
     } else if (ogp_salesperson_type == 'mpo') {
         document.getElementById('salescase_div').style.display = 'none';
         document.getElementById('csv_div').style.display = 'none';
         document.getElementById('crv_div').style.display = 'none';
         document.getElementById('mpo_div').style.display = 'block';
+
+        $('#salescase').val('').trigger('change');
+        $('#csv').val('').trigger('change');
+        $('#crv').val('').trigger('change');
+        $('#salescase, #csv, #crv').val('');
+
+        document.getElementById('salescaserefDiv').style.display = 'none';
+        document.getElementById('csvDiv').style.display = 'none';
+        document.getElementById('crvDiv').style.display = 'none';
+        document.getElementById('mpoDiv').style.display = 'block';
+
+        $('#salescaseref').val('');
+        $('#csvref').val('');
+        $('#crvref').val('');
+
     } else if (ogp_salesperson_type == 'cart') {
         document.getElementById('salescase_div').style.display = 'none';
         document.getElementById('csv_div').style.display = 'none';
         document.getElementById('crv_div').style.display = 'none';
         document.getElementById('mpo_div').style.display = 'none';
+
+
+        $('#salescase').val('').trigger('change');
+        $('#csv').val('').trigger('change');
+        $('#crv').val('').trigger('change');
+        $('#mpo').val('').trigger('change');
+        $('#salescase, #csv, #crv, #mpo').val('');
+
+        document.getElementById('salescaserefDiv').style.display = 'none';
+        document.getElementById('csvDiv').style.display = 'none';
+        document.getElementById('crvDiv').style.display = 'none';
+        document.getElementById('mpoDiv').style.display = 'none';
+
+        $('#salescaseref').val('');
+        $('#csvref').val('');
+        $('#crvref').val('');
+        $('#mporef').val('');
     }
 }
 
@@ -533,7 +618,6 @@ function showSalescaseDiv(name) {
 
 function showcsvDiv(name) {
     var salescase = name.value;
-    alert(salescase);
     // Hide and show relevant divs
     document.getElementById('salescaserefDiv').style.display = 'none';
     document.getElementById('csvDiv').style.display = 'block';
@@ -577,7 +661,7 @@ function showcrvDiv(name) {
 
     // Update the hidden input value
     $('.crvrefs').text("CRV Reference: " + salescase);
-    document.getElementById('crveref').value = salescase;
+    document.getElementById('crvref').value = salescase;
 }
 
 function showmpoDiv(name) {
@@ -594,7 +678,7 @@ function showmpoDiv(name) {
 
     // Update the <select> element safely
     if (!$('#mpo option[value="' + salescase + '"]').length) {
-        $('#mpo').append(new Option(salescase, salescase)); // Add option if not exists
+        $('#mpo').append(new Option(salescase, salescase)); // Add option if not existsselect one salescase
     }
     $('#mpo').val(salescase); // Set the selected value
 
@@ -629,6 +713,10 @@ function showStoreDiv(name) {
 }
 
 function ogpSaleman(name) {
+    $('#salescaseref').val('');
+    $('#csvref').val('');
+    $('#crvref').val('');
+    $('#mporef').val('');
     var salesman = name.value;
     document.getElementById('salesmanDiv').style.display = 'block';
     $('.salesperson').html("<b>Sales Person:     </b>" + salesman);
@@ -656,7 +744,7 @@ function ogpSaleman(name) {
                 .find('option')
                 .remove()
                 .end()
-                .append('<option selected>select one salescase </option>');
+                .append('<option value="" selected>select one salescase </option>');
             for (var i in dataList) {
                 $('#salescases').append(new Option(dataList[i], dataList[i]));
             }
@@ -676,7 +764,7 @@ function ogpSaleman(name) {
                 .find('option')
                 .remove()
                 .end()
-                .append('<option selected>select one csv </option>');
+                .append('<option value="" selected>select one csv </option>');
             for (var i in dataList) {
                 $('#csv').append(new Option(dataList[i], dataList[i]));
             }
@@ -696,7 +784,7 @@ function ogpSaleman(name) {
                 .find('option')
                 .remove()
                 .end()
-                .append('<option selected>select one crv </option>');
+                .append('<option value="" selected>select one crv </option>');
             for (var i in dataList) {
                 $('#crv').append(new Option(dataList[i], dataList[i]));
             }
@@ -715,7 +803,7 @@ function ogpSaleman(name) {
                 .find('option')
                 .remove()
                 .end()
-                .append('<option selected>select one mpo </option>');
+                .append('<option value="" selected>select one mpo </option>');
             for (var i in dataList) {
                 $('#mpo').append(new Option(dataList[i], dataList[i]));
             }

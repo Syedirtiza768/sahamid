@@ -1,6 +1,6 @@
 <?php
 include('../../config1.php');
-ini_set('memory_limit', '512M'); 
+ini_set('memory_limit', '512M');
 session_start();
 // $_SESSION['UsersRealName'];
 $igp_type = $_POST['igp_type'];
@@ -24,28 +24,31 @@ if (empty($stock_location)) {
 
 if ($igp_type == "s" || $igp_type == "e") {
     if ($igp_salesperson_type == "salescase") {
-        $SQL5 = "SELECT DISTINCT stockmaster.stockid,
-        stockmaster.description,
-        stockmaster.mnfCode,
-        stockmaster.mnfpno,
-        stockmaster.mbflag,
-        stockmaster.discontinued,
-        stockissuance.issued AS qoh,
-        stockmaster.units,
-        stockmaster.decimalplaces,
-        ogpsalescaseref.salescaseref
-            FROM stockmaster INNER JOIN stockissuance
-            ON stockmaster.stockid=stockissuance.stockid
-            INNER JOIN ogpsalescaseref
-            ON stockmaster.stockid=ogpsalescaseref.stockid
-            where stockissuance.salesperson = '" . $salesman . "'
-            AND ogpsalescaseref.salescaseref = '" . $salescase . "'
-            AND ogpsalescaseref.quantity != ''
-            AND ogpsalescaseref.quantity != '0'
-            AND stockmaster.stockid NOT LIKE '%\t%'
-            order by stockissuance.issued desc
+        $SQL5 = "SELECT stockmaster.stockid,
+    stockmaster.description,
+    stockmaster.mnfCode,
+    stockmaster.mnfpno,
+    stockmaster.mbflag,
+    stockmaster.discontinued,
+    LEAST(stockissuance.issued, SUM(ogpsalescaseref.quantity)) AS qoh,
+    stockmaster.units,
+    stockmaster.decimalplaces,
+    ogpsalescaseref.salescaseref
+FROM stockmaster
+INNER JOIN stockissuance ON stockmaster.stockid = stockissuance.stockid
+INNER JOIN ogpsalescaseref ON stockmaster.stockid = ogpsalescaseref.stockid
+WHERE stockissuance.salesperson = '" . $salesman . "'
+  AND ogpsalescaseref.salescaseref = '" . $salescase . "'
+  AND ogpsalescaseref.quantity != ''
+  AND ogpsalescaseref.quantity != '0'
+  AND stockissuance.issued > 0
+  AND stockmaster.stockid NOT LIKE '%\t%'
+GROUP BY stockmaster.stockid, stockmaster.description, stockmaster.mnfCode, 
+         stockmaster.mnfpno, stockmaster.mbflag, stockmaster.discontinued,
+         stockmaster.units, stockmaster.decimalplaces, ogpsalescaseref.salescaseref
+ORDER BY stockissuance.issued DESC;
+
             ";
-            
         $UpdateResult = mysqli_query($conn, $SQL5);
 
         if ($UpdateResult) {
@@ -61,26 +64,29 @@ if ($igp_type == "s" || $igp_type == "e") {
 
     // From csv 
     if ($igp_salesperson_type == "csv") {
-        $SQL5 = "SELECT DISTINCT stockmaster.stockid,
+        $SQL5 = "SELECT stockmaster.stockid,
     stockmaster.description,
     stockmaster.mnfCode,
     stockmaster.mnfpno,
     stockmaster.mbflag,
     stockmaster.discontinued,
-    stockissuance.issued  AS qoh,
+    LEAST(stockissuance.issued, SUM(ogpcsvref.quantity)) AS qoh,
     stockmaster.units,
     stockmaster.decimalplaces,
     ogpcsvref.csv
-        FROM stockmaster INNER JOIN stockissuance
-        ON stockmaster.stockid=stockissuance.stockid
-        INNER JOIN ogpcsvref
-        ON stockmaster.stockid=ogpcsvref.stockid
-        where stockissuance.salesperson = '" . $salesman . "'
-        AND ogpcsvref.csv = '" . $csv . "'
-        AND ogpcsvref.quantity != ''
-        AND ogpcsvref.quantity != '0'
-        AND stockmaster.stockid NOT LIKE '%\t%'
-        order by stockissuance.issued desc
+FROM stockmaster
+INNER JOIN stockissuance ON stockmaster.stockid = stockissuance.stockid
+INNER JOIN ogpcsvref ON stockmaster.stockid = ogpcsvref.stockid
+WHERE stockissuance.salesperson = '" . $salesman . "'
+  AND ogpcsvref.csv = '" . $csv . "'
+  AND ogpcsvref.quantity != ''
+  AND ogpcsvref.quantity != '0'
+  AND stockmaster.stockid NOT LIKE '%\t%'
+GROUP BY stockmaster.stockid, stockmaster.description, stockmaster.mnfCode,
+         stockmaster.mnfpno, stockmaster.mbflag, stockmaster.discontinued,
+         stockmaster.units, stockmaster.decimalplaces, ogpcsvref.csv
+ORDER BY stockissuance.issued DESC;
+
         ";
         $UpdateResult = mysqli_query($conn, $SQL5);
         if ($UpdateResult) {
@@ -101,20 +107,23 @@ if ($igp_type == "s" || $igp_type == "e") {
     stockmaster.mnfpno,
     stockmaster.mbflag,
     stockmaster.discontinued,
-    stockissuance.issued  AS qoh,
+    LEAST(stockissuance.issued, SUM(ogpcrvref.quantity)) AS qoh,
     stockmaster.units,
     stockmaster.decimalplaces,
     ogpcrvref.crv
-        FROM stockmaster INNER JOIN stockissuance
-        ON stockmaster.stockid=stockissuance.stockid
-        INNER JOIN ogpcrvref
-        ON stockmaster.stockid=ogpcrvref.stockid
-        where stockissuance.salesperson = '" . $salesman . "'
-        AND ogpcrvref.crv = '" . $crv . "'
-        AND ogpcrvref.quantity != ''
-        AND ogpcrvref.quantity != '0'
-        AND stockmaster.stockid NOT LIKE '%\t%'
-        order by stockissuance.issued desc
+FROM stockmaster
+INNER JOIN stockissuance ON stockmaster.stockid = stockissuance.stockid
+INNER JOIN ogpcrvref ON stockmaster.stockid = ogpcrvref.stockid
+WHERE stockissuance.salesperson = '" . $salesman . "'
+  AND ogpcrvref.crv = '" . $crv . "'
+  AND ogpcrvref.quantity != ''
+  AND ogpcrvref.quantity != '0'
+  AND stockmaster.stockid NOT LIKE '%\t%'
+GROUP BY stockmaster.stockid, stockmaster.description, stockmaster.mnfCode,
+         stockmaster.mnfpno, stockmaster.mbflag, stockmaster.discontinued,
+         stockmaster.units, stockmaster.decimalplaces, ogpcrvref.crv
+ORDER BY stockissuance.issued DESC;
+
         ";
 
         $UpdateResult = mysqli_query($conn, $SQL5);
@@ -132,26 +141,29 @@ if ($igp_type == "s" || $igp_type == "e") {
     }
     // From mpo 
     if ($igp_salesperson_type == "mpo") {
-        $SQL5 = "SELECT DISTINCT stockmaster.stockid,
+        $SQL5 = "SELECT stockmaster.stockid,
     stockmaster.description,
     stockmaster.mnfCode,
     stockmaster.mnfpno,
     stockmaster.mbflag,
     stockmaster.discontinued,
-    stockissuance.issued  AS qoh,
+    LEAST(stockissuance.issued, SUM(ogpmporef.quantity)) AS qoh,
     stockmaster.units,
     stockmaster.decimalplaces,
     ogpmporef.mpo
-        FROM stockmaster INNER JOIN stockissuance
-        ON stockmaster.stockid=stockissuance.stockid
-        INNER JOIN ogpmporef
-        ON stockmaster.stockid=ogpmporef.stockid
-        where stockissuance.salesperson = '" . $salesman . "'
-        AND ogpmporef.mpo = '" . $mpo . "'
-        AND ogpmporef.quantity != ''
-        AND ogpmporef.quantity != '0'
-        AND stockmaster.stockid NOT LIKE '%\t%'
-        order by stockissuance.issued desc
+FROM stockmaster
+INNER JOIN stockissuance ON stockmaster.stockid = stockissuance.stockid
+INNER JOIN ogpmporef ON stockmaster.stockid = ogpmporef.stockid
+WHERE stockissuance.salesperson = '" . $salesman . "'
+  AND ogpmporef.mpo = '" . $mpo . "'
+  AND ogpmporef.quantity != ''
+  AND ogpmporef.quantity != '0'
+  AND stockmaster.stockid NOT LIKE '%\t%'
+GROUP BY stockmaster.stockid, stockmaster.description, stockmaster.mnfCode,
+         stockmaster.mnfpno, stockmaster.mbflag, stockmaster.discontinued,
+         stockmaster.units, stockmaster.decimalplaces, ogpmporef.mpo
+ORDER BY stockissuance.issued DESC;
+
         ";
         $UpdateResult = mysqli_query($conn, $SQL5);
         if ($UpdateResult) {
