@@ -346,7 +346,7 @@ include('../v2/config1.php');
           <div class="p-44">
             <div class="printDiv rounded overflow-hidden shadow-lg">
               <div class="flex justify-center mt-6">
-                <h3 class="mt-4 text-gray-700 font-semibold text-lg justify-center">Print The OGP:</h3>
+                <h3 class="mt-4 text-gray-700 font-semibold text-lg justify-center">Print The IGP:</h3>
               </div>
               <div class="flex justify-center mt-2">
                 <button type="button" class="py-3 px-8 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-500 text-white hover:bg-blue-600">
@@ -376,6 +376,6 @@ include('../v2/config1.php');
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="igp/javascriptjsFilessssss.js"></script>
+<script src="igp/javascriptFiledd.js"></script>
 
 </html>

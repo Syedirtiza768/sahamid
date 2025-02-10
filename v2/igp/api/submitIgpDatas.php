@@ -451,83 +451,115 @@ if ($igp_type == "d") {
 if ($salescase != "") {
     $selectedItemsCode = NULL;
     foreach ($items as $LineItems) {
-        $itemcode = "UPDATE ogpsalescaseref SET quantity =quantity -'" . $LineItems['quantity'] . "' WHERE salescaseref= '" . $salescase . "'
-                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "'";
+        $itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $salescase . "'	
+            AND stockid = '" . $LineItems['Code'] . "' AND  salesman  = '" . $salesperson . "' AND quantity IS NOT NULL AND quantity > 0";
         $Result = mysqli_query($conn, $itemcode);
 
+        if (mysqli_num_rows($Result) == 1) {
+            $itemcode = "UPDATE ogpsalescaseref 
+            SET quantity = quantity - '" . intval($LineItems['quantity']) . "' 
+            WHERE salescaseref = '" . $salescase . "' 
+            AND stockid = '" . $LineItems['Code'] . "' 
+            AND salesman = '" . $salesperson . "' 
+            AND quantity IS NOT NULL 
+            AND quantity > 0 ";
+            $Result = mysqli_query($conn, $itemcode);
 
-        $HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
+            $HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
                                         salescaseref,
                                         requestedby,
                                         stockid,
-                                        salesman,
-                                        quantity
+                                        salesman
                                         )
                                     VALUES (
                                         '" . $RequestNo . "',
                                         '" . $salescase . "',
                                         '" . $_SESSION['UsersRealName'] . "',
                                         '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
+                                        '" . $salesperson . "')";
 
-        $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-        $DbgMsg = _('The following SQL to insert the request header record was used');
-        $Result = mysqli_query($conn, $HeaderSalescaserefSQL);
+            $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+            $DbgMsg = _('The following SQL to insert the request header record was used');
+            $Result = mysqli_query($conn, $HeaderSalescaserefSQL);
+        }
+        // else {
+        //     $HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
+        //                                 salescaseref,
+        //                                 requestedby,
+        //                                 stockid,
+        //                                 salesman,
+        //                                 quantity
+        //                                 )
+        //                             VALUES (
+        //                                 '" . $RequestNo . "',
+        //                                 '" . $salescase . "',
+        //                                 '" . $_SESSION['UsersRealName'] . "',
+        //                                 '" . $LineItems['Code'] . "',
+        //                                 '" . $salesperson . "',
+        //                                 '" . $LineItems['quantity'] . "')";
+        //     $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+        //     $DbgMsg = _('The following SQL to insert the request header record was used');
+        //     $Result = mysqli_query($conn, $HeaderSalescaserefSQL);++
+        // }
     }
 }
 
 if ($csv != "") {
     $selectedItemsCode = NULL;
     foreach ($items as $LineItems) {
-        $itemcode = "UPDATE ogpcsvref SET quantity =quantity -'" . $LineItems['quantity'] . "' WHERE csv= '" . $csv . "'
-                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "'";
+
+        $itemcode = "SELECT * FROM ogpcsvref WHERE csv= '" . $csv . "'	
+            AND stockid = '" . $LineItems['Code'] . "' AND  salesman  = '" . $salesperson . "' AND quantity IS NOT NULL AND quantity > 0";
         $Result = mysqli_query($conn, $itemcode);
 
+        if (mysqli_num_rows($Result) == 1) {
+            $itemcode = "UPDATE ogpcsvref SET quantity =quantity -'" . $LineItems['quantity'] . "' WHERE csv= '" . $csv . "'
+                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "' AND quantity IS NOT NULL AND quantity > 0";
+            $Result = mysqli_query($conn, $itemcode);
 
-        $HeaderSalescaserefSQL = "INSERT INTO ogpcsvref (dispatchid,
-                                        csv,
-                                        requestedby,
-                                        stockid,
-                                        salesman,
-                                        quantity
-                                        )
-                                    VALUES (
-                                        '" . $RequestNo . "',
-                                        '" . $csv . "',
-                                        '" . $_SESSION['UsersRealName'] . "',
-                                        '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
+            $HeaderSalescaserefSQL = "INSERT INTO ogpcsvref (dispatchid,
+            csv,
+            requestedby,
+            stockid,
+            salesman
+            )
+        VALUES (
+            '" . $RequestNo . "',
+            '" . $csv . "',
+            '" . $_SESSION['UsersRealName'] . "',
+            '" . $LineItems['Code'] . "',
+            '" . $salesperson . "')";
 
-        $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-        $DbgMsg = _('The following SQL to insert the request header record was used');
-        $Result = mysqli_query($conn, $HeaderSalescaserefSQL);
+            $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+            $DbgMsg = _('The following SQL to insert the request header record was used');
+            $Result = mysqli_query($conn, $HeaderSalescaserefSQL);
+        }
     }
 }
 
 if ($crv != "") {
     $selectedItemsCode = NULL;
-    foreach ($items as $LineItems) {
+    $itemcode = "SELECT * FROM ogpcrvref WHERE crv = '" . $crv . "'	
+            AND stockid = '" . $LineItems['Code'] . "' AND  salesman  = '" . $salesperson . "' AND quantity IS NOT NULL AND quantity > 0";
+    $Result = mysqli_query($conn, $itemcode);
+
+    if (mysqli_num_rows($Result) == 1) {
         $itemcode = "UPDATE ogpcrvref SET quantity =quantity -'" . $LineItems['quantity'] . "' WHERE crv= '" . $crv . "'
-                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "'";
+                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "' AND quantity IS NOT NULL AND quantity > 0";
         $Result = mysqli_query($conn, $itemcode);
 
-
-        $HeaderSalescaserefSQL = "INSERT INTO ogpcsvref (dispatchid,
-                                        crv,
-                                        requestedby,
-                                        stockid,
-                                        salesman,
-                                        quantity
-                                        )
-                                    VALUES (
-                                        '" . $RequestNo . "',
-                                        '" . $crv . "',
-                                        '" . $_SESSION['UsersRealName'] . "',
-                                        '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
+        $HeaderSalescaserefSQL = "INSERT INTO ogpcrvref (dispatchid,
+            crv,
+            requestedby,
+            stockid,
+            salesman
+            )
+        VALUES (
+            '" . $RequestNo . "',
+            '" . $crv . "',
+            '" . $_SESSION['UsersRealName'] . "',
+            '" . $LineItems['Code'] . "',
+            '" . $salesperson . "')";
 
         $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
         $DbgMsg = _('The following SQL to insert the request header record was used');
@@ -537,26 +569,27 @@ if ($crv != "") {
 
 if ($mpo != "") {
     $selectedItemsCode = NULL;
-    foreach ($items as $LineItems) {
+    $itemcode = "SELECT * FROM ogpmporef WHERE mpo = '" . $mpo . "'	
+            AND stockid = '" . $LineItems['Code'] . "' AND  salesman  = '" . $salesperson . "' AND quantity IS NOT NULL AND quantity > 0";
+    $Result = mysqli_query($conn, $itemcode);
+
+    if (mysqli_num_rows($Result) == 1) {
         $itemcode = "UPDATE ogpmporef SET quantity =quantity -'" . $LineItems['quantity'] . "' WHERE mpo= '" . $mpo . "'
-                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "'";
+                    AND stockid = '" . $LineItems['Code'] . "' AND  salesman = '" . $salesperson . "' AND quantity IS NOT NULL AND quantity > 0";
         $Result = mysqli_query($conn, $itemcode);
 
-
-        $HeaderSalescaserefSQL = "INSERT INTO ogpcsvref (dispatchid,
-                                        mpo,
-                                        requestedby,
-                                        stockid,
-                                        salesman,
-                                        quantity
-                                        )
-                                    VALUES (
-                                        '" . $RequestNo . "',
-                                        '" . $mpo . "',
-                                        '" . $_SESSION['UsersRealName'] . "',
-                                        '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
+        $HeaderSalescaserefSQL = "INSERT INTO ogpmporef (dispatchid,
+            mpo,
+            requestedby,
+            stockid,
+            salesman
+            )
+        VALUES (
+            '" . $RequestNo . "',
+            '" . $mpo . "',
+            '" . $_SESSION['UsersRealName'] . "',
+            '" . $LineItems['Code'] . "',
+            '" . $salesperson . "')";
 
         $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
         $DbgMsg = _('The following SQL to insert the request header record was used');
@@ -602,7 +635,7 @@ VALUES(
     }
 
     if ($igp_type == "d") {
-    $SQL = "INSERT INTO stockmoves (stockid,
+        $SQL = "INSERT INTO stockmoves (stockid,
 												type,
 												transno,
 												loccode,
@@ -626,11 +659,10 @@ VALUES(
 						,'" . round($QtyOnHandPrior + $LineItems['quantity'], 0) . "'
 						)";
 
-    $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
-    $DbgMsg =  _('The following SQL to insert the stock movement record was used');
-    $Result = mysqli_query($conn, $SQL);
-    }
-    else{
+        $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
+        $DbgMsg =  _('The following SQL to insert the stock movement record was used');
+        $Result = mysqli_query($conn, $SQL);
+    } else {
         $SQL = "INSERT INTO stockmoves (stockid,
 												type,
 												transno,
@@ -655,9 +687,9 @@ VALUES(
 						,'" . round($QtyOnHandPrior + $LineItems['quantity'], 0) . "'
 						)";
 
-    $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
-    $DbgMsg =  _('The following SQL to insert the stock movement record was used');
-    $Result = mysqli_query($conn, $SQL);
+        $ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
+        $DbgMsg =  _('The following SQL to insert the stock movement record was used');
+        $Result = mysqli_query($conn, $SQL);
     }
 
 
