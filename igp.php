@@ -247,7 +247,8 @@ if (isset($_POST['Submit']) and $count > 0) {
 				SET quantity = quantity - " . $LineItems->Quantity . "
 				WHERE stockid='" . $LineItems->StockID . "'
 				AND salesman ='" . $_SESSION['Request']->receivedfrom . "'
-				AND salescaseref='" . $_SESSION['Request']->salescaseref . "'";
+				AND salescaseref='" . $_SESSION['Request']->salescaseref . "'
+				AND quantity != 0";
 
 				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 				$DbgMsg = _('The following SQL to insert the request header record was used');
@@ -273,7 +274,8 @@ if (isset($_POST['Submit']) and $count > 0) {
 				SET quantity = quantity - " . $LineItems->Quantity . "
 				WHERE stockid='" . $LineItems->StockID . "'
 				AND salesman ='" . $_SESSION['Request']->receivedfrom . "'
-				AND csv ='" . $_SESSION['Request']->csv . "'";
+				AND csv ='" . $_SESSION['Request']->csv . "'
+				AND quantity != 0 ";
 
 				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 				$DbgMsg = _('The following SQL to insert the request header record was used');
@@ -299,7 +301,8 @@ if (isset($_POST['Submit']) and $count > 0) {
 				SET quantity = quantity - " . $LineItems->Quantity . "
 				WHERE stockid='" . $LineItems->StockID . "'
 				AND salesman ='" . $_SESSION['Request']->receivedfrom . "'
-				AND crv ='" . $_SESSION['Request']->crv . "'";
+				AND crv ='" . $_SESSION['Request']->crv . "'
+				AND quantity != 0 ";
 
 				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 				$DbgMsg = _('The following SQL to insert the request header record was used');
@@ -325,7 +328,8 @@ if (isset($_POST['Submit']) and $count > 0) {
 				SET quantity = quantity - " . $LineItems->Quantity . "
 				WHERE stockid='" . $LineItems->StockID . "'
 				AND salesman ='" . $_SESSION['Request']->receivedfrom . "'
-				AND mpo ='" . $_SESSION['Request']->mpo . "'";
+				AND mpo ='" . $_SESSION['Request']->mpo . "'
+				AND quantity != 0";
 
 				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 				$DbgMsg = _('The following SQL to insert the request header record was used');

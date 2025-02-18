@@ -234,70 +234,147 @@ if (isset($_POST['Submit']) and $count > 0) {
 		if ($_SESSION['Request']->salescaseref) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
-				$itemcode = "SELECT * FROM ogpsalescaseref WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'	
-					AND stockid = '" . $LineItems->StockID . "' AND salesman = '" . $_SESSION['Request']->deliveredto . "'";
+				// Step 1: Fetch all relevant rows for the same stockid, salescaseref, and salesman
+				$itemcode = "SELECT * FROM ogpsalescaseref 
+							 WHERE salescaseref = '" . $_SESSION['Request']->salescaseref . "'
+							 AND stockid = '" . $LineItems->StockID . "' 
+							 AND salesman = '" . $_SESSION['Request']->deliveredto . "' 
+							 AND quantity > 0 
+							 ORDER BY dispatchid DESC"; // Get all matching rows, ordered by dispatchid
 				$Result = DB_query($itemcode, $db);
 
-				if (DB_num_rows($Result) == 1) {
-					$itemcode = "UPDATE ogpsalescaseref SET quantity =quantity +'" . $LineItems->Quantity . "' WHERE salescaseref= '" . $_SESSION['Request']->salescaseref . "'
-							AND stockid = '" . $LineItems->StockID . "' AND  salesman = '" . $_SESSION['Request']->deliveredto . "'";
-					$Result = DB_query($itemcode, $db);
-				} else {
+				$totalQuantity = 0; // Variable to store the total sum of quantities
+				$rows = []; // Array to store the fetched rows for later updates
 
-					$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
-												salescaseref,
-												requestedby,
-												stockid,
-												salesman,
-												quantity
-												)
-											VALUES (
-												'" . $RequestNo . "',
-												'" . $_SESSION['Request']->salescaseref . "',
-												'" . $_SESSION['UsersRealName'] . "',
-												'" . $LineItems->StockID . "',
-												'" . $_SESSION['Request']->deliveredto . "',
-												'" . $LineItems->Quantity . "')";
+				// Step 2: Loop through all fetched rows and calculate the total quantity
+				while ($row = DB_fetch_array($Result)) {
+					// Add the quantity of each row to the total
+					$totalQuantity += $row['quantity'];
 
+					// Store the row for later updating
+					$rows[] = $row;
+				}
+
+				// Step 3: Add the new quantity from the LineItems to the total
+				$totalQuantity += $LineItems->Quantity;
+
+				if (!empty($rows)) {
+					// Step 4: Update all previous rows' quantities to NULL
+					foreach ($rows as $row) {
+						$updateRow = "UPDATE ogpsalescaseref 
+									  SET quantity = NULL 
+									  WHERE id = '" . $row['id'] . "'";
+						DB_query($updateRow, $db);
+					}
+
+					// Step 5: Insert a new record with the total quantity (including the new quantity)
+					$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid, 
+																		salescaseref, 
+																		requestedby, 
+																		stockid, 
+																		salesman, 
+																		quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->salescaseref . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $totalQuantity . "')";
 					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 					$DbgMsg = _('The following SQL to insert the request header record was used');
-					$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				} else {
+					// If no rows found (no matching OGP), insert the new record as usual
+					$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid, 
+																		salescaseref, 
+																		requestedby, 
+																		stockid, 
+																		salesman, 
+																		quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->salescaseref . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $LineItems->Quantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				}
 			}
 		}
-		
+
 		if ($_SESSION['Request']->parchino) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
-				echo $_POST['parchino'];
-				$itemcode = "SELECT * FROM ogpmporef WHERE mpo= '" . $_SESSION['Request']->parchino . "'
-				AND stockid = '" . $LineItems->StockID . "' AND salesman = '" . $_SESSION['Request']->deliveredto . "'";
+				echo $_POST['parchino']; // Echo the value of 'parchino' (you may remove this if not needed for debugging)
+
+				// Step 1: Fetch all relevant rows for the same mpo, stockid, and salesman
+				$itemcode = "SELECT * FROM ogpmporef 
+							 WHERE mpo = '" . $_SESSION['Request']->parchino . "' 
+							 AND stockid = '" . $LineItems->StockID . "' 
+							 AND salesman = '" . $_SESSION['Request']->deliveredto . "' 
+							 AND quantity > 0 
+							 ORDER BY dispatchid DESC"; // Fetch all matching rows, ordered by dispatchid
 				$Result = DB_query($itemcode, $db);
-				if (DB_num_rows($Result) == 1) {
-					$itemcode = "UPDATE ogpmporef SET quantity =quantity +'" . $LineItems->Quantity . "' WHERE mpo= '" . $_SESSION['Request']->parchino . "'
-							AND stockid = '" . $LineItems->StockID . "' AND  salesman = '" . $_SESSION['Request']->deliveredto . "'";
-					$Result = DB_query($itemcode, $db);
+
+				$totalQuantity = 0; // Initialize the variable to store the total quantity
+				$rows = []; // Array to store the fetched rows for later updates
+
+				// Step 2: Loop through all fetched rows and calculate the total quantity
+				while ($row = DB_fetch_array($Result)) {
+					// Add the quantity of each row to the total
+					$totalQuantity += $row['quantity'];
+
+					// Store the row for later updates
+					$rows[] = $row;
+				}
+
+				// Step 3: Add the new quantity from LineItems to the total
+				$totalQuantity += $LineItems->Quantity;
+
+				if (!empty($rows)) {
+					// Step 4: Update all previous rows' quantities to NULL
+					foreach ($rows as $row) {
+						$updateRow = "UPDATE ogpmporef 
+									  SET quantity = NULL 
+									  WHERE id = '" . $row['id'] . "'";
+						DB_query($updateRow, $db);
+					}
+
+					// Step 5: Insert a new record with the total quantity (including the new quantity)
+					$HeaderSalescaserefSQL = "INSERT INTO ogpmporef (dispatchid, 
+																  mpo, 
+																  requestedby, 
+																  stockid, 
+																  salesman, 
+																  quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->parchino . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $totalQuantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				} else {
-
-				$HeaderSalescaserefSQL = "INSERT INTO ogpmporef (dispatchid,
-												mpo,
-												requestedby,
-												stockid,
-												salesman,
-												quantity
-												)
-											VALUES (
-												'" . $RequestNo . "',
-												'" . $_SESSION['Request']->parchino . "',
-												'" . $_SESSION['UsersRealName'] . "',
-												'" . $LineItems->StockID . "',
-												'" . $_SESSION['Request']->deliveredto . "',
-												'" . $LineItems->Quantity . "')";
-												
-
-				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-				$DbgMsg = _('The following SQL to insert the request header record was used');
-				$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+					// If no rows found (no matching OGP), insert the new record as usual
+					$HeaderSalescaserefSQL = "INSERT INTO ogpmporef (dispatchid, 
+																  mpo, 
+																  requestedby, 
+																  stockid, 
+																  salesman, 
+																  quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->parchino . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $LineItems->Quantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				}
 			}
 		}
@@ -305,27 +382,73 @@ if (isset($_POST['Submit']) and $count > 0) {
 		if ($_SESSION['Request']->csv) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
-
-				$itemcode = "SELECT * FROM ogpcsvref WHERE csv= '" . $_SESSION['Request']->csv . "'";
+				// Step 1: Fetch all rows related to the same csv (similar to ogpcsvref)
+				$itemcode = "SELECT * FROM ogpcsvref 
+							 WHERE csv = '" . $_SESSION['Request']->csv . "' 
+							 AND stockid = '" . $LineItems->StockID . "' 
+							 AND salesman = '" . $_SESSION['Request']->deliveredto . "' 
+							 AND quantity > 0 
+							 ORDER BY dispatchid DESC"; // Fetch matching rows, ordered by dispatchid
 				$Result = DB_query($itemcode, $db);
 
-				$HeaderSalescaserefSQL = "INSERT INTO ogpcsvref (dispatchid,
-											csv,
-											requestedby,
-											stockid,
-											salesman,
-											quantity
-											)
-										VALUES (
-											'" . $RequestNo . "',
-											'" . $_SESSION['Request']->csv . "',
-											'" . $_SESSION['UsersRealName'] . "',
-											'" . $LineItems->StockID . "',
-											'" . $_SESSION['Request']->deliveredto . "',
-											'" . $LineItems->Quantity . "')";
-				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-				$DbgMsg = _('The following SQL to insert the request header record was used');
-				$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				$totalQuantity = 0; // Initialize the variable to store the total quantity
+				$rows = []; // Array to store the fetched rows for later updates
+
+				// Step 2: Loop through all fetched rows and calculate the total quantity
+				while ($row = DB_fetch_array($Result)) {
+					// Add the quantity of each row to the total
+					$totalQuantity += $row['quantity'];
+
+					// Store the row for later updates
+					$rows[] = $row;
+				}
+
+				// Step 3: Add the new quantity from LineItems to the total
+				$totalQuantity += $LineItems->Quantity;
+
+				if (!empty($rows)) {
+					// Step 4: Update all previous rows' quantities to NULL
+					foreach ($rows as $row) {
+						$updateRow = "UPDATE ogpcsvref 
+									  SET quantity = NULL 
+									  WHERE id = '" . $row['id'] . "'";
+						DB_query($updateRow, $db);
+					}
+
+					// Step 5: Insert a new record with the total quantity (including the new quantity)
+					$HeaderSalescaserefSQL = "INSERT INTO ogpcsvref (dispatchid, 
+																  csv, 
+																  requestedby, 
+																  stockid, 
+																  salesman, 
+																  quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->csv . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $totalQuantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				} else {
+					// If no rows found (no matching CSV), insert the new record as usual
+					$HeaderSalescaserefSQL = "INSERT INTO ogpcsvref (dispatchid, 
+																  csv, 
+																  requestedby, 
+																  stockid, 
+																  salesman, 
+																  quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->csv . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $LineItems->Quantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				}
 			}
 		}
 
@@ -333,27 +456,73 @@ if (isset($_POST['Submit']) and $count > 0) {
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
 
-				$itemcode = "SELECT * FROM ogpcrvref WHERE crv= '" . $_SESSION['Request']->crv . "'";
+				// Step 1: Fetch all rows related to the same crv (similar to previous examples)
+				$itemcode = "SELECT * FROM ogpcrvref 
+							 WHERE crv = '" . $_SESSION['Request']->crv . "' 
+							 AND stockid = '" . $LineItems->StockID . "' 
+							 AND salesman = '" . $_SESSION['Request']->deliveredto . "' 
+							 AND quantity > 0 
+							 ORDER BY dispatchid DESC"; // Fetch matching rows, ordered by dispatchid
 				$Result = DB_query($itemcode, $db);
 
-				$HeaderSalescaserefSQL = "INSERT INTO ogpcrvref (dispatchid,
-											crv,
-											requestedby,
-											stockid,
-											salesman,
-											quantity
-											)
-										VALUES (
-											'" . $RequestNo . "',
-											'" . $_SESSION['Request']->crv . "',
-											'" . $_SESSION['UsersRealName'] . "',
-											'" . $LineItems->StockID . "',
-												'" . $_SESSION['Request']->deliveredto . "',
-											'" . $LineItems->Quantity . "')";
+				$totalQuantity = 0; // Initialize the variable to store the total quantity
+				$rows = []; // Array to store the fetched rows for later updates
 
-				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-				$DbgMsg = _('The following SQL to insert the request header record was used');
-				$Result = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				// Step 2: Loop through all fetched rows and calculate the total quantity
+				while ($row = DB_fetch_array($Result)) {
+					// Add the quantity of each row to the total
+					$totalQuantity += $row['quantity'];
+
+					// Store the row for later updates
+					$rows[] = $row;
+				}
+
+				// Step 3: Add the new quantity from LineItems to the total
+				$totalQuantity += $LineItems->Quantity;
+
+				if (!empty($rows)) {
+					// Step 4: Update all previous rows' quantities to NULL
+					foreach ($rows as $row) {
+						$updateRow = "UPDATE ogpcrvref 
+									  SET quantity = NULL 
+									  WHERE id = '" . $row['id'] . "'";
+						DB_query($updateRow, $db);
+					}
+
+					// Step 5: Insert a new record with the total quantity (including the new quantity)
+					$HeaderSalescaserefSQL = "INSERT INTO ogpcrvref (dispatchid, 
+																  crv, 
+																  requestedby, 
+																  stockid, 
+																  salesman, 
+																  quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->crv . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $totalQuantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				} else {
+					// If no rows found (no matching CRV), insert the new record as usual
+					$HeaderSalescaserefSQL = "INSERT INTO ogpcrvref (dispatchid, 
+																  crv, 
+																  requestedby, 
+																  stockid, 
+																  salesman, 
+																  quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->crv . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $LineItems->Quantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				}
 			}
 		}
 
