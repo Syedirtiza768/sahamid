@@ -151,8 +151,10 @@ if (isset($_GET['Delete'])) {
 	echo '<br />';
 }
 
-if ($_SESSION['Request']->salescaseref) {
+if (isset($_SESSION['Request']) && isset($_SESSION['Request']->salescaseref)) {
     echo "<script>console.log('Entered the IF statement');</script>";
+} else {
+    echo "<script>console.log('Not entered');</script>";
 }
 
 foreach ($_POST as $key => $value) {
