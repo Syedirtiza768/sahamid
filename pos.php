@@ -4,7 +4,7 @@
 
 include('includes/DefinePOSClass.php');
 include('includes/session.inc');
-$Title = _('Create a Stock Requests');
+$Title = _('Create a Stock Request');
 $ViewTopic = 'Inventory';
 $BookMark = 'CreateRequest';
 include('includes/header.inc');
@@ -151,7 +151,6 @@ if (isset($_GET['Delete'])) {
 	echo '<br />';
 }
 
-
 foreach ($_POST as $key => $value) {
 	if (mb_strstr($key, 'StockID')) {
 		$Index = mb_substr($key, 7);
@@ -233,7 +232,6 @@ if (isset($_POST['Submit']) and $count > 0) {
 		$Result = DB_query($HeaderSQL, $db, $ErrMsg, $DbgMsg, true);
 
 		if ($_SESSION['Request']->salescaseref) {
-			
 			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
 				// Step 1: Fetch all relevant rows for the same stockid, salescaseref, and salesman
@@ -304,12 +302,6 @@ if (isset($_POST['Submit']) and $count > 0) {
 					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				}
 			}
-		}
-
-		if (isset($_SESSION['Request']) && isset($_SESSION['Request']->salescaseref)) {
-			echo "<script>console.log('Entered the IF statementsssssssssssssss');</script>";
-		} else {
-			echo "<script>console.log('Not entered');</script>";
 		}
 
 		if ($_SESSION['Request']->parchino) {
