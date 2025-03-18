@@ -4,7 +4,7 @@
 
 include('includes/DefinePOSClass.php');
 include('includes/session.inc');
-$Title = _('Create a Stock Request');
+$Title = _('Create a Stock Requests');
 $ViewTopic = 'Inventory';
 $BookMark = 'CreateRequest';
 include('includes/header.inc');
@@ -232,87 +232,79 @@ if (isset($_POST['Submit']) and $count > 0) {
 		$DbgMsg = _('The following SQL to insert the request header record was used');
 		$Result = DB_query($HeaderSQL, $db, $ErrMsg, $DbgMsg, true);
 
-		if (isset($_SESSION['Request']) && is_object($_SESSION['Request']) && isset($_SESSION['Request']->salescaseref)) {
-    
-			$selectedItemsCode = NULL;
+		if ($_SESSION['Request']->salescaseref) {
 			
-			if (!isset($_SESSION['Request']->LineItems) || !is_array($_SESSION['Request']->LineItems)) {
-				die("Error: LineItems is missing or not an array in Request object.");
-			}
-		
+			$selectedItemsCode = NULL;
 			foreach ($_SESSION['Request']->LineItems as $LineItems) {
-				if (!isset($LineItems->StockID) || !isset($LineItems->Quantity)) {
-					die("Error: Missing StockID or Quantity in LineItems.");
-				}
-				
-				if (!isset($_SESSION['Request']->deliveredto)) {
-					die("Error: DeliveredTo field is missing in Request.");
-				}
-		
 				// Step 1: Fetch all relevant rows for the same stockid, salescaseref, and salesman
 				$itemcode = "SELECT * FROM ogpsalescaseref 
-							 WHERE salescaseref = '" . mysqli_real_escape_string($db, $_SESSION['Request']->salescaseref) . "'
-							 AND stockid = '" . mysqli_real_escape_string($db, $LineItems->StockID) . "' 
-							 AND salesman = '" . mysqli_real_escape_string($db, $_SESSION['Request']->deliveredto) . "' 
+							 WHERE salescaseref = '" . $_SESSION['Request']->salescaseref . "'
+							 AND stockid = '" . $LineItems->StockID . "' 
+							 AND salesman = '" . $_SESSION['Request']->deliveredto . "' 
 							 AND quantity > 0 
-							 ORDER BY dispatchid DESC";
-		
+							 ORDER BY dispatchid DESC"; // Get all matching rows, ordered by dispatchid
 				$Result = DB_query($itemcode, $db);
-				if (!$Result) {
-					die("SQL Error: " . mysqli_error($db)); 
-				}
-		
+
 				$totalQuantity = 0; // Variable to store the total sum of quantities
 				$rows = []; // Array to store the fetched rows for later updates
-		
+
 				// Step 2: Loop through all fetched rows and calculate the total quantity
 				while ($row = DB_fetch_array($Result)) {
+					// Add the quantity of each row to the total
 					$totalQuantity += $row['quantity'];
+
+					// Store the row for later updating
 					$rows[] = $row;
 				}
-		
+
 				// Step 3: Add the new quantity from the LineItems to the total
 				$totalQuantity += $LineItems->Quantity;
-		
+
 				if (!empty($rows)) {
 					// Step 4: Update all previous rows' quantities to NULL
 					foreach ($rows as $row) {
 						$updateRow = "UPDATE ogpsalescaseref 
 									  SET quantity = NULL 
-									  WHERE id = '" . mysqli_real_escape_string($db, $row['id']) . "'";
-						$updateResult = DB_query($updateRow, $db);
-						if (!$updateResult) {
-							die("Error updating quantity to NULL: " . mysqli_error($db));
-						}
+									  WHERE id = '" . $row['id'] . "'";
+						DB_query($updateRow, $db);
 					}
-				}
-		
-				// Step 5: Insert a new record with the total quantity (including the new quantity)
-				$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid, 
+
+					// Step 5: Insert a new record with the total quantity (including the new quantity)
+					$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid, 
 																		salescaseref, 
 																		requestedby, 
 																		stockid, 
 																		salesman, 
 																		quantity) 
-										  VALUES ('" . mysqli_real_escape_string($db, $RequestNo) . "', 
-												  '" . mysqli_real_escape_string($db, $_SESSION['Request']->salescaseref) . "', 
-												  '" . mysqli_real_escape_string($db, $_SESSION['UsersRealName']) . "', 
-												  '" . mysqli_real_escape_string($db, $LineItems->StockID) . "', 
-												  '" . mysqli_real_escape_string($db, $_SESSION['Request']->deliveredto) . "', 
-												  '" . mysqli_real_escape_string($db, $totalQuantity) . "')";
-		
-				$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-				$DbgMsg = _('The following SQL to insert the request header record was used');
-		
-				$insertResult = DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
-				if (!$insertResult) {
-					die("Error inserting new record: " . mysqli_error($db));
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->salescaseref . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $totalQuantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
+				} else {
+					// If no rows found (no matching OGP), insert the new record as usual
+					$HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid, 
+																		salescaseref, 
+																		requestedby, 
+																		stockid, 
+																		salesman, 
+																		quantity) 
+											 VALUES ('" . $RequestNo . "', 
+													 '" . $_SESSION['Request']->salescaseref . "', 
+													 '" . $_SESSION['UsersRealName'] . "', 
+													 '" . $LineItems->StockID . "', 
+													 '" . $_SESSION['Request']->deliveredto . "', 
+													 '" . $LineItems->Quantity . "')";
+					$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
+					$DbgMsg = _('The following SQL to insert the request header record was used');
+					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				}
 			}
-		} else {
-			die("Error: salescaseref is missing or '" . $_SESSION['Request']. "' is not an object.");
 		}
-		
 
 		if (isset($_SESSION['Request']) && isset($_SESSION['Request']->salescaseref)) {
 			echo "<script>console.log('Entered the IF statementsssssssssssssss');</script>";
