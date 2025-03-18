@@ -4,7 +4,7 @@
 
 include('includes/DefinePOSClass.php');
 include('includes/session.inc');
-$Title = _('Create a Stock Request');
+$Title = _('Create a Stock Requests');
 $ViewTopic = 'Inventory';
 $BookMark = 'CreateRequest';
 include('includes/header.inc');
