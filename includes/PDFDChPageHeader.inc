@@ -7,12 +7,22 @@
 
 $img = glob($_SESSION['part_pics_dir'] . '/companylogos/' .$TransferRowS['dba'].'*');
 
-$pdf->addJpegFromFile($img[0], 20, 750, 0, 60);
+if (!empty($img)) {
+    $pageWidth = 612; // Page width in points (standard A4 width)
+    $imageWidth = 200; // Set your preferred fixed image width
+    $imageHeight = 60;
+
+    // Calculate X position for horizontal centering
+    $xPosition = ($pageWidth - $imageWidth) / 2;
+    $yPosition = 750;
+
+    $pdf->addJpegFromFile($img[0], $xPosition, $yPosition, $imageWidth, $imageHeight);
+}
 
 
 
 
-$html2= '<br><br><div align = "center"> <br><br><h3><br><br>'.$TransferRowS['companyaddress'].'</h3><h1 align="right">Delivery Challan</h1></div>';
+$html2= '<br><br><br><br><br><div align = "center"><h3><br><br>'.$TransferRowS['companyaddress'].'</h3><h1 align="right">Delivery Challan</h1></div>';
 
 //$LeftOvers = $pdf->addTextWrap($Left_Margin,$YPos,300,$FontSize,$_SESSION['CompanyRecord']['coyname']);
 $html2.= '<div align = "center" style = "padding-top:100px;"></div><div style = "border:1px; height:auto; width:auto; " >';
