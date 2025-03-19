@@ -12,7 +12,7 @@ $pdf->addJpegFromFile($img[0], 20, 750, 0, 60);
 
 
 
-$html2= '<br><br><div align = "center"> <h1>'.$TransferRowS['dba'].'</h1><h3><br><br>'.$TransferRowS['companyaddress'].'</h3><h1 align="right">Delivery Challan</h1></div>';
+$html2= '<br><br><div align = "center"> <br><br><h3><br><br>'.$TransferRowS['companyaddress'].'</h3><h1 align="right">Delivery Challan</h1></div>';
 
 //$LeftOvers = $pdf->addTextWrap($Left_Margin,$YPos,300,$FontSize,$_SESSION['CompanyRecord']['coyname']);
 $html2.= '<div align = "center" style = "padding-top:100px;"></div><div style = "border:1px; height:auto; width:auto; " >';
