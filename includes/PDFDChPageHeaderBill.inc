@@ -7,20 +7,22 @@
 
 $img = glob($_SESSION['part_pics_dir'] . '/companylogos/' .$TransferRowS['dba'].'*');
 if (!empty($img)) {
-    $pageWidth = 612; // Page width in points (standard A4 width)
-    $imageWidth = 200; // Set your preferred fixed image width
-    $imageHeight = 60;
+    $pageWidth = $pdf->GetPageWidth(); // Get the actual page width
+    list($imageWidth, $imageHeight) = getimagesize($img[0]); // Get actual image dimensions
 
-    // Calculate X position for horizontal centering
-    $xPosition = ($pageWidth - $imageWidth) / 2;
-    $yPosition = 750;
+    $desiredWidth = 280; // Increase the width (adjust as needed)
+    $desiredHeight = ($imageHeight / $imageWidth) * $desiredWidth; // Maintain aspect ratio
 
-    $pdf->addJpegFromFile($img[0], $xPosition, $yPosition, $imageWidth, $imageHeight);
+    // Calculate X position for centering
+    $xPosition = ($pageWidth - $desiredWidth) / 2;
+    $yPosition = $pdf->GetY() + 10; // Adjust Y position if needed
+
+    $pdf->Image($img[0], $xPosition, $yPosition, $desiredWidth, $desiredHeight, '', '', '', false, 300, '', false, false, 0, false, false, false);
 }
 
 
 
-$html2= '<br><br><br><br><div align = "center"><br><br><h3>'.$TransferRowS['companyaddress'].'</h3><h1 align="right">Bill</h1></div>';
+$html2= '<br><br><br><br><br><br><br><br><br><div align = "center"><br><br><h3>'.$TransferRowS['companyaddress'].'</h3><h1 align="right">Bill</h1></div>';
 
 //$LeftOvers = $pdf->addTextWrap($Left_Margin,$YPos,300,$FontSize,$_SESSION['CompanyRecord']['coyname']);
 $html2.= '<div align = "center" style = "padding-top:100px;"></div><div style = "border:1px; height:auto; width:auto; " >';

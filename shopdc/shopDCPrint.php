@@ -105,19 +105,19 @@ $salesman = mysqli_fetch_assoc(mysqli_query($db, $SQL));
 
 $img = glob('../' . $_SESSION['part_pics_dir'] . '/companylogos/' . $info['dba'] . '*');
 $pageWidth = 612; // Page width in points (standard A4 width)
-$imageWidth = 200; // Set your preferred fixed image width
-$imageHeight = 60;
+$imageWidth = 280; // Set your preferred fixed image width
+$imageHeight = 120;
 
 // Calculate X position for horizontal centering
 $xPosition = ($pageWidth - $imageWidth) / 2;
-$yPosition = 750;
+$yPosition = 750-40;
 
 $pdf->addJpegFromFile($img[0], $xPosition, $yPosition, $imageWidth, $imageHeight);
 
 $SQL = "SELECT * FROM dcoptions WHERE orderno='" . $dcNo . "'";
 $options = mysqli_query($db, $SQL);
 
-$html = '<br><br><br><br><br><div align = "center"><h3><br><br>' . $info['companyaddress'] . '</h3><h1 align="right">Delivery Challan</h1></div>';
+$html = '<br><br><br><br><br><br><br><div align = "center"><h3><br><br>' . $info['companyaddress'] . '</h3><h1 align="right">Delivery Challan</h1></div>';
 /*
 if(isset($_GET['orignal'])){
     $html .= '<h1 align="right" style="margin-bottom:0px">Orignal</h1>';
