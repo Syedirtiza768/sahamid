@@ -74,16 +74,15 @@ if ($name == "quantity") {
 
 	$optionQuantity = $row['quantity'];
 
-	$SQL = "SELECT quantity FROM ogpsalescaseref 
-				WHERE stockid='" . $stockid . "'
-				AND salesman='" . $salesman . "'
-				AND salescaseref = '" . $salescaseref . "'";
+	$SQL = "SELECT SUM(quantity) AS total_quantity FROM ogpsalescaseref 
+        WHERE stockid='" . $stockid . "'
+        AND salesman='" . $salesman . "'
+        AND salescaseref = '" . $salescaseref . "'";
 
 	$result = mysqli_query($db, $SQL);
-
 	$quant = mysqli_fetch_assoc($result);
+	$issuedQuantityref = $quant['total_quantity'];
 
-	$issuedQuantityref = $quant['quantity'];
 
 	$SQL = "SELECT issued,dc FROM stockissuance WHERE stockid='" . $stockid . "'AND salesperson='" . $salesman . "'";
 	$result = mysqli_query($db, $SQL);
@@ -160,15 +159,15 @@ if ($name == "quantity") {
 			$result = mysqli_query($db, $SQL);
 		}
 	}
-	
+
 	if ($optionQuantity == 1) {
 
 		if ($value > $stkQuantity) {
-			$difference = $value - $stkQuantity ;
+			$difference = $value - $stkQuantity;
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '" . $salescaseref . "'
 				AND stockid='" . $stockid . "'
 				AND salesman='" . $salesman . "'";
-	
+
 			$result = mysqli_query($db, $SQL);
 		}
 		if ($value < $stkQuantity) {
@@ -177,7 +176,7 @@ if ($name == "quantity") {
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
 				AND stockid='" . $stockid . "'
 				AND salesman='" . $salesman . "'";
-	
+
 			$result = mysqli_query($db, $SQL);
 		}
 	}
