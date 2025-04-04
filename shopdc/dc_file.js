@@ -1268,8 +1268,7 @@
 		    data: {orderno: order, salescaseref: salesref, name: "quantity",value:quantity,item:item,FormID:formID},
 		    dataType: "json",
 		    success: function(response) { 
-		    	var status = response.status;
-		    	
+				var status = response.status;
 		    	if(status == "success"){
 
 		    		$("#"+item+"").find("input.quantity").css("border","2px green solid");

@@ -675,7 +675,7 @@
 
 		<script src="../quotation/assets/javascripts/theme.js"></script>
 		<script type="text/javascript" src="../includes/textboxio/textboxio.js"></script>
-		<script src="dc.js?version=<?php echo generateRandom() ?>"></script>
+		<script src="dc_file.js?version=<?php echo generateRandom() ?>"></script>
   
 	</body>
 </html>

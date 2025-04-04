@@ -91,7 +91,7 @@ if ($name == "quantity") {
 	$issuedQuantity = $quant['issued'];
 	$dcQuantity = $quant['dc'];
 
-	if ($value <= 0) {
+	if ($value <= 0) {									
 
 		$response = [
 			'status' => 'alert',
@@ -402,14 +402,16 @@ if (!$result) {
 	echo json_encode($response);
 	return;
 }
-$SQL = "SELECT quantity FROM ogpsalescaseref 
-				WHERE stockid='" . $stockid . "'
-				AND salesman='" . $salesman . "'
-				AND salescaseref = '" . $salescaseref . "'";
 
-$result = mysqli_query($db, $SQL);
+// $SQL = "SELECT SUM(quantity) AS total_quantity FROM ogpsalescaseref 
+//         WHERE stockid='" . $stockid . "'
+//         AND salesman='" . $salesman . "'
+//         AND salescaseref = '" . $salescaseref . "'";
 
-$salescaseIssued = mysqli_fetch_assoc($result)['quantity'];
+// 	$result = mysqli_query($db, $SQL);
+// 	$quant = mysqli_fetch_assoc($result);
+// 	$salescaseIssued = $quant['total_quantity'];
+
 
 $response = [
 
