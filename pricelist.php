@@ -244,8 +244,15 @@ if(isset($_GET['json'])){
                 dom: 'Bfrtip',
                 lengthMenu: [ 10, 25, 50, 75, 100 ],
                 buttons: [
-                    'copy', 'csv', 'excel'
-                ],
+                        'copy',
+                        {
+                            text: 'Download CSV',
+                            action: function(e, dt, node, config) {
+                                window.location.href = 'export_pricelist.php';
+                            }
+                        },
+                        'excel'
+                    ],
                 language: {
                     search: "_INPUT_",
                     searchPlaceholder: "Search..."
