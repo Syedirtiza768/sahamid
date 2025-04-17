@@ -170,53 +170,33 @@ include_once("../../v2/config1.php");
 
         <!-- Customer Info -->
         <div class="item-form">
-            <div class="form-section row">
-                <div class="form-group col-md-4">
-                    <label class="form-label">Select Customer:</label>
-                    <select class="form-control">
-                        <option>Add New Customer</option>
-                    </select>
-                </div>
-                <div class="form-group col-md-4">
+            <div class="form-section row justify-content-center">
+                <div class="form-group col-md-3">
                     <label class="form-label">Customer Name:</label>
                     <input type="text" class="form-control" value="Ali Shabar">
                 </div>
-                <div class="form-group col-md-4">
-                    <label class="form-label">Customer Code:</label>
-                    <input type="text" class="form-control">
+                <div class="form-group col-md-3">
+                    <label class="form-label">Phone:</label>
+                    <input type="number" class="form-control" placeholder="Phone">
+                </div>
+                <div class="form-group col-md-3">
+                    <label class="form-label">Address:</label>
+                    <input type="text" class="form-control" placeholder="Address">
                 </div>
             </div>
 
-            <div class="form-section row">
-                <div class="form-group col-md-4">
+            <div class="form-section row justify-content-center">
+                <div class="form-group col-md-3">
                     <label class="form-label">DBA:</label>
-                    <input type="text" class="form-control" value="SA HAMID AND COMPANY">
+                    <input type="text" class="form-control" value="SA HAMID AND COMPANY" readonly>
                 </div>
-                <div class="form-group col-md-4">
-                    <label class="form-label">Customer Type:</label>
-                    <input type="text" class="form-control" value="Power Industry">
-                </div>
-                <div class="form-group col-md-4">
+                <div class="form-group col-md-3">
                     <label class="form-label">Salesman:</label>
                     <input type="text" class="form-control" value="Mubashar Tahir">
                 </div>
             </div>
-
-            <div class="form-section row">
-                <div class="form-group col-md-4">
-                    <label class="form-label">Address Line 1:</label>
-                    <input type="text" class="form-control" value="Lahore">
-                </div>
-                <div class="form-group col-md-4">
-                    <label class="form-label">Address Line 2:</label>
-                    <input type="text" class="form-control">
-                </div>
-                <div class="form-group col-md-4">
-                    <label class="form-label">Address Line 3:</label>
-                    <input type="text" class="form-control">
-                </div>
-            </div>
         </div>
+
 
         <!-- Add New Item -->
         <div class="item-form">
@@ -229,18 +209,15 @@ include_once("../../v2/config1.php");
 
         <!-- Payment Info -->
         <div class="item-form">
-            <div class="form-section row">
-                <div class="form-group col-md-4">
-                    <label class="form-label">Dispatch Via:</label>
-                    <input type="text" class="form-control">
-                </div>
-                <div class="form-group col-md-4">
-                    <label class="form-label">Customer Reference:</label>
-                    <input type="text" class="form-control">
-                </div>
-                <div class="form-group col-md-4">
+            <div class="form-section row justify-content-end">
+                <div class="form-group col-md-3">
                     <label class="form-label">Amount Paid:</label>
-                    <input type="text" class="form-control">
+                    <div class="input-group">
+                        <input type="text" class="form-control text-right" placeholder="0.00">
+                        <div class="input-group-append">
+                            <span class="input-group-text">PKR</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -254,6 +231,16 @@ include_once("../../v2/config1.php");
 <script>
     let itemId = 0;
 
+    const uomOptions = `
+    <option>meters</option>
+    <option>kgs</option>
+    <option>liters</option>
+    <option>length</option>
+    <option>hours</option>
+    <option>feet</option>
+    <option>packets</option>
+`;
+
     function addItemRow() {
         itemId++;
         const container = document.getElementById('itemsContainer');
@@ -263,42 +250,34 @@ include_once("../../v2/config1.php");
         row.setAttribute('id', `item-${itemId}`);
 
         row.innerHTML = `
-            <div class="form-group col-md-3">
-                <label class="form-label">Item Name:</label>
-                <input type="text" class="form-control" placeholder="Enter item name">
-            </div>
-            <div class="form-group col-md-2">
-                <label class="form-label">Model/Comments:</label>
-                <input type="text" class="form-control" placeholder="Model or comment">
-            </div>
-            <div class="form-group col-md-1">
-                <label class="form-label">Qty:</label>
-                <input type="number" class="form-control qty" value="1" oninput="calculateSubtotal(${itemId})">
-            </div>
-            <div class="form-group col-md-2">
-                <label class="form-label">UOM:</label>
-                <select class="form-control">
-                    <option>meters</option>
-                    <option>kgs</option>
-                    <option>liters</option>
-                    <option>length</option>
-                    <option>hours</option>
-                    <option>feet</option>
-                    <option>packets</option>
-                </select>
-            </div>
-            <div class="form-group col-md-2">
-                <label class="form-label">Unit Price:</label>
-                <input type="number" class="form-control price" value="0" oninput="calculateSubtotal(${itemId})">
-            </div>
-            <div class="form-group col-md-1">
-                <label class="form-label">Subtotal:</label>
-                <input type="text" class="form-control subtotal" readonly>
-            </div>
-            <div class="form-group col-md-1 text-center">
-                <button class="btn btn-danger btn-sm" onclick="removeItemRow('item-${itemId}')">-</button>
-            </div>
-        `;
+        <div class="form-group col-md-3">
+            <label class="form-label">Item Name:</label>
+            <input type="text" class="form-control" placeholder="Enter item name">
+        </div>
+        <div class="form-group col-md-2">
+            <label class="form-label">Model/Comments:</label>
+            <input type="text" class="form-control" placeholder="Model or comment">
+        </div>
+        <div class="form-group col-md-1">
+            <label class="form-label">Qty:</label>
+            <input type="number" class="form-control qty" value="1" oninput="calculateSubtotal(${itemId})">
+        </div>
+        <div class="form-group col-md-2">
+            <label class="form-label">UOM:</label>
+            <select class="form-control">${uomOptions}</select>
+        </div>
+        <div class="form-group col-md-2">
+            <label class="form-label">Unit Price:</label>
+            <input type="number" class="form-control price" value="0" oninput="calculateSubtotal(${itemId})">
+        </div>
+        <div class="form-group col-md-1">
+            <label class="form-label">Subtotal:</label>
+            <input type="text" class="form-control subtotal" readonly>
+        </div>
+        <div class="form-group col-md-1 text-center">
+            <button class="btn btn-danger btn-sm" onclick="removeItemRow('item-${itemId}')">-</button>
+        </div>
+    `;
 
         container.appendChild(row);
     }
