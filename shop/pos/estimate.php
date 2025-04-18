@@ -297,3 +297,54 @@ include_once("../../v2/config1.php");
 </script>
 
 </html>
+
+columns: [{
+                    "data": "stockid"
+                },
+                {
+                    "data": "mnfCode"
+                },
+                {
+                    "data": "mnfpno"
+                },
+                {
+                    "data": "description"
+                },
+                {
+                    "data": "manufacturers_name"
+                },
+                {
+                    "data": "qohA"
+                },
+                {
+                    "data": "dcitemQty"
+                },
+                {
+                    "data": "dcexclusivegsttotalamount"
+                },
+                {
+                    "data": "invoiceitemQty"
+                },
+                {
+                    "data": "invoiceexclusivegsttotalamount"
+                },
+                {
+                    "data": "averageInvoiceFactor"
+                },
+                {
+                    "data": "itemQtyShopsale"
+                },
+                {
+                    "data": "shopsaletotalamount"
+                },
+                {
+                    "data": "averageShopSaleFactor"
+                },
+                {
+                    "data": "qohB"
+                },
+                {
+                    "data": "materialcost"
+                }
+
+            ],

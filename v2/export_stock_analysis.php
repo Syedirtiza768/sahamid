@@ -62,50 +62,50 @@ while ($row = mysqli_fetch_assoc($brandQuery)) {
 }
 
 // 1. Internal Reference Quantities
-$refQty = [];
-$SQL = "DROP VIEW refA";
-mysqli_query($conn, $SQL);
-$SQL = 'SELECT stockmaster.stockid,
-    AVG(invoicedetails.unitprice*(1-invoicedetails.discountpercent)) as invoicecost,
-    AVG(invoicedetails.discountpercent*100) as averageInvoiceFactor,
-    SUM(invoicedetails.quantity*invoiceoptions.quantity) as invoiceitemQty,
-    SUM(CASE 
-        WHEN invoice.gst LIKE "%inclusive%" THEN  
-            (invoicedetails.unitprice * (1 - invoicedetails.discountpercent) * invoicedetails.quantity * invoiceoptions.quantity)
-        ELSE 
-            (invoicedetails.unitprice * (1 - invoicedetails.discountpercent) * invoicedetails.quantity * invoiceoptions.quantity) * 1.17
-    END) as invoiceexclusivegsttotalamount
-    FROM invoicedetails 
-    INNER JOIN invoiceoptions 
-        ON invoicedetails.invoiceno = invoiceoptions.invoiceno 
-        AND invoicedetails.invoicelineno = invoiceoptions.invoicelineno 
-    INNER JOIN invoice 
-        ON invoice.invoiceno = invoicedetails.invoiceno 
-    INNER JOIN salescase 
-        ON salescase.salescaseref = invoice.salescaseref 
-    INNER JOIN stockmaster 
-        ON stockmaster.stockid = invoicedetails.stkcode 
-    INNER JOIN manufacturers 
-        ON manufacturers.manufacturers_id = stockmaster.brand 
-    INNER JOIN debtorsmaster 
-        ON debtorsmaster.debtorno = salescase.debtorno 
-    WHERE invoice.inprogress = 0 
-        AND invoice.returned = 0 
-        AND invoice.invoicesdate BETWEEN "' . $from . '"
-        AND debtorsmaster.debtorno LIKE "%' . $Location . '%"
-    GROUP BY invoicedetails.stkcode';
+// $refQty = [];
+// $SQL = "DROP VIEW refA";
+// mysqli_query($conn, $SQL);
+// $SQL = 'SELECT stockmaster.stockid,
+//     AVG(invoicedetails.unitprice*(1-invoicedetails.discountpercent)) as invoicecost,
+//     AVG(invoicedetails.discountpercent*100) as averageInvoiceFactor,
+//     SUM(invoicedetails.quantity*invoiceoptions.quantity) as invoiceitemQty,
+//     SUM(CASE 
+//         WHEN invoice.gst LIKE "%inclusive%" THEN  
+//             (invoicedetails.unitprice * (1 - invoicedetails.discountpercent) * invoicedetails.quantity * invoiceoptions.quantity)
+//         ELSE 
+//             (invoicedetails.unitprice * (1 - invoicedetails.discountpercent) * invoicedetails.quantity * invoiceoptions.quantity) * 1.17
+//     END) as invoiceexclusivegsttotalamount
+//     FROM invoicedetails 
+//     INNER JOIN invoiceoptions 
+//         ON invoicedetails.invoiceno = invoiceoptions.invoiceno 
+//         AND invoicedetails.invoicelineno = invoiceoptions.invoicelineno 
+//     INNER JOIN invoice 
+//         ON invoice.invoiceno = invoicedetails.invoiceno 
+//     INNER JOIN salescase 
+//         ON salescase.salescaseref = invoice.salescaseref 
+//     INNER JOIN stockmaster 
+//         ON stockmaster.stockid = invoicedetails.stkcode 
+//     INNER JOIN manufacturers 
+//         ON manufacturers.manufacturers_id = stockmaster.brand 
+//     INNER JOIN debtorsmaster 
+//         ON debtorsmaster.debtorno = salescase.debtorno 
+//     WHERE invoice.inprogress = 0 
+//         AND invoice.returned = 0 
+//         AND invoice.invoicesdate BETWEEN "' . $from . '"
+//         AND debtorsmaster.debtorno LIKE "%' . $Location . '%"
+//     GROUP BY invoicedetails.stkcode';
 
-$refRes = mysqli_query($conn, $SQL);
+// $refRes = mysqli_query($conn, $SQL);
 
-while ($row = mysqli_fetch_assoc($refRes)) {
-    $stockid = $row['stockid'];
-    $refQty[$stockid] = [
-        'invoicecost' => $row['invoicecost'],
-        'averageInvoiceFactor' => $row['averageInvoiceFactor'],
-        'invoiceitemQty' => $row['invoiceitemQty'],
-        'invoiceexclusivegsttotalamount' => $row['invoiceexclusivegsttotalamount'],
-    ];
-}
+// while ($row = mysqli_fetch_assoc($refRes)) {
+//     $stockid = $row['stockid'];
+//     $refQty[$stockid] = [
+//         'invoicecost' => $row['invoicecost'],
+//         'averageInvoiceFactor' => $row['averageInvoiceFactor'],
+//         'invoiceitemQty' => $row['invoiceitemQty'],
+//         'invoiceexclusivegsttotalamount' => $row['invoiceexclusivegsttotalamount'],
+//     ];
+// }
 
 $SQL = "CREATE VIEW refB AS SELECT stockid,MAX(stkmoveno) as stkmoves,loccode FROM stockmoves 
         
@@ -149,7 +149,7 @@ while ($stock = mysqli_fetch_assoc($stockResult)) {
         $stock['mnfpno'],
         $stock['description'],
         $brandMap[$stockid]['name'] ?? 'N/A',       // column 5: Manufacturer name
-        $brandMap[$stockid]['qohA'] ?? 0,            // column 6: Quantity on hand (qohA)
+        $response4[$stockid]['qohB'] ?? 0,           // column 6: Quantity on hand (qohA)
         $dcData[$stockid]['qty'] ?? 0,
         $dcData[$stockid]['amount'] ?? 0,
         $refQty[$stockid]['invoiceitemQty'] ?? 0,
