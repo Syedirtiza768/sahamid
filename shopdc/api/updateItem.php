@@ -144,7 +144,9 @@ if ($name == "quantity") {
 			$difference = $current_value - $previous_value;
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '" . $salescaseref . "'
 			AND stockid='" . $stockid . "'
-			AND salesman='" . $salesman . "'";
+			AND salesman='" . $salesman . "'
+			AND quantity != NULL 
+			AND quantity != 0";
 
 			$result = mysqli_query($db, $SQL);
 		}
@@ -154,7 +156,9 @@ if ($name == "quantity") {
 			$difference = $previous_value - $current_value;
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
 			AND stockid='" . $stockid . "'
-			AND salesman='" . $salesman . "'";
+			AND salesman='" . $salesman . "'
+			AND quantity != NULL 
+			AND quantity != 0";
 
 			$result = mysqli_query($db, $SQL);
 		}
@@ -166,7 +170,9 @@ if ($name == "quantity") {
 			$difference = $value - $stkQuantity;
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '" . $salescaseref . "'
 				AND stockid='" . $stockid . "'
-				AND salesman='" . $salesman . "'";
+				AND salesman='" . $salesman . "'
+			AND quantity != NULL 
+			AND quantity != 0";
 
 			$result = mysqli_query($db, $SQL);
 		}
@@ -175,7 +181,9 @@ if ($name == "quantity") {
 			$difference = $stkQuantity - $difference;
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
 				AND stockid='" . $stockid . "'
-				AND salesman='" . $salesman . "'";
+				AND salesman='" . $salesman . "'
+			AND quantity != NULL 
+			AND quantity != 0";
 
 			$result = mysqli_query($db, $SQL);
 		}

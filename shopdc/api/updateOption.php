@@ -103,19 +103,32 @@ if ($name == "quantity") {
 
 		$quantityDifference = ($row['quantity'] * $value) - ($row['quantity'] * $optionQuantity);
 
-		$SQL = "SELECT quantity FROM ogpsalescaseref 
-				WHERE stockid='" . $stockid . "'
-				AND salesman='" . $salesman . "'
-				AND salescaseref = '" . $salescaseref . "'";
+		// $SQL = "SELECT quantity FROM ogpsalescaseref 
+		// 		WHERE stockid='" . $stockid . "'
+		// 		AND salesman='" . $salesman . "'
+		// 		AND salescaseref = '" . $salescaseref . "'";
+
+		// $result = mysqli_query($db, $SQL);
+		// if (DB_num_rows($result) == 1) {
+		// 	$quant = mysqli_fetch_assoc($result);
+
+		// 	$issuedQuantityref = $quant['quantity'];
+		// } else {
+		// 	$issuedQuantityref = $quantityDifference + 1;
+		// }
+
+		$SQL = "SELECT SUM(quantity) AS quantity FROM ogpsalescaseref 
+        WHERE stockid='" . $stockid . "'
+        AND salesman='" . $salesman . "'
+        AND salescaseref = '" . $salescaseref . "'";
 
 		$result = mysqli_query($db, $SQL);
-		if (DB_num_rows($result) == 1) {
-			$quant = mysqli_fetch_assoc($result);
+		$quant = mysqli_fetch_assoc($result);
 
-			$issuedQuantityref = $quant['quantity'];
-		} else {
-			$issuedQuantityref = $quantityDifference + 1;
-		}
+		// Handle null values safely
+		$issuedQuantityref = $quant['quantity'] ?? 0;
+
+
 		$SQL = "SELECT issued,dc FROM stockissuance WHERE stockid='" . $stockid . "'AND salesperson='" . $salesman . "'";
 		$result = mysqli_query($db, $SQL);
 		$quant = mysqli_fetch_assoc($result);
@@ -224,7 +237,7 @@ if ($name == "quantity") {
 
 			'stkcode' => $stockid,
 			'qoh' => $newIssued,
-			'salesqoh'=>  $salescaseIssued
+			'salesqoh' =>  $salescaseIssued
 
 		];
 
