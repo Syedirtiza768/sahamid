@@ -91,7 +91,7 @@ if ($name == "quantity") {
 	$issuedQuantity = $quant['issued'];
 	$dcQuantity = $quant['dc'];
 
-	if ($value <= 0) {									
+	if ($value <= 0) {
 
 		$response = [
 			'status' => 'alert',
@@ -142,24 +142,28 @@ if ($name == "quantity") {
 			$previous_value = $optionQuantity * $stkQuantity;
 			$current_value = $optionQuantity * $value;
 			$difference = $current_value - $previous_value;
-			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '" . $salescaseref . "'
-			AND stockid='" . $stockid . "'
-			AND salesman='" . $salesman . "'
-			AND quantity != NULL 
-			AND quantity != 0";
 
+			$SQL = "UPDATE ogpsalescaseref 
+        			SET quantity = quantity - $difference 
+        			WHERE salescaseref = '$salescaseref'
+        			AND stockid = '$stockid'
+        			AND salesman = '$salesman'
+        			AND quantity IS NOT NULL 
+        			AND quantity != 0";
 			$result = mysqli_query($db, $SQL);
 		}
 		if ($value < $stkQuantity) {
 			$previous_value = $optionQuantity * $stkQuantity;
 			$current_value = $optionQuantity * $value;
 			$difference = $previous_value - $current_value;
-			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
-			AND stockid='" . $stockid . "'
-			AND salesman='" . $salesman . "'
-			AND quantity != NULL 
-			AND quantity != 0";
-
+			
+			$SQL = "UPDATE ogpsalescaseref 
+        			SET quantity = quantity + $difference 
+        			WHERE salescaseref = '$salescaseref'
+        			AND stockid = '$stockid'
+        			AND salesman = '$salesman'
+        			AND quantity IS NOT NULL 
+        			AND quantity != 0";
 			$result = mysqli_query($db, $SQL);
 		}
 	}

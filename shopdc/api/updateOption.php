@@ -159,6 +159,7 @@ if ($name == "quantity") {
 		$result = mysqli_query($db, $SQL);
 		if (DB_num_rows($result) == 1) {
 
+			
 
 			$new = $row['quantity'] * $value;
 			$old = $row['quantity'] * $optionQuantity;

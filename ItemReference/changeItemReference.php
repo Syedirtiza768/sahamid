@@ -200,20 +200,29 @@ include_once("../v2/config.php");
             $row3 = [];
             $row4 = [];
             $row5 = [];
-            $sql = "SELECT  ogpsalescaseref.stockid,
-                SUM(ogpsalescaseref.quantity) as quantity,
-                ogpsalescaseref.dispatchid,
-                ogpsalescaseref.salescaseref
-                FROM ogpsalescaseref
-                WHERE salesman = '" . $_SESSION['UsersRealName'] . "'
-                AND quantity != '0'
-                GROUP BY ogpsalescaseref.stockid,ogpsalescaseref.salescaseref";
+            $sql = "SELECT  
+    ogpsalescaseref.stockid,
+    SUM(ogpsalescaseref.quantity) AS quantity,
+    ogpsalescaseref.dispatchid,
+    ogpsalescaseref.salescaseref
+FROM ogpsalescaseref
+INNER JOIN stockissuance 
+    ON stockissuance.stockid = ogpsalescaseref.stockid
+WHERE ogpsalescaseref.salesman = '" . $_SESSION['UsersRealName'] . "'
+  AND ogpsalescaseref.quantity != '0'
+  AND stockissuance.issued > 0
+  AND stockissuance.salesperson = '" . $_SESSION['UsersRealName'] . "'
+GROUP BY 
+    ogpsalescaseref.stockid,
+    ogpsalescaseref.dispatchid,
+    ogpsalescaseref.salescaseref
+";
             $res = mysqli_query($db, $sql);
             while ($row = mysqli_fetch_assoc($res)) {
                 $row1[] = $row;
             }
 
-            
+
             $sql = "SELECT ogpcsvref.stockid,
                 SUM(ogpcsvref.quantity) as quantity,
                 ogpcsvref.dispatchid,
@@ -584,8 +593,8 @@ include_once("../v2/config.php");
         <?php
         $sql = "SELECT * FROM `bazar_parchi` WHERE `on_behalf_of` = '" . $_SESSION['UsersRealName'] . "' AND `inprogress` = '1' ";
         $result = mysqli_query($db, $sql);
-            while ($row = mysqli_fetch_assoc($result)) { ?>
-                htmlStr += '<option value="<?php echo $row["parchino"] ?>"><?php echo htmlspecialchars($row["parchino"], ENT_QUOTES, 'UTF-8') ?></option>';
+        while ($row = mysqli_fetch_assoc($result)) { ?>
+            htmlStr += '<option value="<?php echo $row["parchino"] ?>"><?php echo htmlspecialchars($row["parchino"], ENT_QUOTES, 'UTF-8') ?></option>';
         <?php
         }
         ?>
@@ -599,42 +608,40 @@ include_once("../v2/config.php");
         // alert(htmlStr);
         // adding the data to the modal
         $('.modal-body').html(htmlStr);
-        new TomSelect(".select_state",{
-        create: false,
-        sortField: {
-            field: "text",
-            direction: "asc"
-        }
-    });
-        new TomSelect(".select_state1",{
-        create: false,
-        sortField: {
-            field: "text",
-            direction: "asc"
-        }
-    });
-        new TomSelect(".select_state2",{
-        create: false,
-        sortField: {
-            field: "text",
-            direction: "asc"
-        }
-    });
-        new TomSelect(".select_state3",{
-        create: false,
-        sortField: {
-            field: "text",
-            direction: "asc"
-        }
-    });
+        new TomSelect(".select_state", {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+        new TomSelect(".select_state1", {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+        new TomSelect(".select_state2", {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+        new TomSelect(".select_state3", {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
         //         $('.js-example-basic-single').select2({
         //     dropdownParent: $('.modal-body', '#myModal')
         //   });
         // $('.modal-body input').text(title);
         // $('#quantity').text(qty);
     }
-
-    
 </script>
 
 </html>
