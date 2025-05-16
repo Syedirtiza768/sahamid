@@ -86,6 +86,60 @@ if ($name == "quantity") {
 
 	$optionQuantity = $row['quantity'];
 
+	// hceking for items quantity not exceed
+	$SQL = "SELECT * FROM dcdetails 
+				WHERE orderno='" . $orderno . "'
+				AND orderlineno='" . $row['lineno'] . "'
+				AND lineoptionno='" . $row['optionno'] . "'";
+	$res = mysqli_query($db, $SQL);
+
+	while ($row = mysqli_fetch_assoc($res)) {
+
+		$SQL = "SELECT stkcode,quantity FROM dcdetails WHERE dcdetailsindex='" . $row['dcdetailsindex'] . "'";
+		$result = mysqli_query($db, $SQL);
+		$stock = mysqli_fetch_assoc($result);
+		$stockid = $stock['stkcode'];
+		$stkQuantity = $stock['quantity'];
+
+
+		$quantityDifference = ($row['quantity'] * $value) - ($row['quantity'] * $optionQuantity);
+
+		$SQL = "SELECT SUM(quantity) AS quantity FROM ogpsalescaseref 
+        WHERE stockid='" . $stockid . "'
+        AND salesman='" . $salesman . "'
+        AND salescaseref = '" . $salescaseref . "'";
+
+		$result = mysqli_query($db, $SQL);
+		$quant = mysqli_fetch_assoc($result);
+
+		// Handle null values safely
+		$issuedQuantityref = $quant['quantity'] ?? 0;
+
+
+		$SQL = "SELECT issued,dc FROM stockissuance WHERE stockid='" . $stockid . "'AND salesperson='" . $salesman . "'";
+		$result = mysqli_query($db, $SQL);
+		$quant = mysqli_fetch_assoc($result);
+
+		$issuedQuantity = $quant['issued'];
+		$dcQuantity = $quant['dc'];
+
+
+
+
+		if ($issuedQuantityref < $quantityDifference && ($row['quantity'] * $value > $issuedQuantityref || $value < $stkQuantity)) {
+
+			$response = [
+				'status'  => 'alert',
+				'message' => 'cannot give more quantity then assigned.',
+				'minimum' => $stkQuantity,
+			];
+
+			echo json_encode($response);
+			return;
+		}
+	}
+
+
 	$SQL = "SELECT * FROM dcdetails 
 				WHERE orderno='" . $orderno . "'
 				AND orderlineno='" . $row['lineno'] . "'
@@ -151,7 +205,7 @@ if ($name == "quantity") {
 			return;
 		}
 
-		$SQL = "SELECT quantity FROM ogpsalescaseref 
+		$SQL = "SELECT SUM(quantity) AS quantity FROM ogpsalescaseref 
 				WHERE stockid='" . $stockid . "'
 				AND salesman='" . $salesman . "'
 				AND salescaseref = '" . $salescaseref . "'";
