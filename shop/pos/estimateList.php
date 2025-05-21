@@ -1,3 +1,12 @@
+<?php
+// Connect to DB
+// Replace with your actual DB connection
+include_once("../../v2/config1.php");
+// Get date filters from GET or default to current month start and today
+$from = isset($_GET['fromDate']) ? $_GET['fromDate'] : date('Y-m-01');
+$to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -58,28 +67,27 @@
             justify-content: center;
             gap: 20px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .form-inline {
             display: flex;
             gap: 10px;
-        }
-
-        .top-controls .form-inline {
-            justify-content: center;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .top-controls .form-inline label {
+        .form-inline label {
             margin-right: 5px;
         }
 
-        .top-controls .form-inline button {
+        .form-inline button {
             margin-left: 10px;
         }
 
-        .top-controls .btn-success {
-            align-self: center;
+        .btn-success {
+            min-width: 100px;
+            margin-bottom: -10px;
         }
     </style>
 </head>
@@ -94,20 +102,19 @@
         <div class="table-section">
 
             <div class="top-controls">
-                <form class="form-inline">
+                <form class="form-inline" method="GET" action="">
                     <label for="fromDate" class="mr-2">From</label>
-                    <input type="date" id="fromDate" class="form-control mr-2">
+                    <input type="date" id="fromDate" name="fromDate" class="form-control mr-2" value="<?php echo htmlspecialchars($from); ?>">
                     <label for="toDate" class="mr-2">To</label>
-                    <input type="date" id="toDate" class="form-control mr-2">
-                    <button type="button" class="btn btn-primary btn-sm">Search</button>
+                    <input type="date" id="toDate" name="toDate" class="form-control mr-2" value="<?php echo htmlspecialchars($to); ?>">
+                    <button type="submit" class="btn btn-primary btn-sm">Search</button>
                 </form>
 
                 <div>
                     <a href="estimate.php" target="_blank">
-                        <button class="btn btn-success btn-sm" style="min-width: 100px; margin-bottom: -10px">New Estimate</button>
+                        <button class="btn btn-success btn-sm">New Estimate</button>
                     </a>
                 </div>
-
             </div>
 
             <table id="estimateTable" class="table table-bordered table-striped table-hover">
@@ -117,8 +124,9 @@
                         <th>CCode</th>
                         <th>Name</th>
                         <th>Salesman</th>
+                        <th>Created By</th>
                         <th>Amount PKR</th>
-                        <th>Advance PKR</th>
+                        <th>Paid PKR</th>
                         <th>Date</th>
                         <th>Add Items</th>
                         <th>Original</th>
@@ -127,22 +135,63 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>6208</td>
-                        <td>SR-717</td>
-                        <td>Ali Shabbar</td>
-                        <td>Mubashar Tahir</td>
-                        <td>20000</td>
-                        <td>0</td>
-                        <td>2025/04/15</td>
-                        <td><button class="btn btn-warning btn-sm">Add Internal Items</button></td>
-                        <td><button class="btn btn-danger btn-sm">Print</button></td>
-                        <td><button class="btn btn-danger btn-sm">Print</button></td>
-                        <td><button class="btn btn-info btn-sm">Internal Print</button></td>
-                    </tr>
-                    <!-- Add more dynamic rows if needed -->
+                    <?php
+                    $SQL = "
+            SELECT
+                estimateshopsale.orderno as sr,
+                estimateshopsale.mp,
+                estimateshopsale.payment,
+                estimateshopsale.complete,
+                estimateshopsale.orddate,
+                estimateshopsale.advance,
+                estimateshopsale.branchcode,
+                estimateshopsale.crname,
+                estimateshopsale.salesman,
+                estimateshopsale.created_by,
+                estimateshopsale.paid,
+                estimatecustbranch.brname as name,
+                (SUM(estimateshopsalelines.price * estimateshopsalelines.quantity) * (1 - (estimateshopsale.discount / 100))) - estimateshopsale.discountPKR as amt
+            FROM estimateshopsale
+            INNER JOIN estimateshopsalelines ON estimateshopsale.orderno = estimateshopsalelines.orderno
+            INNER JOIN estimatecustbranch ON estimateshopsale.branchcode = estimatecustbranch.branchcode
+            WHERE estimateshopsale.orddate >= '$from'
+              AND estimateshopsale.orddate <= '$to'
+            GROUP BY estimateshopsalelines.orderno
+            ORDER BY estimateshopsale.orderno DESC
+        ";
+
+                    $res = mysqli_query($conn, $SQL);
+
+                    if ($res && mysqli_num_rows($res) > 0) {
+                        while ($row = mysqli_fetch_assoc($res)) {
+                            $orddate = date('Y/m/d', strtotime($row['orddate']));
+                            $name = ($row['branchcode'] == "WALKIN01") ? html_entity_decode($row['crname']) : $row['name'];
+                            $advance = number_format($row['advance'], 2);
+                            $amt = number_format($row['amt'], 2);
+                            $paid = number_format($row['paid'], 2);
+
+                            echo "<tr>";
+                            echo "<td>" . htmlspecialchars($row['sr']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['branchcode']) . "</td>";
+                            echo "<td>" . htmlspecialchars($name) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['salesman']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['created_by']) . "</td>";
+                            echo "<td>" . $amt . "</td>";
+                            echo "<td>" . $paid . "</td>";
+                            echo "<td>" . $orddate . "</td>";
+                            echo "<td><button class='btn btn-warning btn-sm'>Add Items</button></td>";
+                            echo "<td><button class='btn btn-primary btn-sm'>Original</button></td>";
+                            echo "<td><button class='btn btn-danger btn-sm'>Print</button></td>";
+                            echo "<td><button class='btn btn-info btn-sm'>Internal</button></td>";
+                            echo "</tr>";
+                        }
+                    } else {
+                        echo "<tr><td colspan='12' class='text-center'>No estimates found for selected date range.</td></tr>";
+                    }
+                    ?>
                 </tbody>
             </table>
+
         </div>
     </div>
 
