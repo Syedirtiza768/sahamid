@@ -130,7 +130,7 @@ $billId = GetNextTransNo(750, $conn);
 $SQL = "INSERT INTO estimateshopsale(orderno, debtorno, branchcode, orddate, payment, salesman, advance,
 						crname,discount,created_by,dispatchedvia,customerref,paid,discountPKR,accounts,due,expected) 
 			VALUES ('$billId','" . $customer['debtorno'] . "','" . $customer['branchcode'] . "','" . date('Y-m-d') . "',
-					'$payment','" . $customer['salesman'] . "','" . $advance . "','" . htmlentities($crname, ENT_QUOTES) . "',
+					'$payment','" . $customer['salesman'] . "','" . $advance . "','" . htmlentities($client['name'], ENT_QUOTES) . "',
 					'" . $discount . "','" . $_SESSION['UsersRealName'] . "','" . htmlentities($dispatched, ENT_QUOTES) . "','" . htmlentities($creferance, ENT_QUOTES) . "','" . $paid . "','" . $discountPKR . "',0,'$dueDays','$expectedDays')";
 
 if (!mysqli_query($conn, $SQL)) {

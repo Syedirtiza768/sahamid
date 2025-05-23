@@ -1,216 +1,156 @@
-<?php
+<?php 
 
-$PathPrefix = "../../";
-include("../../includes/session.inc");
-include('../../includes/SQL_CommonFunctions.inc');
+	$PathPrefix = "../../";
+	include("../../includes/session.inc");
+	include('../../includes/SQL_CommonFunctions.inc');
 
-if (!isset($_GET['internal'])) {
-	$_GET['internal'] = "yes";
-}
+	if(!isset($_GET['internal'])){
+		$_GET['internal'] = "yes";
+	}
+	
+	$orderno = trim($_GET['orderno']);
 
-$orderno = trim($_GET['orderno']);
+	$SQL = "SELECT * FROM shopsale WHERE orderno='".$orderno."'";
+	$res = mysqli_query($db, $SQL);
 
-$SQL = "SELECT * FROM shopsale WHERE orderno='" . $orderno . "'";
-$res = mysqli_query($db, $SQL);
-
-if (mysqli_num_rows($res) == 1) {
-
+	if(mysqli_num_rows($res) != 1){
+		echo json_encode([
+				'status' => 'error1'
+			]);
+		return;
+	}
 
 	$sale = mysqli_fetch_assoc($res);
 
-	$SQL = "SELECT brname FROM custbranch WHERE branchcode='" . $sale['branchcode'] . "'";
+	$SQL = "SELECT brname FROM custbranch WHERE branchcode='".$sale['branchcode']."'";
 	$res = mysqli_query($db, $SQL);
 
-	if (mysqli_num_rows($res) != 1) {
+	if(mysqli_num_rows($res) != 1){
 		echo json_encode([
-			'status' => 'error2'
-		]);
+				'status' => 'error2'
+			]);
 		return;
 	}
 
 	$sale['customer'] = mysqli_fetch_assoc($res);
-
-	if ($sale['crname'] != "") {
+	
+	if($sale['crname'] != ""){
 		$sale['customer']['brname'] = html_entity_decode($sale['crname']);
 	}
 
-	$SQL = "SELECT * FROM shopsalelines WHERE orderno='" . $sale['orderno'] . "'";
+	$SQL = "SELECT * FROM shopsalelines WHERE orderno='".$sale['orderno']."'";
 	$res = mysqli_query($db, $SQL);
 
 	$sale['lines'] = [];
 
-	while ($row = mysqli_fetch_assoc($res)) {
+	while($row = mysqli_fetch_assoc($res)){
 		$sale['lines'][] = $row;
 	}
-} else {
-	$SQL = "SELECT * FROM estimateshopsale WHERE orderno='" . $orderno . "'";
-	$res = mysqli_query($db, $SQL);
-	if (mysqli_num_rows($res) != 1) {
-		echo json_encode([
-			'status' => 'error1'
-		]);
-		return;
-	}
-
-
-	$sale = mysqli_fetch_assoc($res);
-
-	$SQL = "SELECT brname FROM estimatecustbranch WHERE branchcode='" . $sale['branchcode'] . "'";
-	$res = mysqli_query($db, $SQL);
-
-	if (mysqli_num_rows($res) != 1) {
-		echo json_encode([
-			'status' => 'error2'
-		]);
-		return;
-	}
-
-	$sale['customer'] = mysqli_fetch_assoc($res);
-
-	if ($sale['crname'] != "") {
-		$sale['customer']['brname'] = html_entity_decode($sale['crname']);
-	}
-
-	$SQL = "SELECT * FROM estimateshopsalelines WHERE orderno='" . $sale['orderno'] . "'";
-	$res = mysqli_query($db, $SQL);
-
-	$sale['lines'] = [];
-
-	while ($row = mysqli_fetch_assoc($res)) {
-		$sale['lines'][] = $row;
-	}
-}
 
 ?>
 
 <!DOCTYPE html>
-
 <head>
 	<title>Shop Sale Print</title>
 	<link rel="stylesheet" href="../../quotation/assets/vendor/bootstrap/css/bootstrap.css" />
 	<style type="text/css">
 		body {
-			background: rgb(204, 204, 204);
+			background: rgb(204,204,204); 
 		}
-
 		page {
-			background: white;
-			display: block;
-			margin: 0 auto;
-			margin-bottom: 0.5cm;
-			box-shadow: 0 0 0.5cm rgba(0, 0, 0, 0.5);
+		  	background: white;
+		  	display: block;
+		  	margin: 0 auto;
+		  	margin-bottom: 0.5cm;
+		  	box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
 		}
-
-		page[size="A4"] {
-			width: 21cm;
-			height: 29.65cm;
+		page[size="A4"] {  
+		  	width: 21cm;
+		  	height: 29.65cm; 
 		}
-
 		page[size="A4"][layout="portrait"] {
-			width: 29.7cm;
-			height: 21cm;
+		  	width: 29.7cm;
+		  	height: 21cm;  
 		}
-
 		page[size="A3"] {
-			width: 29.7cm;
-			height: 42cm;
+		  	width: 29.7cm;
+		  	height: 42cm;
 		}
-
 		page[size="A3"][layout="portrait"] {
-			width: 42cm;
-			height: 29.7cm;
+		  	width: 42cm;
+		  	height: 29.7cm;  
 		}
-
 		page[size="A5"] {
-			width: 14.8cm;
-			height: 21cm;
+		  	width: 14.8cm;
+		  	height: 21cm;
 		}
-
 		page[size="A5"][layout="portrait"] {
-			width: 21cm;
-			height: 14.8cm;
+		  width: 21cm;
+		  height: 14.8cm;  
 		}
-
-		.watermark {
+		.watermark{
 			position: absolute;
 			background-image: url('../../../qrcodes/directDC/test.png');
 
 		}
-
-		.tdpa {
-			padding: 5px;
+		.tdpa{
+			padding:5px;
 		}
-
-		.break {
-			word-wrap: break-word;
-			white-space: normal;
+		.break{
+		    word-wrap: break-word;
+		    white-space: normal;
 		}
-
-		.parchino {
-			display: none;
-		}
-
-		.nonprint {
-			display: inline-block;
-		}
-
+		.parchino{
+	  		display: none;
+	  	}
+	  	.nonprint{
+	  		display: inline-block;
+	  	}
 		@media print {
-
-			body,
-			page {
-				margin: 0;
-				box-shadow: 0;
-			}
-
-			.vendor {
-				display: none;
-			}
-
-			.parchino {
-				display: block;
-			}
-
-			.nonprint {
-				display: none;
-			}
+		  	body, page {
+		    	margin: 0;
+		    	box-shadow: 0;
+		  	}
+		  	.vendor{
+		  		display: none;
+		  	}
+		  	.parchino{
+		  		display: block;
+		  	}
+		  	.nonprint{
+		  		display: none;
+		  	}
 		}
-
-		.header {
+		.header{
 			margin-top: 15px;
 			display: flex;
 		}
-
-		.header img {
+		.header img{
 			height: 100px;
 			width: 100px;
 		}
-
-		.header .namedet {
-			flex: 1;
+		.header .namedet{
+			flex:1;
 			display: flex;
 			flex-direction: column;
 			justify-content: center;
 			align-items: center;
 		}
-
-		.serno {
+		.serno{
 			width: 100px;
 			display: flex;
 			justify-content: space-between;
 			align-items: flex-end;
 			flex-direction: column;
 		}
-
-		.serno h4 {
+		.serno h4{
 			margin: 0;
 			margin-right: 2px;
 		}
-
-		.ddasda {
+		.ddasda{
 			top: -38px;
 		}
-
-		.abc {
+		.abc{
 			text-align: right;
 			border-left: 1px solid white;
 			border-bottom: 1px solid white;
@@ -218,15 +158,14 @@ if (mysqli_num_rows($res) == 1) {
 		}
 	</style>
 </head>
-
 <body>
-
+	
 	<page size="A4">
 		<div>
-			<button class="btn btn-primary hidden-print" onclick="window.print()" style="text-align: right !important; position: fixed; z-index: 200; right: 0; top:50px;"><span class="glyphicon glyphicon-print" aria-hidden="true"></span> Print</button>
-			<button class="btn btn-primary hidden-print changeCompanyName" style="text-align: right !important; position: fixed; z-index: 200; right: 0"><span class="glyphicon glyphicon-print" aria-hidden="true"></span> Change CompanyName</button>
-			<?php if ($sale['complete'] == 0) { ?>
-				<a class="btn btn-primary hidden-print" href="editShopSale.php?orderno=<?php echo $sale['orderno']; ?>" style="text-align: right !important; position: fixed; z-index: 200; right: 0; top:100px;"><span class="glyphicon glyphicon-print" aria-hidden="true"></span> Add Internal Item</a>
+	         <button class="btn btn-primary hidden-print" onclick="window.print()" style="text-align: right !important; position: fixed; z-index: 200; right: 0; top:50px;"><span class="glyphicon glyphicon-print" aria-hidden="true"></span> Print</button>
+			 <button class="btn btn-primary hidden-print changeCompanyName" style="text-align: right !important; position: fixed; z-index: 200; right: 0"><span class="glyphicon glyphicon-print" aria-hidden="true"></span> Change CompanyName</button>
+			<?php if($sale['complete'] == 0){ ?>
+			 <a class="btn btn-primary hidden-print" href="editShopSale.php?orderno=<?php echo $sale['orderno']; ?>" style="text-align: right !important; position: fixed; z-index: 200; right: 0; top:100px;"><span class="glyphicon glyphicon-print" aria-hidden="true"></span> Add Internal Item</a>
 			<?php } ?>
 		</div>
 		<!--
@@ -238,7 +177,7 @@ if (mysqli_num_rows($res) == 1) {
 				<table style="position: absolute;">
 					<tr>
 						<td>
-							<img src="../../qrcodes/shopsale/<?php echo $sale['orderno'] . '-shopSaleQR.png';  ?>" 
+							<img src="../../qrcodes/shopsale/<?php echo $sale['orderno'].'-shopSaleQR.png';  ?>" 
 								 alt="QR Code" 
 								 height="90px" 
 								 style="display: inline-block;">
@@ -248,14 +187,14 @@ if (mysqli_num_rows($res) == 1) {
 								<span style="font-weight: bold;">
 									Dated: 
 								</span>
-								<?php echo date('d/m/Y', strtotime($sale['orddate'])); ?><br/>
+								<?php echo date('d/m/Y',strtotime($sale['orddate'])); ?><br/>
 							</div>
 						</td>
 					</tr>
 				</table>
 			</div>
 			<div class="col-md-6" style="text-align: right; min-height: 55px">
-				<h3><?php echo ($sale['payment'] == "csv") ? "Cash" : ""; ?> Bill</h3>
+				<h3><?php echo ($sale['payment'] == "csv") ? "Cash":""; ?> Bill</h3>
 				<p class="">Customer: <?php echo $sale['customer']['brname']; ?></p>
 			</div>
 		</div>-->
@@ -270,17 +209,7 @@ if (mysqli_num_rows($res) == 1) {
 			</div>
 			<div class="serno">
 				<h6><?php echo date('d/m/Y', strtotime($sale['orddate'])); ?></h6>
-				<h6>
-					<?php
-					if ($sale['payment'] == "csv") {
-						echo "CS-" . $sale['orderno'];
-					} elseif ($sale['payment'] == "cash") {
-						echo "ESTIMATE-" . $sale['orderno'];
-					} else {
-						echo "CR-" . $sale['orderno'];
-					}
-					?>
-				</h6>
+				<h6><?php echo ($sale['payment'] == "csv") ? "CS-".$sale['orderno'] : "CR-".$sale['orderno']; ?></h6>
 			</div>
 		</div>
 		<div class="col-md-12">
@@ -298,9 +227,7 @@ if (mysqli_num_rows($res) == 1) {
 					</tr>
 				</thead>
 				<tbody>
-					<?php $count = 1;
-					$total = 0;
-					foreach ($sale['lines'] as $item) { ?>
+					<?php $count = 1; $total=0; foreach($sale['lines'] as $item){ ?>
 
 						<tr style="font-size: 11px">
 							<td class="tdpa" style="text-align: center;"><?php echo $count; ?></td>
@@ -311,126 +238,126 @@ if (mysqli_num_rows($res) == 1) {
 								<?php echo $item['quantity']; ?>
 								<sub><?php echo $item['uom']; ?></sub>
 							</td>
-							<td style="text-align: center;"><?php echo locale_number_format($item['price'], 2); ?></td>
+							<td style="text-align: center;"><?php echo locale_number_format($item['price'],2); ?></td>
 							<td style="text-align: center;">
-								<?php echo locale_number_format(($item['quantity'] * $item['price']), 2); ?>
+								<?php echo locale_number_format(($item['quantity']*$item['price']),2); ?>
 								<sub>PKR</sub>
 							</td>
 						</tr>
-
-						<?php
-
-						if (isset($_GET['internal'])) {
-
+						
+					<?php 
+					
+						if(isset($_GET['internal'])){
+								
 							$SQL = "SELECT stockmaster.mnfpno,manufacturers.manufacturers_name as bname, stockmaster.description,
 									stockmaster.mnfCode, stockmaster.stockid,shopsalesitems.quantity,shopsalesitems.discountpercent
 									FROM shopsalesitems 
 									LEFT OUTER JOIN stockmaster ON shopsalesitems.stockid = stockmaster.stockid
 									LEFT OUTER JOIN manufacturers ON manufacturers.manufacturers_id = stockmaster.brand
 									WHERE shopsalesitems.orderno=$orderno
-									AND lineno='" . $item['id'] . "'";
-							$res = mysqli_query($db, $SQL);
-
-							if (mysqli_num_rows($res) > 0) {
-
-						?>
-
+									AND lineno='".$item['id']."'"; 
+							$res = mysqli_query($db, $SQL);		
+							
+							if(mysqli_num_rows($res) > 0){
+								
+					?>
+						
 								<tr style="font-size: 11px">
 									<th style="text-align: center;">QTY</th>
 									<th colspan="2" class="tdpa" style="text-align: center;">StockID</th>
-									<th colspan="2" class="tdpa" style="text-align: center;">Discount</th>
+                                    <th colspan="2" class="tdpa" style="text-align: center;">Discount</th>
 									<th class="tdpa" style="text-align: center;">MNFP NO</th>
 									<th colspan="3" style="text-align: center;" class="tdpa">Short Description</th>
 								</tr>
-
-								<?php
-								while ($row = mysqli_fetch_assoc($res)) {
-								?>
-
+								
+					<?php  
+								while($row = mysqli_fetch_assoc($res)){
+					?>
+					
 									<tr style="font-size: 11px">
 										<td style="text-align: center;"><?php echo $row['quantity']; ?></td>
 										<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['stockid']; ?></td>
-										<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['discountpercent']; ?></td>
+                                        <td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['discountpercent']; ?></td>
 										<td class="tdpa" style="text-align: center;"><?php echo $row['mnfpno']; ?></td>
 										<td colspan="3" style="text-align: center;" class="tdpa"><?php echo $row['description']; ?></td>
 									</tr>
-
-						<?php
+					
+					<?php 
 								}
-							}
+								
+							} 
+						
 						}
-						?>
-					<?php $total += ($item['quantity'] * $item['price']);
-						$count++;
-					} ?>
-					<?php if ($sale['discount'] != 0 || $sale['advance'] != 0) { ?>
+					?>
+					<?php $total += ($item['quantity']*$item['price']); $count++; } ?>
+					<?php if($sale['discount'] != 0 || $sale['advance'] != 0){ ?>
+					<tr style="font-size: 11px">
+						<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
+						<th class="tdpa abc" style="text-align: center;">SubTotal: </th>
+						<td colspan="2" class="tdpa" style="text-align: center;">
+							<?php echo locale_number_format($total,2); ?> 
+							<sub>PKR</sub>
+						</td>
+					</tr>
+					<?php } ?>
+					<?php if($sale['discount'] != 0 || $sale['discountPKR']){ ?>
+					<?php if($sale['discount'] != 0){ ?>
 						<tr style="font-size: 11px">
 							<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
-							<th class="tdpa abc" style="text-align: center;">SubTotal: </th>
+							<th class="tdpa abc" style="text-align: center;">Discount<sub>%</sub>: </th>
 							<td colspan="2" class="tdpa" style="text-align: center;">
-								<?php echo locale_number_format($total, 2); ?>
+								<?php echo locale_number_format($sale['discount'],2); ?> 
+								<sub>%</sub>
+							</td>
+						</tr>
+					<?php } ?>
+					<?php if($sale['discountPKR'] != 0){ ?>
+						<tr style="font-size: 11px">
+							<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
+							<th class="tdpa abc" style="text-align: center;">Discount<sub>PKR</sub>: </th>
+							<td colspan="2" class="tdpa" style="text-align: center;">
+								<?php echo locale_number_format($sale['discountPKR'],2); ?> 
 								<sub>PKR</sub>
 							</td>
 						</tr>
 					<?php } ?>
-					<?php if ($sale['discount'] != 0 || $sale['discountPKR']) { ?>
-						<?php if ($sale['discount'] != 0) { ?>
-							<tr style="font-size: 11px">
-								<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
-								<th class="tdpa abc" style="text-align: center;">Discount<sub>%</sub>: </th>
-								<td colspan="2" class="tdpa" style="text-align: center;">
-									<?php echo locale_number_format($sale['discount'], 2); ?>
-									<sub>%</sub>
-								</td>
-							</tr>
-						<?php } ?>
-						<?php if ($sale['discountPKR'] != 0) { ?>
-							<tr style="font-size: 11px">
-								<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
-								<th class="tdpa abc" style="text-align: center;">Discount<sub>PKR</sub>: </th>
-								<td colspan="2" class="tdpa" style="text-align: center;">
-									<?php echo locale_number_format($sale['discountPKR'], 2); ?>
-									<sub>PKR</sub>
-								</td>
-							</tr>
-						<?php } ?>
-						<tr style="font-size: 11px">
-							<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
-							<th class="tdpa abc" style="text-align: center;"><?php if ($sale['payment'] == "csv") echo "Grand "; ?>Total: </th>
-							<td colspan="2" class="tdpa" style="text-align: center;">
-								<?php echo locale_number_format(($total * (1 - ($sale['discount'] / 100)) - $sale['discountPKR']), 2); ?>
-								<sub>PKR</sub>
-							</td>
-						</tr>
-					<?php } else if ($sale['discount'] == 0 && $sale['discountPKR'] == 0 && $sale['payment'] == "csv") { ?>
-						<tr style="font-size: 11px">
-							<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
-							<th class="tdpa abc" style="text-align: center;">Grand Total: </th>
-							<td colspan="2" class="tdpa" style="text-align: center;">
-								<?php echo locale_number_format(($total * (1 - ($sale['discount'] / 100))), 2); ?>
-								<sub>PKR</sub>
-							</td>
-						</tr>
+					<tr style="font-size: 11px">
+						<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
+						<th class="tdpa abc" style="text-align: center;"><?php if($sale['payment'] == "csv") echo "Grand "; ?>Total: </th>
+						<td colspan="2" class="tdpa" style="text-align: center;">
+							<?php echo locale_number_format(($total * (1 - ($sale['discount']/100)) - $sale['discountPKR']),2); ?> 
+							<sub>PKR</sub>
+						</td>
+					</tr>
+					<?php }else if($sale['discount'] == 0 && $sale['discountPKR'] == 0 && $sale['payment'] == "csv"){ ?>
+					<tr style="font-size: 11px">
+						<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
+						<th class="tdpa abc" style="text-align: center;">Grand Total: </th>
+						<td colspan="2" class="tdpa" style="text-align: center;">
+							<?php echo locale_number_format(($total * (1 - ($sale['discount']/100))),2); ?> 
+							<sub>PKR</sub>
+						</td>
+					</tr>
 					<?php } ?>
-					<?php if ($sale['advance'] != 0 && $sale['payment'] == "crv") { ?>
-						<tr style="font-size: 11px">
-							<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
-							<th class="tdpa abc" style="text-align: center;">Advance: </th>
-							<td colspan="2" class="tdpa" style="text-align: center;">
-								<?php echo locale_number_format($sale['advance'], 2); ?>
-								<sub>PKR</sub>
-							</td>
-						</tr>
+					<?php if($sale['advance'] != 0 && $sale['payment'] == "crv"){ ?>
+					<tr style="font-size: 11px">
+						<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
+						<th class="tdpa abc" style="text-align: center;">Advance: </th>
+						<td colspan="2" class="tdpa" style="text-align: center;">
+							<?php echo locale_number_format($sale['advance'],2); ?> 
+							<sub>PKR</sub>
+						</td>
+					</tr>
 					<?php } ?>
-					<?php if ($sale['payment'] == "crv") { ?>
-						<tr style="font-size: 11px">
-							<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
-							<th class="tdpa abc" style="text-align: center;">Remaining Balance: </th>
-							<td colspan="2" class="tdpa" style="text-align: center;">
-								<?php echo locale_number_format(($total * (1 - ($sale['discount'] / 100))) - $sale['advance'] - $sale['discountPKR'], 2); ?>
-								<sub>PKR</sub>
-							</td>
-						</tr>
+					<?php if($sale['payment'] == "crv"){ ?>
+					<tr style="font-size: 11px">
+						<th colspan="5" class="tdpa abc" style="text-align: right;"></th>
+						<th class="tdpa abc" style="text-align: center;">Remaining Balance: </th>
+						<td colspan="2" class="tdpa" style="text-align: center;">
+							<?php echo locale_number_format(($total * (1 - ($sale['discount']/100)))-$sale['advance']-$sale['discountPKR'],2); ?> 
+							<sub>PKR</sub>
+						</td>
+					</tr>
 					<?php } ?>
 				</tbody>
 			</table>
@@ -443,10 +370,10 @@ if (mysqli_num_rows($res) == 1) {
 					</div>
 				</div>
 				<div class="col-md-6 ddasda " style="text-align: right; position: absolute; right: 0; padding-right: 0; display:none;">
-					<img src="../../qrcodes/shopsale/<?php echo $sale['orderno'] . '-shopSaleQR.png';  ?>"
-						alt="QR Code"
-						height="90px"
-						style="display: inline-block;">
+					<img src="../../qrcodes/shopsale/<?php echo $sale['orderno'].'-shopSaleQR.png';  ?>" 
+								 alt="QR Code" 
+								 height="90px" 
+								 style="display: inline-block;">
 				</div>
 			</div>
 			<div class="col-md-12" style="">
@@ -460,7 +387,7 @@ if (mysqli_num_rows($res) == 1) {
 				<img src="../../reports/balance/logo.png" height="15px" width="15px"> 
 				Compresol
 			</h5>-->
-		</div>
+		</div>	
 	</page>
 	<script src="../../quotation/assets/vendor/jquery/jquery.js"></script>
 
@@ -470,19 +397,18 @@ if (mysqli_num_rows($res) == 1) {
 		//     	e.preventDefault();
 		//     };
 		// });
-
-		$(".changeCompanyName").on("click", function() {
-			if ($(".companyname1").html() == "SAH") {
+		
+		$(".changeCompanyName").on("click", function(){
+			if($(".companyname1").html() == "SAH"){
 				$(".companyname1").html("S.A HAMID & Co.");
 				$(".companyaddress").html("7 Nishter Road, Lahore, Ph: 042-37650475, 37650099");
-				$(".hidethisshit").css("visibility", "visible");
-			} else {
+				$(".hidethisshit").css("visibility","visible");
+			}else{
 				$(".companyname1").html("SAH");
 				$(".companyaddress").html("");
-				$(".hidethisshit").css("visibility", "hidden");
+				$(".hidethisshit").css("visibility","hidden");
 			}
 		});
 	</script>
 </body>
-
 </html>

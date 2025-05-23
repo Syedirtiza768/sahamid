@@ -744,7 +744,7 @@
           if (userHasPermission($db, 'create_shop_sale')) {
           ?>
             <li>
-              <a target="_blank" href="<?php echo $NewRootPath; ?>shop/pos/estimate.php">
+              <a target="_blank" href="<?php echo $NewRootPath; ?>shop/estimate/estimate.php">
                 <i class="fa fa-plus"></i> Create New Estimate
               </a>
             </li>
@@ -753,7 +753,7 @@
           if (userHasPermission($db, 'shopsale_list')) {
           ?>
             <li>
-              <a target="_blank" href="<?php echo $NewRootPath; ?>shop/pos/estimateList.php">
+              <a target="_blank" href="<?php echo $NewRootPath; ?>shop/estimate/estimateList.php">
                 <i class="fa fa-plus"></i> Estimate List
               </a>
             </li>

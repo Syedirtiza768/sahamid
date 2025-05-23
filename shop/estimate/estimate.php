@@ -38,25 +38,21 @@
                 padding: 20px;
             }
 
-            .value-box {
+            .card {
                 background-color: #fff;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                padding: 15px;
-                text-align: right;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-                height: 100%;
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                padding: 1rem;
+                /* reduced padding */
+                font-size: 0.9rem;
+                /* slightly smaller font overall */
             }
 
-            .value-title {
-                font-size: 0.85rem;
-                color: #666;
-            }
-
-            .value-amount {
+            #subtotalDisplay {
                 font-size: 1.25rem;
-                font-weight: bold;
+                /* reduce from h4 default size */
             }
+
 
             .item-form {
                 background-color: #fff;
@@ -161,6 +157,19 @@
             }
             ?>
 
+            <div class="container-fluid mt-3">
+                <div class="row justify-content-end">
+                    <div class="col-md-2">
+                        <div class="card shadow-sm border-0 rounded-3 p-3 text-end bg-white">
+                            <div class="fw-bold text-muted mb-1">Subtotal</div>
+                            <div class="fw-bold text-primary" id="subtotalDisplay">PKR 0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
             <!-- Customer Info -->
             <div class="item-form">
                 <div class="form-section row justify-content-center">
@@ -211,15 +220,26 @@
             <div class="item-form">
                 <div class="form-section row justify-content-end">
                     <div class="form-group col-md-3">
-                        <label class="form-label">Amount Paid:</label>
+                        <label class="form-label">Discount (Amount):</label>
                         <div class="input-group">
-                            <input type="text" id="amountpaid" class="form-control text-right" placeholder="0.00">
+                            <input type="number" id="discountPKR" class="form-control text-right" placeholder="0.00">
                             <div class="input-group-append">
                                 <span class="input-group-text">PKR</span>
                             </div>
                         </div>
                     </div>
+
+                    <div class="form-group col-md-3">
+                        <label class="form-label">Discount (%):</label>
+                        <div class="input-group">
+                            <input type="number" id="discount" class="form-control text-right" placeholder="0.00">
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
 
                 <div class="text-center">
                     <button class="btn btn-success custom-btn1" id="proceed">Proceed</button>
@@ -293,7 +313,31 @@
 
             // Trigger initial calculation
             calculateSubtotal(itemId);
+
+            updateSubtotal();
         }
+
+        function updateSubtotal() {
+            let total = 0;
+
+            document.querySelectorAll('.item-row').forEach(row => {
+                const qty = parseFloat(row.querySelector('.qty').value) || 0;
+                const price = parseFloat(row.querySelector('.price').value) || 0;
+                const subtotal = qty * price;
+
+                row.querySelector('.subtotal').value = subtotal.toFixed(2);
+                total += subtotal;
+            });
+
+            document.getElementById('subtotalDisplay').innerText = `PKR ${total.toFixed(2)}`;
+        }
+
+        // Recalculate subtotal when values change
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('qty') || e.target.classList.contains('price')) {
+                updateSubtotal();
+            }
+        });
 
 
         function calculateSubtotal(id) {
@@ -308,7 +352,7 @@
             const row = document.getElementById(rowId);
             if (row) {
                 row.remove();
-                updateSummaryBoxes(); // 👈 Recalculate totals after removal
+                updateSubtotal(); // Update subtotal after removal
             }
         }
 
@@ -352,6 +396,11 @@
             $("#itemsContainer").find(".item-row").each(function() {
 
                 let quantity = parseFloat($(this).find(".qty").val()) || 0;
+                if (quantity <= 0) {
+                    message = "Item with 0 Quantity Found. Please enter a quantity greater than zero.";
+                    pass = false;
+                    return false; // exit each loop
+                }
                 let price = parseFloat($(this).find(".price").val()) || 0;
                 let desc = $(this).find(".form-control[placeholder='Enter item name']").val() || "";
                 let note = $(this).find(".form-control[placeholder='Model or comment']").val() || "";
@@ -403,16 +452,16 @@
             }
 
             // let advance = parseFloat($("#advance-payment").val()) || 0;
-            let name = "Maddy";
-            let discount = 0;
-            let discountPKR = 0;
+            let name = "none";
+            let discount = parseFloat($("#discount").val()) || 0;
+            let discountPKR = parseFloat($("#discountPKR").val()) || 0;
 
-            let salesman = "Maddy";
+            let salesman = "none";
 
-            let dispatchvia = "Maddy";
-            let customerref = "Maddy";
-            let advance = "Maddy";
-            let paid = parseFloat($("#amountpaid").val()) || 0;
+            let dispatchvia = "none";
+            let customerref = "none";
+            let advance = "none";
+            let paid = 0;
 
             // Call backend
             generateBill(client, items, payment, advance, name, discount, discountPKR, salesman, dispatchvia, customerref, paid);

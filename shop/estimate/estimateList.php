@@ -180,9 +180,9 @@ $to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
                             echo "<td>" . $paid . "</td>";
                             echo "<td>" . $orddate . "</td>";
                             echo "<td><button class='btn btn-warning btn-sm'>Add Items</button></td>";
-                            echo "<td><button class='btn btn-primary btn-sm'>Original</button></td>";
-                            echo "<td><button class='btn btn-danger btn-sm'>Print</button></td>";
-                            echo "<td><button class='btn btn-info btn-sm'>Internal</button></td>";
+                            echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['sr']) . "&orignal' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
+                            echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['sr']) . "' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
+                            echo "<td><a href='../pos/shopSalePrintInternal.php?orderno=" . urlencode($row['sr']) . "' target='_blank' class='btn btn-info btn-sm'>Internal</a></td>";
                             echo "</tr>";
                         }
                     } else {
@@ -204,7 +204,7 @@ $to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
     <script>
         $(document).ready(function() {
             $('#estimateTable').DataTable({
-                "pageLength": 5,
+                "pageLength": 10,
                 "lengthChange": false,
                 "ordering": true
             });
