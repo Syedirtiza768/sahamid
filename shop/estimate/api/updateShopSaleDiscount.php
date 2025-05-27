@@ -18,7 +18,7 @@
 	$type  			= trim($_POST['type']);
 	$discount 		= $_POST['discount'];
 
-	$SQL = "SELECT complete FROM shopsale WHERE orderno=$orderno";
+	$SQL = "SELECT complete FROM estimateshopsale WHERE orderno=$orderno";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_fetch_assoc($res)['complete'] == 1){
@@ -30,7 +30,7 @@
 	}
 
 
-	$SQL = "UPDATE shopsale 
+	$SQL = "UPDATE estimateshopsale 
 			SET ".$type."='".$discount."'
 			WHERE orderno='".$orderno."'";
 	if(DB_query($SQL, $db)){

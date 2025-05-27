@@ -15,7 +15,7 @@
 		exit;
 	}
 
-	$SQL = "SELECT * FROM shopsale WHERE orderno=$orderNo AND complete=0";
+	$SQL = "SELECT * FROM estimateshopsale WHERE orderno=$orderNo AND complete=0";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_num_rows($res) != 1){
@@ -27,10 +27,10 @@
 
 	$debtorno = $shopSale['debtorno'];
 
-	$SQL = "SELECT * FROM shopsalelines WHERE orderno=$orderNo";
+	$SQL = "SELECT * FROM estimateshopsalelines WHERE orderno=$orderNo";
 	$lines = mysqli_query($db, $SQL);
 
-	$SQL = "SELECT * FROM debtorsmaster WHERE debtorno='$debtorno'";
+	$SQL = "SELECT * FROM estimatedebtormaster WHERE debtorno='$debtorno'";
 	$res = mysqli_query($db, $SQL);
 
 	$client = mysqli_fetch_assoc($res);
@@ -39,7 +39,7 @@
 		$client['name'] = $shopSale['crname'];
 	}
 
-	$SQL = "SELECT SUM(quantity * price) as total FROM shopsalelines WHERE orderno='$orderNo'";
+	$SQL = "SELECT SUM(quantity * price) as total FROM estimateshopsalelines WHERE orderno='$orderNo'";
 	$res = mysqli_query($db, $SQL);
 
 	$subTotal = mysqli_fetch_assoc($res)['total'];
@@ -121,7 +121,7 @@
 
 	      	<h3 style="text-align: center; font-variant-caps: petite-caps;">
 	      		<i class="fa fa-sign-in" aria-hidden="true"></i> 
-	      		Attach Internal Items (CSV/CRV) 
+	      		Attach Internal Items (Estimate) 
 	      		<a href="shopSalePrint.php?orderno=<?php echo $_GET['orderno']?>" target="_blank" class="btn btn-success">
 	      			<span class="glyphicon glyphicon-print" aria-hidden="true"></span>
 	      		</a>
@@ -309,11 +309,11 @@
 																		stockmaster.materialcost as price,
 																		stockmaster.mnfcode,
 																		stockmaster.mnfpno,
-																		shopsalesitems.id,
-																		shopsalesitems.quantity,
-																		shopsalesitems.discountpercent
-			      												FROM shopsalesitems
-			      												INNER JOIN stockmaster ON shopsalesitems.stockid = stockmaster.stockid
+																		estimateshopsalesitems.id,
+																		estimateshopsalesitems.quantity,
+																		estimateshopsalesitems.discountpercent
+			      												FROM estimateshopsalesitems
+			      												INNER JOIN stockmaster ON estimateshopsalesitems.stockid = stockmaster.stockid
 																INNER JOIN manufacturers ON manufacturers.manufacturers_id = stockmaster.brand
 			      												WHERE lineno='".$row['id']."'"; 
 			      									?>

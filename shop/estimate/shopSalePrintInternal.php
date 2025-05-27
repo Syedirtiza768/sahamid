@@ -10,7 +10,7 @@
 	
 	$orderno = trim($_GET['orderno']);
 
-	$SQL = "SELECT * FROM shopsale WHERE orderno='".$orderno."'";
+	$SQL = "SELECT * FROM estimateshopsale WHERE orderno='".$orderno."'";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_num_rows($res) != 1){
@@ -22,7 +22,7 @@
 
 	$sale = mysqli_fetch_assoc($res);
 
-	$SQL = "SELECT brname FROM custbranch WHERE branchcode='".$sale['branchcode']."'";
+	$SQL = "SELECT brname FROM estimatecustbranch WHERE branchcode='".$sale['branchcode']."'";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_num_rows($res) != 1){
@@ -38,7 +38,7 @@
 		$sale['customer']['brname'] = html_entity_decode($sale['crname']);
 	}
 
-	$SQL = "SELECT * FROM shopsalelines WHERE orderno='".$sale['orderno']."'";
+	$SQL = "SELECT * FROM estimateshopsalelines WHERE orderno='".$sale['orderno']."'";
 	$res = mysqli_query($db, $SQL);
 
 	$sale['lines'] = [];

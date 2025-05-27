@@ -36,10 +36,10 @@ $discount 	= $_POST['discount'];
 
 
 
-$SQL="SELECT lineno FROM shopsalesitems WHERE id=$itemID";
+$SQL="SELECT lineno FROM estimateshopsalesitems WHERE id=$itemID";
 
 $lineno=mysqli_fetch_assoc(mysqli_query($db,$SQL))['lineno'];
-$SQL = "UPDATE shopsalesitems 
+$SQL = "UPDATE estimateshopsalesitems 
 			SET discountpercent = $discount
 			WHERE id=$itemID";
 DB_query($SQL, $db);

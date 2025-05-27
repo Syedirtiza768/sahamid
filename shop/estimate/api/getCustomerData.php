@@ -6,18 +6,18 @@
 
 	$branchCode = $_GET['branchCode'];
 
-	$SQL = "SELECT  debtorsmaster.dba,
-		 			custbranch.brname,
-		 			debtorsmaster.typeid,
-					custbranch.salesman,
-					custbranch.branchcode,
-					custbranch.braddress1,
-					custbranch.braddress2,
-					custbranch.braddress3,
-					custbranch.debtorno,
-					debtorsmaster.creditlimit
+	$SQL = "SELECT  estimatedebtorsmaster.dba,
+		 			estimatecustbranch.brname,
+		 			estimatedebtorsmaster.typeid,
+					estimatecustbranch.salesman,
+					estimatecustbranch.branchcode,
+					estimatecustbranch.braddress1,
+					estimatecustbranch.braddress2,
+					estimatecustbranch.braddress3,
+					estimatecustbranch.debtorno,
+					estimatedebtorsmaster.creditlimit
 			FROM custbranch
-			INNER JOIN debtorsmaster ON debtorsmaster.debtorno = custbranch.debtorno 
+			INNER JOIN estimatedebtorsmaster ON estimatedebtorsmaster.debtorno = estimatecustbranch.debtorno 
 			WHERE branchcode='".$branchCode."'";
 	$res = mysqli_query($db, $SQL);
 

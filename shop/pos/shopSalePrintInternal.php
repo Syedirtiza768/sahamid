@@ -274,7 +274,7 @@ if (mysqli_num_rows($res) == 1) {
 					<?php
 					if ($sale['payment'] == "csv") {
 						echo "CS-" . $sale['orderno'];
-					} elseif ($sale['payment'] == "cash") {
+					} elseif ($sale['payment'] == "estimate") {
 						echo "ESTIMATE-" . $sale['orderno'];
 					} else {
 						echo "CR-" . $sale['orderno'];

@@ -153,14 +153,14 @@ if (isset($_GET['json'])) {
 			$sale['lines'][] = $row;
 		}
 
-		$sale['invoice'] = (($sale['payment'] == "cash") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['orderno']);
+		$sale['invoice'] = (($sale['payment'] == "estimate") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['orderno']);
 
 		$sale['header'] = [];
 		$sale['header']['orignal'] = $orignal ? "<b>Orignal<b/>" : "<b>Duplicate</b>";
 		$sale['header']['customer'] = $sale['customer']['brname'];
 		$sale['header']['cdetails'] = (($sale['payment'] == "csv") ? $details : "");
 		$sale['header']['payment']  = $sale['payment'];
-		$sale['header']['invoice']  = (($sale['payment'] == "cash") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['orderno']);
+		$sale['header']['invoice']  = (($sale['payment'] == "estimate") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['orderno']);
 		$sale['header']['date']		= date('d/m/Y', strtotime($sale['orddate']));
 		$sale['header']['salesman'] = $sale['salesman'];
 		$sale['header']['customerref'] 		= $sale['customerref'] ?: "";

@@ -80,9 +80,9 @@
 		$sale['header'] = [];
 		$sale['header']['orignal'] = $orignal ? "<b>Orignal<b/>":"<b>Duplicate</b>";
 		$sale['header']['customer'] = $sale['customer']['brname'];
-		$sale['header']['cdetails'] = (($sale['payment'] == "cash") ? $details : "");
+		$sale['header']['cdetails'] = (($sale['payment'] == "estimate") ? $details : "");
 		$sale['header']['payment']  = $sale['payment'];
-		$sale['header']['invoice']  = (($sale['payment'] == "cash") ? ("CS-") : ("CR-")).sprintf("%'.04d\n", $sale['orderno']);
+		$sale['header']['invoice']  = (($sale['payment'] == "estimate") ? ("CS-") : ("CR-")).sprintf("%'.04d\n", $sale['orderno']);
 		$sale['header']['date']		= date('d/m/Y',strtotime($sale['orddate']));
 		$sale['header']['salesman'] = $sale['salesman'];
 		$sale['header']['customerref'] 		= $sale['customerref'] ?:"";
@@ -591,7 +591,7 @@
 			// 	$(document.body).html(`<div style="display:flex; justify-content:center; align-items:center"><h1 style="text-align:center">Over Credit Limit!!!</h1></div>`);	
 			// }
 			
-			if(parseFloat(discount) == 0 && parseFloat(discountPKR) == 0 && type == "cash"){
+			if(parseFloat(discount) == 0 && parseFloat(discountPKR) == 0 && type == "estimate"){
 				
 				html += `
 					<ul class="totalItem">
@@ -613,7 +613,7 @@
 				
 			}
 			
-			if(type == "cash"){
+			if(type == "estimate"){
 				
 				html += `<ul class="totalItem">
 					<li class="totalTitle">Remaining Amount: </li>

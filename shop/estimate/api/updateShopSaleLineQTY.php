@@ -25,7 +25,7 @@
 	}
 
 
-	$SQL = "SELECT complete FROM shopsale WHERE orderno=$orderno";
+	$SQL = "SELECT complete FROM estimateshopsale WHERE orderno=$orderno";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_fetch_assoc($res)['complete'] == 1){
@@ -36,7 +36,7 @@
 		return;
 	}
 
-	$SQL = "UPDATE shopsalelines 
+	$SQL = "UPDATE estimateshopsalelines 
 			SET quantity='".$quantity."'
 			WHERE id='".$lineno."'
 			AND orderno='".$orderno."'";

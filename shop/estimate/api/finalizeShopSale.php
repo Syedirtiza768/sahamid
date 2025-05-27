@@ -28,7 +28,7 @@ if (!isset($_POST['orderno'])) {
 
 $orderno = trim($_POST['orderno']);
 
-$SQL = "SELECT * FROM shopsale WHERE orderno=$orderno AND complete=0";
+$SQL = "SELECT * FROM estimateshopsale WHERE orderno=$orderno AND complete=0";
 $res = mysqli_query($db, $SQL);
 
 if (mysqli_num_rows($res) != 1) {
@@ -45,11 +45,11 @@ if (mysqli_num_rows($res) != 1) {
 $shopSale = mysqli_fetch_assoc($res);
 
 $SQL = "SELECT * 
-			FROM shopsalelines 
-			LEFT OUTER JOIN shopsalesitems ON (shopsalesitems.orderno = shopsalelines.orderno
-				AND shopsalesitems.lineno = shopsalelines.id)
-			WHERE shopsalesitems.id IS NULL
-			AND shopsalesitems.orderno=$orderno";
+			FROM estimateshopsalelines 
+			LEFT OUTER JOIN estimateshopsalesitems ON (estimateshopsalesitems.orderno = estimateshopsalelines.orderno
+				AND estimateshopsalesitems.lineno = estimateshopsalelines.id)
+			WHERE estimateshopsalesitems.id IS NULL
+			AND estimateshopsalesitems.orderno=$orderno";
 $res = mysqli_query($db, $SQL);
 
 if (mysqli_num_rows($res) > 0) {
@@ -63,7 +63,7 @@ if (mysqli_num_rows($res) > 0) {
 	return;
 }
 
-$SQL = "SELECT * FROM shopsalesitems WHERE orderno=$orderno";
+$SQL = "SELECT * FROM estimateshopsalesitems WHERE orderno=$orderno";
 $res = mysqli_query($db, $SQL);
 
 if (mysqli_num_rows($res) <= 0) {
@@ -94,12 +94,12 @@ while ($row = mysqli_fetch_assoc($res)) {
 
 	$stockid = $row['stockid'];
 
-	$SQL = "SELECT SUM(shopsalesitems.quantity * shopsalelines.quantity) as required
-				FROM shopsalesitems 
-				INNER JOIN shopsalelines ON (shopsalelines.orderno = shopsalesitems.orderno
-					AND shopsalelines.id = shopsalesitems.lineno)
-				WHERE shopsalesitems.orderno=$orderno
-				AND shopsalesitems.stockid='$stockid'";
+	$SQL = "SELECT SUM(estimateshopsalesitems.quantity * estimateshopsalelines.quantity) as required
+				FROM estimateshopsalesitems 
+				INNER JOIN estimateshopsalelines ON (estimateshopsalelines.orderno = estimateshopsalesitems.orderno
+					AND estimateshopsalelines.id = estimateshopsalesitems.lineno)
+				WHERE estimateshopsalesitems.orderno=$orderno
+				AND estimateshopsalesitems.stockid='$stockid'";
 	$requiredQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['required'];
 	$requiredQuantity = ($requiredQuantity != "") ? $requiredQuantity : 0;
 

@@ -55,14 +55,14 @@
     return;
 
 }
-	$SQL = "SELECT * FROM shopsalelines WHERE id=$lineID";
+	$SQL = "SELECT * FROM estimateshopsalelines WHERE id=$lineID";
 	$res = mysqli_query($db, $SQL);
 	$line = mysqli_fetch_assoc($res);
 
 	$orderno = $line['orderno'];
 	$rate = $item['price'];
 
-	$SQL = "SELECT * FROM shopsalesitems WHERE orderno='$orderno' AND stockid='$stockid' AND lineno='$lineID'";
+	$SQL = "SELECT * FROM estimateshopsalesitems WHERE orderno='$orderno' AND stockid='$stockid' AND lineno='$lineID'";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_num_rows($res) > 0){
@@ -78,7 +78,7 @@
 
 	}
 
-	$SQL = "INSERT INTO shopsalesitems(orderno, lineno, stockid, quantity, rate) 
+	$SQL = "INSERT INTO estimateshopsalesitems(orderno, lineno, stockid, quantity, rate) 
 			VALUES ('$orderno','$lineID','$stockid',0,$rate)";
 	DB_query($SQL, $db);
 

@@ -443,7 +443,7 @@
                 return;
             }
 
-            let payment = "cash";
+            let payment = "estimate";
 
             if (!payment) {
                 swal("Error", "Payment Type Not Selected!!!", "error");

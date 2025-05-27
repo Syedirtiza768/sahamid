@@ -30,10 +30,10 @@
     $discount   = $_POST['discount'];
     $externalLineID=$_POST['externalLineID'];
 	$SQL = "SELECT * 
-			FROM shopsalesitems
-			INNER JOIN shopsale ON shopsale.orderno = shopsalesitems.orderno 
-			WHERE shopsalesitems.id=$itemID
-			AND shopsale.complete=0";
+			FROM estimateshopsalesitems
+			INNER JOIN estimateshopsale ON estimateshopsale.orderno = estimateshopsalesitems.orderno 
+			WHERE estimateshopsalesitems.id=$itemID
+			AND estimateshopsale.complete=0";
 	$res = mysqli_query($db, $SQL);
 	
 	if(mysqli_num_rows($res) <= 0){
@@ -48,11 +48,11 @@
 		
 	}
 
-    $SQL = "UPDATE shopsalesitems 
+    $SQL = "UPDATE estimateshopsalesitems 
 			SET discountpercent = $discount
 			WHERE lineno=$externalLineID";
     DB_query($SQL, $db);
-	$SQL = "DELETE FROM shopsalesitems WHERE id=$itemID";
+	$SQL = "DELETE FROM estimateshopsalesitems WHERE id=$itemID";
 	DB_query($SQL, $db);
 
 	echo json_encode([

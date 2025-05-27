@@ -15,7 +15,7 @@
 	$orderno 		= $_POST['orderno'];
 	$lineno  		= $_POST['line'];
 
-	$SQL = "SELECT complete FROM shopsale WHERE orderno=$orderno";
+	$SQL = "SELECT complete FROM estimateshopsale WHERE orderno=$orderno";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_fetch_assoc($res)['complete'] == 1){
@@ -26,7 +26,7 @@
 		return;
 	}
 
-	$SQL = "SELECT * FROM shopsalelines WHERE orderno=$orderno";
+	$SQL = "SELECT * FROM estimateshopsalelines WHERE orderno=$orderno";
 	$res = mysqli_query($db, $SQL);
 
 	if(mysqli_num_rows($res) == 1){
@@ -38,10 +38,10 @@
 		return;
 	}
 
-	$SQL = "DELETE FROM shopsalesitems WHERE orderno=$orderno AND lineno=$lineno";
+	$SQL = "DELETE FROM estimateshopsalesitems WHERE orderno=$orderno AND lineno=$lineno";
 	DB_query($SQL, $db);
 
-	$SQL = "DELETE FROM shopsalelines WHERE orderno=$orderno AND id=$lineno";
+	$SQL = "DELETE FROM estimateshopsalelines WHERE orderno=$orderno AND id=$lineno";
 	DB_query($SQL, $db);
 	
 	echo json_encode(['status' 	=> 'success']);
