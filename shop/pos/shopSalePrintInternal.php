@@ -320,42 +320,87 @@ if (mysqli_num_rows($res) == 1) {
 
 						<?php
 
-						if (isset($_GET['internal'])) {
+						$SQL = "SELECT * FROM shopsale WHERE orderno='" . $orderno . "'";
+						$res = mysqli_query($db, $SQL);
 
-							$SQL = "SELECT stockmaster.mnfpno,manufacturers.manufacturers_name as bname, stockmaster.description,
+						if (mysqli_num_rows($res) == 1) {
+							if (isset($_GET['internal'])) {
+
+								$SQL = "SELECT stockmaster.mnfpno,manufacturers.manufacturers_name as bname, stockmaster.description,
 									stockmaster.mnfCode, stockmaster.stockid,shopsalesitems.quantity,shopsalesitems.discountpercent
 									FROM shopsalesitems 
 									LEFT OUTER JOIN stockmaster ON shopsalesitems.stockid = stockmaster.stockid
 									LEFT OUTER JOIN manufacturers ON manufacturers.manufacturers_id = stockmaster.brand
 									WHERE shopsalesitems.orderno=$orderno
 									AND lineno='" . $item['id'] . "'";
-							$res = mysqli_query($db, $SQL);
+								$res = mysqli_query($db, $SQL);
 
-							if (mysqli_num_rows($res) > 0) {
+								if (mysqli_num_rows($res) > 0) {
 
 						?>
 
-								<tr style="font-size: 11px">
-									<th style="text-align: center;">QTY</th>
-									<th colspan="2" class="tdpa" style="text-align: center;">StockID</th>
-									<th colspan="2" class="tdpa" style="text-align: center;">Discount</th>
-									<th class="tdpa" style="text-align: center;">MNFP NO</th>
-									<th colspan="3" style="text-align: center;" class="tdpa">Short Description</th>
-								</tr>
-
-								<?php
-								while ($row = mysqli_fetch_assoc($res)) {
-								?>
-
 									<tr style="font-size: 11px">
-										<td style="text-align: center;"><?php echo $row['quantity']; ?></td>
-										<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['stockid']; ?></td>
-										<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['discountpercent']; ?></td>
-										<td class="tdpa" style="text-align: center;"><?php echo $row['mnfpno']; ?></td>
-										<td colspan="3" style="text-align: center;" class="tdpa"><?php echo $row['description']; ?></td>
+										<th style="text-align: center;">QTY</th>
+										<th colspan="2" class="tdpa" style="text-align: center;">StockID</th>
+										<th colspan="2" class="tdpa" style="text-align: center;">Discount</th>
+										<th class="tdpa" style="text-align: center;">MNFP NO</th>
+										<th colspan="3" style="text-align: center;" class="tdpa">Short Description</th>
 									</tr>
 
+									<?php
+									while ($row = mysqli_fetch_assoc($res)) {
+									?>
+
+										<tr style="font-size: 11px">
+											<td style="text-align: center;"><?php echo $row['quantity']; ?></td>
+											<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['stockid']; ?></td>
+											<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['discountpercent']; ?></td>
+											<td class="tdpa" style="text-align: center;"><?php echo $row['mnfpno']; ?></td>
+											<td colspan="3" style="text-align: center;" class="tdpa"><?php echo $row['description']; ?></td>
+										</tr>
+
+									<?php
+									}
+								}
+							}
+						} else {
+							if (isset($_GET['internal'])) {
+
+								$SQL = "SELECT stockmaster.mnfpno,manufacturers.manufacturers_name as bname, stockmaster.description,
+									stockmaster.mnfCode, stockmaster.stockid,estimateshopsalesitems.quantity,estimateshopsalesitems.discountpercent
+									FROM estimateshopsalesitems 
+									LEFT OUTER JOIN stockmaster ON estimateshopsalesitems.stockid = stockmaster.stockid
+									LEFT OUTER JOIN manufacturers ON manufacturers.manufacturers_id = stockmaster.brand
+									WHERE estimateshopsalesitems.orderno=$orderno
+									AND lineno='" . $item['id'] . "'";
+								$res = mysqli_query($db, $SQL);
+
+								if (mysqli_num_rows($res) > 0) {
+
+									?>
+
+									<tr style="font-size: 11px">
+										<th style="text-align: center;">QTY</th>
+										<th colspan="2" class="tdpa" style="text-align: center;">StockID</th>
+										<th colspan="2" class="tdpa" style="text-align: center;">Discount</th>
+										<th class="tdpa" style="text-align: center;">MNFP NO</th>
+										<th colspan="3" style="text-align: center;" class="tdpa">Short Description</th>
+									</tr>
+
+									<?php
+									while ($row = mysqli_fetch_assoc($res)) {
+									?>
+
+										<tr style="font-size: 11px">
+											<td style="text-align: center;"><?php echo $row['quantity']; ?></td>
+											<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['stockid']; ?></td>
+											<td colspan="2" class="tdpa" style="text-align: center;"><?php echo $row['discountpercent']; ?></td>
+											<td class="tdpa" style="text-align: center;"><?php echo $row['mnfpno']; ?></td>
+											<td colspan="3" style="text-align: center;" class="tdpa"><?php echo $row['description']; ?></td>
+										</tr>
+
 						<?php
+									}
 								}
 							}
 						}

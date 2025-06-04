@@ -126,7 +126,6 @@ $to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
                         <th>Salesman</th>
                         <th>Created By</th>
                         <th>Amount PKR</th>
-                        <th>Paid PKR</th>
                         <th>Date</th>
                         <th>Add Items</th>
                         <th>Original</th>
@@ -149,6 +148,7 @@ $to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
                 estimateshopsale.salesman,
                 estimateshopsale.created_by,
                 estimateshopsale.paid,
+                estimateshopsale.complete,
                 estimatecustbranch.brname as name,
                 (SUM(estimateshopsalelines.price * estimateshopsalelines.quantity) * (1 - (estimateshopsale.discount / 100))) - estimateshopsale.discountPKR as amt
             FROM estimateshopsale
@@ -177,9 +177,12 @@ $to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
                             echo "<td>" . htmlspecialchars($row['salesman']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['created_by']) . "</td>";
                             echo "<td>" . $amt . "</td>";
-                            echo "<td>" . $paid . "</td>";
                             echo "<td>" . $orddate . "</td>";
-                            echo "<td><a href='../estimate/editShopSale.php?orderno=" . urlencode($row['sr']) . "&orignal' target='_blank' class='btn btn-success btn-sm'>Add Items</a></td>";
+                            if ($row['complete'] == 1) {
+                                echo "<td></td>";
+                            } else {
+                                echo "<td><a href='../estimate/editShopSale.php?orderno=" . urlencode($row['sr']) . "&orignal' target='_blank' class='btn btn-success btn-sm'>Add Items</a></td>";
+                            }
                             echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['sr']) . "&orignal' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
                             echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['sr']) . "' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
                             echo "<td><a href='../pos/shopSalePrintInternal.php?orderno=" . urlencode($row['sr']) . "' target='_blank' class='btn btn-info btn-sm'>Internal</a></td>";

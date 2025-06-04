@@ -487,7 +487,7 @@
                     res = JSON.parse(res);
 
                     if (res.status === "success") {
-                        window.location = "estimateList.php?orderno=" + res.code;
+                        window.location = "../pos/shopSalePrint.php?orderno=" + res.code;
                         // window.location = "estimateList.php?orderno=" + res.code;
                     } else {
                         // Handle error case

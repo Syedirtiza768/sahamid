@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stockid = intval($stockid);
         $quantity = intval($quantity);
 
-        $sql = "UPDATE ogpsalescaseref SET quantity = $quantity WHERE id = $id";
+        $sql = "UPDATE ogpsalescaseref SET quantity = $quantity WHERE id = $id AND stockid = $stockid";
         mysqli_query($conn, $sql);
     }
 

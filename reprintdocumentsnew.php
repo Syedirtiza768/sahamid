@@ -610,7 +610,7 @@ if (isset($_POST['reprintdocuments'])){
 if ($_POST['document'] == 'IGP')
 {
 		
-		$sql = "SELECT igp.orderno,
+		$sql = "SELECT
 		igp.loccode,
 		locations.locationname,
 		igp.despatchdate,

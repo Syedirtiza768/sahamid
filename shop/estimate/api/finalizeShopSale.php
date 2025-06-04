@@ -106,341 +106,341 @@ while ($row = mysqli_fetch_assoc($res)) {
 	$issuedQuantity = 0;
 
 	
-	$SQL = "SELECT quantity
-	FROM ogpcsvref 
-	WHERE stockid='$stockid'
-	AND salesman='$salesman'
-	AND csv= '$orderno'";
-	$result = mysqli_query($db, $SQL);
-	$num_rows = mysqli_num_rows($result);
-	if ($num_rows > 0) {
-		$SQL = "SELECT SUM(quantity) as quantity
-				FROM ogpcsvref 
-				WHERE stockid='$stockid'
-				AND salesman='$salesman'
-	AND csv= '$orderno'";
-		$issuedQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
-		$issuedQuantity = ($issuedQuantity != "") ? $issuedQuantity : 0;
-	} else {
-		$SQL = "SELECT SUM(quantity) as quantity
-				FROM ogpcrvref 
-				WHERE stockid='$stockid'
-				AND salesman='$salesman'
-	AND crv= '$orderno'";
-		$issuedQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
-		$issuedQuantity = ($issuedQuantity != "") ? $issuedQuantity : 0;
-	}
+	// $SQL = "SELECT quantity
+	// FROM ogpcsvref 
+	// WHERE stockid='$stockid'
+	// AND salesman='$salesman'
+	// AND csv= '$orderno'";
+	// $result = mysqli_query($db, $SQL);
+	// $num_rows = mysqli_num_rows($result);
+	// if ($num_rows > 0) {
+	// 	$SQL = "SELECT SUM(quantity) as quantity
+	// 			FROM ogpcsvref 
+	// 			WHERE stockid='$stockid'
+	// 			AND salesman='$salesman'
+	// AND csv= '$orderno'";
+	// 	$issuedQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
+	// 	$issuedQuantity = ($issuedQuantity != "") ? $issuedQuantity : 0;
+	// } else {
+	// 	$SQL = "SELECT SUM(quantity) as quantity
+	// 			FROM ogpcrvref 
+	// 			WHERE stockid='$stockid'
+	// 			AND salesman='$salesman'
+	// AND crv= '$orderno'";
+	// 	$issuedQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
+	// 	$issuedQuantity = ($issuedQuantity != "") ? $issuedQuantity : 0;
+	// }
 
-	if ($requiredQuantity > $issuedQuantity) {
+	// if ($requiredQuantity > $issuedQuantity) {
 
-		echo json_encode([
+	// 	echo json_encode([
 
-			'status' => 'error',
-			'message' => 'Cart quantity for item (' . $stockid . ') is ' . $issuedQuantity . ', required is ' . $requiredQuantity
+	// 		'status' => 'error',
+	// 		'message' => 'Cart quantity for item (' . $stockid . ') is ' . $issuedQuantity . ', required is ' . $requiredQuantity
 
-		]);
-		return;
-	}
+	// 	]);
+	// 	return;
+	// }
 }
 
 $SQL = "SELECT defaultlocation FROM www_users WHERE realname='$salesman'";
 $location = mysqli_fetch_assoc(mysqli_query($db, $SQL))['defaultlocation'];
 
-$SQL = "SELECT SUM(shopsalesitems.quantity * shopsalelines.quantity) as required, shopsalesitems.stockid
-			FROM shopsalesitems 
-			INNER JOIN shopsalelines ON (shopsalelines.orderno = shopsalesitems.orderno
-				AND shopsalelines.id = shopsalesitems.lineno)
-			WHERE shopsalesitems.orderno=$orderno
-			GROUP BY shopsalesitems.stockid";
+$SQL = "SELECT SUM(estimateshopsalesitems.quantity * estimateshopsalelines.quantity) as required, estimateshopsalesitems.stockid
+			FROM estimateshopsalesitems 
+			INNER JOIN estimateshopsalelines ON (estimateshopsalelines.orderno = estimateshopsalesitems.orderno
+				AND estimateshopsalelines.id = estimateshopsalesitems.lineno)
+			WHERE estimateshopsalesitems.orderno=$orderno
+			GROUP BY estimateshopsalesitems.stockid";
 $res = mysqli_query($db, $SQL);
 
-$PeriodNo = GetPeriod(Date($_SESSION['DefaultDateFormat']), $db);
+// $PeriodNo = GetPeriod(Date($_SESSION['DefaultDateFormat']), $db);
 
-while ($item = mysqli_fetch_assoc($res)) {
+// while ($item = mysqli_fetch_assoc($res)) {
 
-	$SQL = "SELECT issued,dc FROM stockissuance 
-				WHERE stockid='" . $item['stockid'] . "'
-				AND salesperson='" . $salesman . "'";
-	$quantityRes = mysqli_fetch_assoc(mysqli_query($db, $SQL));
+// 	$SQL = "SELECT issued,dc FROM stockissuance 
+// 				WHERE stockid='" . $item['stockid'] . "'
+// 				AND salesperson='" . $salesman . "'";
+// 	$quantityRes = mysqli_fetch_assoc(mysqli_query($db, $SQL));
 
-	$issued = $quantityRes['issued'];
-	$dc 	= $quantityRes['dc'];
+// 	$issued = $quantityRes['issued'];
+// 	$dc 	= $quantityRes['dc'];
 
-	$newIssued 	= $issued - $item['required'];
-	$newDC 		= $dc + $item['required'];
+// 	$newIssued 	= $issued - $item['required'];
+// 	$newDC 		= $dc + $item['required'];
 
-	$SQL = "UPDATE `stockissuance` SET issued='" . $newIssued . "',dc='" . $newDC . "' 
-				WHERE salesperson='" . $salesman . "'
-				AND stockid='" . $item['stockid'] . "'";
-	DB_query($SQL, $db);
+// 	$SQL = "UPDATE `stockissuance` SET issued='" . $newIssued . "',dc='" . $newDC . "' 
+// 				WHERE salesperson='" . $salesman . "'
+// 				AND stockid='" . $item['stockid'] . "'";
+// 	DB_query($SQL, $db);
 
-	$SQL = "SELECT quantity
-	FROM ogpcsvref 
-	WHERE stockid='" . $item['stockid'] . "'
-	AND salesman='$salesman'
-	AND csv = '$orderno'";
-	$result = mysqli_query($db, $SQL);
-	$num_rows = mysqli_num_rows($result);
-	if ($num_rows > 0) {
-		$SQL = "SELECT SUM(quantity) as quantity
-				FROM ogpcsvref 
-				WHERE stockid='" . $item['stockid'] . "'
-				AND salesman='$salesman'
-				AND csv = '$orderno'";
-		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
-		if($oldQuantity == "" || $oldQuantity == NULL){
-			$oldQuantity = 0;
-		}
-		$quantit 	= $oldQuantity - $item['required'];
+// 	$SQL = "SELECT quantity
+// 	FROM ogpcsvref 
+// 	WHERE stockid='" . $item['stockid'] . "'
+// 	AND salesman='$salesman'
+// 	AND csv = '$orderno'";
+// 	$result = mysqli_query($db, $SQL);
+// 	$num_rows = mysqli_num_rows($result);
+// 	if ($num_rows > 0) {
+// 		$SQL = "SELECT SUM(quantity) as quantity
+// 				FROM ogpcsvref 
+// 				WHERE stockid='" . $item['stockid'] . "'
+// 				AND salesman='$salesman'
+// 				AND csv = '$orderno'";
+// 		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
+// 		if($oldQuantity == "" || $oldQuantity == NULL){
+// 			$oldQuantity = 0;
+// 		}
+// 		$quantit 	= $oldQuantity - $item['required'];
 
-		$SQL = "UPDATE `ogpcsvref` SET quantity='0' 
-		WHERE salesman='" . $salesman . "'
-		AND stockid='" . $item['stockid'] . "'
-		AND csv = '$orderno'";
-		DB_query($SQL, $db);
+// 		$SQL = "UPDATE `ogpcsvref` SET quantity='0' 
+// 		WHERE salesman='" . $salesman . "'
+// 		AND stockid='" . $item['stockid'] . "'
+// 		AND csv = '$orderno'";
+// 		DB_query($SQL, $db);
 
-		$SQL = "INSERT INTO ogpcsvref (stockid,csv,salesman,quantity) 
-		VALUES ('" . $item['stockid'] . "','$orderno','$salesman','$quantit')";
-		DB_query($SQL, $db);
-	} else {
-		$SQL = "SELECT SUM(quantity) as quantity
-				FROM ogpcrvref 
-				WHERE stockid='" . $item['stockid'] . "'
-				AND salesman='$salesman'
-				AND crv = '$orderno'";
-		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
-		if($oldQuantity == "" || $oldQuantity == NULL){
-			$oldQuantity = 0;
-		}
-		$quantit 	= $oldQuantity - $item['required'];
-		$SQL = "UPDATE `ogpcrvref` SET quantity='0' 
-		WHERE salesman='" . $salesman . "'
-		AND stockid='" . $item['stockid'] . "'
-		AND crv = '$orderno'";
-		DB_query($SQL, $db);
+// 		$SQL = "INSERT INTO ogpcsvref (stockid,csv,salesman,quantity) 
+// 		VALUES ('" . $item['stockid'] . "','$orderno','$salesman','$quantit')";
+// 		DB_query($SQL, $db);
+// 	} else {
+// 		$SQL = "SELECT SUM(quantity) as quantity
+// 				FROM ogpcrvref 
+// 				WHERE stockid='" . $item['stockid'] . "'
+// 				AND salesman='$salesman'
+// 				AND crv = '$orderno'";
+// 		$oldQuantity = mysqli_fetch_assoc(mysqli_query($db, $SQL))['quantity'];
+// 		if($oldQuantity == "" || $oldQuantity == NULL){
+// 			$oldQuantity = 0;
+// 		}
+// 		$quantit 	= $oldQuantity - $item['required'];
+// 		$SQL = "UPDATE `ogpcrvref` SET quantity='0' 
+// 		WHERE salesman='" . $salesman . "'
+// 		AND stockid='" . $item['stockid'] . "'
+// 		AND crv = '$orderno'";
+// 		DB_query($SQL, $db);
 
-		$SQL = "INSERT INTO ogpcrvref (stockid,crv,salesman,quantity) 
-		VALUES ('" . $item['stockid'] . "','$orderno','$salesman','$quantit')";
-		DB_query($SQL, $db);
-	}
+// 		$SQL = "INSERT INTO ogpcrvref (stockid,crv,salesman,quantity) 
+// 		VALUES ('" . $item['stockid'] . "','$orderno','$salesman','$quantit')";
+// 		DB_query($SQL, $db);
+// 	}
 
 
 
-	$SQL = "INSERT INTO stockmoves(stockid,type,transno,loccode,trandate,reference,qty,prd,newqoh)
-				VALUES ('" . $item['stockid'] . "','750','" . $orderno . "','" . $location . "','" . Date('Y-m-d') . "',
-						'Delivered To " . $shopSale['payment'] . " (Cart: $salesman)','" . $item['required'] . "',
-						'" . $PeriodNo . "','" . $newIssued . "')";
-	DB_query($SQL, $db);
-}
+// 	$SQL = "INSERT INTO stockmoves(stockid,type,transno,loccode,trandate,reference,qty,prd,newqoh)
+// 				VALUES ('" . $item['stockid'] . "','750','" . $orderno . "','" . $location . "','" . Date('Y-m-d') . "',
+// 						'Delivered To " . $shopSale['payment'] . " (Cart: $salesman)','" . $item['required'] . "',
+// 						'" . $PeriodNo . "','" . $newIssued . "')";
+// 	DB_query($SQL, $db);
+// }
 
-$failedSQL = [];
+// $failedSQL = [];
 
-if ($shopSale['accounts'] == 0) {
+// if ($shopSale['accounts'] == 0) {
 
-	$SQL = "SELECT SUM(quantity*price) as total 
-				FROM shopsalelines
-				WHERE orderno=$orderno";
-	$res = mysqli_query($db, $SQL);
+// 	$SQL = "SELECT SUM(quantity*price) as total 
+// 				FROM shopsalelines
+// 				WHERE orderno=$orderno";
+// 	$res = mysqli_query($db, $SQL);
 
-	$totalValue = mysqli_fetch_assoc($res)['total'];
+// 	$totalValue = mysqli_fetch_assoc($res)['total'];
 
-	$totalValue = $totalValue * (1 - ($shopSale['discount'] / 100));
-	$totalValue -= $shopSale['discountPKR'];
+// 	$totalValue = $totalValue * (1 - ($shopSale['discount'] / 100));
+// 	$totalValue -= $shopSale['discountPKR'];
 
-	$billId  = $orderno;
-	$advance = $shopSale['advance'];
-	$debNo 	 = $shopSale['debtorno'];
-	$bCode 	 = $shopSale['branchcode'];
-	$payment = $shopSale['payment'];
-	$cDate 	 = date('Y-m-d H-i-s');
-	$URN   	 = $_SESSION['UsersRealName'];
+// 	$billId  = $orderno;
+// 	$advance = $shopSale['advance'];
+// 	$debNo 	 = $shopSale['debtorno'];
+// 	$bCode 	 = $shopSale['branchcode'];
+// 	$payment = $shopSale['payment'];
+// 	$cDate 	 = date('Y-m-d H-i-s');
+// 	$URN   	 = $_SESSION['UsersRealName'];
 
-	$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd, reference,
-							tpe, order_, ovamount, WHTamt, GSTamt, GSTtotalamt, ovgst, ovfreight, rate, invtext,
-							shipvia, consignment, packages, salesperson, processed )
-				VALUES 		('$billId', 750, '$debNo', '$bCode', '$cDate', '$cDate', '$PeriodNo', '', '', '', 
-							'$totalValue', 0, 0, 0, '', '', '1', 'Default', '', '', '', '$URN','-1')";
-	if (!DB_query($SQL, $db)) {
-		$failedSQL[] = $SQL;
-	}
+// 	$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd, reference,
+// 							tpe, order_, ovamount, WHTamt, GSTamt, GSTtotalamt, ovgst, ovfreight, rate, invtext,
+// 							shipvia, consignment, packages, salesperson, processed )
+// 				VALUES 		('$billId', 750, '$debNo', '$bCode', '$cDate', '$cDate', '$PeriodNo', '', '', '', 
+// 							'$totalValue', 0, 0, 0, '', '', '1', 'Default', '', '', '', '$URN','-1')";
+// 	if (!DB_query($SQL, $db)) {
+// 		$failedSQL[] = $SQL;
+// 	}
 
-	$paymentToID = $_SESSION['LastInsertId'];
+// 	$paymentToID = $_SESSION['LastInsertId'];
 
-	if ($payment == "csv") {
+// 	if ($payment == "csv") {
 
-		$receiptno 	= GetNextTransNo(12, $db);
-		$advance 	= $totalValue;
+// 		$receiptno 	= GetNextTransNo(12, $db);
+// 		$advance 	= $totalValue;
 
-		$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd, reference,
-							tpe, order_, ovamount, WHTamt, GSTamt, GSTtotalamt, ovgst, ovfreight, rate, invtext,
-							shipvia, consignment, packages, salesperson, processed )
-					VALUES 		('$receiptno', 12, '$debNo', '$bCode', '$cDate', '$cDate', '$PeriodNo', '', '', '', 
-							'" . (-1 * $totalValue) . "', 0, 0, 0, '', '', '1', 'Cash', '', '', '', '$URN','-1')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd, reference,
+// 							tpe, order_, ovamount, WHTamt, GSTamt, GSTtotalamt, ovgst, ovfreight, rate, invtext,
+// 							shipvia, consignment, packages, salesperson, processed )
+// 					VALUES 		('$receiptno', 12, '$debNo', '$bCode', '$cDate', '$cDate', '$PeriodNo', '', '', '', 
+// 							'" . (-1 * $totalValue) . "', 0, 0, 0, '', '', '1', 'Cash', '', '', '', '$URN','-1')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$paymentFromID = $_SESSION['LastInsertId'];
+// 		$paymentFromID = $_SESSION['LastInsertId'];
 
-		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
-					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
-							'" . $PeriodNo . "',1,'(1) CSV Payment " . $billId . "','" . (-1 * $totalValue) . "')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
+// 					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
+// 							'" . $PeriodNo . "',1,'(1) CSV Payment " . $billId . "','" . (-1 * $totalValue) . "')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
-					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
-							'" . $PeriodNo . "',1100,'(1100) CSV Payment " . $billId . "','" . ($totalValue) . "')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
+// 					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
+// 							'" . $PeriodNo . "',1100,'(1100) CSV Payment " . $billId . "','" . ($totalValue) . "')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "UPDATE debtorsmaster
-					SET lastpaiddate ='" . date('Y-m-d H-i-s') . "',
-					lastpaid=$advance
-					WHERE debtorsmaster.debtorno='" . $shopSale['debtorno'] . "'";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "UPDATE debtorsmaster
+// 					SET lastpaiddate ='" . date('Y-m-d H-i-s') . "',
+// 					lastpaid=$advance
+// 					WHERE debtorsmaster.debtorno='" . $shopSale['debtorno'] . "'";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "INSERT INTO banktrans (type, transno, bankact, ref, exrate, functionalexrate,
-								transdate, banktranstype, amount, currcode)
-					VALUES (12, '$receiptno', 1034, 'Advance Entry for CSV $billId', 1, 1,
-							'" . date('Y-m-d H-i-s') . "', 'Cash', '" . $advance . "', 'PKR')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO banktrans (type, transno, bankact, ref, exrate, functionalexrate,
+// 								transdate, banktranstype, amount, currcode)
+// 					VALUES (12, '$receiptno', 1034, 'Advance Entry for CSV $billId', 1, 1,
+// 							'" . date('Y-m-d H-i-s') . "', 'Cash', '" . $advance . "', 'PKR')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "INSERT INTO custallocns ( datealloc, amt, transid_allocfrom, transid_allocto ) 
-					VALUES ('" . date('Y-m-d') . "','$advance', '$paymentFromID', '$paymentToID')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO custallocns ( datealloc, amt, transid_allocfrom, transid_allocto ) 
+// 					VALUES ('" . date('Y-m-d') . "','$advance', '$paymentFromID', '$paymentToID')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "UPDATE debtortrans 
-					SET alloc='$advance',
-						settled=1,
-						processed=$paymentFromID
-					WHERE id='$paymentToID'";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "UPDATE debtortrans 
+// 					SET alloc='$advance',
+// 						settled=1,
+// 						processed=$paymentFromID
+// 					WHERE id='$paymentToID'";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "UPDATE debtortrans 
-					SET settled=1, 
-						alloc='" . (-1 * $advance) . "'
-					WHERE id='$paymentFromID'";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "UPDATE debtortrans 
+// 					SET settled=1, 
+// 						alloc='" . (-1 * $advance) . "'
+// 					WHERE id='$paymentFromID'";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
-					VALUES (750, '$billId', '$cDate', '$PeriodNo', 1100, 'Advance Entry for CSV $billId','" . (-1 * $advance) . "')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
+// 					VALUES (750, '$billId', '$cDate', '$PeriodNo', 1100, 'Advance Entry for CSV $billId','" . (-1 * $advance) . "')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
-					VALUES (750,'$billId','$cDate','$PeriodNo', 1034,'Advance Entry for CSV $billId','$advance')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
-	} else if ($payment == "crv") {
+// 		$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
+// 					VALUES (750,'$billId','$cDate','$PeriodNo', 1034,'Advance Entry for CSV $billId','$advance')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
+// 	} else if ($payment == "crv") {
 
-		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
-					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
-							'" . $PeriodNo . "',1,'(1) CRV Payment " . $billId . "','" . (-1 * $totalValue) . "')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
+// 					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
+// 							'" . $PeriodNo . "',1,'(1) CRV Payment " . $billId . "','" . (-1 * $totalValue) . "')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
-					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
-							'" . $PeriodNo . "',1100,'(1100) CRV Payment " . $billId . "','" . ($totalValue) . "')";
-		if (!DB_query($SQL, $db)) {
-			$failedSQL[] = $SQL;
-		}
+// 		$SQL = "INSERT INTO gltrans (type,typeno,trandate,periodno,account,narrative,amount) 
+// 					VALUES (750,'" . $billId . "','" . date('Y-m-d H-i-s') . "',
+// 							'" . $PeriodNo . "',1100,'(1100) CRV Payment " . $billId . "','" . ($totalValue) . "')";
+// 		if (!DB_query($SQL, $db)) {
+// 			$failedSQL[] = $SQL;
+// 		}
 
-		if ($advance > 0 and $advance != '') {
+// 		if ($advance > 0 and $advance != '') {
 
-			$receiptno = GetNextTransNo(12, $db);
+// 			$receiptno = GetNextTransNo(12, $db);
 
-			$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd,
-									reference, tpe, rate, ovamount, ovdiscount, invtext, salesperson, chequefilepath,
-									chequedepositfilepath, cashfilepath, bankaccount )
-						VALUES 		('$receiptno',12, '$debNo','$bCode','$cDate','$cDate', '$PeriodNo', 
-									'Advance Entry for CRV $billId','',1,'" . (-1 * $advance) . "',0,
-									'Advance Cash','$URN','','','',1034)";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
+// 			$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd,
+// 									reference, tpe, rate, ovamount, ovdiscount, invtext, salesperson, chequefilepath,
+// 									chequedepositfilepath, cashfilepath, bankaccount )
+// 						VALUES 		('$receiptno',12, '$debNo','$bCode','$cDate','$cDate', '$PeriodNo', 
+// 									'Advance Entry for CRV $billId','',1,'" . (-1 * $advance) . "',0,
+// 									'Advance Cash','$URN','','','',1034)";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
 
-			$paymentFromID = $_SESSION['LastInsertId'];
+// 			$paymentFromID = $_SESSION['LastInsertId'];
 
-			$SQL = "UPDATE debtorsmaster
-						SET lastpaiddate ='" . date('Y-m-d H-i-s') . "',
-						lastpaid=$advance
-						WHERE debtorsmaster.debtorno='" . $shopSale['debtorno'] . "'";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
+// 			$SQL = "UPDATE debtorsmaster
+// 						SET lastpaiddate ='" . date('Y-m-d H-i-s') . "',
+// 						lastpaid=$advance
+// 						WHERE debtorsmaster.debtorno='" . $shopSale['debtorno'] . "'";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
 
-			$SQL = "INSERT INTO banktrans (type, transno, bankact, ref, exrate, functionalexrate,
-									transdate, banktranstype, amount, currcode)
-						VALUES (12, '$receiptno', 1034, 'Advance Entry for CRV $billId', 1, 1,
-								'" . date('Y-m-d H-i-s') . "', 'Cash', '" . $advance . "', 'PKR')";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
+// 			$SQL = "INSERT INTO banktrans (type, transno, bankact, ref, exrate, functionalexrate,
+// 									transdate, banktranstype, amount, currcode)
+// 						VALUES (12, '$receiptno', 1034, 'Advance Entry for CRV $billId', 1, 1,
+// 								'" . date('Y-m-d H-i-s') . "', 'Cash', '" . $advance . "', 'PKR')";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
 
-			$SQL = "INSERT INTO custallocns ( datealloc, amt, transid_allocfrom, transid_allocto ) 
-						VALUES ('" . date('Y-m-d') . "','$advance', '$paymentFromID', '$paymentToID')";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
+// 			$SQL = "INSERT INTO custallocns ( datealloc, amt, transid_allocfrom, transid_allocto ) 
+// 						VALUES ('" . date('Y-m-d') . "','$advance', '$paymentFromID', '$paymentToID')";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
 
-			$toPaymentSettled = (abs($totalValue - $advance) < 3) ? 1 : 0;
+// 			$toPaymentSettled = (abs($totalValue - $advance) < 3) ? 1 : 0;
 
-			$SQL = "UPDATE debtortrans 
-						SET alloc='$advance',
-							settled=$toPaymentSettled,
-							processed=$paymentFromID
-						WHERE id='$paymentToID'";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
+// 			$SQL = "UPDATE debtortrans 
+// 						SET alloc='$advance',
+// 							settled=$toPaymentSettled,
+// 							processed=$paymentFromID
+// 						WHERE id='$paymentToID'";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
 
-			$SQL = "UPDATE debtortrans 
-						SET settled=1, 
-							alloc='" . (-1 * $advance) . "'
-						WHERE id='$paymentFromID'";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
+// 			$SQL = "UPDATE debtortrans 
+// 						SET settled=1, 
+// 							alloc='" . (-1 * $advance) . "'
+// 						WHERE id='$paymentFromID'";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
 
-			$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
-						VALUES (750, '$billId', '$cDate', '$PeriodNo', 1100, 'Advance Entry for CRV $billId','" . (-1 * $advance) . "')";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
+// 			$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
+// 						VALUES (750, '$billId', '$cDate', '$PeriodNo', 1100, 'Advance Entry for CRV $billId','" . (-1 * $advance) . "')";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
 
-			$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
-						VALUES (750,'$billId','$cDate','$PeriodNo', 1034,'Advance Entry for CRV $billId','$advance')";
-			if (!DB_query($SQL, $db)) {
-				$failedSQL[] = $SQL;
-			}
-		}
-	}
-}
+// 			$SQL = "INSERT INTO gltrans (type, typeno, trandate, periodno, account, narrative, amount)
+// 						VALUES (750,'$billId','$cDate','$PeriodNo', 1034,'Advance Entry for CRV $billId','$advance')";
+// 			if (!DB_query($SQL, $db)) {
+// 				$failedSQL[] = $SQL;
+// 			}
+// 		}
+// 	}
+// }
 
-if (count($failedSQL) > 0) {
-	echo json_encode($failedSQL);
-	return;
-} else {
+// if (count($failedSQL) > 0) {
+// 	echo json_encode($failedSQL);
+// 	return;
+// } else {
 
-	$SQL = "UPDATE shopsale SET complete=1, accounts=1 WHERE orderno=$orderno";
+	$SQL = "UPDATE estimateshopsale SET complete=1, accounts=1 WHERE orderno=$orderno";
 	DB_query($SQL, $db);
 
 	echo json_encode(['status' => 'success']);
-}
+// }
