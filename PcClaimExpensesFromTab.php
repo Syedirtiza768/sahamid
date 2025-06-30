@@ -30,42 +30,54 @@ if (isset($_GET['SelectedIndex'])) {
 	$ReceiptID = 'receipt_' . $ind;
 $_SESSION['clearpic'] = $_SESSION['part_pics_dir'] . '/' . $_SESSION['$ReceiptIDEdit'] . '.pdf';
 
-if (isset($_FILES['receipt']) and $_FILES['receipt']['name'] != '') {
+if (isset($_FILES['receipt']) && $_FILES['receipt']['name'] != '') {
 
-	$result	= $_FILES['receipt']['error'];
-	$UploadTheFile = 'Yes'; //Assume all is well to start off with
-	if (isset($_SESSION['$ReceiptIDEdit']))
-		$filename = $_SESSION['part_pics_dir'] . '/' . $_SESSION['$ReceiptIDEdit'] . '.pdf';
-	else
-		$filename = $_SESSION['part_pics_dir'] . '/' . $ReceiptID . '.pdf';
+	$result = $_FILES['receipt']['error'];
+	$UploadTheFile = 'Yes';
 
-	//But check for the worst
-	if (mb_strtoupper(mb_substr(trim($_FILES['receipt']['name']), mb_strlen($_FILES['receipt']['name']) - 3)) != 'PDF') {
-		prnMsg(_('Only pdf files are supported - a file extension of .pdf is expected'), 'warn');
+	$originalName = $_FILES['receipt']['name'];
+	$fileExtension = mb_strtoupper(pathinfo($originalName, PATHINFO_EXTENSION));
+	$extLower = mb_strtolower($fileExtension);
+
+	$allowedExtensions = ['PDF', 'JPEG', 'JPG', 'DOC', 'DOCX', 'XLS', 'XLSX'];
+
+	if (!in_array($fileExtension, $allowedExtensions)) {
+		prnMsg(_('Only pdf, jpeg, jpg, doc, docx, xls, and xlsx files are supported'), 'warn');
 		$UploadTheFile = 'No';
-	} elseif ($_FILES['receipt']['size'] > $maxFileSize) { //File Size Check
-		prnMsg(_('The file size is over the maximum allowed. The maximum size allowed in KB is 10 MB') , 'warn');
+	} elseif ($_FILES['receipt']['size'] > $maxFileSize) {
+		prnMsg(_('The file size is over the maximum allowed. The maximum size allowed is 10 MB'), 'warn');
 		$UploadTheFile = 'No';
-	} elseif ($_FILES['receipt']['type'] == 'text/plain') {  //File Type Check
-		prnMsg(_('Only graphics files can be uploaded'), 'warn');
+	} elseif ($_FILES['receipt']['type'] == 'text/plain') {
+		prnMsg(_('Only graphics and document files can be uploaded'), 'warn');
 		$UploadTheFile = 'No';
-	} elseif ($_FILES['receipt']['error'] == 6) {  //upload temp directory check
-		prnMsg(_('No tmp directory set. You must have a tmp directory set in your PHP for upload of files. '), 'warn');
+	} elseif ($_FILES['receipt']['error'] == 6) {
+		prnMsg(_('No tmp directory set. You must have a tmp directory set in your PHP for upload of files.'), 'warn');
 		$UploadTheFile = 'No';
-	} elseif (file_exists($filename)) {
-		prnMsg(_('Attempting to overwrite an existing item image'), 'warn');
-		$result = unlink($filename);
-		if (!$result) {
-			prnMsg(_('The existing image could not be removed'), 'error');
-			$UploadTheFile = 'No';
+	}
+
+	// Get ReceiptID from session or variable
+	$receiptIdValue = isset($_SESSION['$ReceiptIDEdit']) ? $_SESSION['$ReceiptIDEdit'] : $ReceiptID;
+
+	// Remove any existing file with the same ReceiptID and any allowed extension
+	foreach ($allowedExtensions as $ext) {
+		$checkFile = $_SESSION['part_pics_dir'] . '/' . $receiptIdValue . '.' . strtolower($ext);
+		if (file_exists($checkFile)) {
+			unlink($checkFile);
 		}
 	}
 
+	// Final file name
+	$filename = $_SESSION['part_pics_dir'] . '/' . $receiptIdValue . '.' . $extLower;
+
 	if ($UploadTheFile == 'Yes') {
-		$result  =  move_uploaded_file($_FILES['receipt']['tmp_name'], $filename);
-		$message = ($result) ? _('File url')  . '<a href="' . $filename . '">' .  $filename . '</a>' : _('Something is wrong with uploading a file');
+		$result = move_uploaded_file($_FILES['receipt']['tmp_name'], $filename);
+		$message = ($result)
+			? _('File uploaded: ') . '<a href="' . $filename . '">' . basename($filename) . '</a>'
+			: _('Something went wrong during file upload.');
 	}
 }
+
+
 
 if (isset($Errors)) {
 	unset($Errors);
@@ -418,7 +430,7 @@ if (!isset($SelectedTabs)) {
 							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
 							$myrow['7'],
 							$myrow['0'],
-							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>',
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>',
 
 							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
 							$myrow['0'],
@@ -449,7 +461,7 @@ if (!isset($SelectedTabs)) {
 							'',
 							$myrow['7'],
 							$myrow['0'],
-							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>',
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>',
 
 							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
 							$myrow['0'],
@@ -549,7 +561,7 @@ if (!isset($SelectedTabs)) {
 							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
 							$myrow['7'],
 							$myrow['0'],
-							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>'
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>'
 						);
 					} else {
 						printf(
@@ -573,7 +585,7 @@ if (!isset($SelectedTabs)) {
 							'',
 							$myrow['7'],
 							$myrow['0'],
-							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>'
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>'
 						);
 					}
 				} else {
@@ -787,16 +799,64 @@ if (!isset($SelectedTabs)) {
 		//<td><input type="text" name="Receipt" size="50" maxlength="49" value="' . $_POST['Receipt'] . '" /></td>
 		//</tr>';
 		if (isset($_GET['SelectedIndex'])) {
-			echo '<tr>
-		<td>' . _('Receipt Image (.pdf)') . ':</td>
-		<td><input type="file" id="receipt" name="receipt" />';
+			$sql = "SELECT *
+				FROM pcashdetails
+				WHERE counterindex='" . $SelectedIndex . "'";
 
-			echo '<br /><input type="checkbox" name="ClearImage" id="ClearImage" value="1" > ' . _('Clear Image');
+			$result = DB_query($sql, $db);
+			$myrow = DB_fetch_array($result);
+
+			echo '<tr>
+    <td>' . _('Receipt File (PDF, JPEG, JPG, DOC, DOCX, XLS, XLSX)') . ':</td>
+    <td><input type="file" id="receipt" name="receipt"  accept=".pdf,.jpeg,.jpg,.doc,.docx,.xls,.xlsx" />';
+
+			echo '<br /><input type="checkbox" name="ClearImage" id="ClearImage" value="1" > ' . _('Clear File');
+			function getFileExtensionIfExists($filenameWithoutExtension)
+			{
+				$allowedExtensions = ['pdf', 'jpeg', 'jpg', 'doc', 'docx', 'xls', 'xlsx'];
+				foreach ($allowedExtensions as $ext) {
+					$fullPath = $_SESSION['part_pics_dir'] . '/' . $filenameWithoutExtension . '.' . $ext;
+					if (file_exists($fullPath)) {
+						return '.' . $ext;
+					}
+				}
+				return '';
+			}
+
+			if (isset($myrow['receiptimage'])) {
+				$filePath = $_SESSION['part_pics_dir'] . '/' . $myrow['receiptimage'] . getFileExtensionIfExists($myrow['receiptimage']);
+				if (file_exists($filePath)) {
+					echo '<br /><a href="' . $filePath . '" target="_blank">' . _('Download Current File') . '</a>';
+				} else {
+					echo '<br />' . _('No file uploaded yet.');
+				}
+			}
+
 			echo '</td>';
+			echo '</tr>';
 		}
 
 		if (isset($_SESSION['clearpic']) and  !empty($_SESSION['clearpic']) and file_exists($_SESSION['clearpic'])) {
 			$ReceiptImgLink = '<img src="' . $_SESSION['part_pics_dir'] . '/' . $myrow['receiptimage'] . '.pdf" height="100" width="100" />';
+			// $receiptFile = $_SESSION['part_pics_dir'] . '/' . $myrow['receiptimage'] . '.pdf';
+			$receiptUrl = $receiptFile;
+
+			$extension = pathinfo($receiptFile, PATHINFO_EXTENSION);
+			$allowedImageTypes = ['jpg', 'jpeg', 'png'];
+
+			if (file_exists($receiptFile)) {
+				$extension = strtolower($extension);
+				if (in_array($extension, $allowedImageTypes)) {
+					// Show image preview
+					$ReceiptImgLink = '<img src="' . $receiptUrl . '" height="100" width="100" />';
+				} else {
+					// Provide link to download/view
+					$ReceiptImgLink = '<a href="' . $receiptUrl . '" target="_blank">View Uploaded File</a>';
+				}
+			} else {
+				$ReceiptImgLink = _('No File Uploaded');
+			}
+
 
 			if (isset($_POST['ClearImage'])) {
 				$_SESSION['clearpic'];
@@ -827,7 +887,9 @@ if (!isset($SelectedTabs)) {
 					<input type="submit" name="UpdateForm" style="visibility:hidden;width:1px" value="' . _('Categories') . '" />
 
 			</div>
-			</div>
+			</div>';
+
+		echo '
 		</form>';
 	} // end if user wish to delete
 
