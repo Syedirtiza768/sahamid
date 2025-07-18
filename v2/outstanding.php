@@ -73,7 +73,7 @@
                 //                 IN (SELECT salescase_permissions.can_access FROM salescase_permissions
                 //                 WHERE salescase_permissions.user = "'.$_SESSION['UserID'].'"'.')) ';
 
-                }
+                // }
 
         $res = mysqli_query($db, $SQL);
         $response = [];
