@@ -178,6 +178,7 @@ if (isset($_GET['json'])) {
 $SQL = "SELECT * FROM estimateshopsale WHERE orderno='" . $orderno . "'";
 $res = mysqli_query($db, $SQL);
 
+
 if (mysqli_num_rows($res) == 1) {
 ?>
 	<!DOCTYPE html>
