@@ -430,6 +430,204 @@ if (!isset($SelectedTabs)) {
 							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
 							$myrow['7'],
 							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					}
+				} else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.doc')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.doc' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.doc' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					}
+				} else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpg')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpg' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpg' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					}
+				} else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
 							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>',
 
 							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
@@ -462,6 +660,204 @@ if (!isset($SelectedTabs)) {
 							$myrow['7'],
 							$myrow['0'],
 							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					}
+				} else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.docx')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.docx' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.docx' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					}
+				} else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.xls')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.xls' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.xls' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					}
+				} else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.xlsx')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.xlsx' . '">download</a>',
+
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0'],
+							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
+							$myrow['0']
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;edit=yes">' . _('Edit') . '</a></td>
+					<td><a href="%sSelectedIndex=%s&amp;SelectedTabs=' . $SelectedTabs . '&amp;Days=' . $Days . '&amp;date=' . $myrow['2'] . '&amp;delete=yes" onclick=\'return confirm("' . _('Are you sure you wish to delete this code and the expenses it may have set up?') . '");\'>' . _('Delete') . '</a></td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.xlsx' . '">download</a>',
 
 							htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?',
 							$myrow['0'],
@@ -561,6 +957,112 @@ if (!isset($SelectedTabs)) {
 							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
 							$myrow['7'],
 							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>'
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.pdf' . '">download</a>'
+						);
+					}
+				}
+				else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpg')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpg' . '">download</a>'
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpg' . '">download</a>'
+						);
+					}
+				}
+				else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
 							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>'
 						);
 					} else {
@@ -588,7 +1090,114 @@ if (!isset($SelectedTabs)) {
 							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.jpeg' . '">download</a>'
 						);
 					}
-				} else {
+				}
+				else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.doc')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.doc' . '">download</a>'
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.doc' . '">download</a>'
+						);
+					}
+				}
+				else if (file_exists($_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.docx')) {
+					if ($myrow['11'] > 0) {
+						error_reporting(E_ERROR | E_PARSE);
+
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							$myrow['10'],
+							$myrow['11'],
+							-1 * $myrow['4'] / ($myrow['11'] - $myrow['10']),
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.docx' . '">download</a>'
+						);
+					} else {
+						printf(
+							'<td>%s</td>
+					<td>%s</td>
+					<td class="number">%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					<td>%s</td>
+					</tr>',
+							ConvertSQLDate($myrow['2']),
+							$Description['0'],
+							locale_number_format($myrow['4'], $CurrDecimalPlaces),
+							$AuthorisedDate,
+							'',
+							'',
+							'',
+							$myrow['7'],
+							$myrow['0'],
+							'' . _('') . '<a target = "_blank" href = "' . $_SESSION['part_pics_dir'] . '/receipt_' . $myrow['0'] . '.docx' . '">download</a>'
+						);
+					}
+				}
+				 else {
 					if ($myrow['11'] > 0) {
 						error_reporting(E_ERROR | E_PARSE);
 
