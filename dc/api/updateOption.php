@@ -104,9 +104,9 @@ if ($name == "quantity") {
 	// 	$quantityDifference = ($row['quantity'] * $value) - ($row['quantity'] * $optionQuantity);
 
 	// 	$SQL = "SELECT SUM(quantity) AS quantity FROM ogpsalescaseref 
-    //     WHERE stockid='" . $stockid . "'
-    //     AND salesman='" . $salesman . "'
-    //     AND salescaseref = '" . $salescaseref . "'";
+	//     WHERE stockid='" . $stockid . "'
+	//     AND salesman='" . $salesman . "'
+	//     AND salescaseref = '" . $salescaseref . "'";
 
 	// 	$result = mysqli_query($db, $SQL);
 	// 	$quant = mysqli_fetch_assoc($result);
@@ -158,7 +158,9 @@ if ($name == "quantity") {
 		$SQL = "SELECT SUM(quantity) AS quantity FROM ogpsalescaseref 
         WHERE stockid='" . $stockid . "'
         AND salesman='" . $salesman . "'
-        AND salescaseref = '" . $salescaseref . "'";
+        AND salescaseref = '" . $salescaseref . "'
+		AND quantity IS NOT NULL 
+			AND quantity != 0 ";
 
 		$result = mysqli_query($db, $SQL);
 		$quant = mysqli_fetch_assoc($result);
@@ -201,7 +203,9 @@ if ($name == "quantity") {
 		$SQL = "SELECT SUM(quantity) as quantity FROM ogpsalescaseref 
 				WHERE stockid='" . $stockid . "'
 				AND salesman='" . $salesman . "'
-				AND salescaseref = '" . $salescaseref . "'";
+				AND salescaseref = '" . $salescaseref . "'
+				AND quantity IS NOT NULL 
+			AND quantity != 0 ";
 
 		$result = mysqli_query($db, $SQL);
 		if (DB_num_rows($result) == 1) {
@@ -215,14 +219,18 @@ if ($name == "quantity") {
 				$difference = $difference - $old;
 				$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '" . $salescaseref . "'
 					AND stockid='" . $stockid . "'
-					AND salesman='" . $salesman . "'";
+					AND salesman='" . $salesman . "'
+					AND quantity IS NOT NULL 
+			AND quantity != 0 ";
 				$result = mysqli_query($db, $SQL);
 			}
 			if ($new < $old) {
 				$difference = $old - $new;
 				$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
 					AND stockid='" . $stockid . "'
-					AND salesman='" . $salesman . "'";
+					AND salesman='" . $salesman . "'
+					AND quantity IS NOT NULL 
+			AND quantity != 0 ";
 
 				$result = mysqli_query($db, $SQL);
 			}

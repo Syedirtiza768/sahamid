@@ -148,7 +148,8 @@ if ($name == "quantity") {
         			WHERE salescaseref = '$salescaseref'
         			AND stockid = '$stockid'
         			AND salesman = '$salesman'
-        			AND quantity IS NOT NULL";
+        			AND quantity IS NOT NULL
+					AND quantity != 0";
 			$result = mysqli_query($db, $SQL);
 		}
 		if ($value < $stkQuantity) {
@@ -161,7 +162,8 @@ if ($name == "quantity") {
         			WHERE salescaseref = '$salescaseref'
         			AND stockid = '$stockid'
         			AND salesman = '$salesman'
-        			AND quantity IS NOT NULL ";
+        			AND quantity IS NOT NULL 
+					AND quantity != 0 ";
 			$result = mysqli_query($db, $SQL);
 		}
 	}
@@ -173,7 +175,8 @@ if ($name == "quantity") {
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity - $difference WHERE salescaseref = '" . $salescaseref . "'
 				AND stockid='" . $stockid . "'
 				AND salesman='" . $salesman . "'
-			AND quantity IS NOT NULL ";
+			AND quantity IS NOT NULL 
+			AND quantity != 0 ";
 
 			$result = mysqli_query($db, $SQL);
 		}
@@ -183,7 +186,8 @@ if ($name == "quantity") {
 			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
 				AND stockid='" . $stockid . "'
 				AND salesman='" . $salesman . "'
-			AND quantity IS NOT NULL ";
+			AND quantity IS NOT NULL 
+			AND quantity != 0 ";
 
 			$result = mysqli_query($db, $SQL);
 		}
