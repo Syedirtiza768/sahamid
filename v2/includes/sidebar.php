@@ -289,6 +289,11 @@
                 <i class="fa fa-arrow-left"></i> OGP
               </a>
             </li>
+            <!-- <li>
+              <a href="<?php echo $NewRootPath; ?>/v2/ogp_request.php">
+                <i class="fa fa-arrow-left"></i> OGP Location Item Request
+              </a>
+            </li> -->
           <?php } ?>
           <?php
           $PageSecurity = $_SESSION['PageSecurityArray']['pos.php'];
