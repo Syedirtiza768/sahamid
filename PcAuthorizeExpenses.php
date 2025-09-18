@@ -306,6 +306,14 @@ $line = 0;
 			
 			if (file_exists($_SESSION['part_pics_dir'] .'/receipt_'. $myrow['counterindex'].'.pdf'))	
 			echo '<td>' . _('') . '<a target = "_blank" href = "'.$_SESSION['part_pics_dir'] . '/' .$myrow['receiptimage'].'.pdf'.'">download</a></td>';
+			else if (file_exists($_SESSION['part_pics_dir'] .'/receipt_'. $myrow['counterindex'].'.jpg'))	
+			echo '<td>' . _('') . '<a target = "_blank" href = "'.$_SESSION['part_pics_dir'] . '/' .$myrow['receiptimage'].'.jpg'.'">download</a></td>';
+			else if (file_exists($_SESSION['part_pics_dir'] .'/receipt_'. $myrow['counterindex'].'.jpeg'))	
+			echo '<td>' . _('') . '<a target = "_blank" href = "'.$_SESSION['part_pics_dir'] . '/' .$myrow['receiptimage'].'.jpeg'.'">download</a></td>';
+			else if (file_exists($_SESSION['part_pics_dir'] .'/receipt_'. $myrow['counterindex'].'.doc'))	
+			echo '<td>' . _('') . '<a target = "_blank" href = "'.$_SESSION['part_pics_dir'] . '/' .$myrow['receiptimage'].'.doc'.'">download</a></td>';
+			else if (file_exists($_SESSION['part_pics_dir'] .'/receipt_'. $myrow['counterindex'].'.docx'))	
+			echo '<td>' . _('') . '<a target = "_blank" href = "'.$_SESSION['part_pics_dir'] . '/' .$myrow['receiptimage'].'.docx'.'">download</a></td>';
 			else
 				echo '<td></td>';
 		if (isset($_POST[$myrow['counterindex']])){
