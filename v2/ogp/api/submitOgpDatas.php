@@ -445,97 +445,232 @@ if ($ogp_type == "d") {
 if ($salescase != "") {
     $selectedItemsCode = NULL;
     foreach ($items as $LineItems) {
+        $stockId = $LineItems['Code'];
+        $qty = $LineItems['quantity'];
 
-        $HeaderSalescaserefSQL = "INSERT INTO ogpsalescaseref (dispatchid,
-                                        salescaseref,
-                                        requestedby,
-                                        stockid,
-                                        salesman,
-                                        quantity
-                                        )
-                                    VALUES (
-                                        '" . $RequestNo . "',
-                                        '" . $salescase . "',
-                                        '" . $_SESSION['UsersRealName'] . "',
-                                        '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
+        // Step 1: Check existing records
+        $checkSQL = "SELECT SUM(quantity) as totalQty 
+                 FROM ogpsalescaseref 
+                 WHERE salescaseref = '" . $salescase . "' 
+                 AND stockid = '" . $stockId . "' 
+                 AND salesman = '" . $salesperson . "'";
+        $checkResult = mysqli_query($conn, $checkSQL);
+        $row = mysqli_fetch_assoc($checkResult);
 
-        $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-        $DbgMsg = _('The following SQL to insert the request header record was used');
-        $Result = mysqli_query($conn, $HeaderSalescaserefSQL);
+        $existingQty = $row['totalQty'] ?? 0;
+
+        if ($existingQty > 0) {
+            // Step 2: Set all found records’ quantities to 0
+            $updateSQL = "UPDATE ogpsalescaseref 
+                      SET quantity = NULL
+                      WHERE salescaseref = '" . $salescase . "'
+                      AND stockid = '" . $stockId . "' 
+                      AND salesman = '" . $salesperson . "' ";
+            mysqli_query($conn, $updateSQL);
+        }
+
+        // Step 3: Calculate new total
+        $newQty = $existingQty + $qty;
+
+        // Step 4: Insert new record
+        $insertSQL = "INSERT INTO ogpsalescaseref (
+                        dispatchid,
+                        salescaseref,
+                        requestedby,
+                        stockid,
+                        salesman,
+                        quantity
+                    ) VALUES (
+                        '" . $RequestNo . "',
+                        '" . $salescase . "',
+                        '" . $_SESSION['UsersRealName'] . "',
+                        '" . $stockId . "',
+                        '" . $salesperson . "',
+                        '" . $newQty . "'
+                    )";
+
+        $result = mysqli_query($conn, $insertSQL);
+
+        if (!$result) {
+            $ErrMsg = 'CRITICAL ERROR! Could not insert new record.';
+            $DbgMsg = 'SQL Used: ' . $insertSQL;
+            die($ErrMsg . "<br>" . $DbgMsg . "<br>" . mysqli_error($conn));
+        }
     }
 }
+
 if ($csv != "") {
     $selectedItemsCode = NULL;
     foreach ($items as $LineItems) {
-        $HeadercsvrefSQL = "INSERT INTO ogpcsvref (dispatchid,
-                                        csv,
-                                        requestedby,
-                                        stockid,
-                                        salesman,
-                                        quantity
-                                        )
-                                    VALUES (
-                                        '" . $RequestNo . "',
-                                        '" . $csv . "',
-                                        '" . $_SESSION['UsersRealName'] . "',
-                                        '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
+        $stockId = $LineItems['Code'];
+        $qty = $LineItems['quantity'];
 
-        $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-        $DbgMsg = _('The following SQL to insert the request header record was used');
-        $Result = mysqli_query($conn, $HeadercsvrefSQL);
+        // Step 1: Check existing records
+        $checkSQL = "SELECT SUM(quantity) as totalQty 
+                     FROM ogpcsvref 
+                     WHERE csv = '" . $csv . "' 
+                     AND stockid = '" . $stockId . "' 
+                     AND salesman = '" . $salesperson . "'";
+        $checkResult = mysqli_query($conn, $checkSQL);
+        $row = mysqli_fetch_assoc($checkResult);
+
+        $existingQty = $row['totalQty'] ?? 0;
+
+        if ($existingQty > 0) {
+            // Step 2: Set all found records’ quantities to 0 (or NULL if you prefer)
+            $updateSQL = "UPDATE ogpcsvref 
+                          SET quantity = NULL
+                          WHERE csv = '" . $csv . "'
+                          AND stockid = '" . $stockId . "' 
+                          AND salesman = '" . $salesperson . "' ";
+            mysqli_query($conn, $updateSQL);
+        }
+
+        // Step 3: Calculate new total
+        $newQty = $existingQty + $qty;
+
+        // Step 4: Insert new record
+        $insertSQL = "INSERT INTO ogpcsvref (
+                            dispatchid,
+                            csv,
+                            requestedby,
+                            stockid,
+                            salesman,
+                            quantity
+                        ) VALUES (
+                            '" . $RequestNo . "',
+                            '" . $csv . "',
+                            '" . $_SESSION['UsersRealName'] . "',
+                            '" . $stockId . "',
+                            '" . $salesperson . "',
+                            '" . $newQty . "'
+                        )";
+
+        $result = mysqli_query($conn, $insertSQL);
+
+        if (!$result) {
+            $ErrMsg = 'CRITICAL ERROR! Could not insert new CSV record.';
+            $DbgMsg = 'SQL Used: ' . $insertSQL;
+            die($ErrMsg . "<br>" . $DbgMsg . "<br>" . mysqli_error($conn));
+        }
     }
 }
+
+
 if ($crv != "") {
     $selectedItemsCode = NULL;
     foreach ($items as $LineItems) {
+        $stockId = $LineItems['Code'];
+        $qty = $LineItems['quantity'];
 
-        $HeadercrvrefSQL = "INSERT INTO ogpcrvref (dispatchid,
-                                        crv,
-                                        requestedby,
-                                        stockid,
-                                        salesman,
-                                        quantity
-                                        )
-                                    VALUES (
-                                        '" . $RequestNo . "',
-                                        '" . $crv . "',
-                                        '" . $_SESSION['UsersRealName'] . "',
-                                        '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
-        $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-        $DbgMsg = _('The following SQL to insert the request header record was used');
-        $Result = mysqli_query($conn, $HeadercrvrefSQL);
+        // Step 1: Check existing records
+        $checkSQL = "SELECT SUM(quantity) as totalQty 
+                     FROM ogpcrvref 
+                     WHERE crv = '" . $crv . "' 
+                     AND stockid = '" . $stockId . "' 
+                     AND salesman = '" . $salesperson . "'";
+        $checkResult = mysqli_query($conn, $checkSQL);
+        $row = mysqli_fetch_assoc($checkResult);
+
+        $existingQty = $row['totalQty'] ?? 0;
+
+        if ($existingQty > 0) {
+            // Step 2: Set all found records’ quantities to 0 (or NULL if you prefer)
+            $updateSQL = "UPDATE ogpcrvref 
+                          SET quantity = NULL
+                          WHERE crv = '" . $crv . "'
+                          AND stockid = '" . $stockId . "' 
+                          AND salesman = '" . $salesperson . "'";
+            mysqli_query($conn, $updateSQL);
+        }
+
+        // Step 3: Calculate new total
+        $newQty = $existingQty + $qty;
+
+        // Step 4: Insert new record
+        $insertSQL = "INSERT INTO ogpcrvref (
+                            dispatchid,
+                            crv,
+                            requestedby,
+                            stockid,
+                            salesman,
+                            quantity
+                        ) VALUES (
+                            '" . $RequestNo . "',
+                            '" . $crv . "',
+                            '" . $_SESSION['UsersRealName'] . "',
+                            '" . $stockId . "',
+                            '" . $salesperson . "',
+                            '" . $newQty . "'
+                        )";
+
+        $result = mysqli_query($conn, $insertSQL);
+
+        if (!$result) {
+            $ErrMsg = 'CRITICAL ERROR! Could not insert new CRV record.';
+            $DbgMsg = 'SQL Used: ' . $insertSQL;
+            die($ErrMsg . "<br>" . $DbgMsg . "<br>" . mysqli_error($conn));
+        }
     }
 }
+
 if ($mpo != "") {
     $selectedItemsCode = NULL;
     foreach ($items as $LineItems) {
-      
-            $HeadermporefSQL = "INSERT INTO ogpmporef (dispatchid,
-                                        mpo,
-                                        requestedby,
-                                        stockid,
-                                        salesman,
-                                        quantity
-                                        )
-                                    VALUES (
-                                        '" . $RequestNo . "',
-                                        '" . $mpo . "',
-                                        '" . $_SESSION['UsersRealName'] . "',
-                                        '" . $LineItems['Code'] . "',
-                                        '" . $salesperson . "',
-                                        '" . $LineItems['quantity'] . "')";
+        $stockId = $LineItems['Code'];
+        $qty = $LineItems['quantity'];
 
-            $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
-            $DbgMsg = _('The following SQL to insert the request header record was used');
-            $Result = mysqli_query($conn, $HeadermporefSQL);
+        // Step 1: Check existing records
+        $checkSQL = "SELECT SUM(quantity) as totalQty 
+                     FROM ogpmporef 
+                     WHERE mpo = '" . $mpo . "' 
+                     AND stockid = '" . $stockId . "' 
+                     AND salesman = '" . $salesperson . "'";
+        $checkResult = mysqli_query($conn, $checkSQL);
+        $row = mysqli_fetch_assoc($checkResult);
+
+        $existingQty = $row['totalQty'] ?? 0;
+
+        if ($existingQty > 0) {
+            // Step 2: Set all found records’ quantities to 0 (or NULL if you prefer)
+            $updateSQL = "UPDATE ogpmporef 
+                          SET quantity = NULL
+                          WHERE mpo = '" . $mpo . "'
+                          AND stockid = '" . $stockId . "' 
+                          AND salesman = '" . $salesperson . "'";
+            mysqli_query($conn, $updateSQL);
         }
+
+        // Step 3: Calculate new total
+        $newQty = $existingQty + $qty;
+
+        // Step 4: Insert new record
+        $insertSQL = "INSERT INTO ogpmporef (
+                            dispatchid,
+                            mpo,
+                            requestedby,
+                            stockid,
+                            salesman,
+                            quantity
+                        ) VALUES (
+                            '" . $RequestNo . "',
+                            '" . $mpo . "',
+                            '" . $_SESSION['UsersRealName'] . "',
+                            '" . $stockId . "',
+                            '" . $salesperson . "',
+                            '" . $newQty . "'
+                        )";
+
+        $result = mysqli_query($conn, $insertSQL);
+
+        if (!$result) {
+            $ErrMsg = 'CRITICAL ERROR! Could not insert new MPO record.';
+            $DbgMsg = 'SQL Used: ' . $insertSQL;
+            die($ErrMsg . "<br>" . $DbgMsg . "<br>" . mysqli_error($conn));
+        }
+    }
 }
+
 
 $ogp_notification_id = 0;
 if ($ogp_type == "l") {
