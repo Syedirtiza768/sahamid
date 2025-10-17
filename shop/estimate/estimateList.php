@@ -1,6 +1,4 @@
 <?php
-// Connect to DB
-// Replace with your actual DB connection
 include_once("../../v2/config1.php");
 // Get date filters from GET or default to current month start and today
 $from = isset($_GET['fromDate']) ? $_GET['fromDate'] : date('Y-m-01');
@@ -137,7 +135,8 @@ $to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
                     <?php
                     $SQL = "
             SELECT
-                estimateshopsale.orderno as sr,
+                estimateshopsale.id as sr,
+                estimateshopsale.orderno as orderno,
                 estimateshopsale.mp,
                 estimateshopsale.payment,
                 estimateshopsale.complete,
@@ -183,8 +182,8 @@ $to = isset($_GET['toDate']) ? $_GET['toDate'] : date('Y-m-d');
                             } else {
                                 echo "<td><a href='../estimate/editShopSale.php?orderno=" . urlencode($row['sr']) . "&orignal' target='_blank' class='btn btn-success btn-sm'>Add Items</a></td>";
                             }
-                            echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['sr']) . "&orignal' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
-                            echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['sr']) . "' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
+                            echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['orderno']) . "&orignal' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
+                            echo "<td><a href='../pos/shopSalePrint.php?orderno=" . urlencode($row['orderno']) . "' target='_blank' class='btn btn-danger btn-sm'>Print</a></td>";
                             echo "<td><a href='../pos/shopSalePrintInternal.php?orderno=" . urlencode($row['sr']) . "' target='_blank' class='btn btn-info btn-sm'>Internal</a></td>";
                             echo "</tr>";
                         }

@@ -132,6 +132,99 @@
                 transform: scale(0.98);
                 box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
             }
+
+            .option-cards {
+                display: flex;
+                gap: 10px;
+            }
+
+            .option-cards input[type="radio"] {
+                display: none;
+            }
+
+            .option-card {
+                flex: 1;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                text-align: center;
+                cursor: pointer;
+                transition: 0.3s ease;
+                background: #f9f9f9;
+                font-weight: 500;
+            }
+
+            .option-cards input[type="radio"]:checked+.option-card {
+                background: #28a745;
+                color: white;
+                border-color: #28a745;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            }
+
+            .section-heading {
+                background: #f8f9fa;
+                /* light gray background */
+                border-left: 4px solid #007bff;
+                /* blue accent */
+                padding: 10px 15px;
+                border-radius: 6px;
+            }
+
+            .section-heading h5 {
+                font-weight: 600;
+                color: #343a40;
+                /* dark text */
+            }
+
+            .section-heading h5 {
+                font-weight: 600;
+                color: #343a40;
+                display: inline-block;
+                padding: 6px 20px;
+                border-radius: 6px;
+                background: #f8f9fa;
+                /* light gray background */
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            }
+
+            .sticky-subtotal {
+                position: fixed;
+                top: 120px;
+                right: 40px;
+                z-index: 1050;
+            }
+
+            .subtotal-card {
+                background: linear-gradient(135deg, #7dc580, #28a745);
+                color: white;
+                padding: 18px 25px;
+                border-radius: 12px;
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+                text-align: right;
+                min-width: 320px;
+                min-height: 120px;
+                transition: transform 0.2s ease, box-shadow 0.3s ease;
+                text-align: center;
+            }
+
+            .subtotal-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            }
+
+            .subtotal-label {
+                font-size: 22px;
+                font-weight: 500;
+                opacity: 0.9;
+                margin-bottom: 8px;
+                display: block;
+                color: rgb(0, 0, 0);
+            }
+
+            .subtotal-value {
+                font-size: 28px;
+                font-weight: 700;
+            }
         </style>
     </head>
 
@@ -157,21 +250,22 @@
             }
             ?>
 
-            <div class="container-fluid mt-3">
-                <div class="row justify-content-end">
-                    <div class="col-md-2">
-                        <div class="card shadow-sm border-0 rounded-3 p-3 text-end bg-white">
-                            <div class="fw-bold text-muted mb-1">Subtotal</div>
-                            <div class="fw-bold text-primary" id="subtotalDisplay">PKR 0.00</div>
-                        </div>
-                    </div>
+            <!-- Sticky Subtotal Card -->
+            <div class="sticky-subtotal">
+                <div class="subtotal-card">
+                    <div class="subtotal-label">Subtotal</div>
+                    <div class="subtotal-value" id="subtotalDisplay">PKR 0.00</div>
                 </div>
             </div>
 
 
-
             <!-- Customer Info -->
             <div class="item-form">
+                <div class="section-heading mb-5 text-center">
+                    <h5 class="mb-0">👤 User Information</h5>
+                </div>
+
+
                 <div class="form-section row justify-content-center">
                     <div class="form-group col-md-3">
                         <label class="form-label">Customer Name:</label>
@@ -179,7 +273,7 @@
                     </div>
                     <div class="form-group col-md-3">
                         <label class="form-label">Phone:</label>
-                        <input type="number" class="form-control" placeholder="Phone">
+                        <input type="number" id="phone" class="form-control" placeholder="Phone">
                     </div>
                     <div class="form-group col-md-3">
                         <label class="form-label">Address:</label>
@@ -190,18 +284,30 @@
                 <div class="form-section row justify-content-center">
                     <div class="form-group col-md-3">
                         <label class="form-label">DBA:</label>
-                        <input type="text" id="dbalist" class="form-control" value="SA HAMID AND COMPANY" readonly>
+                        <select class="form-control" id="dbalist">
+                            <option value="SA HAMID AND COMPANY" selected>SA HAMID AND COMPANY</option>
+                            <option value="CESCO INTERNATIONAL">CESCO INTERNATIONAL</option>
+                            <option value="SAH">SAH</option>
+                        </select>
                     </div>
                     <div class="form-group col-md-3">
                         <label class="form-label">Salesman:</label>
                         <select class="form-control" id="salesman">
                             <option value="">Select Salesman</option>
-                            <?php foreach ($salesmen as $salesman): ?>
+                            <option value="Ashfaq Ahmad (N)">Ashfaq Ahmad (N)</option>
+                            <option value="Jalal Nasir">Jalal Nasir</option>
+
+
+                            <!-- <?php foreach ($salesmen as $salesman): ?>
                                 <option value="<?= htmlspecialchars($salesman) ?>">
                                     <?= htmlspecialchars($salesman) ?>
                                 </option>
-                            <?php endforeach; ?>
+                            <?php endforeach; ?> -->
                         </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label class="form-label">Customer Reference:</label>
+                        <input type="text" id="reference" class="form-control" placeholder="Customer Reference">
                     </div>
                 </div>
             </div>
@@ -209,6 +315,10 @@
 
             <!-- Add New Item -->
             <div class="item-form">
+                <div class="section-heading mb-5 text-center">
+                    <h5 class="mb-0">📦 Items Information</h5>
+                </div>
+
                 <div class="form-group text-center">
                     <button class="btn btn-primary mb-3 custom-btn" onclick="addItemRow()">+ Add New Item</button>
                 </div>
@@ -218,7 +328,64 @@
 
             <!-- Payment Info -->
             <div class="item-form">
-                <div class="form-section row justify-content-end">
+                <div class="section-heading mb-5 text-center">
+                    <h5 class="mb-0">💳 Payment Information</h5>
+                </div>
+
+                <div class="form-section row justify-content-center">
+                    <!-- Advance Percentage -->
+                    <div class="form-group col-md-3">
+                        <label class="form-label">Advance (%):</label>
+                        <div class="input-group">
+                            <input type="number" id="advance" class="form-control text-right" placeholder="0.00">
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label class="form-label">On Delivery (%):</label>
+                        <div class="input-group">
+                            <input type="number" id="ondelivery" class="form-control text-right" placeholder="0.00">
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commissioning Percentage -->
+                    <div class="form-group col-md-3">
+                        <label class="form-label">Commissioning (%):</label>
+                        <div class="input-group">
+                            <input type="number" id="commision" class="form-control text-right" placeholder="0.00">
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commissioning Percentage -->
+                    <!-- <div class="form-group col-md-3">
+                        <label class="form-label">Payment Term (Days):</label>
+                        <div class="input-group">
+                            <input type="number" id="paymentin" class="form-control text-right" placeholder="0">
+                            <div class="input-group-append">
+                                <span class="input-group-text">days</span>
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+
+            <!-- Payment Info -->
+            <div class="item-form">
+                <div class="section-heading mb-5 text-center">
+                    <h5 class="mb-0">📑 Finalization & Discounts</h5>
+                </div>
+
+                <div class="form-section row justify-content-center">
+                    <!-- Discount Amount -->
                     <div class="form-group col-md-3">
                         <label class="form-label">Discount (Amount):</label>
                         <div class="input-group">
@@ -229,6 +396,7 @@
                         </div>
                     </div>
 
+                    <!-- Discount Percentage -->
                     <div class="form-group col-md-3">
                         <label class="form-label">Discount (%):</label>
                         <div class="input-group">
@@ -238,9 +406,30 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Discount Percentage -->
+                    <!-- <div class="form-group col-md-3">
+                        <label class="form-label">Delivery Status:</label>
+                        <div class="input-group">
+                            <input type="number" id="expected" class="form-control text-right" placeholder="0">
+                            <div class="input-group-append">
+                                <span class="input-group-text">days</span>
+                            </div>
+                        </div>
+                    </div> -->
+
+                    <!-- Show Total Choice -->
+                    <div class="form-group col-md-3">
+                        <label class="form-label d-block">Total on Receipt:</label>
+                        <div class="option-cards">
+                            <input type="radio" id="totalShow" name="showTotal" value="yes" checked>
+                            <label for="totalShow" class="option-card">Show</label>
+
+                            <input type="radio" id="totalHide" name="showTotal" value="no">
+                            <label for="totalHide" class="option-card">Hide</label>
+                        </div>
+                    </div>
                 </div>
-
-
                 <div class="text-center">
                     <button class="btn btn-success custom-btn1" id="proceed">Proceed</button>
                 </div>
@@ -251,6 +440,16 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script>
+        let showTotalOption = "yes";
+
+        document.querySelectorAll("input[name='showTotal']").forEach((el) => {
+            el.addEventListener("change", function() {
+                showTotalOption = this.value;
+            });
+        });
+
+
+
         let itemId = 0;
 
         const uomOptions = `
@@ -269,11 +468,12 @@
             const container = document.getElementById('itemsContainer');
 
             const row = document.createElement('div');
-            row.className = 'form-section row align-items-end item-row mb-3';
+            row.className = 'form-section item-row mb-3';
             row.setAttribute('id', `item-${itemId}`);
 
             row.innerHTML = `
-            <div class="form-group col-md-3">
+        <div class="row align-items-end">
+            <div class="form-group col-md-2">
                 <label class="form-label">Item Name:</label>
                 <input type="text" class="form-control" placeholder="Enter item name">
             </div>
@@ -285,7 +485,7 @@
                 <label class="form-label">Qty:</label>
                 <input type="number" class="form-control qty" value="1">
             </div>
-            <div class="form-group col-md-2">
+            <div class="form-group col-md-1">
                 <label class="form-label">UOM:</label>
                 <select class="form-control">${uomOptions}</select>
             </div>
@@ -293,14 +493,20 @@
                 <label class="form-label">Unit Price:</label>
                 <input type="number" class="form-control price" value="0">
             </div>
+            <div class="form-group col-md-2">
+                <label class="form-label">Delivery Status:</label>
+                <input type="text" class="form-control delivery-status" placeholder="Mention days">
+            </div>
             <div class="form-group col-md-1">
                 <label class="form-label">Subtotal:</label>
                 <input type="text" class="form-control subtotal" readonly>
             </div>
-            <div class="form-group col-md-1 text-center">
+            <div class="form-group col-md-0.5 text-center">
                 <button class="btn btn-danger btn-sm" onclick="removeItemRow('item-${itemId}')">-</button>
             </div>
-        `;
+        </div>
+        <hr class="my-3">
+    `;
 
             container.appendChild(row);
 
@@ -317,6 +523,7 @@
             updateSubtotal();
         }
 
+
         function updateSubtotal() {
             let total = 0;
 
@@ -329,8 +536,22 @@
                 total += subtotal;
             });
 
-            document.getElementById('subtotalDisplay').innerText = `PKR ${total.toFixed(2)}`;
+            // Apply Discount Amount (PKR)
+            let discountPKR = parseFloat(document.getElementById('discountPKR').value) || 0;
+
+            // Apply Discount Percentage
+            let discountPercent = parseFloat(document.getElementById('discount').value) || 0;
+            if (discountPercent > 100) discountPercent = 100; // avoid negative totals
+
+            let discountFromPercent = (total * discountPercent) / 100;
+
+            // Final total after discounts
+            let finalTotal = total - discountPKR - discountFromPercent;
+            if (finalTotal < 0) finalTotal = 0;
+
+            document.getElementById('subtotalDisplay').innerText = `PKR ${finalTotal.toFixed(2)}`;
         }
+
 
         // Recalculate subtotal when values change
         document.addEventListener('input', function(e) {
@@ -357,6 +578,7 @@
         }
 
         $("#proceed").on("click", function() {
+
             let ref = $(this);
             ref.prop("disabled", true);
 
@@ -365,6 +587,12 @@
             // Validate Customer Info
             if ($("#customername").val().trim() === "") {
                 swal("Error", "Enter New Customer Name", "error");
+                ref.prop("disabled", false);
+                return;
+            }
+
+            if ($("#phone").val().trim() === "") {
+                swal("Error", "Enter Phone Number", "error");
                 ref.prop("disabled", false);
                 return;
             }
@@ -383,9 +611,11 @@
 
             client["name"] = $("#customername").val();
             client["salesman"] = $("#salesman").val();
+            client["reference"] = $("#reference").val();
             client["dba"] = $("#dbalist").val();
             client["ctype"] = "Miscellaneous";
             client["address1"] = $("#address1").val();
+            client["phone"] = $("#phone").val();
 
             // Collect Items
             let count = 0;
@@ -394,17 +624,22 @@
             let items = {};
 
             $("#itemsContainer").find(".item-row").each(function() {
-
                 let quantity = parseFloat($(this).find(".qty").val()) || 0;
                 if (quantity <= 0) {
                     message = "Item with 0 Quantity Found. Please enter a quantity greater than zero.";
                     pass = false;
                     return false; // exit each loop
                 }
+
                 let price = parseFloat($(this).find(".price").val()) || 0;
                 let desc = $(this).find(".form-control[placeholder='Enter item name']").val() || "";
                 let note = $(this).find(".form-control[placeholder='Model or comment']").val() || "";
-                let uom = $(this).find("select").val() || "";
+
+                // UOM select
+                let uom = $(this).find("select").not(".delivery-status").val() || "";
+
+                // Delivery Status select
+                let deliveryStatus = $(this).find(".delivery-status").val() || "Instant";
 
                 if (pass) {
                     if (quantity <= 0) {
@@ -424,7 +659,8 @@
                     price: price,
                     desc: desc.replace("\n", "&#10;"),
                     note: note.replace("\n", "&#10;"),
-                    uom: uom
+                    uom: uom,
+                    deliveryStatus: deliveryStatus // <-- added here
                 };
 
                 count++;
@@ -456,27 +692,37 @@
             let discount = parseFloat($("#discount").val()) || 0;
             let discountPKR = parseFloat($("#discountPKR").val()) || 0;
 
+
             let salesman = "none";
 
             let dispatchvia = "none";
             let customerref = "none";
-            let advance = "none";
+            let advance = parseFloat($("#advance").val()) || 0;
+            let ondelivery = parseFloat($("#ondelivery").val()) || 0;
+            let commision = parseFloat($("#commision").val()) || 0;
+            let paymentin = parseFloat($("#paymentin").val()) || 0;
+            let expected = parseFloat($("#expected").val()) || 0;
             let paid = 0;
 
             // Call backend
-            generateBill(client, items, payment, advance, name, discount, discountPKR, salesman, dispatchvia, customerref, paid);
+            generateBill(client, items, payment, advance, ondelivery, commision, paymentin, expected, name, discount, discountPKR, showTotalOption, salesman, dispatchvia, customerref, paid);
         });
 
 
-        function generateBill(client, items, payment, advance, name, discount, discountPKR, salesman, dispatchvia, creferance, paid) {
+        function generateBill(client, items, payment, advance, ondelivery, commision, paymentin, expected, name, discount, discountPKR, showTotalOption, salesman, dispatchvia, creferance, paid) {
             $.post("api/generateBillEstimate.php", {
                 client: client,
                 items: items,
                 payment: payment,
                 advance: advance,
+                ondelivery: ondelivery,
+                commision: commision,
+                paymentin: paymentin,
+                expected: expected,
                 name: name,
                 discount: discount,
                 discountPKR: discountPKR,
+                showTotalOption: showTotalOption,
                 salesman: salesman,
                 dispatchvia: dispatchvia,
                 creferance: creferance,
@@ -499,6 +745,9 @@
                 }
             });
         }
+
+        document.getElementById('discountPKR').addEventListener('input', updateSubtotal);
+        document.getElementById('discount').addEventListener('input', updateSubtotal);
     </script>
 
     </html>

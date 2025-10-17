@@ -226,13 +226,43 @@ if ($name == "quantity") {
 			}
 			if ($new < $old) {
 				$difference = $old - $new;
-				$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
-					AND stockid='" . $stockid . "'
-					AND salesman='" . $salesman . "'
-					AND quantity IS NOT NULL 
-			AND quantity != 0 ";
+				// Step 1: Find all matching records
+			$checkSQL = "
+    SELECT id 
+    FROM ogpsalescaseref 
+    WHERE salescaseref = '$salescaseref'
+      AND stockid = '$stockid'
+      AND salesman = '$salesman'
+      AND quantity IS NOT NULL
+    ORDER BY id DESC
+";
 
-				$result = mysqli_query($db, $SQL);
+			$checkResult = mysqli_query($db, $checkSQL);
+			$rowCount = mysqli_num_rows($checkResult);
+
+			if ($rowCount > 1) {
+				// More than one record → update only the latest one
+				$latestRow = mysqli_fetch_assoc($checkResult);
+				$latestId = $latestRow['id'];
+
+				$updateSQL = "
+        UPDATE ogpsalescaseref 
+        SET quantity = quantity + $difference
+        WHERE id = '$latestId'
+    ";
+			} else {
+				// One record or none → update normally
+				$updateSQL = "
+        UPDATE ogpsalescaseref 
+        SET quantity = quantity + $difference
+        WHERE salescaseref = '$salescaseref'
+          AND stockid = '$stockid'
+          AND salesman = '$salesman'
+          AND quantity IS NOT NULL
+    ";
+			}
+
+			$result = mysqli_query($db, $updateSQL);
 			}
 		}
 	}

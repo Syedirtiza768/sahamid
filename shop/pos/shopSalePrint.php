@@ -104,7 +104,7 @@ if (isset($_GET['json'])) {
 			$orignal = true;
 		}
 
-		$SQL = "SELECT brname, braddress1, braddress2, braddress3, braddress4, braddress5, braddress6
+		$SQL = "SELECT brname, braddress1, braddress2, braddress3, braddress4, braddress5, braddress6, phoneno
 				FROM estimatecustbranch WHERE branchcode='" . $sale['branchcode'] . "'";
 		$res = mysqli_query($db, $SQL);
 
@@ -153,18 +153,26 @@ if (isset($_GET['json'])) {
 			$sale['lines'][] = $row;
 		}
 
-		$sale['invoice'] = (($sale['payment'] == "estimate") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['orderno']);
+		$sale['invoice'] = (($sale['payment'] == "estimate") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['id']);
 
 		$sale['header'] = [];
 		$sale['header']['orignal'] = $orignal ? "<b>Orignal<b/>" : "<b>Duplicate</b>";
 		$sale['header']['customer'] = $sale['customer']['brname'];
+		$sale['header']['details'] = $sale['customer']['braddress1'];
+		$sale['header']['phone'] = $sale['customer']['phoneno'];
 		$sale['header']['cdetails'] = (($sale['payment'] == "csv") ? $details : "");
 		$sale['header']['payment']  = $sale['payment'];
-		$sale['header']['invoice']  = (($sale['payment'] == "estimate") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['orderno']);
+		$sale['header']['invoice']  = (($sale['payment'] == "estimate") ? ("ESTIMATE-") : ("ESTIMATE-")) . sprintf("%'.04d\n", $sale['id']);
 		$sale['header']['date']		= date('d/m/Y', strtotime($sale['orddate']));
 		$sale['header']['salesman'] = $sale['salesman'];
 		$sale['header']['customerref'] 		= $sale['customerref'] ?: "";
 		$sale['header']['dispatchedvia'] 	= $sale['dispatchedvia'] ?: "";
+		$sale['header']['advance'] 	= $sale['advance'] ?: "";
+		$sale['header']['ondelivery'] 	= $sale['ondelivery'] ?: "";
+		$sale['header']['commision'] 	= $sale['commision'] ?: "";
+		$sale['header']['paymentin'] 	= $sale['paymentin'] ?: "";
+		$sale['header']['expectedin'] 	= $sale['expectedin'] ?: "";
+
 
 		$sale['creditLimit'] = getCreditLimit($db, $sale['debtorno']);
 		$sale['currentCredit'] = getCurrentCredit($db, $sale['debtorno']);
@@ -212,7 +220,25 @@ if (mysqli_num_rows($res) == 1) {
 			}
 
 			.customerDetails .info {
-				line-height: 1.4;
+				font-size: 13px;
+				margin-bottom: 4px;
+			}
+
+
+			.details .customerDetails .row {
+				display: flex;
+				gap: 10px;
+				/* optional spacing */
+			}
+
+			.details .customerDetails .col {
+				flex: 3;
+				/* all columns equal width by default */
+			}
+
+			.details .customerDetails .address-col {
+				flex: 3;
+				/* double width → ~50% if 3 columns total */
 			}
 
 			.invnodate {
@@ -300,18 +326,30 @@ if (mysqli_num_rows($res) == 1) {
 			.details {
 				display: flex;
 				font-size: 12px;
+				justify-content: space-between;
 			}
 
 			.customerDetails {
-				padding-top: 30px;
 				flex: 1;
+				padding-top: 30px;
+			}
+
+			.customerDetails .row {
+				display: flex;
+				gap: 40px;
+				/* spacing between For and Address */
+			}
+
+			.customerDetails .col {
+				display: flex;
+				flex-direction: column;
 			}
 
 			.customerDetails .to {
-				font-weight: bolder;
-				font-weight: bolder;
+				font-weight: bold;
 				font-size: 12px;
 			}
+
 
 			.details .invoice {
 				display: block;
@@ -385,9 +423,16 @@ if (mysqli_num_rows($res) == 1) {
 			}
 
 			.description {
-				width: 47%;
-				min-width: 47%;
-				max-width: 47%;
+				width: 35%;
+				min-width: 35%;
+				max-width: 35%;
+				text-align: center;
+			}
+
+			.deliveryStatus {
+				width: 15%;
+				min-width: 15%;
+				max-width: 15%;
 				text-align: center;
 			}
 
@@ -536,6 +581,27 @@ if (mysqli_num_rows($res) == 1) {
 				font-weight: bold;
 				color: #333;
 			}
+
+			.item-wrapper {
+				border-bottom: 1px solid #ccc;
+				margin-bottom: 10px;
+			}
+
+			.delivery-row {
+				border: 1px solid #ccc;
+				border-top: none;
+				padding: 6px 12px;
+				text-align: right;
+				font-size: 13px;
+				font-weight: 500;
+				background: #f9f9f9;
+				min-width: 20%;
+			}
+
+			.delivery-row span {
+				font-weight: 600;
+				color: #333;
+			}
 		</style>
 	</head>
 
@@ -555,7 +621,7 @@ if (mysqli_num_rows($res) == 1) {
 				$.get("shopSalePrint.php?orderno=<?php echo $_GET['orderno']; ?>&json<?php echo (isset($_GET['orignal']) ? "&orignal" : ""); ?>", function(res, status) {
 
 					res = JSON.parse(res);
-
+					console.log(res)
 					let currentPage = "page-" + pageCount;
 
 					$(".pagesContainer").append(page(currentPage));
@@ -571,7 +637,7 @@ if (mysqli_num_rows($res) == 1) {
 					res.lines.forEach(function(i) {
 
 						$("." + currentPage + " .itemsContainer")
-							.append(item(sr, i.description, i.quantity, i.uom, i.price, i.quantity * i.price));
+							.append(item(sr, i.description, i.quantity, i.uom, i.price, i.deliveryStatus, i.quantity * i.price));
 
 						totalValue += (i.quantity * i.price);
 
@@ -596,7 +662,8 @@ if (mysqli_num_rows($res) == 1) {
 
 					});
 
-					$("." + currentPage + " .itemsContainer").after(totalSection(totalValue, res.discount, res.discountPKR, res.advance, res.payment, res.paid, res.creditLimit, res.currentCredit));
+					$("." + currentPage + " .itemsContainer").after(totalSection(totalValue, res.discount, res.discountPKR, res.advance, res.payment, res.paid, res.creditLimit, res.currentCredit, res.showTotalOption, res.ondelivery, res.commision, res.paymentin, res.expectedin));
+					$("." + currentPage + " .itemsContainer").after(paymentTermsSection(res.advance, res.ondelivery, res.paymentin, res.expectedin));
 
 					let height = $("." + currentPage).height();
 					height -= $("." + currentPage + " .header").height();
@@ -616,7 +683,8 @@ if (mysqli_num_rows($res) == 1) {
 						$("." + currentPage).append(header(res.header));
 						//$("."+currentPage).append(itemsHeader());
 						$("." + currentPage).append(itemsContainer());
-						$("." + currentPage + " .itemsContainer").after(totalSection(totalValue, res.discount, res.discountPKR, res.advance, res.payment, res.paid, res.creditLimit, res.currentCredit));
+						$("." + currentPage + " .itemsContainer").after(totalSection(totalValue, res.discount, res.discountPKR, res.advance, res.payment, res.paid, res.creditLimit, res.currentCredit, res.showTotalOption, res.ondelivery, res.commision, res.paymentin, res.expectedin));
+						$("." + currentPage + " .itemsContainer").after(paymentTermsSection(res.advance, res.ondelivery, res.paymentin, res.expectedin));
 						$("." + currentPage).append(footer(res.invoice, pageCount));
 
 					}
@@ -660,34 +728,23 @@ if (mysqli_num_rows($res) == 1) {
   </span>
 </div>
 
-				<div class="details">
-					<div class="customerDetails">
-						<div class="to">For:</div>
-						<div class="info">${options['customer']}<br>${options['cdetails']}</div>
-					</div>
-					<div class="invnodate">
-						<div class="invoice">${options['invoice']}</div>
-						<div class="datetime">Date: ${options['date']}</div>
-					</div>
-				</div>
-				<div class="details2">
-					<table border="1">
-						<thead>
-							<tr>
-								<th>Salesperson</th>
-								<th>CustomerRef</th>
-								<th>Dispatched Via</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td>${options['salesman']}</td>
-								<td>${options['customerref']}</td>
-								<td>${options['dispatchedvia']}</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+				<div class="details2" style="margin-top:20px;">
+  <table style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:14px;">
+    <tbody>
+      <!-- Row 1 -->
+      <tr style="background:#f2f2f2;">
+        <th style="padding:8px; border:1px solid #ddd; text-align:center;">Salesperson</th>
+        <th style="padding:8px; border:1px solid #ddd; text-align:center;">Customer Ref</th>
+      </tr>
+      <tr>
+        <td style="padding:8px; border:1px solid #ddd;">${options['salesman']}</td>
+        <td style="padding:8px; border:1px solid #ddd;">${options['customerref']}</td>
+      </tr>
+    </tbody>
+  </table>
+</div></br></br>
+
+
 			`;
 
 				let other = `
@@ -715,20 +772,18 @@ if (mysqli_num_rows($res) == 1) {
 			}
 
 			function itemsHeader() {
-
 				let html = `
-				<ul class="itemsHeader">
-					<li class="sr">SR.#</li>
-					<li class="description">DESCRIPTION</li>
-					<li class="qty">QTY</li>
-					<li class="unitprice">UNIT PRICE</li>
-					<li class="total">TOTAL</li>
-				</ul>
-			`;
-
+        <ul class="itemsHeader">
+            <li class="sr">SR.#</li>
+            <li class="description">DESCRIPTION</li>
+            <li class="qty">QTY</li>
+            <li class="unitprice">UNIT PRICE</li>
+            <li class="total">TOTAL</li>
+        </ul>
+    `;
 				return html;
-
 			}
+
 
 			function itemsContainer() {
 
@@ -736,106 +791,153 @@ if (mysqli_num_rows($res) == 1) {
 
 			}
 
-			function item(sr, desc, qty, unit, unitp, total) {
-
+			function item(sr, desc, qty, unit, unitp, dstatus, total) {
 				let html = `
-				<ul class="item">
-					<li class="sr">${sr}</li>
-					<li class="description">${desc}</li>
-					<li class="qty">${qty}<sub>${unit}</sub></li>
-					<li class="unitprice">${numberWithCommas(unitp)}</li>
-					<li class="total">${numberWithCommas(total)}</li>
-				</ul>
-			`;
-
+        <div class="item-wrapper">
+            <ul class="item">
+                <li class="sr">${sr}</li>
+                <li class="description">${desc}</li>
+                <li class="qty">${qty}<sub>${unit}</sub></li>
+                <li class="unitprice">${numberWithCommas(unitp)}</li>
+                <li class="total">${numberWithCommas(total)}</li>
+            </ul>
+            <div class="delivery-row">
+                Delivery Status: <span>${dstatus}</span>
+            </div>
+        </div>
+    `;
 				return html;
-
 			}
 
-			function totalSection(total, discount, discountPKR, advance, type, paid, creditLimit, currentCredit) {
 
-				let html = `<div class="totalArea">`;
 
-				if (parseFloat(discount) != 0 || parseFloat(advance) != 0 || parseFloat(discountPKR) != 0) {
+			function totalSection(total, discount, discountPKR, advance, type, paid, creditLimit, currentCredit, showTotalOption, ondelivery, commision, paymentin, expectedin) {
+				if (showTotalOption == 'yes') {
+					let html = `<div class="totalArea">`;
 
-					html += `
+					if (parseFloat(discount) != 0 || parseFloat(advance) != 0 || parseFloat(discountPKR) != 0) {
+
+						html += `
 					<ul class="totalItem">
 						<li class="totalTitle">SubTotal:</li>
 						<li class="total">${numberWithCommas(total)}</li>
 					</ul>
 				`;
 
-				}
+					}
 
-				if (parseFloat(discount) != 0) {
+					if (parseFloat(discount) != 0) {
 
-					html += `
+						html += `
 					<ul class="totalItem">
 						<li class="totalTitle">Discount<sub>%</sub>: </li>
 						<li class="total">${numberWithCommas(discount)}<sub>%</sub></li>
 					</ul>
 				`;
 
-				}
+					}
 
-				if (parseFloat(discountPKR) != 0) {
+					if (parseFloat(discountPKR) != 0) {
 
-					html += `
+						html += `
 					<ul class="totalItem">
 						<li class="totalTitle">Discount <sub>PKR</sub> : </li>
 						<li class="total">${numberWithCommas(discountPKR)}<sub>PKR</sub></li>
 					</ul>
 				`;
 
-				}
+					}
 
-				if (parseFloat(discount) != 0 || parseFloat(discountPKR) != 0) {
+					// 	if (parseFloat(ondelivery) != 0) {
 
-					html += `<ul class="totalItem">
+					// 		html += `
+					// 	<ul class="totalItem">
+					// 		<li class="totalTitle">On Delivery: </li>
+					// 		<li class="total">${numberWithCommas(ondelivery)}<sub>%</sub></li>
+					// 	</ul>
+					// `;
+					// 	}
+
+					// 	if (parseFloat(commision) != 0) {
+
+					// 		html += `
+					// 	<ul class="totalItem">
+					// 		<li class="totalTitle">Commissioning: </li>
+					// 		<li class="total">${numberWithCommas(commision)}<sub>%</sub></li>
+					// 	</ul>
+					// `;
+					// 	}
+
+					// 	if (parseFloat(paymentin) != 0) {
+
+					// 		html += `
+					// 	<ul class="totalItem">
+					// 		<li class="totalTitle">Payment Term: </li>
+					// 		<li class="total">${numberWithCommas(paymentin)}<sub>Days</sub></li>
+					// 	</ul>
+					// `;
+					// 	}
+
+					// 	if (parseFloat(ondelivery) != 0) {
+
+					// 		html += `
+					// 	<ul class="totalItem">
+					// 		<li class="totalTitle">Delivery In: </li>
+					// 		<li class="total">${numberWithCommas(expectedin)}<sub>Days</sub></li>
+					// 	</ul>
+					// `;
+
+					// 	}
+
+
+
+					if (parseFloat(discount) != 0 || parseFloat(discountPKR) != 0) {
+
+						html += `<ul class="totalItem">
 							<li class="totalTitle">${(type == "csv") ? "Grand ":""}Total: </li>
 							<li class="total">${numberWithCommas(total*(1 - (discount/100))-discountPKR)}<sub>PKR</sub></li>
 						</ul>`;
 
-				}
+					}
 
-				// if(((parseFloat(total)*(1 - (discount/100))-parseFloat(discountPKR))+parseFloat(currentCredit)) > parseFloat(creditLimit)){
-				// 	$(document.body).html(`<div style="display:flex; justify-content:center; align-items:center"><h1 style="text-align:center">Over Credit Limit!!!</h1></div>`);	
-				// }
+					// if(((parseFloat(total)*(1 - (discount/100))-parseFloat(discountPKR))+parseFloat(currentCredit)) > parseFloat(creditLimit)){
+					// 	$(document.body).html(`<div style="display:flex; justify-content:center; align-items:center"><h1 style="text-align:center">Over Credit Limit!!!</h1></div>`);	
+					// }
 
-				if (parseFloat(discount) == 0 && parseFloat(discountPKR) == 0 && type == "cash") {
+					if (parseFloat(discount) == 0 && parseFloat(discountPKR) == 0 && type == "cash") {
 
-					html += `
+						html += `
 					<ul class="totalItem">
 						<li class="totalTitle">Grand Total: </li>
 						<li class="total">${numberWithCommas(total)}<sub>PKR</sub></li>
 					</ul>
 				`;
 
-				}
+					}
 
-				if (type == "crv" || parseFloat(advance) != 0) {
+					// 	if (type == "crv" || parseFloat(advance) != 0) {
 
-					html += `
-					<ul class="totalItem">
-						<li class="totalTitle">Advance: </li>
-						<li class="total">${numberWithCommas(advance)}<sub>PKR</sub></li>
-					</ul>
-				`;
+					// 		html += `
+					// 	<ul class="totalItem">
+					// 		<li class="totalTitle">Advance: </li>
+					// 		<li class="total">${numberWithCommas(advance)}<sub>PKR</sub></li>
+					// 	</ul>
+					// `;
 
-				}
+					// 	}
 
-				if (type == "cash") {
+					if (type == "cash") {
 
-					html += `<ul class="totalItem">
+						html += `<ul class="totalItem">
 					<li class="totalTitle">Remaining Amount: </li>
 					<li class="total">${numberWithCommas((total*(1 - (discount/100)))- discountPKR - advance)}<sub>PKR</sub></li>
 				</ul>`;
 
-				}
+					}
 
-				if ((type == "csv") && (parseFloat(paid) != 0)) {
+					if ((type == "csv") && (parseFloat(paid) != 0)) {
 
-					html += `<ul class="totalItem">
+						html += `<ul class="totalItem">
 							<li class="totalTitle">Cash Paid: </li>
 							<li class="total">${numberWithCommas(paid)}<sub>PKR</sub></li>
 						</ul>
@@ -844,12 +946,23 @@ if (mysqli_num_rows($res) == 1) {
 							<li class="total">${(advance != 0) ? numberWithCommas(paid-advance):numberWithCommas(paid-((total*(1 - (discount/100))) -discountPKR) )}<sub>PKR</sub></li>
 						</ul>`;
 
+					}
+
+					html += "</div>";
+					return html;
 				}
 
-				html += "</div>";
+			}
 
+			function paymentTermsSection(advance, ondelivery, paymentin, creditin) {
+				let html = `
+    <div class="paymentTerms" style="margin-top:20px; padding:10px; border:1px solid #999; border-radius:5px; font-size:13px; line-height:1.6;">
+        <strong>Payment Terms:</strong><br>
+        Advance: ${advance}% <br>
+        On Delivery: ${ondelivery}% <br>
+    </div>
+    `;
 				return html;
-
 			}
 
 			function footer(orderno, page) {
@@ -1006,6 +1119,8 @@ if (mysqli_num_rows($res) == 1) {
 				display: flex;
 				font-size: 12px;
 			}
+
+
 
 			.customerDetails {
 				padding-top: 30px;

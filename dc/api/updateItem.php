@@ -8,6 +8,7 @@ include('../../includes/SQL_CommonFunctions.inc');
 
 $response = [];
 
+
 if (!validHeaders()) {
 
 	$response = [
@@ -138,11 +139,26 @@ if ($name == "quantity") {
 
 	if ($optionQuantity > 1) {
 
+		// $difference = $optionQuantity * $value;
+		// 					$difference = $stkQuantity - $difference;
+		// 					$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
+		// 						AND stockid='" . $stockid . "'
+		// 						AND salesman='" . $salesman . "'
+		// 					AND quantity IS NOT NULL 
+		// 					AND quantity != 0 ";
+		// 				$response = [
+		// 				'status' => 'alert',
+		// 				'message' => $SQL,
+		// 				'minimum' => $stkQuantity,
+		// 			];
+		// 			echo json_encode($response);
+		// 			return;
+
 		if ($value > $stkQuantity) {
 			$previous_value = $optionQuantity * $stkQuantity;
 			$current_value = $optionQuantity * $value;
 			$difference = $current_value - $previous_value;
-			
+
 			$SQL = "UPDATE ogpsalescaseref 
         			SET quantity = quantity - $difference 
         			WHERE salescaseref = '$salescaseref'
@@ -156,19 +172,49 @@ if ($name == "quantity") {
 			$previous_value = $optionQuantity * $stkQuantity;
 			$current_value = $optionQuantity * $value;
 			$difference = $previous_value - $current_value;
-			
-			$SQL = "UPDATE ogpsalescaseref 
-        			SET quantity = quantity + $difference 
-        			WHERE salescaseref = '$salescaseref'
-        			AND stockid = '$stockid'
-        			AND salesman = '$salesman'
-        			AND quantity IS NOT NULL 
-					AND quantity != 0 ";
-			$result = mysqli_query($db, $SQL);
+
+			// Step 1: Find all matching records
+			$checkSQL = "
+    SELECT id 
+    FROM ogpsalescaseref 
+    WHERE salescaseref = '$salescaseref'
+      AND stockid = '$stockid'
+      AND salesman = '$salesman'
+      AND quantity IS NOT NULL
+    ORDER BY id DESC
+";
+
+			$checkResult = mysqli_query($db, $checkSQL);
+			$rowCount = mysqli_num_rows($checkResult);
+
+			if ($rowCount > 1) {
+				// More than one record → update only the latest one
+				$latestRow = mysqli_fetch_assoc($checkResult);
+				$latestId = $latestRow['id'];
+
+				$updateSQL = "
+        UPDATE ogpsalescaseref 
+        SET quantity = quantity + $difference
+        WHERE id = '$latestId'
+    ";
+			} else {
+				// One record or none → update normally
+				$updateSQL = "
+        UPDATE ogpsalescaseref 
+        SET quantity = quantity + $difference
+        WHERE salescaseref = '$salescaseref'
+          AND stockid = '$stockid'
+          AND salesman = '$salesman'
+          AND quantity IS NOT NULL
+    ";
+			}
+
+			$result = mysqli_query($db, $updateSQL);
 		}
 	}
 
 	if ($optionQuantity == 1) {
+
 
 		if ($value > $stkQuantity) {
 			$difference = $value - $stkQuantity;
@@ -183,13 +229,44 @@ if ($name == "quantity") {
 		if ($value < $stkQuantity) {
 			$difference = $optionQuantity * $value;
 			$difference = $stkQuantity - $difference;
-			$SQL = "UPDATE ogpsalescaseref SET quantity = quantity + $difference WHERE salescaseref = '" . $salescaseref . "'
-				AND stockid='" . $stockid . "'
-				AND salesman='" . $salesman . "'
-			AND quantity IS NOT NULL 
-			AND quantity != 0 ";
 
-			$result = mysqli_query($db, $SQL);
+			// Step 1: Find all matching records
+			$checkSQL = "
+    SELECT id 
+    FROM ogpsalescaseref 
+    WHERE salescaseref = '$salescaseref'
+      AND stockid = '$stockid'
+      AND salesman = '$salesman'
+      AND quantity IS NOT NULL
+    ORDER BY id DESC
+";
+
+			$checkResult = mysqli_query($db, $checkSQL);
+			$rowCount = mysqli_num_rows($checkResult);
+
+			if ($rowCount > 1) {
+				// More than one record → update only the latest one
+				$latestRow = mysqli_fetch_assoc($checkResult);
+				$latestId = $latestRow['id'];
+
+				$updateSQL = "
+        UPDATE ogpsalescaseref 
+        SET quantity = quantity + $difference
+        WHERE id = '$latestId'
+    ";
+			} else {
+				// One record or none → update normally
+				$updateSQL = "
+        UPDATE ogpsalescaseref 
+        SET quantity = quantity + $difference
+        WHERE salescaseref = '$salescaseref'
+          AND stockid = '$stockid'
+          AND salesman = '$salesman'
+          AND quantity IS NOT NULL
+    ";
+			}
+
+			$result = mysqli_query($db, $updateSQL);
 		}
 	}
 

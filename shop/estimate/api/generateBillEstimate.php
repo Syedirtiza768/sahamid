@@ -39,9 +39,14 @@ $client      = $_POST['client'];
 $items       = $_POST['items'];
 $payment     = $_POST['payment'];
 $advance     = $_POST['advance'];
+$ondelivery     = $_POST['ondelivery'];
+$commision     = $_POST['commision'];
+$paymentin     = $_POST['paymentin'];
+$expected     = $_POST['expected'];
 $crname      = $_POST['name'];
 $discount      = $_POST['discount'];
 $discountPKR = $_POST['discountPKR'];
+$showTotalOption = $_POST['showTotalOption'];
 $dispatched = $_POST['dispatchvia'];
 $creferance = $_POST['creferance'];
 $paid         = $_POST['paid'];
@@ -90,7 +95,7 @@ $SQL = "INSERT INTO estimatecustbranch (branchcode,debtorno,brname,braddress1,br
 							brpostaddr4,brpostaddr5,disabletrans,defaultshipvia,custbranchcode,deliverblind)
 				VALUES ('$newClientID','$newClientID','" . $client['name'] . "','" . $client['address1'] . "',
 						'','','','','','','0','" . $client['salesman'] . "',
-						'','','','15','','MT','','','','','','0','1','','1')";
+						'" . $client['phone'] . "','','','15','','MT','','','','','','0','1','','1')";
 
 if (!mysqli_query($conn, $SQL)) {
     $response = [
@@ -106,6 +111,7 @@ $customer = [];
 $customer['debtorno']     = $newClientID;
 $customer['branchcode'] = $newClientID;
 $customer['salesman']     = $client['salesman'];
+$customer['ref'] = !empty($client['reference']) ? $client['reference'] : "None";
 
 
 // $SQL = "SELECT salesmanname FROM salesman WHERE salesmancode='" . $customer['salesman'] . "'";
@@ -127,11 +133,11 @@ $expectedDays = date('Y-m-d', strtotime(" + " . $debtorsMaster['paymentExpected'
 $billId = GetNextTransNo(750, $conn);
 // $PeriodNo = GetPeriod(date($_SESSION['DefaultDateFormat']), $conn);
 
-$SQL = "INSERT INTO estimateshopsale(orderno, debtorno, branchcode, orddate, payment, salesman, advance,
-						crname,discount,created_by,dispatchedvia,customerref,paid,discountPKR,accounts,due,expected) 
+$SQL = "INSERT INTO estimateshopsale(orderno, debtorno, branchcode, orddate, payment, salesman, advance,ondelivery, commision, paymentin, expectedin,
+						crname,discount,showTotalOption,created_by,dispatchedvia,customerref,paid,discountPKR,accounts,due,expected) 
 			VALUES ('$billId','" . $customer['debtorno'] . "','" . $customer['branchcode'] . "','" . date('Y-m-d') . "',
-					'$payment','" . $customer['salesman'] . "','" . $advance . "','" . htmlentities($client['name'], ENT_QUOTES) . "',
-					'" . $discount . "','" . $_SESSION['UsersRealName'] . "','" . htmlentities($dispatched, ENT_QUOTES) . "','" . htmlentities($creferance, ENT_QUOTES) . "','" . $paid . "','" . $discountPKR . "',0,'$dueDays','$expectedDays')";
+					'$payment','" . $customer['salesman'] . "','" . $advance . "','" . $ondelivery . "','" . $commision . "','" . $paymentin . "','" . $expected . "','" . htmlentities($client['name'], ENT_QUOTES) . "',
+					'" . $discount . "','" . $showTotalOption . "','" . $_SESSION['UsersRealName'] . "','" . htmlentities($dispatched, ENT_QUOTES) . "','" . $customer['ref'] . "','" . $paid . "','" . $discountPKR . "',0,'$dueDays','$expectedDays')";
 
 if (!mysqli_query($conn, $SQL)) {
 
@@ -156,9 +162,9 @@ foreach ($items as $item) {
 
     $totalValue += $item['price'] * $item['quantity'];
 
-    $SQL = "INSERT INTO estimateshopsalelines (orderno, description, notes, quantity, price, uom) 
+    $SQL = "INSERT INTO estimateshopsalelines (orderno, description, notes, quantity, price, uom, deliveryStatus) 
 				VALUES ('$billId','" . $item['desc'] . "','" . $item['note'] . "','" . $item['quantity'] . "',
-						'" . $item['price'] . "','" . $item['uom'] . "')";
+						'" . $item['price'] . "','" . $item['uom'] . "' ,'" . $item['deliveryStatus'] . "')";
 
     if (!mysqli_query($conn, $SQL)) {
 
