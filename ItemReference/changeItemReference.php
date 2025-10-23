@@ -210,7 +210,7 @@ INNER JOIN stockissuance
     ON stockissuance.stockid = ogpsalescaseref.stockid
 WHERE ogpsalescaseref.salesman = '" . $_SESSION['UsersRealName'] . "'
   AND ogpsalescaseref.quantity != '0'
-  AND ogpsalescaseref.quantity != NULL
+  
   AND stockissuance.issued > 0
   AND stockissuance.salesperson = '" . $_SESSION['UsersRealName'] . "'
 GROUP BY 
