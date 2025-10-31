@@ -34,7 +34,12 @@ if (isset($_POST['to'])) {
     while ($row2 = mysqli_fetch_assoc($res2)) {
         $invoicearray[$row2['orderno']] = "";
     }
-    $SQLinvoice = "SELECT * from dcs inner join invoice on dcs.invoicegroupid=invoice.groupid  ";
+    $SQLinvoice = "SELECT dcs.orderno, invoice.invoiceno 
+               FROM dcs 
+               INNER JOIN invoice ON dcs.invoicegroupid = invoice.groupid
+               WHERE dcs.orddate >= '$from' 
+               AND dcs.orddate <= '$to'";
+
     $resinvoice = mysqli_query($db, $SQLinvoice);
 
     while ($rowinvoice = mysqli_fetch_assoc($resinvoice)) {
@@ -629,7 +634,7 @@ include_once("includes/footer.php");
             let FormID = '<?php echo $_SESSION['FormID']; ?>';
 
             table.clear().draw();
-            $("tbody tr td").html("<h3>Loading ... (This may take a few minutes) </h3>");
+            $("tbody tr td").html("<h3>Generating results — hang on a moment 🔍</h3>");
             $.post("dcattachments.php", {
                 from,
                 to,
