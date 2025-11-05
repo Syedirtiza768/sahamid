@@ -1,273 +1,17 @@
 <?php
-
+// dcattachments.php
 $active = "reports";
 $AllowAnyone = true;
 
 include_once("config.php");
 
+// Main page permission check
 if (!userHasPermission($db, "show_dc_attachments_view")) {
     header("Location: /sahamid");
-    return;
-}
-
-if (isset($_POST['to'])) {
-    // Your existing PHP backend code remains exactly the same
-    $from     = $_POST['from'];
-    $to     = $_POST['to'];
-    $SQL1 = "SELECT DISTINCT dcno as dcno FROM grb";
-    $res1 = mysqli_query($db, $SQL1);
-    $grbarray = [];
-    while ($row1 = mysqli_fetch_assoc($res1)) {
-        $grbarray[$row1['dcno']] = "";
-    }
-    $SQLgrb = "SELECT * FROM grb";
-    $resgrb = mysqli_query($db, $SQLgrb);
-
-    while ($rowgrb = mysqli_fetch_assoc($resgrb)) {
-        $grbarray[$rowgrb['dcno']] .=
-            '<a target="_blank" href = "../PDFGRB.php?grbno=' . $rowgrb['orderno'] . '">' . $rowgrb['orderno'] . '</a>' .
-            "<br/>";
-    }
-    $SQL2 = "SELECT distinct dcs.orderno from dcs inner join invoice on dcs.invoicegroupid=invoice.groupid";
-    $res2 = mysqli_query($db, $SQL2);
-    $invoicearray = [];
-    while ($row2 = mysqli_fetch_assoc($res2)) {
-        $invoicearray[$row2['orderno']] = "";
-    }
-    $SQLinvoice = "SELECT dcs.orderno, invoice.invoiceno 
-               FROM dcs 
-               INNER JOIN invoice ON dcs.invoicegroupid = invoice.groupid
-               WHERE dcs.orddate >= '$from' 
-               AND dcs.orddate <= '$to'";
-
-    $resinvoice = mysqli_query($db, $SQLinvoice);
-
-    while ($rowinvoice = mysqli_fetch_assoc($resinvoice)) {
-
-        $invoicearray[$rowinvoice['orderno']] .=
-            '<a target="_blank" href = "../PDFInvoice.php?InvoiceNo=' . $rowinvoice['invoiceno'] . '">' . $rowinvoice['invoiceno'] . '</a>' .
-            "<br/>";
-    }
-
-
-
-    if (!userHasPermission($db, "show_all_dcs_attachments")) {
-        $SQLdcs = 'SELECT dcs.orderno as dcno FROM dcs INNER JOIN salescase
-        ON dcs.salescaseref=salescase.salescaseref INNER JOIN salesman
-        ON salescase.salesman=salesman.salesmanname
-        
-		WHERE ( salesman.salesmanname ="' . $_SESSION['UsersRealName'] . '"
-		OR salesman.salesmancode IN  (SELECT salescase_permissions.user 
-		FROM salescase_permissions WHERE salescase_permissions.can_access = "' . $_SESSION['UserID'] . '"' . '))
-		AND dcs.orddate >= "' . $from . '"' . '
-		AND dcs.orddate <= "' . $to . '"' . '
-		';
-    } else {
-        $SQLdcs = 'SELECT dcs.orderno as dcno FROM dcs
-		WHERE dcs.orddate >= "' . $from . '"' . '
-		AND dcs.orddate <= "' . $to . '"' . '
-		';
-    }
-    $resdcs = mysqli_query($db, $SQLdcs);
-
-    $polist = [];
-
-    $POFilePath = glob("../" . $_SESSION['part_pics_dir'] . '/' . 'PurchaseOrder_*.pdf');
-
-    $couriersliplist = [];
-
-    $CourierSlipFilePath = glob("../" . $_SESSION['part_pics_dir'] . '/' . 'CourierSlip_*.pdf');
-
-    $grblist = [];
-
-    $GRBFilePath = glob("../" . $_SESSION['part_pics_dir'] . '/' . 'GRB_*.pdf');
-
-    $invoicelist = [];
-
-    $InvoiceFilePath = glob("../" . $_SESSION['part_pics_dir'] . '/' . 'Invoice_*.pdf');
-
-    $commercialinvoicelist = [];
-
-    $CommercialInvoiceFilePath = glob("../" . $_SESSION['part_pics_dir'] . '/' . 'CommercialInvoice_*.pdf');
-
-    while ($rowdcs = mysqli_fetch_assoc($resdcs)) {
-        $PO = "";
-        $ind = 0;
-        foreach ($POFilePath as $POFile) {
-
-
-
-            if (strpos($POFile, $rowdcs['dcno']) != False) {
-
-                $ind++;
-                if (strpos($POFile, "deleted") != False)
-                    $PO .= '<br /><a target = "_blank" class="btn btn-danger col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $POFile . '">Attachment' . $ind . "</a>";
-
-                else
-                    $PO .= '<br /><a target = "_blank" class="btn btn-primary col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $POFile . '">Attachment' . $ind . "</a> <input type='button' id='removeFile' data-basepath='" . $POFile . "' data-orderno='" . $rowdcs['dcno'] . "' class='btn btn-danger removeFile' name='removeFile' value='X'>";
-            }
-            $polist[$rowdcs['dcno']] = "<form id='attachmentForm' action='' enctype='multipart/form-data' method='post'>
-            <input type='hidden' name='FormID' value=' " . $_SESSION['FormID'] . " ' />
-            <input type='file' id='attachPOFile" . $rowdcs['dcno'] . "' data-orderno='" . $rowdcs['dcno'] . "' class='attachPOFile' name='PO'>
-            <input type='button' id='uploadPOFile' data-orderno='" . $rowdcs['dcno'] . "' class='uploadPOFile' name='uploadPOFile' value='uploadPO'>
-            </form>" . $PO;
-        }
-        $CourierSlip = "";
-        $ind = 0;
-        foreach ($CourierSlipFilePath as $CourierSlipFile) {
-
-
-
-            if (strpos($CourierSlipFile, $rowdcs['dcno']) != False) {
-
-                $ind++;
-                if (strpos($CourierSlipFile, "deleted") != False)
-                    $CourierSlip .= '<br /><a target = "_blank" class="btn btn-danger col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $CourierSlipFile . '">Attachment' . $ind . "</a>";
-
-                else
-                    $CourierSlip .= '<br /><a target = "_blank" class="btn btn-primary col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $CourierSlipFile . '">Attachment' . $ind . "</a> <input type='button' id='removeFile' data-basepath='" . $CourierSlipFile . "'  data-orderno='" . $rowdcs['dcno'] . "' class='btn btn-danger removeFile' name='removeFile' value='X'>";
-            }
-        }
-        $couriersliplist[$rowdcs['dcno']] = "<form id='attachmentForm' action='' enctype='multipart/form-data' method='post'>
-            <input type='hidden' name='FormID' value=' " . $_SESSION['FormID'] . " ' />
-            <input type='file' id='attachCourierSlipFile" . $rowdcs['dcno'] . "' data-orderno='" . $rowdcs['dcno'] . "' class='attachCourierSlipFile' name='CourierSlip'>
-            <input type='button' id='uploadCourierSlipFile' data-orderno='" . $rowdcs['dcno'] . "' class='uploadCourierSlipFile' name='uploadCourierSlipFile' value='uploadCourierSlip'>
-            </form>" . $CourierSlip;
-
-        $Invoice = "";
-        $ind = 0;
-        foreach ($InvoiceFilePath as $InvoiceFile) {
-
-
-
-            if (strpos($InvoiceFile, $rowdcs['dcno']) != False) {
-
-                $ind++;
-                if (strpos($InvoiceFile, "deleted") != False)
-                    $Invoice .= '<br /><a target = "_blank" class="btn btn-danger col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $InvoiceFile . '">Attachment' . $ind . "</a>";
-
-                else
-                    $Invoice .= '<br /><a target = "_blank" class="btn btn-primary col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $InvoiceFile . '">Attachment' . $ind . "</a> <input type='button' id='removeFile' data-basepath='" . $InvoiceFile . "'  data-orderno='" . $rowdcs['dcno'] . "' class='btn btn-danger removeFile' name='removeFile' value='X'>";
-            }
-        }
-        $invoicelist[$rowdcs['dcno']] = "<form id='attachmentForm' action='' enctype='multipart/form-data' method='post'>
-            <input type='hidden' name='FormID' value=' " . $_SESSION['FormID'] . " ' />
-            <input type='file' id='attachInvoiceFile" . $rowdcs['dcno'] . "' data-orderno='" . $rowdcs['dcno'] . "' class='attachInvoiceFile' name='Invoice'>
-            <input type='button' id='uploadInvoiceFile' data-orderno='" . $rowdcs['dcno'] . "' class='uploadInvoiceFile' name='uploadInvoiceFile' value='uploadInvoice'>
-            </form>" . $Invoice;
-
-
-        $CommercialInvoice = "";
-        $ind = 0;
-        foreach ($CommercialInvoiceFilePath as $CommercialInvoiceFile) {
-
-
-
-            if (strpos($CommercialInvoiceFile, $rowdcs['dcno']) != False) {
-
-                $ind++;
-                if (strpos($CommercialInvoiceFile, "deleted") != False)
-                    $CommercialInvoice .= '<br /><a target = "_blank" class="btn btn-danger col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $CommercialInvoiceFile . '">Attachment' . $ind . "</a>";
-
-                else
-                    $CommercialInvoice .= '<br /><a target = "_blank" class="btn btn-primary col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $CommercialInvoiceFile . '">Attachment' . $ind . "</a> <input type='button' id='removeFile' data-basepath='" . $CommercialInvoiceFile . "'  data-orderno='" . $rowdcs['dcno'] . "' class='btn btn-danger removeFile' name='removeFile' value='X'>";
-            }
-            /*                $commercialinvoicelist[$rowdcs['dcno']] = "<form id='attachmentForm' action='' enctype='multipart/form-data' method='post'>
-            <input type='hidden' name='FormID' value=' " . $_SESSION['FormID'] . " ' />
-            <input type='file' id='attachInvoiceFile" . $rowdcs['dcno'] . "' data-orderno='" . $rowdcs['dcno'] . "' class='attachInvoiceFile' name='Invoice'>
-            <input type='button' id='uploadInvoiceFile' data-orderno='" . $rowdcs['dcno'] . "' class='uploadInvoiceFile' name='uploadInvoiceFile' value='uploadInvoice'>
-            </form>" . $CommercialInvoice;*/
-        }
-        $commercialinvoicelist[$rowdcs['dcno']] = "<form id='attachmentForm' action='' enctype='multipart/form-data' method='post'>
-            <input type='hidden' name='FormID' value=' " . $_SESSION['FormID'] . " ' />
-            <input type='file' id='attachCommercialInvoiceFile" . $rowdcs['dcno'] . "' data-orderno='" . $rowdcs['dcno'] . "' class='attachCommercialInvoiceFile' name='CommercialInvoice'>
-            <input type='button' id='uploadCommercialnvoiceFile' data-orderno='" . $rowdcs['dcno'] . "' class='uploadCommercialInvoiceFile' name='uploadCommercialInvoiceFile' value='uploadCommercialInvoice'>
-            </form>" . $CommercialInvoice;
-
-        $GRB = "";
-        $ind = 0;
-        foreach ($GRBFilePath as $GRBFile) {
-
-
-
-            if (strpos($GRBFile, $rowdcs['dcno']) != False) {
-
-                $ind++;
-                if (strpos($GRBFile, "deleted") != False)
-                    $GRB .= '<br /><a target = "_blank" class="btn btn-danger col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $GRBFile . '">Attachment' . $ind . "</a>";
-
-                else
-                    $GRB .= '<br /><a target = "_blank" class="btn btn-primary col-md-12" style="margin:5px 0" href = "' . $RootPath . '/' . $GRBFile . '">Attachment' . $ind . "</a> <input type='button' id='removeFile' data-basepath='" . $GRBFile . "'  data-orderno='" . $rowdcs['dcno'] . "' class='btn btn-danger removeFile' name='removeFile' value='X'>";
-            }
-        }
-        $grblist[$rowdcs['dcno']] = "<form id='attachmentForm' action='' enctype='multipart/form-data' method='post'>
-            <input type='hidden' name='FormID' value=' " . $_SESSION['FormID'] . " ' />
-            <input type='file' id='attachGRBFile" . $rowdcs['dcno'] . "' data-orderno='" . $rowdcs['dcno'] . "' class='attachGRBFile' name='GRB'>
-            <input type='button' id='uploadGRBFile' data-orderno='" . $rowdcs['dcno'] . "' class='uploadGRBFile' name='uploadGRBFile' value='uploadGRB'>
-            </form>" . $GRB;
-    }
-
-
-    if (!userHasPermission($db, "show_all_dcs_attachments")) {
-        $SQL = 'SELECT dcs.orderno as dcno,dcs.orddate as date,dcs.salescaseref,debtorsmaster.name as client
-        ,debtorsmaster.dba,dcs.invoicegroupid,
-        dcs.dcstatus FROM dcs INNER JOIN debtorsmaster on debtorsmaster.debtorno=dcs.debtorno
-		WHERE dcs.orderno IN (SELECT dcs.orderno as dcno FROM dcs 
-		INNER JOIN salescase ON dcs.salescaseref=salescase.salescaseref
-		 INNER JOIN www_users ON salescase.salesman = www_users.realname
-		  WHERE www_users.userid
-		   IN (SELECT salescase_permissions.can_access FROM salescase_permissions
-		    WHERE salescase_permissions.user = "' . $_SESSION['UserID'] . '"' . ')) AND
-		dcs.orddate >= "' . $from . '"' . '
-		AND dcs.orddate <= "' . $to . '"' . '
-		';
-    } else {
-        $SQL = 'SELECT dcs.orderno as dcno,dcs.orddate as date,dcs.salescaseref,debtorsmaster.name as client,debtorsmaster.dba,dcs.invoicegroupid,
-        dcs.dcstatus FROM dcs INNER JOIN debtorsmaster on debtorsmaster.debtorno=dcs.debtorno
-		WHERE dcs.orddate >= "' . $from . '"' . '
-		AND dcs.orddate <= "' . $to . '"' . '
-		';
-    }
-    $res = mysqli_query($db, $SQL);
-    $response = [];
-
-
-    while ($row = mysqli_fetch_assoc($res)) {
-
-        $response[$row['dcno']] = $row;
-
-
-        $response[$row['dcno']]['grblist'] = $grbarray[$row['dcno']];
-        $response[$row['dcno']]['invoicelist'] = $invoicearray[$row['dcno']];
-
-        $checked = (($row['dcstatus'] != "") ? $row['dcstatus'] : "");
-
-        $response[$row['dcno']]['sendtoinvoice'] = (($checked == "") ? "
-                <input type='checkbox' id='booked' data-orderno='" . $row['id'] . "' class='booked' name='booked' $checked value=1>
-            
-                " : $row['dcstatus']);
-
-        $checked = (($row['dcstatus'] != "") ? $row['dcstatus'] : "");
-
-        $response[$row['dcno']]['dcinvoiced'] = (($checked == "") ? "
-                <input type='checkbox' id='booked' data-orderno='" . $row['id'] . "' class='booked' name='booked' $checked value=1>
-                
-                " : $row['dcstatus']);
-        $response[$row['dcno']]['polist'] = $polist[$row['dcno']];
-        $response[$row['dcno']]['couriersliplist'] = $couriersliplist[$row['dcno']];
-        $response[$row['dcno']]['oldgrblist'] = $grblist[$row['dcno']];
-        $response[$row['dcno']]['oldinvoicelist'] = $invoicelist[$row['dcno']];
-        $response[$row['dcno']]['oldcommercialinvoicelist'] = $commercialinvoicelist[$row['dcno']];
-    }
-    $data = [];
-    foreach ($response as $key => $value) {
-        $data[] = $value;
-    }
-
-    echo json_encode($data);
-    return;
+    exit;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -281,6 +25,8 @@ if (isset($_POST['to'])) {
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         .date {
@@ -303,10 +49,9 @@ if (isset($_POST['to'])) {
         .page-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px 0;
+            padding: 30px 0;
             margin-bottom: 30px;
             border-radius: 0 0 8px 8px;
-            text-align: center;
         }
         .btn-custom {
             background: #667eea;
@@ -317,6 +62,27 @@ if (isset($_POST['to'])) {
         .btn-custom:hover {
             background: #764ba2;
             color: white;
+        }
+        .btn-file {
+            background: #28a745;
+            color: white;
+        }
+        .btn-file:hover {
+            background: #218838;
+            color: white;
+        }
+        .file-section {
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+        .file-section h6 {
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            color: #495057;
         }
         
         /* Fix for DataTable width */
@@ -330,60 +96,32 @@ if (isset($_POST['to'])) {
         .dataTables_scroll {
             width: 100% !important;
         }
-        .dataTables_scrollHead {
-            width: 100% !important;
-        }
-        .dataTables_scrollHeadInner {
-            width: 100% !important;
-        }
-        .dataTables_scrollHeadInner table {
-            width: 100% !important;
-        }
-        .dataTables_scrollBody {
-            width: 100% !important;
-        }
         
-        /* Make table cells wrap content properly */
-        #datatable td {
-            white-space: normal !important;
-            word-wrap: break-word;
-        }
-        
-        /* Ensure the container uses full width */
-        .container-fluid {
-            padding-left: 15px;
-            padding-right: 15px;
-        }
-        
-        /* Make the table responsive with horizontal scroll */
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-        
-        /* Center the header content */
-        .header-content {
-            text-align: center;
-            width: 100%;
-        }
-        
-        /* Center the filter section */
-        .filter-section {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
         }
     </style>
 </head>
 <body>
+    <!-- Alert Container for Notifications -->
+    <div class="alert-container"></div>
+
     <div class="container-fluid p-0">
-        <!-- Header Section - Centered -->
+        <!-- Header Section -->
         <div class="page-header">
             <div class="container-fluid">
-                <div class="header-content">
-                    <h1 class="display-4 fw-bold">Manage DC Attachments</h1>
-                    <p class="lead mb-0 mt-3">Document management for delivery challans</p>
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-5 fw-bold">Manage DC Attachments</h1>
+                        <p class="lead mb-0">Document management for delivery challans</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-light text-dark fs-6">Professional Dashboard</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -394,20 +132,24 @@ if (isset($_POST['to'])) {
                 <div class="row mb-4">
                     <div class="col-md-12">
                         <div class="card">
-                            <div class="card-header bg-light text-center">
+                            <div class="card-header bg-light">
                                 <h5 class="card-title mb-0">Filter Data</h5>
                             </div>
                             <div class="card-body">
-                                <div class="filter-section">
-                                    <div class="d-flex align-items-center">
-                                        <label class="col-form-label fw-bold me-2">FROM</label>
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-auto">
+                                        <label class="col-form-label fw-bold">FROM</label>
+                                    </div>
+                                    <div class="col-auto">
                                         <input type="date" class="form-control date fromDate">
                                     </div>
-                                    <div class="d-flex align-items-center">
-                                        <label class="col-form-label fw-bold me-2">TO</label>
+                                    <div class="col-auto">
+                                        <label class="col-form-label fw-bold">TO</label>
+                                    </div>
+                                    <div class="col-auto">
                                         <input type="date" class="form-control date toDate">
                                     </div>
-                                    <div>
+                                    <div class="col-auto">
                                         <button class="btn btn-success btn-custom searchData">
                                             <i class="fas fa-search me-2"></i>Search Data
                                         </button>
@@ -432,13 +174,7 @@ if (isset($_POST['to'])) {
                                         <th>DBA</th>
                                         <th>DC Internal</th>
                                         <th>DC External</th>
-                                        <th>Purchase Order</th>
-                                        <th>Courier Slip</th>
-                                        <th>Tax Invoice</th>
-                                        <th>Commercial Invoice</th>
-                                        <th>GRB</th>
-                                        <th>System Invoice</th>
-                                        <th>System GRB</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tfoot class="table-dark">
@@ -450,18 +186,35 @@ if (isset($_POST['to'])) {
                                         <th>DBA</th>
                                         <th>DC Internal</th>
                                         <th>DC External</th>
-                                        <th>Purchase Order</th>
-                                        <th>Courier Slip</th>
-                                        <th>Tax Invoice</th>
-                                        <th>Commercial Invoice</th>
-                                        <th>GRB</th>
-                                        <th>System Invoice</th>
-                                        <th>System GRB</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Details Modal -->
+    <div class="modal fade" id="fileModal" tabindex="-1" aria-labelledby="fileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fileModalLabel">File Attachments - DC: <span id="modalDcNo"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="fileModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading file attachments...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -479,6 +232,26 @@ if (isset($_POST['to'])) {
     <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
 
     <script>
+        // Utility function to show alerts
+        function showAlert(message, type = 'danger') {
+            const alertContainer = $('.alert-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHtml = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertContainer.append(alertHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                $('#' + alertId).alert('close');
+            }, 5000);
+        }
+
         $(document).ready(function() {
             let table = $('#datatable').DataTable({
                 <?php if (userHasPermission($db, "show_dc_attachments_csv")): ?>
@@ -497,49 +270,41 @@ if (isset($_POST['to'])) {
                 columns: [
                     {"data": "dcno"},
                     {"data": "date"},
-                    {"data": "salescaseref"},
-                    {"data": "client"},
-                    {"data": "dba"},
-                    {"data": "dcno"},
-                    {"data": "dcno"},
-                    {"data": "polist"},
-                    {"data": "couriersliplist"},
-                    {"data": "oldinvoicelist"},
-                    {"data": "oldcommercialinvoicelist"},
-                    {"data": "oldgrblist"},
-                    {"data": "invoicelist"},
-                    {"data": "grblist"},
-                ],
-                "columnDefs": [
                     {
+                        "data": "salescaseref",
                         "render": function(data, type, row) {
                             return '<a href="../salescase/salescaseview.php?salescaseref=' + data + '" target="_blank" class="text-decoration-none">' + data + '</a>';
-                        },
-                        "targets": [2]
+                        }
                     },
+                    {"data": "client"},
+                    {"data": "dba"},
                     {
+                        "data": "dcno",
                         "render": function(data, type, row) {
                             return '<a target="_blank" href="../PDFDCh.php?DCNo=' + data + '" class="text-decoration-none">' + data + '</a>';
-                        },
-                        "targets": [5]
+                        }
                     },
                     {
+                        "data": "dcno",
                         "render": function(data, type, row) {
                             return '<a target="_blank" href="../PDFDChExternal.php?DCNo=' + data + '" class="text-decoration-none">' + data + '</a>';
-                        },
-                        "targets": [6]
+                        }
+                    },
+                    {
+                        "data": "dcno",
+                        "render": function(data, type, row) {
+                            return '<button class="btn btn-primary btn-sm view-files" data-dcno="' + data + '" title="View File Attachments">' +
+                                   '<i class="fas fa-paperclip me-1"></i>Files</button>';
+                        }
                     }
                 ],
                 initComplete: function() {
                     // Apply the search
                     this.api().columns().every(function() {
                         var that = this;
-                        
                         $('input', this.footer()).on('keyup change clear', function() {
                             if (that.search() !== this.value) {
-                                that
-                                    .search(this.value)
-                                    .draw();
+                                that.search(this.value).draw();
                             }
                         });
                     });
@@ -552,135 +317,169 @@ if (isset($_POST['to'])) {
                 $(this).html('<input type="text" placeholder="Search ' + title + '" data-index="' + i + '" class="form-control form-control-sm" />');
             });
 
-            // All your existing JavaScript functionality remains exactly the same
-            $('#datatable').on('click', '.uploadPOFile', function() {
-                var ref = $(this);
-                var orderno = $(this).attr('data-orderno');
-                var fd = new FormData();
-                var files = $('#attachPOFile' + orderno)[0].files[0];
-                fd.append('PO', files);
-                fd.append('orderno', orderno);
-
+            // View files button click
+            $(document).on('click', '.view-files', function() {
+                var dcno = $(this).data('dcno');
+                $('#modalDcNo').text(dcno);
+                $('#fileModalBody').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div><p>Loading file attachments...</p></div>');
+                
+                // Show modal immediately
+                $('#fileModal').modal('show');
+                
                 $.ajax({
-                    url: 'api/uploadPOFile.php',
-                    type: 'post',
-                    data: fd,
-                    contentType: false,
-                    processData: false,
-                    success: function(res) {
-                        if (res) {
-                            ref.parent().parent().html(res);
-                        } else {
-                            alert('file not uploaded');
-                        }
+                    url: 'api_get_dc_files.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        dcno: dcno,
+                        FormID: '<?php echo $_SESSION['FormID']; ?>'
                     },
-                });
-            });
-
-            // Continue with all your existing JavaScript event handlers...
-            $('#datatable').on('click', '.uploadCourierSlipFile', function() {
-                var ref = $(this);
-                var orderno = $(this).attr('data-orderno');
-                var fd = new FormData();
-                var files = $('#attachCourierSlipFile' + orderno)[0].files[0];
-                fd.append('CourierSlip', files);
-                fd.append('orderno', orderno);
-
-                $.ajax({
-                    url: 'api/uploadCourierSlipFile.php',
-                    type: 'post',
-                    data: fd,
-                    contentType: false,
-                    processData: false,
-                    success: function(res) {
-                        if (res) {
-                            ref.parent().parent().html(res);
-                        } else {
-                            alert('file not uploaded');
+                    success: function(response) {
+                        console.log('API Response:', response);
+                        
+                        if (response.error) {
+                            throw new Error(response.error);
                         }
+                        
+                        if (!response.success) {
+                            throw new Error('Failed to load files');
+                        }
+                        
+                        var html = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="file-section">
+                                        <h6><i class="fas fa-file-pdf text-danger me-2"></i>Purchase Orders</h6>
+                                        ${response.polist || 'No files found'}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="file-section">
+                                        <h6><i class="fas fa-truck text-warning me-2"></i>Courier Slips</h6>
+                                        ${response.couriersliplist || 'No files found'}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="file-section">
+                                        <h6><i class="fas fa-receipt text-success me-2"></i>Tax Invoices</h6>
+                                        ${response.oldinvoicelist || 'No files found'}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="file-section">
+                                        <h6><i class="fas fa-file-invoice-dollar text-info me-2"></i>Commercial Invoices</h6>
+                                        ${response.oldcommercialinvoicelist || 'No files found'}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="file-section">
+                                        <h6><i class="fas fa-clipboard-check text-primary me-2"></i>GRB Files</h6>
+                                        ${response.oldgrblist || 'No files found'}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="file-section">
+                                        <h6><i class="fas fa-cogs text-secondary me-2"></i>System Documents</h6>
+                                        <strong>Invoices:</strong><br>${response.invoicelist || 'No invoices found'}<br><br>
+                                        <strong>GRB:</strong><br>${response.grblist || 'No GRB found'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        $('#fileModalBody').html(html);
                     },
-                });
-            });
-
-            $('#datatable').on('click', '.uploadInvoiceFile', function() {
-                var ref = $(this);
-                var orderno = $(this).attr('data-orderno');
-                var fd = new FormData();
-                var files = $('#attachInvoiceFile' + orderno)[0].files[0];
-                fd.append('Invoice', files);
-                fd.append('orderno', orderno);
-
-                $.ajax({
-                    url: 'api/uploadInvoiceFile.php',
-                    type: 'post',
-                    data: fd,
-                    contentType: false,
-                    processData: false,
-                    success: function(res) {
-                        if (res) {
-                            ref.parent().parent().html(res);
-                        } else {
-                            alert('file not uploaded');
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        console.log('XHR Response:', xhr.responseText);
+                        
+                        let errorMessage = 'Unable to load files. ';
+                        
+                        if (xhr.responseText) {
+                            try {
+                                const errorResponse = JSON.parse(xhr.responseText);
+                                if (errorResponse.error) {
+                                    errorMessage = errorResponse.error;
+                                }
+                            } catch (e) {
+                                if (xhr.responseText.includes('<!DOCTYPE') || xhr.responseText.includes('<html')) {
+                                    errorMessage = 'Server returned an error page. Please check your session and try again.';
+                                } else {
+                                    errorMessage = 'Server error: ' + xhr.responseText.substring(0, 100);
+                                }
+                            }
                         }
-                    },
-                });
-            });
-
-            $('#datatable').on('click', '.uploadCommercialInvoiceFile', function() {
-                var ref = $(this);
-                var orderno = $(this).attr('data-orderno');
-                var fd = new FormData();
-                var files = $('#attachCommercialInvoiceFile' + orderno)[0].files[0];
-                fd.append('CommercialInvoice', files);
-                fd.append('orderno', orderno);
-
-                $.ajax({
-                    url: 'api/uploadCommercialInvoiceFile.php',
-                    type: 'post',
-                    data: fd,
-                    contentType: false,
-                    processData: false,
-                    success: function(res) {
-                        if (res) {
-                            ref.parent().parent().html(res);
-                        } else {
-                            alert('file not uploaded');
-                        }
-                    },
-                });
-            });
-
-            $('#datatable').on('click', '.uploadGRBFile', function() {
-                var ref = $(this);
-                var orderno = $(this).attr('data-orderno');
-                var fd = new FormData();
-                var files = $('#attachGRBFile' + orderno)[0].files[0];
-                fd.append('GRB', files);
-                fd.append('orderno', orderno);
-
-                $.ajax({
-                    url: 'api/uploadGRBFile.php',
-                    type: 'post',
-                    data: fd,
-                    contentType: false,
-                    processData: false,
-                    success: function(res) {
-                        if (res) {
-                            ref.parent().parent().html(res);
-                        } else {
-                            alert('file not uploaded');
-                        }
+                        
+                        $('#fileModalBody').html(`
+                            <div class="alert alert-danger">
+                                <h5>Error Loading Files</h5>
+                                <p>${errorMessage}</p>
+                                <div class="mt-3">
+                                    <button class="btn btn-warning btn-sm" onclick="$('.view-files[data-dcno=\"${dcno}\"]').click()">
+                                        <i class="fas fa-redo me-1"></i>Try Again
+                                    </button>
+                                </div>
+                            </div>
+                        `);
                     }
                 });
             });
 
-            $('#datatable').on('click', '.removeFile', function() {
-                var ref = $(this);
-                var basepath = $(this).attr('data-basepath');
-                var orderno = $(this).attr('data-orderno');
+            // File upload functionality
+            $(document).on('click', '.uploadPOFile, .uploadCourierSlipFile, .uploadInvoiceFile, .uploadCommercialInvoiceFile, .uploadGRBFile', function() {
+                var button = $(this);
+                var orderno = button.data('orderno');
+                var fileType = button.attr('class').match(/upload(\w+)File/)[1];
+                var fd = new FormData();
+                var fileInput = $('#attach' + fileType + 'File' + orderno)[0];
+                
+                if (!fileInput || fileInput.files.length === 0) {
+                    showAlert('Please select a file first');
+                    return;
+                }
+                
+                fd.append(fileType, fileInput.files[0]);
+                fd.append('orderno', orderno);
+                fd.append('FormID', '<?php echo $_SESSION['FormID']; ?>');
+
+                button.prop('disabled', true).text('Uploading...');
+                
+                $.ajax({
+                    url: 'api/upload' + fileType + 'File.php',
+                    type: 'post',
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function(res) {
+                        button.prop('disabled', false).text('Upload');
+                        if (res) {
+                            showAlert('File uploaded successfully', 'success');
+                            // Refresh the file modal content
+                            $('.view-files[data-dcno="' + orderno + '"]').click();
+                        } else {
+                            showAlert('File upload failed');
+                        }
+                    },
+                    error: function() {
+                        button.prop('disabled', false).text('Upload');
+                        showAlert('File upload failed');
+                    }
+                });
+            });
+
+            // Remove file functionality
+            $(document).on('click', '.removeFile', function() {
+                var button = $(this);
+                var basepath = button.data('basepath');
+                var orderno = button.data('orderno');
+                
+                if (!confirm('Are you sure you want to delete this file?')) {
+                    return;
+                }
+
                 var fd = new FormData();
                 fd.append('basepath', basepath);
                 fd.append('orderno', orderno);
+                fd.append('FormID', '<?php echo $_SESSION['FormID']; ?>');
 
                 $.ajax({
                     url: 'api/removeFile.php',
@@ -690,29 +489,69 @@ if (isset($_POST['to'])) {
                     processData: false,
                     success: function(res) {
                         if (res) {
-                            ref.prev().css("background-color", "red");
-                            ref.remove();
+                            showAlert('File deleted successfully', 'success');
+                            // Refresh the file modal content
+                            $('.view-files[data-dcno="' + orderno + '"]').click();
                         } else {
-                            alert('file not uploaded');
+                            showAlert('File deletion failed');
                         }
                     },
+                    error: function() {
+                        showAlert('File deletion failed');
+                    }
                 });
             });
 
+            // Search data
             $(".searchData").on("click", function() {
                 let from = $(".fromDate").val();
                 let to = $(".toDate").val();
                 let FormID = '<?php echo $_SESSION['FormID']; ?>';
 
+                if (!from || !to) {
+                    showAlert('Please select both from and to dates');
+                    return;
+                }
+
+                $(".searchData").prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Searching...');
                 table.clear().draw();
-                $("tbody tr td").html("<h3>Generating results — hang on a moment 🔍</h3>");
-                $.post("dcattachments.php", {
-                    from,
-                    to,
-                    FormID
-                }, function(res, status) {
-                    res = JSON.parse(res);
-                    table.rows.add(res).draw();
+                
+                $.ajax({
+                    url: "api_get_dc_list.php",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        from: from,
+                        to: to,
+                        FormID: FormID
+                    },
+                    success: function(response) {
+                        $(".searchData").prop('disabled', false).html('<i class="fas fa-search me-2"></i>Search Data');
+                        
+                        if (response.error) {
+                            throw new Error(response.error);
+                        }
+                        
+                        table.rows.add(response).draw();
+                        showAlert('Data loaded successfully', 'success');
+                    },
+                    error: function(xhr, status, error) {
+                        $(".searchData").prop('disabled', false).html('<i class="fas fa-search me-2"></i>Search Data');
+                        
+                        let errorMessage = 'Error loading data: ' + error;
+                        if (xhr.responseText) {
+                            try {
+                                const errorResponse = JSON.parse(xhr.responseText);
+                                if (errorResponse.error) {
+                                    errorMessage = errorResponse.error;
+                                }
+                            } catch (e) {
+                                // Ignore parsing errors
+                            }
+                        }
+                        
+                        showAlert(errorMessage);
+                    }
                 });
             });
         });
