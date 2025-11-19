@@ -140,10 +140,10 @@ $SQL = "INSERT INTO estimateshopsale(orderno, debtorno, branchcode, orddate, pay
 					'" . $discount . "','" . $showTotalOption . "','" . $_SESSION['UsersRealName'] . "','" . htmlentities($dispatched, ENT_QUOTES) . "','" . $customer['ref'] . "','" . $paid . "','" . $discountPKR . "',0,'$dueDays','$expectedDays')";
 
 if (!mysqli_query($conn, $SQL)) {
-
     $response = [
         'status' => 'error',
-        'message' => $SQL
+        'message' => 'Database error: ' . mysqli_error($conn),
+        'sql_query' => $SQL // Optional: include the SQL for debugging
     ];
 
     echo json_encode($response);
