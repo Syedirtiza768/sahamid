@@ -639,7 +639,7 @@
                 let uom = $(this).find("select").not(".delivery-status").val() || "";
 
                 // Delivery Status select
-                let deliveryStatus = $(this).find(".delivery-status").val() || "Instant";
+                let deliveryStatus = $(this).find(".delivery-status").val() || "Ex-Stock";
 
                 if (pass) {
                     if (quantity <= 0) {
