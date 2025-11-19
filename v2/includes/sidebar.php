@@ -745,7 +745,7 @@
               </a>
             </li>
           <?php } ?>
-          <!-- <?php
+          <?php
           if (userHasPermission($db, 'create_shop_sale')) {
           ?>
             <li>
@@ -762,7 +762,7 @@
                 <i class="fa fa-plus"></i> Estimate List
               </a>
             </li>
-          <?php } ?> -->
+          <?php } ?>
           <?php
           if (userHasPermission($db, 'cashDrawer')) {
           ?>
