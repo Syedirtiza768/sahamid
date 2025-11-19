@@ -143,7 +143,7 @@ if (!mysqli_query($conn, $SQL)) {
 
     $response = [
         'status' => 'error',
-        'message' => 'Bill Creation Failed'
+        'message' => $SQL
     ];
 
     echo json_encode($response);
