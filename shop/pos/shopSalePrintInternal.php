@@ -275,7 +275,7 @@ if (mysqli_num_rows($res) == 1) {
 					if ($sale['payment'] == "csv") {
 						echo "CS-" . $sale['orderno'];
 					} elseif ($sale['payment'] == "estimate") {
-						echo "ESTIMATE-" . $sale['orderno'];
+						echo "ESTIMATE-" . $sale['id'];
 					} else {
 						echo "CR-" . $sale['orderno'];
 					}

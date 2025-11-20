@@ -15,7 +15,7 @@ if (!isset($orderNo) || $orderNo == "") {
 	exit;
 }
 
-$SQL = "SELECT * FROM estimateshopsale WHERE orderno=$orderNo AND complete=0";
+$SQL = "SELECT * FROM estimateshopsale WHERE orderno = $orderNo AND complete =0";
 $res = mysqli_query($db, $SQL);
 
 if (mysqli_num_rows($res) != 1) {
