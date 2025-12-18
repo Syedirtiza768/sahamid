@@ -161,12 +161,42 @@
 				AND stockid='".$stockid."'";
 		DB_query($SQL, $db);
 		
-		$SQL = "UPDATE `ogpmporef` 
-				SET quantity=(quantity-$quantity_received)
-				WHERE salesman='".$salesperson."'
-				AND stockid='".$stockid."'
-				AND mpo = '". $parchi ."'";
-		DB_query($SQL, $db);
+		// $SQL = "UPDATE `ogpmporef` 
+		// 		SET quantity=(quantity-$quantity_received)
+		// 		WHERE salesman='".$salesperson."'
+		// 		AND stockid='".$stockid."'
+		// 		AND mpo = '". $parchi ."'";
+		// DB_query($SQL, $db);
+
+		// 1. First, get the sum of all quantities for this salesman/stockid/mpo combination
+	$sumSQL = "SELECT SUM(quantity) as total_quantity 
+           FROM ogpmporef 
+           WHERE salesman = '" . $salesperson . "'
+             AND stockid = '" . $stockid . "'
+             AND mpo = '" . $parchi . "'
+			 AND quantity IS NOT NULL
+			AND quantity > 0";
+	$sumResult = DB_query($sumSQL, $db);
+	$sumRow = DB_fetch_array($sumResult);
+	$totalQuantity = $sumRow['total_quantity'];
+
+	// Handle NULL case (if no records found)
+	if ($totalQuantity === null) {
+		$totalQuantity = 0;
+	}
+
+	// 2. Calculate the new quantity after deduction
+	$newQuantity = $totalQuantity - $quantity_received;
+
+	// 3. Set all existing records to NULL first
+	$nullifySQL = "UPDATE ogpmporef 
+               SET quantity = NULL 
+               WHERE salesman = '" . $salesperson . "'
+                 AND stockid = '" . $stockid . "'
+                 AND mpo = '" . $parchi . "'
+				 AND quantity IS NOT NULL
+			AND quantity > 0";
+	DB_query($nullifySQL, $db);
 		
         $SQL = "SELECT locstock.quantity FROM locstock
 						WHERE locstock.stockid='".$stockid."' 

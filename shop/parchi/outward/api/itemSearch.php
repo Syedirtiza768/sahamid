@@ -39,6 +39,8 @@ if (mysqli_num_rows($result1) > 0) {
 			AND stockmaster.mbflag <>'G'
 			AND ogpmporef.salesman = '$obo'
 			AND ogpmporef.mpo = '$parchi'
+			AND ogpmporef.quantity IS NOT NULL
+			AND ogpmporef.quantity > 0
 			AND stockissuance.salesperson='$obo'
 			AND stockmaster.discontinued=0
 			AND stockissuance.issued > 0
