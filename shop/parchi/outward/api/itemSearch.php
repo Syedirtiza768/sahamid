@@ -1,15 +1,15 @@
 <?php
 
-	$PathPrefix='../../../../';
-	include('../../../../includes/session.inc');
-	include('../../../../includes/SQL_CommonFunctions.inc');
+$PathPrefix = '../../../../';
+include('../../../../includes/session.inc');
+include('../../../../includes/SQL_CommonFunctions.inc');
 
-	$SearchString = '%' . $_POST['term'] . '%';
-	$selectedItem = $_POST['itemIndex'];
-	$parchi = $_POST['parchi'];
-	$obo = $_POST['obo'];
+$SearchString = '%' . $_POST['term'] . '%';
+$selectedItem = $_POST['itemIndex'];
+$parchi = $_POST['parchi'];
+$obo = $_POST['obo'];
 
-	$SQL = "SELECT stockid FROM ogpmporef 
+$SQL = "SELECT stockid FROM ogpmporef 
 			WHERE salesman='" . $obo . "'";
 $result1 = mysqli_query($db, $SQL);
 if (mysqli_num_rows($result1) > 0) {
@@ -18,7 +18,7 @@ if (mysqli_num_rows($result1) > 0) {
 		$searchid = "'" . $row1['stockid'] . "'" . ',' . $searchid;
 	}
 	$searchid = substr_replace($searchid, "", -1);
-	$SQL = "SELECT  stockmaster.stockid,
+	$SQL = "SELECT stockmaster.stockid,
 					stockmaster.mnfcode,
 					stockmaster.mnfpno,
 					stockmaster.description,
@@ -52,16 +52,16 @@ if (mysqli_num_rows($result1) > 0) {
 
 	$response = [];
 
-	while($row = mysqli_fetch_assoc($res)){
-		$row['action'] = "<button class='btn btn-success' onclick='attachSKU(\"".$selectedItem."\",\"".$row['stockid']."\")'>Attach</button>";
+	while ($row = mysqli_fetch_assoc($res)) {
+		$row['action'] = "<button class='btn btn-success' onclick='attachSKU(\"" . $selectedItem . "\",\"" . $row['stockid'] . "\")'>Attach</button>";
 		$response[] = $row;
 	}
 
 	echo json_encode([
-			'status' => 'success',
-			'data'	 => $response
-		]);
-	}
+		'status' => 'success',
+		'data'	 => $response
+	]);
+}
 	// else{
 	// 	$SQL = "SELECT  stockmaster.stockid,
 	// 				stockmaster.mnfcode,

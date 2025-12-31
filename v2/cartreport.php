@@ -326,7 +326,7 @@ WHERE
     echo json_encode($resFinal);
     return;
 }
-$sql2 = "SELECT      stockissuance.salesperson,
+$sql2 = "SELECT stockissuance.salesperson,
                     SUM(stockissuance.issued*stockmaster.materialcost) as totalValue
 						
 					FROM stockissuance,
@@ -556,7 +556,7 @@ include_once("includes/sidebar.php");
             <div class="request-body">
 
                 <?php while ($clients = mysqli_fetch_assoc($res2)) { ?>
-                    <div class="client" data-client="<?php echo $clients['salesperson']; ?>">
+                        <div class="client" data-client="<?php echo abs($clients['salesperson']); ?>"></div>
                         <span><?php echo $clients['salesperson']; ?></span>
 
                     </div>
