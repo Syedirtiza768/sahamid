@@ -85,25 +85,25 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
         // Check if 'issued' is greater than 0
         if ($row['issued'] > 0) {
             $response[$row['stockid']] = $row;
-    
+
             // Check and set the discount value
             if (isset($responsediscount[$row['stockid']]['discount']) && $responsediscount[$row['stockid']]['discount'] > 0) {
                 $response[$row['stockid']]['discount'] = round($responsediscount[$row['stockid']]['discount'] * 100, 2);
             } else {
                 $response[$row['stockid']]['discount'] = 50; // Default discount if none exists or if <= 0
             }
-    
+
             // Calculate total value
             $response[$row['stockid']]['totalValue'] = $row['issued'] * $row['materialcost'] * (1 - ($response[$row['stockid']]['discount'] / 100));
-            
+
             // Add to the total sum
             $sum += $response[$row['stockid']]['totalValue'];
-            
+
             // Format the total value using locale_number_format
             $response[$row['stockid']]['totalValue'] = locale_number_format($response[$row['stockid']]['totalValue']);
         }
     }
-    
+
 
 
 
@@ -556,7 +556,15 @@ include_once("includes/sidebar.php");
             <div class="request-body">
 
                 <?php while ($clients = mysqli_fetch_assoc($res2)) { ?>
-                        <div class="client" data-client="<?php echo abs($clients['salesperson']); ?>"></div>
+                    <!-- <div class="client" data-client="<?php echo $clients['salesperson']; ?>"> -->
+                    <div class="client" data-client="<?php
+                                                        $value = (int)$clients['salesperson'];
+                                                        if ($value < 0) {
+                                                            $value = $value * -1;
+                                                        }
+                                                        echo $value;
+                                                        ?>">
+
                         <span><?php echo $clients['salesperson']; ?></span>
 
                     </div>
