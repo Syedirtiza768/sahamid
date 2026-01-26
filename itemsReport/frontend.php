@@ -544,26 +544,37 @@ include("includes/session.inc");
     <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
 
     <script>
-$(document).ready(function() {
-    let allData = [];
-    let currentFilter = 'non-zero';
+        $(document).ready(function() {
+            let allData = [];
+            let currentFilter = 'non-zero';
+            let isCalculatingPrices = false;
 
-    // ✅ Number format function
-    function numberFormat(number) {
-        if (number === null || number === undefined || isNaN(number)) return '0.00';
-        return parseFloat(number).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    }
+            // ✅ Number format function
+            function numberFormat(number) {
+                if (number === null || number === undefined || isNaN(number)) return '0.00';
+                return parseFloat(number).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            }
 
-    // ✅ Notification show function
-    function showNotification(message, type) {
-        $('.alert-dismissible').remove();
-        
-        const alertClass = type === 'success' ? 'alert-success' : 
-                          type === 'error' ? 'alert-danger' : 'alert-info';
-        const icon = type === 'success' ? 'fa-check-circle' : 
+            // ✅ Calculate total quantity function
+            function calculateTotalQty(row) {
+                return (parseInt(row.qtyHO) || 0) +
+                    (parseInt(row.qtyMT) || 0) +
+                    (parseInt(row.qtySR) || 0) +
+                    (parseInt(row.qtyOS) || 0) +
+                    (parseInt(row.qtyVSR) || 0) +
+                    (parseInt(row.qtyWS) || 0);
+            }
+
+            // ✅ Notification function
+            function showNotification(message, type) {
+                $('.alert-dismissible').remove();
+
+                const alertClass = type === 'success' ? 'alert-success' :
+                    type === 'error' ? 'alert-danger' : 'alert-info';
+                const icon = type === 'success' ? 'fa-check-circle' :
                     type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
-        
-        const alertHtml = `
+
+                const alertHtml = `
             <div class="alert ${alertClass} alert-dismissible fade show m-4" role="alert" 
                  style="border-radius: 8px; position: fixed; top: 100px; right: 20px; z-index: 9999; min-width: 300px;">
                 <i class="fas ${icon} mr-2"></i> ${message}
@@ -572,564 +583,368 @@ $(document).ready(function() {
                 </button>
             </div>
         `;
-        
-        $('body').append(alertHtml);
-        
-        setTimeout(() => {
-            $('.alert').alert('close');
-        }, 3000);
-    }
 
-    // ✅ Calculate total quantity function
-    function calculateTotalQty(row) {
-        return (parseInt(row.qtyHO) || 0) +
-            (parseInt(row.qtyMT) || 0) +
-            (parseInt(row.qtySR) || 0) +
-            (parseInt(row.qtyOS) || 0) +
-            (parseInt(row.qtyVSR) || 0) +
-            (parseInt(row.qtyWS) || 0);
-    }
+                $('body').append(alertHtml);
 
-    var datatable = $('#datatable').DataTable({
-        dom: '<"row"<"col-sm-12 text-center"B>>' +
-            '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-            '<"row"<"col-sm-12"tr>>' +
-            '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-        buttons: [{
-            extend: 'csv',
-            className: 'btn btn-professional',
-            text: '<i class="fas fa-download mr-2"></i> Download CSV Report',
-            action: function(e, dt, button, config) {
-                const filterParam = currentFilter ? `&filter=${currentFilter}` : '';
-                window.location.href = 'export.php?export=csv' + filterParam;
+                setTimeout(() => {
+                    $('.alert').alert('close');
+                }, 3000);
             }
-        }],
-        lengthMenu: [
-            [10, 25, 50, 100],
-            ["10", "25", "50", "100"]
-        ],
-        pageLength: 10,
-        order: [
-            [0, 'asc']
-        ],
-        language: {
-            search: "",
-            searchPlaceholder: "Search products, brands, categories...",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-            infoEmpty: "No records available",
-            zeroRecords: "No matching records found"
-        },
-        columns: [{
-                data: "stockid",
-                className: "font-weight-bold",
-                render: function(data, type, row) {
-                    return `<a href="javascript:void(0)" class="stock-id-link" 
-                             title="${data}">
-                            ${data}
-                        </a>`;
-                }
-            },
-            {
-                data: "manufacturers_name",
-                className: "text-dark"
-            },
-            {
-                data: "categorydescription",
-                className: "text-muted"
-            },
-            {
-                data: "abbreviation",
-                className: "text-warning font-weight-bold"
-            },
-            {
-                data: null,
-                className: "font-weight-bold",
-                render: function(data, type, row) {
-                    const totalQty = calculateTotalQty(row);
-                    if (totalQty > 0) {
-                        return '<span class="badge total-qty badge-stock">' + totalQty + '</span>';
-                    } else {
-                        return '<span class="badge zero-qty badge-stock">0</span>';
+
+            var datatable = $('#datatable').DataTable({
+                dom: '<"row"<"col-sm-12 text-center"B>>' +
+                    '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                    '<"row"<"col-sm-12"tr>>' +
+                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                buttons: [{
+                    extend: 'csv',
+                    className: 'btn btn-professional',
+                    text: '<i class="fas fa-download mr-2"></i> Download CSV Report',
+                    action: function(e, dt, button, config) {
+                        const filterParam = currentFilter ? `&filter=${currentFilter}` : '';
+                        window.location.href = 'export.php?export=csv' + filterParam;
                     }
-                }
-            },
-            // ✅ TOTAL PRICE COLUMN (Column 5)
-            {
-                data: null,
-                className: "text-success font-weight-bold",
-                render: function(data, type, row) {
-                    // Agar price already calculate hua hai
-                    if (row.total_bpitems_price !== undefined && row.total_bpitems_price !== null) {
-                        if (row.total_bpitems_price > 0) {
-                            return `
+                }],
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    ["10", "25", "50", "100"]
+                ],
+                pageLength: 10,
+                order: [
+                    [0, 'asc']
+                ],
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search products, brands, categories...",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "No records available",
+                    zeroRecords: "No matching records found"
+                },
+                columns: [{
+                        data: "stockid",
+                        className: "font-weight-bold",
+                        render: function(data, type, row) {
+                                    return `<a href="../SelectProduct.php?Select=${data}" class="stock-id-link" 
+                                    title="${data}" target="_blank">
+                                    ${data}
+                                    </a>`;
+                        }
+                    },
+                    {
+                        data: "manufacturers_name",
+                        className: "text-dark"
+                    },
+                    {
+                        data: "categorydescription",
+                        className: "text-muted"
+                    },
+                    {
+                        data: "abbreviation",
+                        className: "text-warning font-weight-bold"
+                    },
+                    {
+                        data: null,
+                        className: "font-weight-bold",
+                        render: function(data, type, row) {
+                            const totalQty = calculateTotalQty(row);
+                            if (totalQty > 0) {
+                                return '<span class="badge total-qty badge-stock">' + totalQty + '</span>';
+                            } else {
+                                return '<span class="badge zero-qty badge-stock">0</span>';
+                            }
+                        }
+                    },
+                    // ✅ TOTAL PRICE COLUMN - Shows calculated price directly
+                    {
+                        data: "total_bpitems_price",
+                        className: "text-success font-weight-bold",
+                        render: function(data, type, row) {
+                            const totalQty = calculateTotalQty(row);
+
+                            if (totalQty > 0) {
+                                if (data > 0) {
+                                    return `
                                 <div class="price-result">
-                                    <span class="text-success">PKR ${numberFormat(row.total_bpitems_price)}</span>
+                                    <span class="text-success">PKR ${numberFormat(data)}</span>
                                     <br>
                                     <small class="text-muted">
-                                        for ${row.total_quantity || 0} units
+                                        for ${row.total_quantity || totalQty} units
                                     </small>
                                 </div>`;
-                        } else {
-                            // ✅ Agar zero ho
-                            return `
+                                } else {
+                                    // If price is 0 but has quantity
+                                    return `
                                 <div class="price-result">
                                     <span class="text-muted">PKR 0.00</span>
                                     <br>
                                     <small class="text-muted">
-                                        No price available
+                                        No parchino data
                                     </small>
                                 </div>`;
+                                }
+                            } else {
+                                // Zero quantity
+                                return `
+                            <div class="price-result">
+                                <span class="text-muted">PKR 0.00</span>
+                                <br>
+                                <small class="text-muted">
+                                    Out of stock
+                                </small>
+                            </div>`;
+                            }
                         }
-                    }
-                    
-                    // ✅ Agar price nahi hai to BUTTON show karen
-                    const totalQty = calculateTotalQty(row);
-                    return `
-                        <button type="button" class="btn btn-sm btn-eye-calculate" 
-                                data-stockid="${row.stockid}"
-                                data-totalqty="${totalQty}">
-                            <i class="fas fa-eye mr-1"></i> Calculate
-                        </button>
-                    `;
-                }
-            },
-            // ✅ UNIT PRICE COLUMN (Column 6)
-            {
-                data: null,
-                className: "text-info font-weight-bold",
-                render: function(data, type, row) {
-                    // Agar price already calculate hua hai
-                    if (row.weighted_unit_price !== undefined && row.weighted_unit_price !== null) {
-                        if (row.weighted_unit_price > 0) {
-                            return `
+                    },
+                    // ✅ UNIT PRICE COLUMN - Shows calculated price directly
+                    {
+                        data: "weighted_unit_price",
+                        className: "text-info font-weight-bold",
+                        render: function(data, type, row) {
+                            const totalQty = calculateTotalQty(row);
+
+                            if (totalQty > 0) {
+                                if (data > 0) {
+                                    return `
                                 <div class="price-result">
-                                    <span class="text-info">PKR ${numberFormat(row.weighted_unit_price)}</span>
+                                    <span class="text-info">PKR ${numberFormat(data)}</span>
                                     <br>
                                     <small class="text-muted">
                                         weighted average
                                     </small>
                                 </div>`;
-                        } else {
-                            // ✅ Agar zero ho
-                            return `
+                                } else {
+                                    return `
                                 <div class="price-result">
                                     <span class="text-muted">PKR 0.00</span>
                                     <br>
                                     <small class="text-muted">
-                                        N/A
+                                        No parchino data
                                     </small>
                                 </div>`;
+                                }
+                            } else {
+                                return `
+                            <div class="price-result">
+                                <span class="text-muted">PKR 0.00</span>
+                                <br>
+                                <small class="text-muted">
+                                    Out of stock
+                                </small>
+                            </div>`;
+                            }
+                        }
+                    },
+                    {
+                        data: "materialcost",
+                        className: "text-danger font-weight-bold",
+                        render: function(data) {
+                            return data > 0 ? 'PKR  ' + numberFormat(data) : '<span class="text-muted">PKR 0.00</span>';
                         }
                     }
-                    
-                    // ✅ Agar price nahi hai to BUTTON show karen
-                    const totalQty = calculateTotalQty(row);
-                    return `
-                        <button type="button" class="btn btn-sm btn-eye-calculate" 
-                                data-stockid="${row.stockid}"
-                                data-totalqty="${totalQty}">
-                            <i class="fas fa-eye mr-1"></i> Calculate
-                        </button>
-                    `;
+                ],
+                initComplete: function() {
+                    loadData();
                 }
-            },
-            {
-                data: "materialcost",
-                className: "text-danger font-weight-bold",
-                render: function(data) {
-                    return data ? 'PKR  ' + parseFloat(data).toFixed(2) : '<span class="text-muted">PKR 0.00</span>';
+            });
+
+            // Quantity filter button handlers
+            $('.qty-filter-btn').on('click', function() {
+                const filter = $(this).data('filter');
+                const filterText = getFilterText(filter);
+
+                showFilterLoading(filterText);
+                $('.qty-filter-btn').addClass('loading');
+
+                setTimeout(() => {
+                    $('.qty-filter-btn').removeClass('active');
+                    $(this).addClass('active');
+                    applyQuantityFilter(filter);
+                    $('.qty-filter-btn').removeClass('loading');
+                }, 300);
+            });
+
+            function getFilterText(filter) {
+                switch (filter) {
+                    case 'non-zero':
+                        return 'Filtering In Stock Items...';
+                    case 'zero':
+                        return 'Filtering Out of Stock Items...';
+                    case 'both':
+                        return 'Showing All Items...';
+                    default:
+                        return 'Applying Filter...';
                 }
             }
-        ],
-        initComplete: function() {
-            loadData();
-        }
-    });
 
-    // ✅ Eye button listeners function
-    function attachEyeButtonListeners() {
-        $(document).off('click', '.btn-eye-calculate');
-        
-        $(document).on('click', '.btn-eye-calculate', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const button = $(this);
-            const stockid = button.data('stockid');
-            const totalQty = button.data('totalqty');
-            const cell = button.closest('td');
-            const isTotalPriceColumn = cell.index() === 5;
-            
-            console.log("Button clicked for:", stockid);
-            
-            // Button ko loading state mein dalen
-            const originalHtml = button.html();
-            button.html('<i class="fas fa-spinner fa-spin mr-1"></i> Calculating...');
-            button.prop('disabled', true);
-            
-            // AJAX call karen
-            $.ajax({
-                type: 'POST',
-                url: 'calculate_price.php',
-                data: {
-                    stockid: stockid,
-                    quantity: totalQty || 1
-                },
-                dataType: 'json',
-                // AJAX success handler mein:
-
-success: function(response) {
-    // ✅ Response mein 'data' property check karen
-    const priceData = response.data || {
-        total_price: 0.00,
-        unit_price: 0.00,
-        allocated_quantity: 0,
-        requested_quantity: 0
-    };
-    
-    // ✅ Success ka check
-    if (response.success === true) {
-        // ✅ Button ki jagah PRICE show karen DIRECTLY
-        const cell = button.closest('td');
-        
-        if (priceData.total_price > 0) {
-            // Agar price aya hai
-            if (isTotalPriceColumn) {
-                cell.html(`
-                    <div class="price-result">
-                        <span class="text-success">PKR ${numberFormat(priceData.total_price)}</span>
-                        <br>
-                        <small class="text-muted">
-                            for ${priceData.allocated_quantity} units
-                        </small>
-                    </div>
-                `);
-            } else {
-                cell.html(`
-                    <div class="price-result">
-                        <span class="text-info">PKR ${numberFormat(priceData.unit_price)}</span>
-                        <br>
-                        <small class="text-muted">
-                            weighted average
-                        </small>
-                    </div>
-                `);
+            function showFilterLoading(message) {
+                $('#filterLoadingText').text(message);
+                $('#filterLoadingOverlay').fadeIn(300);
             }
-            
-            showNotification(`Price calculated for ${stockid}: PKR ${numberFormat(priceData.total_price)}`, 'success');
-        } else {
-            // ✅ Agar zero price ho
-            cell.html(`
-                <div class="price-result">
-                    <span class="text-muted">PKR 0.00</span>
-                    <br>
-                    <small class="text-muted">
-                        ${response.message || 'No price found'}
-                    </small>
-                </div>
-            `);
-            showNotification(`${response.message || 'No price found for'} ${stockid}`, 'info');
-        }
-        
-        // ✅ Dono columns update karen ek saath
-        updateBothPriceColumns(stockid, priceData);
-        
-    } else {
-        // ✅ Agar success false ho lekin data aya ho
-        const cell = button.closest('td');
-        cell.html(`
-            <div class="price-result">
-                <span class="text-danger">PKR 0.00</span>
-                <br>
-                <small class="text-muted">
-                    ${response.message || 'Calculation failed'}
-                </small>
+
+            function hideFilterLoading() {
+                $('#filterLoadingOverlay').fadeOut(300);
+            }
+
+            // Update loadData() function:
+            function loadData() {
+                isCalculatingPrices = true;
+
+                // Show enhanced loading screen
+                $('#loadingOverlay').html(`
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+            <h5 class="text-muted">Calculating Prices for All Products</h5>
+            <div class="progress mt-3" style="height: 20px;">
+                <div id="loadingProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%">0%</div>
             </div>
-        `);
-        
-        // ✅ Phir bhi columns ko zero se update karen
-        updateBothPriceColumns(stockid, priceData);
-        
-        showNotification(`${response.message || 'Calculation failed for'} ${stockid}`, 'error');
-    }
-},
-error: function(xhr, status, error) {
-    console.error('AJAX Error:', error);
-    const cell = button.closest('td');
-    cell.html(`
-        <div class="price-result">
-            <span class="text-danger">PKR 0.00</span>
-            <br>
-            <small class="text-muted">
-                Server error
-            </small>
+            <p class="text-muted mt-2" id="loadingStatus">
+                Processing 45,000+ products with parchi data...
+            </p>
+            <small class="text-muted">This may take 30-60 seconds</small>
         </div>
-    `);
-    
-    // ✅ Error mein bhi zero values se update karen
-    updateBothPriceColumns(stockid, {
-        total_price: 0.00,
-        unit_price: 0.00,
-        allocated_quantity: 0,
-        requested_quantity: 0
-    });
-    
-    showNotification('Calculation failed. Please try again.', 'error');
-}
+    `).fadeIn(300);
+
+                $.ajax({
+                    type: 'GET',
+                    url: 'index.php',
+                    dataType: "json",
+                    success: function(response) {
+                        isCalculatingPrices = false;
+
+                        if (response.status === 'success' && response.data) {
+                            allData = response.data;
+                            updateStatistics(allData);
+                            applyQuantityFilter(currentFilter);
+
+                            const itemsWithPrice = allData.filter(item => item.total_bpitems_price > 0).length;
+                            showNotification(`✅ Loaded ${response.count} products with prices (${itemsWithPrice} have parchino data)`, 'success');
+
+                            $('#loadingOverlay').fadeOut(300);
+                        } else {
+                            showNotification('Error: ' + (response.error || 'Unable to load data'), 'error');
+                            $('#loadingOverlay').fadeOut(300);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        isCalculatingPrices = false;
+                        $('#loadingOverlay').fadeOut(300);
+
+                        let errorMsg = 'Failed to load data. ';
+                        if (status === 'timeout') {
+                            errorMsg = 'Request took too long. Try refreshing or use the nightly pre-calculated option.';
+                        } else if (status === 'parsererror') {
+                            errorMsg = 'Memory error. Try the nightly pre-calculated option for better performance.';
+                        } else if (xhr.status === 500) {
+                            errorMsg = 'Server memory limit exceeded. Please use the nightly calculation option.';
+                        } else {
+                            errorMsg += 'Please check your connection.';
+                        }
+
+                        showNotification(errorMsg, 'error');
+
+                        // Suggest alternative
+                        setTimeout(() => {
+                            if (confirm('Large dataset detected. Would you like to use pre-calculated nightly prices instead?')) {
+                                window.location.href = '?use_cached=1';
+                            }
+                        }, 2000);
+                    }
+                });
+            }
+
+            function applyQuantityFilter(filter) {
+                currentFilter = filter;
+                let filteredData = [];
+
+                switch (filter) {
+                    case 'non-zero':
+                        filteredData = allData.filter(item => calculateTotalQty(item) > 0);
+                        break;
+                    case 'zero':
+                        filteredData = allData.filter(item => calculateTotalQty(item) === 0);
+                        break;
+                    case 'both':
+                        filteredData = allData;
+                        break;
+                }
+
+                // Show filtered results
+                datatable.clear();
+                datatable.rows.add(filteredData).draw();
+                updateFilterCounts();
+                hideFilterLoading();
+
+                // Show filter summary
+                const priceItems = filteredData.filter(item => item.total_bpitems_price > 0).length;
+                showNotification(`Filter applied: ${getFilterSuccessText(filter)} (${filteredData.length} items, ${priceItems} with prices)`, 'success');
+            }
+
+            function getFilterSuccessText(filter) {
+                switch (filter) {
+                    case 'non-zero':
+                        return 'In Stock Items';
+                    case 'zero':
+                        return 'Out of Stock Items';
+                    case 'both':
+                        return 'All Items';
+                    default:
+                        return 'Filtered Items';
+                }
+            }
+
+            function updateFilterCounts() {
+                const nonZeroCount = allData.filter(item => calculateTotalQty(item) > 0).length;
+                const zeroCount = allData.filter(item => calculateTotalQty(item) === 0).length;
+                const bothCount = allData.length;
+
+                $('#nonZeroCount').text(nonZeroCount);
+                $('#zeroCount').text(zeroCount);
+                $('#bothCount').text(bothCount);
+            }
+
+            function updateStatistics(data) {
+                $('#totalProducts').text(data.length);
+
+                const brands = [...new Set(data.map(item => item.manufacturers_name))];
+                const categories = [...new Set(data.map(item => item.categorydescription))];
+                const inStockItems = data.filter(item => calculateTotalQty(item) > 0).length;
+
+                // Calculate total value from pre-calculated prices
+                const totalBPItemsPrice = data.reduce((sum, item) => {
+                    return sum + (item.total_bpitems_price || 0);
+                }, 0);
+
+                const itemsWithPrice = data.filter(item => item.total_bpitems_price > 0).length;
+                const avgUnitPrice = itemsWithPrice > 0 ?
+                    data.reduce((sum, item) => sum + (item.weighted_unit_price || 0), 0) / itemsWithPrice :
+                    0;
+
+                $('#totalBrands').text(brands.length);
+                $('#totalCategories').text(categories.length);
+                $('#inStockItems').text(inStockItems);
+
+                // Update stats display
+                if ($('#totalBPItemsPrice').length) {
+                    $('#totalBPItemsPrice').text('PKR ' + numberFormat(totalBPItemsPrice));
+                }
+                if ($('#avgUnitPrice').length) {
+                    $('#avgUnitPrice').text('PKR ' + numberFormat(avgUnitPrice));
+                }
+                if ($('#itemsWithPrice').length) {
+                    $('#itemsWithPrice').text(itemsWithPrice);
+                }
+
+                updateFilterCounts();
+            }
+
+            // Add refresh button functionality
+            $(document).on('click', '#refreshData', function() {
+                loadData();
             });
         });
-    }
-
-    // ✅ Dono price columns ek saath update karne ka function
-    function updateBothPriceColumns(stockid, priceData) {
-        const table = $('#datatable').DataTable();
-        let rowUpdated = false;
-        
-        table.rows().every(function(rowIdx) {
-            const rowData = this.data();
-            
-            if (rowData.stockid === stockid) {
-                rowUpdated = true;
-                
-                // ✅ Total Price column update karen (column index 5)
-                const totalPriceCell = table.cell(rowIdx, 5);
-                if (priceData.total_price > 0) {
-                    totalPriceCell.node().innerHTML = `
-                        <div class="price-result">
-                            <span class="text-success">PKR ${numberFormat(priceData.total_price)}</span>
-                            <br>
-                            <small class="text-muted">
-                                for ${priceData.allocated_quantity} units
-                            </small>
-                        </div>
-                    `;
-                } else {
-                    totalPriceCell.node().innerHTML = `
-                        <div class="price-result">
-                            <span class="text-muted">PKR 0.00</span>
-                            <br>
-                            <small class="text-muted">
-                                No price found
-                            </small>
-                        </div>
-                    `;
-                }
-                
-                // ✅ Unit Price column update karen (column index 6)
-                const unitPriceCell = table.cell(rowIdx, 6);
-                if (priceData.unit_price > 0) {
-                    unitPriceCell.node().innerHTML = `
-                        <div class="price-result">
-                            <span class="text-info">PKR ${numberFormat(priceData.unit_price)}</span>
-                            <br>
-                            <small class="text-muted">
-                                weighted average
-                            </small>
-                        </div>
-                    `;
-                } else {
-                    unitPriceCell.node().innerHTML = `
-                        <div class="price-result">
-                            <span class="text-muted">PKR 0.00</span>
-                            <br>
-                            <small class="text-muted">
-                                N/A
-                            </small>
-                        </div>
-                    `;
-                }
-                
-                // ✅ Data bhi update karen
-                rowData.total_bpitems_price = priceData.total_price;
-                rowData.weighted_unit_price = priceData.unit_price;
-                rowData.total_quantity = priceData.allocated_quantity;
-                this.data(rowData);
-                
-                // ✅ AllData array update karen
-                allData = allData.map(item => {
-                    if (item.stockid === stockid) {
-                        item.total_bpitems_price = priceData.total_price;
-                        item.weighted_unit_price = priceData.unit_price;
-                        item.total_quantity = priceData.allocated_quantity;
-                    }
-                    return item;
-                });
-                
-                return false; // Loop break karen
-            }
-        });
-        
-        table.draw(false);
-        return rowUpdated;
-    }
-
-    // Quantity filter button handlers
-    $('.qty-filter-btn').on('click', function() {
-        const filter = $(this).data('filter');
-        const filterText = getFilterText(filter);
-
-        showFilterLoading(filterText);
-        $('.qty-filter-btn').addClass('loading');
-
-        setTimeout(() => {
-            $('.qty-filter-btn').removeClass('active');
-            $(this).addClass('active');
-            applyQuantityFilter(filter);
-            $('.qty-filter-btn').removeClass('loading');
-        }, 300);
-    });
-
-    function getFilterText(filter) {
-        switch (filter) {
-            case 'non-zero': return 'Loading In Stock Items...';
-            case 'zero': return 'Loading Out of Stock Items...';
-            case 'both': return 'Loading All Items...';
-            default: return 'Applying Filter...';
-        }
-    }
-
-    function showFilterLoading(message) {
-        $('#filterLoadingText').text(message);
-        $('#filterLoadingOverlay').fadeIn(300);
-    }
-
-    function hideFilterLoading() {
-        $('#filterLoadingOverlay').fadeOut(300);
-    }
-
-    function loadData() {
-        $.ajax({
-            type: 'GET',
-            url: 'index.php',
-            dataType: "json",
-            success: function(response) {
-                console.log('Data loaded:', response);
-                
-                $('#loadingOverlay').fadeOut(300);
-                if (response.status === 'success' && response.data) {
-                    allData = response.data;
-                    updateStatistics(allData);
-                    applyQuantityFilter(currentFilter);
-                    
-                    setTimeout(function() {
-                        attachEyeButtonListeners();
-                    }, 100);
-                    
-                    showNotification('Data loaded successfully! ' + response.count + ' products found.', 'success');
-                } else {
-                    showNotification('Error: Unable to load data from server.', 'error');
-                }
-            },
-            error: function(xhr, status, error) {
-                $('#loadingOverlay').fadeOut(300);
-                let errorMsg = 'Failed to load data. ';
-                if (status === 'timeout') {
-                    errorMsg = 'Request timeout. Please try again.';
-                } else if (status === 'parsererror') {
-                    shouldReload = true;
-                
-                // Log the raw response for debugging
-                console.error('Parser Error - Raw response:', xhr.responseText);
-                } else if (xhr.status === 404) {
-                    errorMsg = 'API endpoint not found.';
-                } else if (xhr.status === 500) {
-                    errorMsg = 'Server error. Please try again later.';
-                } else {
-                    errorMsg += 'Please check your connection.';
-                }
-                
-                showNotification(errorMsg, 'error');
-                if (shouldReload) {
-                setTimeout(function() {
-                    console.log('Reloading page due to error:', status);
-                    location.reload();
-                }, 2000);
-            }
-            }
-        });
-    }
-
-    function applyQuantityFilter(filter) {
-        currentFilter = filter;
-        let filteredData = [];
-
-        switch (filter) {
-            case 'non-zero':
-                filteredData = allData.filter(item => calculateTotalQty(item) > 0);
-                break;
-            case 'zero':
-                filteredData = allData.filter(item => calculateTotalQty(item) === 0);
-                break;
-            case 'both':
-                filteredData = allData;
-                break;
-        }
-
-        setTimeout(() => {
-            datatable.clear();
-            datatable.rows.add(filteredData).draw();
-            updateFilterCounts();
-            hideFilterLoading();
-            
-            // ✅ Filter ke baad listeners re-attach karen
-            setTimeout(function() {
-                attachEyeButtonListeners();
-            }, 100);
-            
-            showNotification(`Filter applied: ${getFilterSuccessText(filter)} (${filteredData.length} items)`, 'success');
-        }, 500);
-    }
-
-    function getFilterSuccessText(filter) {
-        switch (filter) {
-            case 'non-zero': return 'In Stock Items';
-            case 'zero': return 'Out of Stock Items';
-            case 'both': return 'All Items';
-            default: return 'Filtered Items';
-        }
-    }
-
-    function updateFilterCounts() {
-        const nonZeroCount = allData.filter(item => calculateTotalQty(item) > 0).length;
-        const zeroCount = allData.filter(item => calculateTotalQty(item) === 0).length;
-        const bothCount = allData.length;
-
-        $('#nonZeroCount').text(nonZeroCount);
-        $('#zeroCount').text(zeroCount);
-        $('#bothCount').text(bothCount);
-    }
-
-    function updateStatistics(data) {
-        $('#totalProducts').text(data.length);
-
-        const brands = [...new Set(data.map(item => item.manufacturers_name))];
-        const categories = [...new Set(data.map(item => item.categorydescription))];
-        const inStockItems = data.filter(item => calculateTotalQty(item) > 0).length;
-
-        const totalBPItemsPrice = data.reduce((sum, item) => {
-            return sum + (item.total_bpitems_price || 0);
-        }, 0);
-        
-        const avgUnitPrice = data.reduce((sum, item) => {
-            return sum + (item.weighted_unit_price || 0);
-        }, 0) / data.length;
-
-        $('#totalBrands').text(brands.length);
-        $('#totalCategories').text(categories.length);
-        $('#inStockItems').text(inStockItems);
-
-        if ($('#totalBPItemsPrice').length) {
-            $('#totalBPItemsPrice').text('PKR ' + numberFormat(totalBPItemsPrice));
-        }
-        if ($('#avgUnitPrice').length) {
-            $('#avgUnitPrice').text('PKR ' + numberFormat(avgUnitPrice));
-        }
-
-        updateFilterCounts();
-    }
-});
-</script>
+    </script>
 </body>
 
 </html>
