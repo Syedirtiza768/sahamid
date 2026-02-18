@@ -330,30 +330,27 @@ $svs = mysqli_query($db, $SQL);
 				vendor: $("#vendordropdown").val().trim(),
 				obo: $("#obo").val().trim()
 			}, function(res, status) {
-				try {
-					let data = JSON.parse(res);
-					if (data.status == "success") {
-						swal({
-							title: "Success",
-							text: "Bazar Parchi Created Successfully.",
-							type: "success",
-							confirmButtonText: "OK"
-						}).then(function() {
-							location.href = "editInwardParchi.php?parchi=" + data.parchino;
-						});
-						return;
-					} else {
-						swal("Error", data.message, "error");
-						saveButton.prop("disabled", false);
-					}
-				} catch (e) {
-					console.error("JSON Parse Error:", e);
-					console.error("Response:", res);
-					swal("Error", "Something Went wrong. Response: " + res.substring(0, 100), "error");
+				// 'res' is already a JavaScript object because jQuery auto-parses JSON
+				console.log("Response:", res);
+				console.log("Response type:", typeof res);
+
+				if (res.status == "success") {
+					// Use callback pattern instead of .then() for older SweetAlert versions
+					swal({
+						title: "Success",
+						text: "Bazar Parchi Created Successfully.",
+						type: "success",
+						confirmButtonText: "OK"
+					}, function() {
+						location.href = "editInwardParchi.php?parchi=" + res.parchino;
+					});
+				} else {
+					swal("Error", res.message || "Unknown error occurred", "error");
 					saveButton.prop("disabled", false);
 				}
 			}).fail(function(jqXHR, textStatus, errorThrown) {
 				console.error("AJAX Error:", textStatus, errorThrown);
+				console.error("Response Text:", jqXHR.responseText);
 				swal("Error", "Network error occurred. Please try again.", "error");
 				saveButton.prop("disabled", false);
 			});
