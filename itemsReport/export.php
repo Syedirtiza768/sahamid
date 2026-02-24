@@ -16,6 +16,19 @@ $db = getDBConnection();
 // Get the filter parameter with default value
 $filter = isset($_GET['filter']) ? $_GET['filter'] : 'non-zero';
 
+// Get custom prices from URL parameter
+$customPrices = [];
+if (isset($_GET['custom_prices']) && !empty($_GET['custom_prices'])) {
+    try {
+        $customPricesJson = urldecode($_GET['custom_prices']);
+        $customPricesJson = base64_decode($customPricesJson);
+        $customPrices = json_decode($customPricesJson, true) ?: [];
+    } catch (Exception $e) {
+        // If error, just use empty array
+        error_log('Error decoding custom prices: ' . $e->getMessage());
+    }
+}
+
 // Set filename based on filter
 switch($filter) {
     case 'non-zero':
@@ -30,12 +43,17 @@ switch($filter) {
         break;
 }
 
+// Add custom indicator to filename if custom prices exist
+if (!empty($customPrices)) {
+    $filename = str_replace('.csv', '_with_custom_prices.csv', $filename);
+}
+
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=' . $filename);
 
 $output = fopen('php://output', 'w');
 
-// CSV headers - Updated to match your DataTable columns
+// CSV headers - Only raw values, no formatting
 fputcsv($output, [
     'Stock ID',
     'Brand', 
@@ -44,6 +62,8 @@ fputcsv($output, [
     'Total Quantity',
     'Total Price',
     'Unit Price (Weighted Average)',
+    'Adjust Unit Price',      // This is the column users will edit
+    'Qty × Unit Price',
     'List Price'
 ]);
 
@@ -63,7 +83,7 @@ try {
     
     // Process in batches
     for ($offset = 0; $offset < $totalCount; $offset += $batchSize) {
-        // Main product query for this batch - EXACTLY like index.php
+        // Main product query for this batch
         $SQL = "SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
                 lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
                 stockmaster.description
@@ -93,7 +113,7 @@ try {
             continue;
         }
         
-        // Get quantities for this batch - EXACTLY like index.php
+        // Get quantities for this batch
         $quantities = [];
         $stockIdsStr = "'" . implode("','", array_map(function($id) use ($db) {
             return mysqli_real_escape_string($db, $id);
@@ -112,7 +132,7 @@ try {
             mysqli_free_result($res_qty);
         }
         
-        // ✅ CORRECTED: Get parchino data from igp_parchi table (not bpitems)
+        // Get parchino data from igp_parchi table
         $parchinoData = [];
         $SQL_parchinos = "SELECT stockid, quantity, price 
                          FROM igp_parchi 
@@ -141,7 +161,7 @@ try {
             
             $item = $batchRows[$stockid];
             
-            // Add quantities - EXACTLY like index.php
+            // Add quantities
             $totalQty = 0;
             foreach ($locations as $location) {
                 $qty = isset($quantities[$stockid][$location]) ? intval($quantities[$stockid][$location]) : 0;
@@ -150,7 +170,7 @@ try {
             }
             $item['total_qty'] = $totalQty;
             
-            // Calculate price using EXACT same function as index.php
+            // Calculate price
             $priceData = calculatePriceForStock($parchinoData[$stockid] ?? [], $totalQty);
             $item['total_bpitems_price'] = $priceData['total_bpitems_price'];
             $item['weighted_unit_price'] = $priceData['weighted_unit_price'];
@@ -166,7 +186,7 @@ try {
         mysqli_free_result($res);
     }
     
-    // ✅ Apply filter - EXACTLY like frontend
+    // ✅ Apply filter
     $filteredData = [];
     switch($filter) {
         case 'non-zero':
@@ -185,56 +205,41 @@ try {
             break;
     }
 
-    // Helper function to match frontend's numberFormat()
-    function numberFormatPHP($number) {
+    // Helper function for raw numbers (no formatting)
+    function rawNumber($number) {
         if ($number === null || $number === '' || $number === 0) {
-            return '0.00';
+            return '0';
         }
-        return number_format(floatval($number), 2, '.', ',');
+        // Return as plain number without thousands separator
+        return rtrim(rtrim(number_format(floatval($number), 2, '.', ''), '0'), '.');
     }
 
-    // ✅ Output data - EXACTLY matching frontend display logic
+    // ✅ Output data - RAW VALUES ONLY, no PKR, no notes
     foreach ($filteredData as $itemData) {
         $row = $itemData['data'];
         $totalQty = $itemData['totalQty'];
+        $stockId = $row['stockid'];
         
-        // FOR TOTAL PRICE COLUMN - exactly like frontend render function
-        $totalPriceValue = 'PKR 0.00';
-        $totalPriceNote = '';
-        
-        if ($totalQty > 0) {
-            if ($row['total_bpitems_price'] > 0) {
-                $totalPriceValue = 'PKR ' . numberFormatPHP($row['total_bpitems_price']);
-                $totalPriceNote = 'for ' . ($row['total_quantity'] ?: $totalQty) . ' units';
-            } else {
-                $totalPriceValue = 'PKR 0.00';
-                $totalPriceNote = 'No parchino data';
-            }
-        } else {
-            $totalPriceValue = 'PKR 0.00';
-            $totalPriceNote = 'Out of stock';
+        // TOTAL PRICE - raw number only
+        $totalPrice = 0;
+        if ($totalQty > 0 && $row['total_bpitems_price'] > 0) {
+            $totalPrice = $row['total_bpitems_price'];
         }
         
-        // FOR UNIT PRICE COLUMN - exactly like frontend render function
-        $unitPriceValue = 'PKR 0.00';
-        $unitPriceNote = '';
-        
-        if ($totalQty > 0) {
-            if ($row['weighted_unit_price'] > 0) {
-                $unitPriceValue = 'PKR ' . numberFormatPHP($row['weighted_unit_price']);
-                $unitPriceNote = 'weighted average';
-            } else {
-                $unitPriceValue = 'PKR 0.00';
-                $unitPriceNote = 'No parchino data';
-            }
-        } else {
-            $unitPriceValue = 'PKR 0.00';
-            $unitPriceNote = 'Out of stock';
+        // UNIT PRICE - raw number only
+        $unitPrice = 0;
+        if ($totalQty > 0 && $row['weighted_unit_price'] > 0) {
+            $unitPrice = $row['weighted_unit_price'];
         }
         
-        // Combine values and notes (use | separator for CSV)
-        $totalPriceDisplay = $totalPriceValue . ' | ' . $totalPriceNote;
-        $unitPriceDisplay = $unitPriceValue . ' | ' . $unitPriceNote;
+        // ADJUST UNIT PRICE - use custom price if available, otherwise unit price
+        $adjustUnitPrice = isset($customPrices[$stockId]) ? floatval($customPrices[$stockId]) : $unitPrice;
+        
+        // QTY × UNIT PRICE - raw calculation
+        $qtyTimesPrice = $totalQty * $adjustUnitPrice;
+        
+        // LIST PRICE - raw number
+        $listPrice = $row['materialcost'] > 0 ? $row['materialcost'] : 0;
 
         fputcsv($output, [
             $row['stockid'],
@@ -242,16 +247,17 @@ try {
             $row['categorydescription'],
             $row['abbreviation'],
             $totalQty,
-            $totalPriceDisplay,
-            $unitPriceDisplay,
-            $row['materialcost'] > 0 ? 'PKR ' . numberFormatPHP($row['materialcost']) : 'PKR 0.00'
+            rawNumber($totalPrice),
+            rawNumber($unitPrice),
+            rawNumber($adjustUnitPrice),      // This is the column users will edit
+            rawNumber($qtyTimesPrice),
+            rawNumber($listPrice)
         ]);
     }
 
 } catch (Exception $e) {
     // Handle error - output to CSV
     fputcsv($output, ['Error: ' . $e->getMessage()]);
-    fputcsv($output, ['Debug: Check igp_parchi table for price data']);
 }
 
 fclose($output);
