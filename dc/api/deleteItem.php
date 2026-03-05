@@ -218,6 +218,12 @@ if ($quantityStockMovementDC > 0) {
 						'" . $PeriodNo . "','" . $QtyOnHandPrior . "')";
 
 			mysqli_query($db, $SQL);
+
+			//Update stock_status Report Stock Status
+			$update = "UPDATE stock_status 
+           SET latest_trandate = CURDATE() 
+           WHERE stockid = '" . $stockid . "'";
+			DB_query($update, $db);
 		}
 	} else {
 

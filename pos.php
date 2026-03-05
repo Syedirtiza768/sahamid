@@ -376,6 +376,11 @@ if (isset($_POST['Submit']) and $count > 0) {
 					$DbgMsg = _('The following SQL to insert the request header record was used');
 					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				}
+				//Update stock_status Report Stock Status
+				$update = "UPDATE stock_status 
+           SET latest_trandate = CURDATE() 
+           WHERE stockid = '" . $LineItems->StockID . "'";
+				DB_query($update, $db);
 			}
 		}
 
@@ -449,6 +454,11 @@ if (isset($_POST['Submit']) and $count > 0) {
 					$DbgMsg = _('The following SQL to insert the request header record was used');
 					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				}
+				//Update stock_status Report Stock Status
+				$update = "UPDATE stock_status 
+           SET latest_trandate = CURDATE() 
+           WHERE stockid = '" . $LineItems->StockID . "'";
+				DB_query($update, $db);
 			}
 		}
 
@@ -523,6 +533,14 @@ if (isset($_POST['Submit']) and $count > 0) {
 					$DbgMsg = _('The following SQL to insert the request header record was used');
 					DB_query($HeaderSalescaserefSQL, $db, $ErrMsg, $DbgMsg, true);
 				}
+
+				//Update stock_status Report Stock Status
+				$update = "UPDATE stock_status 
+           SET latest_trandate = CURDATE() 
+           WHERE stockid = '" . $LineItems->StockID . "'";
+				DB_query($update, $db);
+
+
 			}
 		}
 
