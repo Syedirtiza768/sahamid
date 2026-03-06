@@ -1433,75 +1433,35 @@ if (!isset($_SESSION['UsersRealName'])) {
                 $('#extremelyDeadCount').text(extremelyDead);
             }
 
-            // ============ DOWNLOAD COMPLETE TEMPLATE ============
+            // ============ DOWNLOAD SIMPLE TEMPLATE (Only Stock ID and Adjust Unit Price) ============
             $('#downloadTemplate').on('click', function() {
-                // Create CSV content with ALL headers matching the table
-                let csvContent = "Stock ID,Brand,Category,Model #,Part #,Total Quantity,Total Price,Unit Price (Weighted Average),Adjust Unit Price,Landing Factor,Adjusted Price After Multiplication,Qty × Adjusted Price,List Price,Stock Status,Last Transaction Date\n";
+                // Create CSV content with ONLY 2 columns: Stock ID and Adjust Unit Price
+                let csvContent = "Stock ID,Adjust Unit Price\n";
 
                 // Add sample rows with stock IDs from actual data (first 20 items)
                 const sampleStockIds = allData.slice(0, 20).map(item => item.stockid);
 
-                // For each sample stock ID, get the complete data
+                // For each sample stock ID, add a row with Stock ID and empty price column
                 sampleStockIds.forEach(stockId => {
                     // Find the complete row data for this stock ID
                     const rowData = allData.find(item => item.stockid === stockId);
                     if (!rowData) return;
 
-                    const totalQty = calculateTotalQty(rowData);
-                    const unitPrice = totalQty > 0 ? parseFloat(rowData.weighted_unit_price) || 0 : 0;
+                    // Get current custom price if exists, otherwise leave empty for user to fill
+                    let currentAdjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : '';
 
-                    // Get current custom price if exists, otherwise use database adjust_unit_price
-                    const currentAdjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] :
-                        (rowData.adjust_unit_price || 0);
+                    // Build CSV row with just Stock ID and Adjust Unit Price
+                    csvContent += `"${stockId}",`;
 
-                    // Get current landing factor if exists, otherwise use database landing_factor
-                    const currentFactor = landingFactors[stockId] !== undefined ? landingFactors[stockId] :
-                        (rowData.landing_factor || 1);
-
-                    // Calculate effective price (unit price if >0, otherwise adjust price)
-                    const effectivePrice = unitPrice > 0 ? unitPrice : currentAdjustPrice;
-
-                    // Calculate adjusted price after multiplication
-                    const adjustedPrice = effectivePrice * currentFactor;
-
-                    // Calculate Qty × Adjusted Price
-                    const qtyTimesAdjustedPrice = totalQty * adjustedPrice;
-
-                    // Total Price
-                    const totalPrice = totalQty > 0 ? parseFloat(rowData.total_bpitems_price) || 0 : 0;
-
-                    // List Price
-                    const listPrice = parseFloat(rowData.materialcost) || 0;
-
-                    // Stock Status and Last Transaction Date
-                    const status = getStockStatus(rowData.latest_trandate);
-                    const lastDate = rowData.latest_trandate ? new Date(rowData.latest_trandate).toLocaleDateString('en-PK') : 'No Stock Record';
-
-                    // Build CSV row with all values
-                    csvContent +=
-                        `"${stockId}",` +
-                        `"${rowData.manufacturers_name || ''}",` +
-                        `"${rowData.categorydescription || ''}",` +
-                        `"${rowData.mnfCode || ''}",` +
-                        `"${rowData.mnfpno || ''}",` +
-                        `${totalQty},` +
-                        `${totalPrice.toFixed(2)},` +
-                        `${unitPrice.toFixed(2)},` +
-                        `${currentAdjustPrice.toFixed(2)},` +
-                        `${currentFactor.toFixed(2)},` +
-                        `${adjustedPrice.toFixed(2)},` +
-                        `${qtyTimesAdjustedPrice.toFixed(2)},` +
-                        `${listPrice.toFixed(2)},` +
-                        `"${status.status}",` +
-                        `"${lastDate}"\n`;
+                    // Add the price if it exists, otherwise leave empty
+                    if (currentAdjustPrice !== '') {
+                        // Ensure it's a number before formatting
+                        const priceNum = parseFloat(currentAdjustPrice) || 0;
+                        csvContent += `${priceNum.toFixed(2)}\n`;
+                    } else {
+                        csvContent += '\n'; // Empty price column
+                    }
                 });
-
-                // Add instructions as comments
-                csvContent += "# INSTRUCTIONS:\n";
-                csvContent += "# 1. Adjust Unit Price: Enter new price (leave blank to keep current)\n";
-                csvContent += "# 2. Landing Factor: Enter multiplier (default 1.00)\n";
-                csvContent += "# 3. All other columns are for reference only - do not modify\n";
-                csvContent += "# 4. When importing, only Stock ID, Adjust Unit Price, and Landing Factor will be processed\n";
 
                 // Create download link
                 const blob = new Blob([csvContent], {
@@ -1511,14 +1471,14 @@ if (!isset($_SESSION['UsersRealName'])) {
                 const url = URL.createObjectURL(blob);
 
                 link.setAttribute('href', url);
-                link.setAttribute('download', 'complete_price_template_' + new Date().toISOString().slice(0, 10) + '.csv');
+                link.setAttribute('download', 'price_template_' + new Date().toISOString().slice(0, 10) + '.csv');
                 link.style.display = 'none';
 
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
-                showNotification('✅ Complete template downloaded with all columns. Fill in Adjust Unit Price and Landing Factor columns and upload.', 'success');
+                showNotification('✅ Simple template downloaded with Stock ID and Adjust Unit Price columns. Fill in the prices and upload.', 'success');
             });
 
             var datatable = $('#datatable').DataTable({
