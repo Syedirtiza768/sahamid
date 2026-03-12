@@ -117,6 +117,18 @@ if (!isset($_SESSION['UsersRealName'])) {
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             border-left: 4px solid var(--secondary);
             margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .stats-card small {
+            font-size: 0.85rem;
+            display: block;
+            margin-top: 5px;
         }
 
         .table th {
@@ -206,6 +218,20 @@ if (!isset($_SESSION['UsersRealName'])) {
 
         .dataTables_wrapper .dt-buttons .btn {
             margin: 0 5px;
+            border-radius: 6px !important;
+            font-weight: 600 !important;
+            padding: 10px 20px !important;
+        }
+
+        .btn-outline-secondary {
+            background: white;
+            border: 2px solid #6c757d;
+            color: #6c757d;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            color: white;
         }
 
         .navbar-brand {
@@ -681,8 +707,9 @@ if (!isset($_SESSION['UsersRealName'])) {
                             <div class="stats-card" style="border-left-color: #28a745;">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="text-muted mb-1">Running</h6>
+                                        <h6 class="text-muted mb-1">Moving</h6>
                                         <h3 class="mb-0 text-success" id="runningCount">-</h3>
+                                        <small class="text-success" id="runningSum"> 0.00</small>
                                     </div>
                                     <i class="fas fa-check-circle text-success fa-2x opacity-50"></i>
                                 </div>
@@ -692,8 +719,9 @@ if (!isset($_SESSION['UsersRealName'])) {
                             <div class="stats-card" style="border-left-color: #ffc107;">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="text-muted mb-1">Slow Running</h6>
+                                        <h6 class="text-muted mb-1">Slow Moving</h6>
                                         <h3 class="mb-0 text-warning" id="slowCount">-</h3>
+                                        <small class="text-warning" id="slowSum"> 0.00</small>
                                     </div>
                                     <i class="fas fa-exclamation-triangle text-warning fa-2x opacity-50"></i>
                                 </div>
@@ -705,6 +733,7 @@ if (!isset($_SESSION['UsersRealName'])) {
                                     <div>
                                         <h6 class="text-muted mb-1">Dead Stock</h6>
                                         <h3 class="mb-0 text-danger" id="deadCount">-</h3>
+                                        <small class="text-danger" id="deadSum"> 0.00</small>
                                     </div>
                                     <i class="fas fa-skull-crossbones text-danger fa-2x opacity-50"></i>
                                 </div>
@@ -716,6 +745,7 @@ if (!isset($_SESSION['UsersRealName'])) {
                                     <div>
                                         <h6 class="text-muted mb-1">Extremely Dead / Never Used</h6>
                                         <h3 class="mb-0 text-dark" id="extremelyDeadCount">-</h3>
+                                        <small class="text-dark" id="extremelyDeadSum"> 0.00</small>
                                     </div>
                                     <i class="fas fa-skull text-dark fa-2x opacity-50"></i>
                                 </div>
@@ -749,40 +779,30 @@ if (!isset($_SESSION['UsersRealName'])) {
                     </div>
 
                     <!-- Import/Export Workflow Zone - SIMPLIFIED to only Simple Template -->
+                    <!-- Import/Export Workflow Zone - UPDATED to accept downloaded CSV -->
                     <div class="row px-4 mb-3">
                         <div class="col-12">
-                            <div class="card border-success">
-                                <div class="card-header bg-success text-white">
-                                    <h5 class="mb-0"><i class="fas fa-sync-alt mr-2"></i>Quick Price Update (Simple Method)</h5>
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-upload mr-2"></i>Update Prices from Downloaded CSV</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="text-center p-3 border-right">
-                                                <span class="badge badge-warning badge-pill p-2 mb-2">Step 1</span>
-                                                <h6><i class="fas fa-file-csv text-warning mr-2"></i>Download Simple Template</h6>
-                                                <p class="text-muted small">Download template with only <strong>Stock ID</strong> and <strong>Adjust Unit Price</strong> columns</p>
-                                                <button type="button" class="btn btn-warning btn-lg" id="downloadTemplate">
-                                                    <i class="fas fa-download mr-2"></i>Download Template CSV
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-12">
                                             <div class="text-center p-3">
-                                                <span class="badge badge-success badge-pill p-2 mb-2">Step 2</span>
-                                                <h6><i class="fas fa-upload text-success mr-2"></i>Import Updated File</h6>
-                                                <p class="text-muted small">Upload your filled CSV file with Stock IDs and their new prices</p>
-                                                <button type="button" class="btn btn-success btn-lg" data-toggle="modal" data-target="#importModal">
-                                                    <i class="fas fa-upload mr-2"></i>Import Updated CSV
+                                                <h6><i class="fas fa-file-csv text-info mr-2"></i>Upload CSV File</h6>
+                                                <p class="text-muted small">Upload the CSV file you downloaded using <strong>"Download CSV Report"</strong> or <strong>"Download All Data"</strong>. Only <strong>Adjust Unit Price</strong> column will be processed.</p>
+                                                <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#importModal">
+                                                    <i class="fas fa-upload mr-2"></i>Upload CSV File
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="row mt-3">
                                         <div class="col-12 text-center">
-                                            <div class="alert alert-info mb-0">
+                                            <div class="alert alert-warning mb-0">
                                                 <i class="fas fa-info-circle mr-2"></i>
-                                                <strong>Format Required:</strong> CSV file must have exactly 2 columns: <code>Stock ID</code> and <code>Adjust Unit Price</code>
+                                                <strong>How it works:</strong> Upload the exact CSV file downloaded from this page. The system will find the <strong>Adjust Unit Price</strong> column and only update rows where the price has changed.
                                             </div>
                                         </div>
                                     </div>
@@ -791,29 +811,29 @@ if (!isset($_SESSION['UsersRealName'])) {
                         </div>
                     </div>
 
-                    <!-- Import Modal - SIMPLIFIED to only show Simple Template Format -->
+                    <!-- Import Modal - UPDATED to handle full downloaded CSV format -->
                     <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg" role="document">
                             <div class="modal-content">
-                                <div class="modal-header bg-success text-white">
+                                <div class="modal-header bg-info text-white">
                                     <h5 class="modal-title" id="importModalLabel">
-                                        <i class="fas fa-upload mr-2"></i>Import Price Update CSV
+                                        <i class="fas fa-upload mr-2"></i>Upload Downloaded CSV File
                                     </h5>
                                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                                         <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="alert alert-warning">
-                                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                                        <strong>Required Format:</strong> Your CSV file must have exactly these 2 columns:
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        <strong>Expected Format:</strong> Upload the CSV file exactly as downloaded from this page (using <strong>"Download CSV Report"</strong> or <strong>"Download All Data"</strong>).
                                     </div>
 
                                     <div class="row mb-3">
                                         <div class="col-md-12">
                                             <div class="card bg-light">
-                                                <div class="card-header bg-warning text-white">
-                                                    <h6 class="mb-0"><i class="fas fa-file-csv mr-2"></i>Required CSV Format</h6>
+                                                <div class="card-header bg-secondary text-white">
+                                                    <h6 class="mb-0"><i class="fas fa-file-csv mr-2"></i>Expected CSV Format (14 columns)</h6>
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="table-responsive">
@@ -821,28 +841,44 @@ if (!isset($_SESSION['UsersRealName'])) {
                                                             <thead class="thead-light">
                                                                 <tr>
                                                                     <th>Stock ID</th>
+                                                                    <th>Brand</th>
+                                                                    <th>Category</th>
+                                                                    <th>Model #</th>
+                                                                    <th>Part #</th>
+                                                                    <th>Qty</th>
+                                                                    <th>Total Price</th>
+                                                                    <th>Unit Price</th>
                                                                     <th class="text-success font-weight-bold">Adjust Unit Price</th>
+                                                                    <th>Landing Factor</th>
+                                                                    <th>Adjusted Price After Multiplication</th>
+                                                                    <th>Qty × Adjusted Price</th>
+                                                                    <th>List Price</th>
+                                                                    <th>Stock Status</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 <tr>
                                                                     <td>ABC123</td>
-                                                                    <td class="text-success font-weight-bold">150.00</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>XYZ789</td>
-                                                                    <td class="text-success font-weight-bold">75.50</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>DEF456</td>
-                                                                    <td class="text-success font-weight-bold">200.00</td>
+                                                                    <td>Brand A</td>
+                                                                    <td>Category X</td>
+                                                                    <td>MODEL1</td>
+                                                                    <td>PART1</td>
+                                                                    <td>10</td>
+                                                                    <td>5,000.00</td>
+                                                                    <td>500.00</td>
+                                                                    <td class="text-success font-weight-bold">550.00</td>
+                                                                    <td>1.00</td>
+                                                                    <td>550.00</td>
+                                                                    <td>5,500.00</td>
+                                                                    <td>600.00</td>
+                                                                    <td>MOVING</td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
                                                     </div>
                                                     <p class="text-muted small mt-2">
                                                         <i class="fas fa-info-circle mr-1"></i>
-                                                        Simple 2-column format. First row must be headers: <strong>Stock ID,Adjust Unit Price</strong>
+                                                        The system will only read <strong>Stock ID</strong> and <strong>Adjust Unit Price</strong> columns. All other columns are ignored.
                                                     </p>
                                                 </div>
                                             </div>
@@ -850,7 +886,7 @@ if (!isset($_SESSION['UsersRealName'])) {
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="csvFile" class="font-weight-bold">Select your filled CSV file:</label>
+                                        <label for="csvFile" class="font-weight-bold">Select your downloaded CSV file:</label>
                                         <div class="custom-file">
                                             <input type="file" class="custom-file-input" id="csvFile" accept=".csv, text/csv">
                                             <label class="custom-file-label" for="csvFile">Choose file...</label>
@@ -891,7 +927,7 @@ if (!isset($_SESSION['UsersRealName'])) {
                                                 </div>
                                                 <div class="col-4">
                                                     <div id="successRows">0</div>
-                                                    <small>Success</small>
+                                                    <small>Updated</small>
                                                 </div>
                                                 <div class="col-4">
                                                     <div id="errorRows">0</div>
@@ -905,12 +941,14 @@ if (!isset($_SESSION['UsersRealName'])) {
                                     <div id="importPreview" style="display: none;">
                                         <hr>
                                         <h6 class="text-primary">Preview of Changes:</h6>
-                                        <div class="table-responsive">
+                                        <div class="table-responsive" style="max-height: 300px;">
                                             <table class="table table-sm table-bordered" id="previewTable">
                                                 <thead class="thead-light">
                                                     <tr>
                                                         <th>Stock ID</th>
-                                                        <th>New Adjust Unit Price</th>
+                                                        <th>Current Adjust Price</th>
+                                                        <th>New Adjust Price</th>
+                                                        <th>Change</th>
                                                         <th>Status</th>
                                                     </tr>
                                                 </thead>
@@ -923,7 +961,7 @@ if (!isset($_SESSION['UsersRealName'])) {
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                         <i class="fas fa-times mr-2"></i>Cancel
                                     </button>
-                                    <button type="button" class="btn btn-success" id="processImport" disabled>
+                                    <button type="button" class="btn btn-info" id="processImport" disabled>
                                         <i class="fas fa-play mr-2"></i>Update Prices from CSV
                                     </button>
                                 </div>
@@ -1051,258 +1089,202 @@ if (!isset($_SESSION['UsersRealName'])) {
     <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
 
     <script>
-        $(document).ready(function() {
-            let allData = [];
-            let currentFilter = 'non-zero';
-            let currentStatusFilter = 'all';
-            let isCalculatingPrices = false;
+    $(document).ready(function() {
+        let allData = [];
+        let currentFilter = 'non-zero';
+        let currentStatusFilter = 'all';
+        let isCalculatingPrices = false;
 
-            // Store custom unit prices - THIS WILL PERSIST ALL CUSTOM PRICES
-            let customUnitPrices = {};
+        // Store custom unit prices - THIS WILL PERSIST ALL CUSTOM PRICES
+        let customUnitPrices = {};
 
-            // Store landing factors - default is 1
-            let landingFactors = {};
+        // Store landing factors - default is 1
+        let landingFactors = {};
 
-            // Track original values from database
-            let originalPrices = {};
-            let originalFactors = {};
+        // Track original values from database
+        let originalPrices = {};
+        let originalFactors = {};
 
-            // Auto-save timeout references
-            let autoSaveTimeout = null;
+        // Auto-save timeout references
+        let autoSaveTimeout = null;
 
-            // Import variables
-            let importStartTime = null;
-            let importTimerInterval = null;
-            let importCancelled = false;
-            let importResults = {
-                success: [],
-                errors: []
+        // Import variables
+        let importStartTime = null;
+        let importTimerInterval = null;
+        let importCancelled = false;
+        let importResults = {
+            success: [],
+            errors: []
+        };
+
+        // ✅ Number format function
+        function numberFormat(number) {
+            if (number === null || number === undefined || isNaN(number)) return '0.00';
+            return parseFloat(number).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        // ✅ Format time function
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ✅ Calculate total quantity function
+        function calculateTotalQty(row) {
+            return (parseInt(row.qtyHO) || 0) +
+                (parseInt(row.qtyMT) || 0) +
+                (parseInt(row.qtySR) || 0) +
+                (parseInt(row.qtyOS) || 0) +
+                (parseInt(row.qtyVSR) || 0) +
+                (parseInt(row.qtyWS) || 0);
+        }
+
+        // ✅ Get stock status based on transaction date
+        function getStockStatus(dateString) {
+            if (!dateString) return {
+                status: 'EXTREMELY DEAD',
+                class: 'badge-dark',
+                icon: 'fa-skull',
+                days: null
             };
 
-            // ✅ Number format function
-            function numberFormat(number) {
-                if (number === null || number === undefined || isNaN(number)) return '0.00';
-                return parseFloat(number).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-            }
+            const today = new Date();
+            const transactionDate = new Date(dateString);
+            const diffTime = Math.abs(today - transactionDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            // ✅ Format time function
-            function formatTime(seconds) {
-                const mins = Math.floor(seconds / 60);
-                const secs = Math.floor(seconds % 60);
-                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            }
-
-            // ✅ Calculate total quantity function
-            function calculateTotalQty(row) {
-                return (parseInt(row.qtyHO) || 0) +
-                    (parseInt(row.qtyMT) || 0) +
-                    (parseInt(row.qtySR) || 0) +
-                    (parseInt(row.qtyOS) || 0) +
-                    (parseInt(row.qtyVSR) || 0) +
-                    (parseInt(row.qtyWS) || 0);
-            }
-
-            // ✅ Get stock status based on transaction date
-            function getStockStatus(dateString) {
-                if (!dateString) return {
+            if (diffDays <= 180) {
+                return {
+                    status: 'MOVING',
+                    class: 'badge-success',
+                    icon: 'fa-check-circle',
+                    days: diffDays
+                };
+            } else if (diffDays > 180 && diffDays <= 360) {
+                return {
+                    status: 'SLOW MOVING',
+                    class: 'badge-warning',
+                    icon: 'fa-exclamation-triangle',
+                    days: diffDays
+                };
+            } else if (diffDays > 360 && diffDays <= 1000) {
+                return {
+                    status: 'DEAD STOCK',
+                    class: 'badge-danger',
+                    icon: 'fa-skull-crossbones',
+                    days: diffDays
+                };
+            } else {
+                return {
                     status: 'EXTREMELY DEAD',
                     class: 'badge-dark',
                     icon: 'fa-skull',
-                    days: null
+                    days: diffDays
                 };
+            }
+        }
 
-                const today = new Date();
-                const transactionDate = new Date(dateString);
-                const diffTime = Math.abs(today - transactionDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // ✅ Format date for tooltip
+        function formatDateTooltip(dateString) {
+            if (!dateString) return 'No transaction history';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-PK', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
 
-                if (diffDays <= 180) {
-                    return {
-                        status: 'RUNNING',
-                        class: 'badge-success',
-                        icon: 'fa-check-circle',
-                        days: diffDays
-                    };
-                } else if (diffDays > 180 && diffDays <= 360) {
-                    return {
-                        status: 'SLOW RUNNING',
-                        class: 'badge-warning',
-                        icon: 'fa-exclamation-triangle',
-                        days: diffDays
-                    };
-                } else if (diffDays > 360 && diffDays <= 1000) {
-                    return {
-                        status: 'DEAD STOCK',
-                        class: 'badge-danger',
-                        icon: 'fa-skull-crossbones',
-                        days: diffDays
-                    };
-                } else {
-                    return {
-                        status: 'EXTREMELY DEAD',
-                        class: 'badge-dark',
-                        icon: 'fa-skull',
-                        days: diffDays
-                    };
+        // ✅ Notification function
+        function showNotification(message, type) {
+            $('.alert-dismissible').remove();
+
+            const alertClass = type === 'success' ? 'alert-success' :
+                type === 'error' ? 'alert-danger' : 'alert-info';
+            const icon = type === 'success' ? 'fa-check-circle' :
+                type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show m-4" role="alert" 
+                     style="border-radius: 8px; position: fixed; top: 100px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <i class="fas ${icon} mr-2"></i> ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+
+            $('body').append(alertHtml);
+
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 3000);
+        }
+
+        // Function to update row calculations directly
+        function updateRowCalculations(stockId) {
+            const rows = datatable.rows().data();
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].stockid === stockId) {
+                    const rowNode = datatable.row(i).node();
+                    const rowData = rows[i];
+                    const totalQty = calculateTotalQty(rowData);
+                    
+                    const unitPrice = parseFloat(rowData.weighted_unit_price) || 0;
+                    const adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
+                    const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
+                    const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+                    const adjustedPrice = effectivePrice * factor;
+                    const qtyTimesAdjustedPrice = totalQty * adjustedPrice;
+                    
+                    // Update Adjusted Price After Multiplication column (index 10)
+                    const adjustedPriceCell = $(rowNode).find('td:eq(10)');
+                    adjustedPriceCell.html(`<span class="text-primary">${numberFormat(adjustedPrice)}</span>`);
+                    
+                    // Update Qty × Adjusted Price column (index 11)
+                    const qtyTimesCell = $(rowNode).find('td:eq(11)');
+                    qtyTimesCell.html(`<span class="text-danger">${numberFormat(qtyTimesAdjustedPrice)}</span>`);
+                    
+                    break;
                 }
             }
+        }
 
-            // ✅ Format date for tooltip
-            function formatDateTooltip(dateString) {
-                if (!dateString) return 'No transaction history';
-                const date = new Date(dateString);
-                return date.toLocaleDateString('en-PK', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+        // AUTO-SAVE FUNCTION - Modified to handle batch saves
+        function autoSaveToDatabase(stockId, field, value, isBatch = false) {
+            if (isBatch) {
+                $.ajax({
+                    type: 'POST',
+                    url: 'save_parchino.php',
+                    data: {
+                        action: 'save_single',
+                        stockid: stockId,
+                        field: field,
+                        value: value
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            if (field === 'adjust_unit_price') {
+                                originalPrices[stockId] = value;
+                            } else if (field === 'landing_factor') {
+                                originalFactors[stockId] = value;
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(`Auto-save error for ${stockId}:`, error);
+                    }
                 });
-            }
-
-            // ✅ Notification function
-            function showNotification(message, type) {
-                $('.alert-dismissible').remove();
-
-                const alertClass = type === 'success' ? 'alert-success' :
-                    type === 'error' ? 'alert-danger' : 'alert-info';
-                const icon = type === 'success' ? 'fa-check-circle' :
-                    type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
-
-                const alertHtml = `
-                    <div class="alert ${alertClass} alert-dismissible fade show m-4" role="alert" 
-                         style="border-radius: 8px; position: fixed; top: 100px; right: 20px; z-index: 9999; min-width: 300px;">
-                        <i class="fas ${icon} mr-2"></i> ${message}
-                        <button type="button" class="close" data-dismiss="alert">
-                            <span>&times;</span>
-                        </button>
-                    </div>
-                `;
-
-                $('body').append(alertHtml);
-
-                setTimeout(() => {
-                    $('.alert').alert('close');
-                }, 3000);
-            }
-
-            // Function to get the effective price for a stock (Unit Price if >0, otherwise Adjust Unit Price)
-            function getEffectivePrice(stockId, row) {
-                // Get the original unit price from the database
-                const unitPrice = parseFloat(row.weighted_unit_price) || 0;
-
-                // If unit price > 0, use it
-                if (unitPrice > 0) {
-                    return unitPrice;
+            } else {
+                if (autoSaveTimeout) {
+                    clearTimeout(autoSaveTimeout);
                 }
 
-                // Otherwise, use adjust unit price if available
-                const adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
-                return parseFloat(adjustPrice) || 0;
-            }
-
-            // Update the updateAdjustedPrice function with fallback logic
-            function updateAdjustedPrice(stockId) {
-                const safeStockId = stockId.replace(/[^a-zA-Z0-9]/g, '_');
-                const cell = $(`#adjusted-price-${safeStockId}`);
-
-                if (cell.length) {
-                    // Find the row data
-                    const rows = datatable.rows().data();
-                    let rowData = null;
-                    for (let i = 0; i < rows.length; i++) {
-                        if (rows[i].stockid === stockId) {
-                            rowData = rows[i];
-                            break;
-                        }
-                    }
-
-                    if (rowData) {
-                        const totalQty = calculateTotalQty(rowData);
-                        const unitPrice = parseFloat(rowData.weighted_unit_price) || 0;
-                        const adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
-
-                        // Get effective price (unit price if >0, otherwise adjust price)
-                        const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-
-                        const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
-                        const adjustedPrice = effectivePrice * factor;
-
-                        if (adjustedPrice > 0) {
-                            let priceSource = unitPrice > 0 ? 'unit' : 'adjust';
-                            cell.html(`
-                                <span class="text-primary font-weight-bold">${numberFormat(adjustedPrice)}</span>
-                                <br>
-                                <small class="text-muted">
-                                    ${numberFormat(effectivePrice)} (${priceSource}) × ${numberFormat(factor)} factor
-                                </small>
-                            `);
-                        } else {
-                            cell.html(`
-                                <span class="text-muted">0.00</span>
-                                <br>
-                                <small class="text-muted">
-                                    No price available
-                                </small>
-                            `);
-                        }
-                    }
-                }
-            }
-
-            // Update the updateQtyTimesAdjustedPrice function with fallback logic
-            function updateQtyTimesAdjustedPrice(stockId, totalQty) {
-                const safeStockId = stockId.replace(/[^a-zA-Z0-9]/g, '_');
-                const cell = $(`#qty-times-adjusted-${safeStockId}`);
-
-                if (cell.length) {
-                    // Find the row data
-                    const rows = datatable.rows().data();
-                    let rowData = null;
-                    for (let i = 0; i < rows.length; i++) {
-                        if (rows[i].stockid === stockId) {
-                            rowData = rows[i];
-                            break;
-                        }
-                    }
-
-                    if (rowData) {
-                        const unitPrice = parseFloat(rowData.weighted_unit_price) || 0;
-                        const adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
-
-                        // Get effective price (unit price if >0, otherwise adjust price)
-                        const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-
-                        const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
-                        const adjustedPrice = effectivePrice * factor;
-                        const qtyTimesAdjustedPrice = totalQty * adjustedPrice;
-
-                        if (totalQty > 0 && effectivePrice > 0) {
-                            let priceSource = unitPrice > 0 ? 'unit' : 'adjust';
-                            cell.html(`
-                                <span class="text-danger font-weight-bold">${numberFormat(qtyTimesAdjustedPrice)}</span>
-                                <br>
-                                <small class="text-muted">
-                                    ${totalQty} units × ${numberFormat(adjustedPrice)} (${priceSource} × factor)
-                                </small>
-                            `);
-                        } else {
-                            cell.html(`
-                                <span class="text-muted">0.00</span>
-                                <br>
-                                <small class="text-muted">
-                                    ${totalQty > 0 ? 'No price available' : 'Out of stock'}
-                                </small>
-                            `);
-                        }
-                    }
-                }
-            }
-
-            // AUTO-SAVE FUNCTION - Modified to handle batch saves
-            function autoSaveToDatabase(stockId, field, value, isBatch = false) {
-                if (isBatch) {
-                    // For batch operations (like CSV import), save immediately without timeout
+                autoSaveTimeout = setTimeout(function() {
                     $.ajax({
                         type: 'POST',
                         url: 'save_parchino.php',
@@ -1315,1339 +1297,1206 @@ if (!isset($_SESSION['UsersRealName'])) {
                         dataType: 'json',
                         success: function(response) {
                             if (response.status === 'success') {
-                                // Update original value
                                 if (field === 'adjust_unit_price') {
                                     originalPrices[stockId] = value;
+                                    showNotification(`✓ Saved price for ${stockId}`, 'success');
                                 } else if (field === 'landing_factor') {
                                     originalFactors[stockId] = value;
+                                    showNotification(`✓ Saved factor for ${stockId}`, 'success');
                                 }
                             } else {
-                                console.error(`Failed to save ${stockId}:`, response.message);
+                                showNotification(`Failed to auto-save: ${response.message}`, 'error');
                             }
                         },
                         error: function(xhr, status, error) {
-                            console.error(`Auto-save error for ${stockId}:`, error);
+                            showNotification(`Auto-save error: ${error}`, 'error');
                         }
                     });
-                } else {
-                    // For manual edits, use timeout to avoid too many requests
-                    if (autoSaveTimeout) {
-                        clearTimeout(autoSaveTimeout);
-                    }
+                }, 1000);
+            }
+        }
 
-                    autoSaveTimeout = setTimeout(function() {
-                        $.ajax({
-                            type: 'POST',
-                            url: 'save_parchino.php',
-                            data: {
-                                action: 'save_single',
-                                stockid: stockId,
-                                field: field,
-                                value: value
-                            },
-                            dataType: 'json',
-                            success: function(response) {
-                                if (response.status === 'success') {
-                                    if (field === 'adjust_unit_price') {
-                                        originalPrices[stockId] = value;
-                                        showNotification(`✓ Saved price for ${stockId}`, 'success');
-                                    } else if (field === 'landing_factor') {
-                                        originalFactors[stockId] = value;
-                                        showNotification(`✓ Saved factor for ${stockId}`, 'success');
-                                    }
-                                } else {
-                                    showNotification(`Failed to auto-save: ${response.message}`, 'error');
-                                }
-                            },
-                            error: function(xhr, status, error) {
-                                showNotification(`Auto-save error: ${error}`, 'error');
+        // Load saved customizations
+        function loadSavedCustomizations() {
+            $.ajax({
+                type: 'GET',
+                url: 'save_parchino.php',
+                data: {
+                    action: 'get'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status === 'success' && response.data) {
+                        Object.keys(response.data).forEach(stockId => {
+                            const data = response.data[stockId];
+                            if (data.adjust_unit_price !== 0) {
+                                customUnitPrices[stockId] = data.adjust_unit_price;
+                                originalPrices[stockId] = data.adjust_unit_price;
+                            }
+                            if (data.landing_factor !== 1) {
+                                landingFactors[stockId] = data.landing_factor;
+                                originalFactors[stockId] = data.landing_factor;
                             }
                         });
-                    }, 1000); // Wait 1 second after user stops typing
+
+                        applyFilters();
+                        showNotification(`Loaded ${Object.keys(response.data).length} saved customizations`, 'success');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to load saved customizations:', error);
                 }
-            }
+            });
+        }
 
-            // Load saved customizations from igp_parchi table on page load
-            function loadSavedCustomizations() {
-                $.ajax({
-                    type: 'GET',
-                    url: 'save_parchino.php',
-                    data: {
-                        action: 'get'
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.status === 'success' && response.data) {
-                            // Update the customUnitPrices and landingFactors objects
-                            Object.keys(response.data).forEach(stockId => {
-                                const data = response.data[stockId];
-                                if (data.adjust_unit_price !== 0) {
-                                    customUnitPrices[stockId] = data.adjust_unit_price;
-                                    originalPrices[stockId] = data.adjust_unit_price;
-                                }
-                                if (data.landing_factor !== 1) {
-                                    landingFactors[stockId] = data.landing_factor;
-                                    originalFactors[stockId] = data.landing_factor;
-                                }
-                            });
+        // Update status statistics with counts and sums
+        function updateStatusStatistics(data) {
+            let running = 0,
+                slow = 0,
+                dead = 0,
+                extremelyDead = 0;
 
-                            // Refresh the display
-                            applyFilters();
-                            showNotification(`Loaded ${Object.keys(response.data).length} saved customizations from igp_parchi`, 'success');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Failed to load saved customizations:', error);
-                    }
-                });
-            }
+            let runningSum = 0,
+                slowSum = 0,
+                deadSum = 0,
+                extremelyDeadSum = 0;
 
-            // Update status statistics
-            function updateStatusStatistics(data) {
-                let running = 0,
-                    slow = 0,
-                    dead = 0,
-                    extremelyDead = 0;
+            data.forEach(item => {
+                const totalQty = calculateTotalQty(item);
+                const status = getStockStatus(item.latest_trandate);
 
-                data.forEach(item => {
-                    const status = getStockStatus(item.latest_trandate);
-                    switch (status.status) {
-                        case 'RUNNING':
-                            running++;
-                            break;
-                        case 'SLOW RUNNING':
-                            slow++;
-                            break;
-                        case 'DEAD STOCK':
-                            dead++;
-                            break;
-                        case 'EXTREMELY DEAD':
+                const unitPrice = parseFloat(item.weighted_unit_price) || 0;
+                const adjustPrice = customUnitPrices[item.stockid] !== undefined ? customUnitPrices[item.stockid] : 0;
+                const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
+                const factor = landingFactors[item.stockid] !== undefined ? landingFactors[item.stockid] : 1;
+                const adjustedPrice = effectivePrice * factor;
+                const adjustedPriceAfterMultiplication = totalQty * adjustedPrice;
+
+                switch (status.status) {
+                    case 'MOVING':
+                        running++;
+                        runningSum += adjustedPriceAfterMultiplication;
+                        break;
+                    case 'SLOW MOVING':
+                        slow++;
+                        slowSum += adjustedPriceAfterMultiplication;
+                        break;
+                    case 'DEAD STOCK':
+                        dead++;
+                        deadSum += adjustedPriceAfterMultiplication;
+                        break;
+                    case 'EXTREMELY DEAD':
+                        if (totalQty > 0) {
                             extremelyDead++;
-                            break;
-                    }
-                });
+                            extremelyDeadSum += adjustedPriceAfterMultiplication;
+                        }
+                        break;
+                }
+            });
 
-                $('#runningCount').text(running);
-                $('#slowCount').text(slow);
-                $('#deadCount').text(dead);
-                $('#extremelyDeadCount').text(extremelyDead);
-            }
+            $('#runningCount').text(running);
+            $('#slowCount').text(slow);
+            $('#deadCount').text(dead);
+            $('#extremelyDeadCount').text(extremelyDead);
+            
+            $('#runningSum').text(numberFormat(runningSum));
+            $('#slowSum').text(numberFormat(slowSum));
+            $('#deadSum').text(numberFormat(deadSum));
+            $('#extremelyDeadSum').text(numberFormat(extremelyDeadSum));
+        }
 
-            // ============ DOWNLOAD SIMPLE TEMPLATE (Only Stock ID and Adjust Unit Price) ============
-            $('#downloadTemplate').on('click', function() {
-                // Create CSV content with ONLY 2 columns: Stock ID and Adjust Unit Price
-                let csvContent = "Stock ID,Adjust Unit Price\n";
-
-                // Add sample rows with stock IDs from actual data (first 20 items)
-                const sampleStockIds = allData.slice(0, 20).map(item => item.stockid);
-
-                // For each sample stock ID, add a row with Stock ID and empty price column
-                sampleStockIds.forEach(stockId => {
-                    // Find the complete row data for this stock ID
-                    const rowData = allData.find(item => item.stockid === stockId);
-                    if (!rowData) return;
-
-                    // Get current custom price if exists, otherwise leave empty for user to fill
-                    let currentAdjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : '';
-
-                    // Build CSV row with just Stock ID and Adjust Unit Price
-                    csvContent += `"${stockId}",`;
-
-                    // Add the price if it exists, otherwise leave empty
-                    if (currentAdjustPrice !== '') {
-                        // Ensure it's a number before formatting
-                        const priceNum = parseFloat(currentAdjustPrice) || 0;
-                        csvContent += `${priceNum.toFixed(2)}\n`;
-                    } else {
-                        csvContent += '\n'; // Empty price column
-                    }
-                });
-
-                // Create download link
-                const blob = new Blob([csvContent], {
-                    type: 'text/csv;charset=utf-8;'
-                });
+        // Export to CSV function
+        function exportToCSV(dt, filteredOnly) {
+            try {
+                let data;
+                if (filteredOnly) {
+                    data = dt.rows({ search: 'applied' }).data();
+                } else {
+                    data = dt.rows().data();
+                }
+                
+                const headers = [
+                    'Stock ID', 'Brand', 'Category', 'Model #', 'Part #', 'Qty',
+                    'Total Price', 'Unit Price', 'Adjust Unit Price', 'Landing Factor',
+                    'Adjusted Price After Multiplication', 'Qty × Adjusted Price',
+                    'List Price', 'Stock Status'
+                ];
+                
+                let csvContent = headers.join(',') + '\n';
+                
+                for (let i = 0; i < data.length; i++) {
+                    const row = data[i];
+                    const rowData = [];
+                    
+                    rowData.push(`"${row.stockid || ''}"`);
+                    rowData.push(`"${row.manufacturers_name || ''}"`);
+                    rowData.push(`"${row.categorydescription || ''}"`);
+                    rowData.push(`"${row.mnfCode || ''}"`);
+                    rowData.push(`"${row.mnfpno || ''}"`);
+                    
+                    const totalQty = calculateTotalQty(row);
+                    rowData.push(totalQty);
+                    
+                    rowData.push(parseFloat(row.total_bpitems_price || 0).toFixed(2));
+                    rowData.push(parseFloat(row.weighted_unit_price || 0).toFixed(2));
+                    
+                    const adjustPrice = customUnitPrices[row.stockid] !== undefined ? customUnitPrices[row.stockid] : '';
+                    rowData.push(adjustPrice !== '' ? parseFloat(adjustPrice).toFixed(2) : '');
+                    
+                    const factor = landingFactors[row.stockid] !== undefined ? landingFactors[row.stockid] : 1;
+                    rowData.push(parseFloat(factor).toFixed(2));
+                    
+                    const unitPrice = parseFloat(row.weighted_unit_price) || 0;
+                    const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
+                    const adjustedPrice = effectivePrice * factor;
+                    rowData.push(adjustedPrice.toFixed(2));
+                    
+                    const qtyTimesAdjustedPrice = totalQty * adjustedPrice;
+                    rowData.push(qtyTimesAdjustedPrice.toFixed(2));
+                    
+                    rowData.push(parseFloat(row.materialcost || 0).toFixed(2));
+                    
+                    const status = getStockStatus(row.latest_trandate);
+                    rowData.push(`"${status.status}"`);
+                    
+                    csvContent += rowData.join(',') + '\n';
+                }
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
-
+                
+                const filename = filteredOnly ? 
+                    'inventory_filtered_' + new Date().toISOString().slice(0,10) + '.csv' : 
+                    'inventory_all_' + new Date().toISOString().slice(0,10) + '.csv';
+                
                 link.setAttribute('href', url);
-                link.setAttribute('download', 'price_template_' + new Date().toISOString().slice(0, 10) + '.csv');
+                link.setAttribute('download', filename);
                 link.style.display = 'none';
-
+                
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+                
+                showNotification(`✅ CSV downloaded successfully with ${data.length} records`, 'success');
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                showNotification('Error generating CSV: ' + error.message, 'error');
+            }
+        }
 
-                showNotification('✅ Simple template downloaded with Stock ID and Adjust Unit Price columns. Fill in the prices and upload.', 'success');
-            });
-
-            var datatable = $('#datatable').DataTable({
-                dom: '<"row"<"col-sm-12 text-center"B>>' +
-                    '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-                    '<"row"<"col-sm-12"tr>>' +
-                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-                buttons: [{
-                    extend: 'csv',
-                    className: 'btn btn-professional',
+        var datatable = $('#datatable').DataTable({
+            dom: '<"row"<"col-sm-12 text-center"B>>' +
+                '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                '<"row"<"col-sm-12"tr>>' +
+                '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            buttons: [
+                {
                     text: '<i class="fas fa-download mr-2"></i> Download CSV Report',
-                    action: function(e, dt, button, config) {
-                        // Include both custom prices and landing factors in export
-                        const customData = {
-                            prices: customUnitPrices,
-                            factors: landingFactors
-                        };
-                        const customDataJson = JSON.stringify(customData);
-                        const customDataBase64 = btoa(unescape(encodeURIComponent(customDataJson)));
-
-                        // Get current filter
-                        const filterParam = currentFilter ? `&filter=${currentFilter}` : '';
-
-                        // Show notification that export is starting
-                        showNotification('Preparing CSV with ' + Object.keys(customUnitPrices).length + ' custom prices and ' +
-                            Object.keys(landingFactors).length + ' landing factors...', 'info');
-
-                        // Redirect with custom data
-                        window.location.href = 'export.php?export=csv' + filterParam + '&custom_data=' + encodeURIComponent(customDataBase64);
+                    className: 'btn btn-professional',
+                    action: function(e, dt, node, config) {
+                        showNotification('Preparing CSV download...', 'info');
+                        setTimeout(function() {
+                            exportToCSV(dt, true);
+                        }, 100);
                     }
-                }],
-                lengthMenu: [
-                    [10, 25, 50, 100, -1],
-                    ["10", "25", "50", "100", "All"]
-                ],
-                pageLength: 10,
-                order: [
-                    [0, 'asc']
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search products, brands, categories...",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    infoEmpty: "No records available",
-                    zeroRecords: "No matching records found"
                 },
-                columns: [{
-                        data: "stockid",
-                        className: "font-weight-bold",
-                        render: function(data, type, row) {
+                {
+                    text: '<i class="fas fa-download mr-2"></i> Download All Data',
+                    className: 'btn btn-outline-secondary',
+                    action: function(e, dt, node, config) {
+                        showNotification('Preparing CSV download...', 'info');
+                        setTimeout(function() {
+                            exportToCSV(dt, false);
+                        }, 100);
+                    }
+                }
+            ],
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                ["10", "25", "50", "100", "All"]
+            ],
+            pageLength: 10,
+            order: [
+                [0, 'asc']
+            ],
+            language: {
+                search: "",
+                searchPlaceholder: "Search products, brands, categories...",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "No records available",
+                zeroRecords: "No matching records found"
+            },
+            columns: [{
+                    data: "stockid",
+                    className: "font-weight-bold",
+                    render: function(data, type, row) {
+                        if (type === 'display') {
                             return `<a href="../SelectProduct.php?Select=${data}" class="stock-id-link" 
                                     title="${data}" target="_blank">
                                     ${data}
                                 </a>`;
                         }
-                    },
-                    {
-                        data: "manufacturers_name",
-                        className: "text-dark"
-                    },
-                    {
-                        data: "categorydescription",
-                        className: "text-muted"
-                    },
-                    // Model # (mnfCode)
-                    {
-                        data: "mnfCode",
-                        className: "text-info font-weight-bold",
-                        render: function(data, type, row) {
+                        return data;
+                    }
+                },
+                {
+                    data: "manufacturers_name",
+                    className: "text-dark",
+                    render: function(data, type, row) {
+                        return data || '';
+                    }
+                },
+                {
+                    data: "categorydescription",
+                    className: "text-muted",
+                    render: function(data, type, row) {
+                        return data || '';
+                    }
+                },
+                {
+                    data: "mnfCode",
+                    className: "text-info font-weight-bold",
+                    render: function(data, type, row) {
+                        if (type === 'display') {
                             return data ? data : '<span class="text-muted">-</span>';
                         }
-                    },
-                    // Part # (mnfpno)
-                    {
-                        data: "mnfpno",
-                        className: "text-primary",
-                        render: function(data, type, row) {
+                        return data || '';
+                    }
+                },
+                {
+                    data: "mnfpno",
+                    className: "text-primary",
+                    render: function(data, type, row) {
+                        if (type === 'display') {
                             return data ? data : '<span class="text-muted">-</span>';
                         }
-                    },
-                    {
-                        data: null,
-                        className: "font-weight-bold",
-                        render: function(data, type, row) {
-                            const totalQty = calculateTotalQty(row);
+                        return data || '';
+                    }
+                },
+                {
+                    data: null,
+                    className: "font-weight-bold",
+                    render: function(data, type, row) {
+                        const totalQty = calculateTotalQty(row);
+                        if (type === 'display') {
                             if (totalQty > 0) {
                                 return '<span class="badge total-qty badge-stock">' + totalQty + '</span>';
                             } else {
                                 return '<span class="badge zero-qty badge-stock">0</span>';
                             }
                         }
-                    },
-                    // TOTAL PRICE COLUMN
-                    {
-                        data: "total_bpitems_price",
-                        className: "text-success font-weight-bold",
-                        render: function(data, type, row) {
-                            const totalQty = calculateTotalQty(row);
-
-                            if (totalQty > 0) {
-                                if (data > 0) {
-                                    return `
-                                        <div class="price-result">
-                                            <span class="text-success"> ${numberFormat(data)}</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                for ${row.total_quantity || totalQty} units
-                                            </small>
-                                        </div>`;
-                                } else {
-                                    return `
-                                        <div class="price-result">
-                                            <span class="text-muted"> 0.00</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                No parchino data
-                                            </small>
-                                        </div>`;
-                                }
-                            } else {
-                                return `
-                                    <div class="price-result">
-                                        <span class="text-muted"> 0.00</span>
-                                        <br>
-                                        <small class="text-muted">
-                                            Out of stock
-                                        </small>
-                                    </div>`;
-                            }
-                        }
-                    },
-                    // UNIT PRICE COLUMN (original, read-only)
-                    {
-                        data: "weighted_unit_price",
-                        className: "text-info font-weight-bold",
-                        render: function(data, type, row) {
-                            const totalQty = calculateTotalQty(row);
-
-                            if (totalQty > 0) {
-                                if (data > 0) {
-                                    return `
-                                        <div class="price-result">
-                                            <span class="text-info"> ${numberFormat(data)}</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                weighted average
-                                            </small>
-                                        </div>`;
-                                } else {
-                                    return `
-                                        <div class="price-result">
-                                            <span class="text-muted"> 0.00</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                No parchino data
-                                            </small>
-                                        </div>`;
-                                }
-                            } else {
-                                return `
-                                    <div class="price-result">
-                                        <span class="text-muted"> 0.00</span>
-                                        <br>
-                                        <small class="text-muted">
-                                            Out of stock
-                                        </small>
-                                    </div>`;
-                            }
-                        }
-                    },
-                    // ADJUST UNIT PRICE COLUMN (input box) - with auto-save
-                    {
-                        data: null,
-                        className: "text-center",
-                        render: function(data, type, row) {
-                            const stockId = row.stockid;
-                            const totalQty = calculateTotalQty(row);
-                            const originalPrice = parseFloat(row.weighted_unit_price) || 0;
-
-                            // Get custom price from persistent storage if exists
-                            const customPrice = customUnitPrices[stockId] !== undefined ?
-                                customUnitPrices[stockId] : '';
-
-                            // Only show input if there's quantity
-                            if (totalQty > 0) {
-                                return `<input type="number" 
-                                            class="unit-price-input ${customPrice !== '' && customPrice !== originalPrice ? 'edited' : ''}" 
-                                            data-stockid="${stockId}"
-                                            data-original="${originalPrice}"
-                                            value="${customPrice}"
-                                            min="0" 
-                                            step="0.01"
-                                            placeholder="Enter price">`;
-                            } else {
-                                return `<span class="text-muted" title="${customPrice !== '' ? 'Custom price: PKR ' + customPrice : 'No price set'}">-</span>`;
-                            }
-                        }
-                    },
-                    // LANDING FACTOR COLUMN (input box, default 1) - with auto-save
-                    {
-                        data: null,
-                        className: "text-center",
-                        render: function(data, type, row) {
-                            const stockId = row.stockid;
-                            const totalQty = calculateTotalQty(row);
-
-                            // Get landing factor from persistent storage (default 1)
-                            const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
-
-                            if (totalQty > 0) {
-                                return `<input type="number" 
-                                            class="landing-factor-input ${factor !== 1 ? 'edited' : ''}" 
-                                            data-stockid="${stockId}"
-                                            value="${factor}"
-                                            min="0.01" 
-                                            step="0.01">`;
-                            } else {
-                                return `<span class="text-muted">-</span>`;
-                            }
-                        }
-                    },
-                    // ADJUSTED PRICE AFTER MULTIPLICATION COLUMN - with fallback logic
-                    {
-                        data: null,
-                        className: "text-primary font-weight-bold",
-                        render: function(data, type, row) {
-                            const totalQty = calculateTotalQty(row);
-                            const stockId = row.stockid;
-
-                            const unitPrice = parseFloat(row.weighted_unit_price) || 0;
-                            const adjustPrice = customUnitPrices[stockId] !== undefined ?
-                                customUnitPrices[stockId] : 0;
-
-                            const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-                            const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
-                            const adjustedPrice = effectivePrice * factor;
-
-                            const cellId = `adjusted-price-${stockId.replace(/[^a-zA-Z0-9]/g, '_')}`;
-
-                            if (totalQty > 0) {
-                                if (effectivePrice > 0) {
-                                    let priceSource = unitPrice > 0 ? 'unit' : 'adjust';
-                                    return `
-                                        <div class="price-result" id="${cellId}">
-                                            <span class="text-primary">${numberFormat(adjustedPrice)}</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                ${numberFormat(effectivePrice)} (${priceSource}) × ${numberFormat(factor)} factor
-                                            </small>
-                                        </div>`;
-                                } else {
-                                    return `
-                                        <div class="price-result" id="${cellId}">
-                                            <span class="text-muted">0.00</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                No price available
-                                            </small>
-                                        </div>`;
-                                }
-                            } else {
-                                return `
-                                    <div class="price-result" id="${cellId}">
-                                        <span class="text-muted">0.00</span>
-                                        <br>
-                                        <small class="text-muted">
-                                            Out of stock
-                                        </small>
-                                    </div>`;
-                            }
-                        }
-                    },
-                    // QTY × ADJUSTED PRICE COLUMN - with fallback logic
-                    {
-                        data: null,
-                        className: "text-danger font-weight-bold",
-                        render: function(data, type, row) {
-                            const totalQty = calculateTotalQty(row);
-                            const stockId = row.stockid;
-
-                            const unitPrice = parseFloat(row.weighted_unit_price) || 0;
-                            const adjustPrice = customUnitPrices[stockId] !== undefined ?
-                                customUnitPrices[stockId] : 0;
-
-                            const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-                            const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
-                            const adjustedPrice = effectivePrice * factor;
-                            const qtyTimesAdjustedPrice = totalQty * adjustedPrice;
-
-                            const cellId = `qty-times-adjusted-${stockId.replace(/[^a-zA-Z0-9]/g, '_')}`;
-
-                            if (totalQty > 0) {
-                                if (effectivePrice > 0) {
-                                    let priceSource = unitPrice > 0 ? 'unit' : 'adjust';
-                                    return `
-                                        <div class="price-result" id="${cellId}">
-                                            <span class="text-danger font-weight-bold">${numberFormat(qtyTimesAdjustedPrice)}</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                ${totalQty} units × ${numberFormat(adjustedPrice)} (${priceSource} × factor)
-                                            </small>
-                                        </div>`;
-                                } else {
-                                    return `
-                                        <div class="price-result" id="${cellId}">
-                                            <span class="text-muted">0.00</span>
-                                            <br>
-                                            <small class="text-muted">
-                                                No price available
-                                            </small>
-                                        </div>`;
-                                }
-                            } else {
-                                return `
-                                    <div class="price-result" id="${cellId}">
-                                        <span class="text-muted">0.00</span>
-                                        <br>
-                                        <small class="text-muted">
-                                            Out of stock
-                                        </small>
-                                    </div>`;
-                            }
-                        }
-                    },
-                    // LIST PRICE COLUMN
-                    {
-                        data: "materialcost",
-                        className: "text-warning font-weight-bold",
-                        render: function(data) {
-                            return data > 0 ? 'PKR ' + numberFormat(data) : '<span class="text-muted">PKR 0.00</span>';
-                        }
-                    },
-                    // STOCK STATUS COLUMN
-                    {
-                        data: "latest_trandate",
-                        className: "text-center",
-                        render: function(data, type, row) {
-                            const status = getStockStatus(data);
-
-                            // For sorting, return days difference or a large number for no data
-                            if (type === 'sort') {
-                                if (!data) return 999999; // Very large number for items with no transactions
-                                const today = new Date();
-                                const transDate = new Date(data);
-                                return today - transDate;
-                            }
-
-                            const formattedDate = formatDateTooltip(data);
-                            const daysText = status.days ? ` (${status.days} days ago)` : ' (No transaction history)';
-
-                            return `<span class="badge ${status.class}" 
-                     style="font-size: 0.85rem; padding: 8px 12px; cursor: help;"
-                     title="Last Transaction: ${formattedDate}${daysText}">
-                    <i class="fas ${status.icon} mr-1"></i> ${status.status}
-                </span>`;
-                        }
+                        return totalQty || 0;
                     }
-                ],
-                initComplete: function() {
-                    loadData();
-                }
-            });
-
-            // Handle unit price input changes
-            $('#datatable tbody').on('input', '.unit-price-input', function() {
-                const $input = $(this);
-                const stockId = $input.data('stockid');
-                const originalPrice = parseFloat($input.data('original')) || 0;
-
-                const inputValue = $input.val();
-                const newPrice = inputValue === '' ? '' : parseFloat(inputValue) || 0;
-
-                // Update visual state
-                if (newPrice === '') {
-                    delete customUnitPrices[stockId];
-                    $input.removeClass('edited');
-                } else if (newPrice !== originalPrice) {
-                    customUnitPrices[stockId] = newPrice;
-                    $input.addClass('edited');
-                } else {
-                    delete customUnitPrices[stockId];
-                    $input.removeClass('edited');
-                }
-
-                // Update adjusted columns if unit price is 0
-                const rows = datatable.rows().data();
-                for (let i = 0; i < rows.length; i++) {
-                    if (rows[i].stockid === stockId) {
-                        const unitPrice = parseFloat(rows[i].weighted_unit_price) || 0;
-                        if (unitPrice === 0) {
-                            const totalQty = calculateTotalQty(rows[i]);
-                            updateAdjustedPrice(stockId);
-                            updateQtyTimesAdjustedPrice(stockId, totalQty);
+                },
+                {
+                    data: "total_bpitems_price",
+                    className: "text-success font-weight-bold",
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            return `<span class="text-success">${numberFormat(data || 0)}</span>`;
                         }
-                        break;
+                        return data || 0;
+                    }
+                },
+                {
+                    data: "weighted_unit_price",
+                    className: "text-info font-weight-bold",
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            return `<span class="text-info">${numberFormat(data || 0)}</span>`;
+                        }
+                        return data || 0;
+                    }
+                },
+                {
+                    data: null,
+                    className: "text-center",
+                    render: function(data, type, row) {
+                        const stockId = row.stockid;
+                        const originalPrice = parseFloat(row.weighted_unit_price) || 0;
+                        const customPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : '';
+
+                        if (type === 'display') {
+                            return `<input type="number" 
+                                        class="unit-price-input ${customPrice !== '' && customPrice !== originalPrice ? 'edited' : ''}" 
+                                        data-stockid="${stockId}"
+                                        data-original="${originalPrice}"
+                                        value="${customPrice}"
+                                        min="0" 
+                                        step="0.01"
+                                        placeholder="Enter price"
+                                        style="width:100px;">`;
+                        }
+                        return customPrice !== '' ? customPrice : '';
+                    }
+                },
+                {
+                    data: null,
+                    className: "text-center",
+                    render: function(data, type, row) {
+                        const stockId = row.stockid;
+                        const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+
+                        if (type === 'display') {
+                            return `<input type="number" 
+                                        class="landing-factor-input ${factor !== 1 ? 'edited' : ''}" 
+                                        data-stockid="${stockId}"
+                                        value="${factor}"
+                                        min="0.01" 
+                                        step="0.01"
+                                        style="width:100px;">`;
+                        }
+                        return factor;
+                    }
+                },
+                {
+                    data: null,
+                    className: "text-primary font-weight-bold",
+                    render: function(data, type, row) {
+                        const totalQty = calculateTotalQty(row);
+                        const stockId = row.stockid;
+
+                        const unitPrice = parseFloat(row.weighted_unit_price) || 0;
+                        const adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
+                        const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
+                        const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+                        const adjustedPrice = effectivePrice * factor;
+
+                        if (type === 'display') {
+                            return `<span class="text-primary">${numberFormat(adjustedPrice)}</span>`;
+                        }
+                        return adjustedPrice || 0;
+                    }
+                },
+                {
+                    data: null,
+                    className: "text-danger font-weight-bold",
+                    render: function(data, type, row) {
+                        const totalQty = calculateTotalQty(row);
+                        const stockId = row.stockid;
+
+                        const unitPrice = parseFloat(row.weighted_unit_price) || 0;
+                        const adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
+                        const effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
+                        const factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+                        const adjustedPrice = effectivePrice * factor;
+                        const qtyTimesAdjustedPrice = totalQty * adjustedPrice;
+
+                        if (type === 'display') {
+                            return `<span class="text-danger">${numberFormat(qtyTimesAdjustedPrice)}</span>`;
+                        }
+                        return qtyTimesAdjustedPrice || 0;
+                    }
+                },
+                {
+                    data: "materialcost",
+                    className: "text-warning font-weight-bold",
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            return numberFormat(data || 0);
+                        }
+                        return data || 0;
+                    }
+                },
+                {
+                    data: "latest_trandate",
+                    className: "text-center",
+                    render: function(data, type, row) {
+                        const status = getStockStatus(data);
+
+                        if (type === 'sort') {
+                            if (!data) return 999999;
+                            const today = new Date();
+                            const transDate = new Date(data);
+                            return today - transDate;
+                        }
+
+                        if (type === 'display') {
+                            return `<span class="badge ${status.class}" style="font-size: 0.85rem; padding: 8px 12px;">
+                                    <i class="fas ${status.icon} mr-1"></i> ${status.status}
+                                </span>`;
+                        }
+                        
+                        return status.status;
                     }
                 }
+            ],
+            initComplete: function() {
+                loadData();
+            }
+        });
 
-                updateCustomizationsCount();
-            });
+        // Handle unit price input changes
+        $('#datatable tbody').on('input', '.unit-price-input', function() {
+            const $input = $(this);
+            const stockId = $input.data('stockid');
+            const originalPrice = parseFloat($input.data('original')) || 0;
 
-            // Auto-save on blur for unit price
-            $('#datatable tbody').on('blur', '.unit-price-input', function() {
-                const $input = $(this);
-                const stockId = $input.data('stockid');
-                const currentValue = $input.val();
+            const inputValue = $input.val();
+            const newPrice = inputValue === '' ? '' : parseFloat(inputValue) || 0;
 
-                if (currentValue === '') {
-                    autoSaveToDatabase(stockId, 'adjust_unit_price', 0, false);
-                } else {
-                    const numericValue = parseFloat(currentValue) || 0;
-                    if (numericValue < 0) {
-                        $input.val(0);
-                        autoSaveToDatabase(stockId, 'adjust_unit_price', 0, false);
-                    } else {
-                        autoSaveToDatabase(stockId, 'adjust_unit_price', numericValue, false);
-                    }
-                }
-            });
+            if (newPrice === '') {
+                delete customUnitPrices[stockId];
+                $input.removeClass('edited');
+            } else if (newPrice !== originalPrice) {
+                customUnitPrices[stockId] = newPrice;
+                $input.addClass('edited');
+            } else {
+                delete customUnitPrices[stockId];
+                $input.removeClass('edited');
+            }
 
-            // Handle landing factor input changes
-            $('#datatable tbody').on('input', '.landing-factor-input', function() {
-                const $input = $(this);
-                const stockId = $input.data('stockid');
-                const newFactor = parseFloat($input.val()) || 1;
+            updateRowCalculations(stockId);
+            updateCustomizationsCount();
+            updateStatusStatistics(allData);
+        });
 
-                if (newFactor < 0.01) {
-                    $input.val(0.01);
-                    landingFactors[stockId] = 0.01;
-                } else {
-                    landingFactors[stockId] = newFactor;
-                }
+        // Auto-save on blur for unit price
+        $('#datatable tbody').on('blur', '.unit-price-input', function() {
+            const $input = $(this);
+            const stockId = $input.data('stockid');
+            const currentValue = $input.val();
 
-                if (newFactor !== 1) {
-                    $input.addClass('edited');
-                } else {
-                    $input.removeClass('edited');
-                }
-
-                // Update adjusted columns
-                const rows = datatable.rows().data();
-                for (let i = 0; i < rows.length; i++) {
-                    if (rows[i].stockid === stockId) {
-                        const totalQty = calculateTotalQty(rows[i]);
-                        updateAdjustedPrice(stockId);
-                        updateQtyTimesAdjustedPrice(stockId, totalQty);
-                        break;
-                    }
-                }
-
-                updateCustomizationsCount();
-            });
-
-            // Auto-save on blur for landing factor
-            $('#datatable tbody').on('blur', '.landing-factor-input', function() {
-                const $input = $(this);
-                const stockId = $input.data('stockid');
-                const value = parseFloat($input.val()) || 1;
-
-                if (value < 0.01) {
-                    $input.val(0.01);
-                    autoSaveToDatabase(stockId, 'landing_factor', 0.01, false);
-                } else {
-                    autoSaveToDatabase(stockId, 'landing_factor', value, false);
-                }
-            });
-
-            // Handle input blur for validation
-            $('#datatable tbody').on('blur', '.unit-price-input', function() {
-                const $input = $(this);
-                const currentValue = $input.val();
-
-                if (currentValue === '') {
-                    return;
-                }
-
+            if (currentValue === '') {
+                autoSaveToDatabase(stockId, 'adjust_unit_price', 0, false);
+            } else {
                 const numericValue = parseFloat(currentValue) || 0;
-
                 if (numericValue < 0) {
                     $input.val(0);
-                    $input.trigger('input');
-                }
-            });
-
-            $('#datatable tbody').on('blur', '.landing-factor-input', function() {
-                const $input = $(this);
-                const value = parseFloat($input.val()) || 1;
-
-                if (value < 0.01) {
-                    $input.val(0.01);
-                    $input.trigger('input');
-                }
-            });
-
-            // Function to update customizations count display
-            function updateCustomizationsCount() {
-                const customPriceCount = Object.keys(customUnitPrices).length;
-                const factorCount = Object.keys(landingFactors).length;
-
-                $('#customizationsCount').remove();
-                if (customPriceCount > 0 || factorCount > 0) {
-                    $('.btn-professional').after(`
-                        <span id="customizationsCount" class="badge badge-info ml-2 p-2" style="font-size: 0.9rem;">
-                            <i class="fas fa-tag mr-1"></i>
-                            ${customPriceCount} custom price${customPriceCount !== 1 ? 's' : ''}, 
-                            ${factorCount} factor${factorCount !== 1 ? 's' : ''}
-                        </span>
-                    `);
+                    autoSaveToDatabase(stockId, 'adjust_unit_price', 0, false);
+                } else {
+                    autoSaveToDatabase(stockId, 'adjust_unit_price', numericValue, false);
                 }
             }
+            updateRowCalculations(stockId);
+        });
 
-            // Quantity filter button handlers
-            $('.qty-filter-btn[data-filter]').on('click', function() {
-                const filter = $(this).data('filter');
-                const filterText = getFilterText(filter);
+        // Handle landing factor input changes
+        $('#datatable tbody').on('input', '.landing-factor-input', function() {
+            const $input = $(this);
+            const stockId = $input.data('stockid');
+            const newFactor = parseFloat($input.val()) || 1;
 
-                showFilterLoading(filterText);
-                $('.qty-filter-btn[data-filter]').addClass('loading');
-
-                setTimeout(() => {
-                    $('.qty-filter-btn[data-filter]').removeClass('active');
-                    $(this).addClass('active');
-                    currentFilter = filter;
-                    applyFilters();
-                    $('.qty-filter-btn[data-filter]').removeClass('loading');
-                }, 300);
-            });
-
-            function getFilterText(filter) {
-                switch (filter) {
-                    case 'non-zero':
-                        return 'Filtering In Stock Items...';
-                    case 'zero':
-                        return 'Filtering Out of Stock Items...';
-                    case 'both':
-                        return 'Showing All Items...';
-                    default:
-                        return 'Applying Filter...';
-                }
+            if (newFactor < 0.01) {
+                $input.val(0.01);
+                landingFactors[stockId] = 0.01;
+            } else {
+                landingFactors[stockId] = newFactor;
             }
 
-            function showFilterLoading(message) {
-                $('#filterLoadingText').text(message);
-                $('#filterLoadingOverlay').fadeIn(300);
+            if (newFactor !== 1) {
+                $input.addClass('edited');
+            } else {
+                $input.removeClass('edited');
             }
 
-            function hideFilterLoading() {
-                $('#filterLoadingOverlay').fadeOut(300);
+            updateRowCalculations(stockId);
+            updateCustomizationsCount();
+            updateStatusStatistics(allData);
+        });
+
+        // Auto-save on blur for landing factor
+        $('#datatable tbody').on('blur', '.landing-factor-input', function() {
+            const $input = $(this);
+            const stockId = $input.data('stockid');
+            const value = parseFloat($input.val()) || 1;
+
+            if (value < 0.01) {
+                $input.val(0.01);
+                autoSaveToDatabase(stockId, 'landing_factor', 0.01, false);
+            } else {
+                autoSaveToDatabase(stockId, 'landing_factor', value, false);
+            }
+            updateRowCalculations(stockId);
+        });
+
+        // Handle input blur for validation
+        $('#datatable tbody').on('blur', '.unit-price-input', function() {
+            const $input = $(this);
+            const currentValue = $input.val();
+
+            if (currentValue === '') {
+                return;
             }
 
-            // Apply both quantity and status filters
-            function applyFilters() {
-                let filteredData = allData;
+            const numericValue = parseFloat(currentValue) || 0;
 
-                // Apply quantity filter
-                switch (currentFilter) {
-                    case 'non-zero':
-                        filteredData = filteredData.filter(item => calculateTotalQty(item) > 0);
-                        break;
-                    case 'zero':
-                        filteredData = filteredData.filter(item => calculateTotalQty(item) === 0);
-                        break;
-                    case 'both':
-                        // No filter
-                        break;
-                }
+            if (numericValue < 0) {
+                $input.val(0);
+                $input.trigger('input');
+            }
+        });
 
-                // Show filtered results
-                datatable.clear();
-                datatable.rows.add(filteredData).draw();
-                updateFilterCounts();
-                hideFilterLoading();
+        $('#datatable tbody').on('blur', '.landing-factor-input', function() {
+            const $input = $(this);
+            const value = parseFloat($input.val()) || 1;
 
-                // Show filter summary
-                const priceItems = filteredData.filter(item => item.total_bpitems_price > 0).length;
-                let filterMessage = `Filter applied: `;
-                if (currentFilter === 'non-zero') filterMessage += 'In Stock, ';
-                else if (currentFilter === 'zero') filterMessage += 'Out of Stock, ';
+            if (value < 0.01) {
+                $input.val(0.01);
+                $input.trigger('input');
+            }
+        });
 
-                if (currentStatusFilter === 'running') filterMessage += 'Running';
-                else if (currentStatusFilter === 'slow') filterMessage += 'Slow Running';
-                else if (currentStatusFilter === 'dead') filterMessage += 'Dead Stock';
-                else if (currentStatusFilter === 'extremely-dead') filterMessage += 'Extremely Dead';
-                else filterMessage += 'All Status';
+        // Function to update customizations count display
+        function updateCustomizationsCount() {
+            const customPriceCount = Object.keys(customUnitPrices).length;
+            const factorCount = Object.keys(landingFactors).length;
 
-                filterMessage += ` (${filteredData.length} items, ${priceItems} with prices)`;
-                showNotification(filterMessage, 'success');
+            $('#customizationsCount').remove();
+            if (customPriceCount > 0 || factorCount > 0) {
+                $('.btn-professional').after(`
+                    <span id="customizationsCount" class="badge badge-info ml-2 p-2" style="font-size: 0.9rem;">
+                        <i class="fas fa-tag mr-1"></i>
+                        ${customPriceCount} custom price${customPriceCount !== 1 ? 's' : ''}, 
+                        ${factorCount} factor${factorCount !== 1 ? 's' : ''}
+                    </span>
+                `);
+            }
+        }
+
+        // Quantity filter button handlers
+        $('.qty-filter-btn[data-filter]').on('click', function() {
+            const filter = $(this).data('filter');
+            const filterText = getFilterText(filter);
+
+            showFilterLoading(filterText);
+            $('.qty-filter-btn[data-filter]').addClass('loading');
+
+            setTimeout(() => {
+                $('.qty-filter-btn[data-filter]').removeClass('active');
+                $(this).addClass('active');
+                currentFilter = filter;
+                applyFilters();
+                $('.qty-filter-btn[data-filter]').removeClass('loading');
+            }, 300);
+        });
+
+        function getFilterText(filter) {
+            switch (filter) {
+                case 'non-zero':
+                    return 'Filtering In Stock Items...';
+                case 'zero':
+                    return 'Filtering Out of Stock Items...';
+                case 'both':
+                    return 'Showing All Items...';
+                default:
+                    return 'Applying Filter...';
+            }
+        }
+
+        function showFilterLoading(message) {
+            $('#filterLoadingText').text(message);
+            $('#filterLoadingOverlay').fadeIn(300);
+        }
+
+        function hideFilterLoading() {
+            $('#filterLoadingOverlay').fadeOut(300);
+        }
+
+        // Apply both quantity and status filters
+        function applyFilters() {
+            let filteredData = allData;
+
+            switch (currentFilter) {
+                case 'non-zero':
+                    filteredData = filteredData.filter(item => calculateTotalQty(item) > 0);
+                    break;
+                case 'zero':
+                    filteredData = filteredData.filter(item => calculateTotalQty(item) === 0);
+                    break;
+                case 'both':
+                    break;
             }
 
-            // Load data function
-            function loadData() {
-                isCalculatingPrices = true;
+            datatable.clear();
+            datatable.rows.add(filteredData).draw();
+            updateFilterCounts();
+            hideFilterLoading();
 
-                $('#loadingOverlay').html(`
-                    <div class="text-center">
-                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
-                        <h5 class="text-muted">Loading Inventory Data</h5>
-                        <p class="text-muted">Please wait while we fetch the latest information. It may take one to two minutes only.</p>
-                    </div>
-                `).fadeIn(300);
+            const priceItems = filteredData.filter(item => item.total_bpitems_price > 0).length;
+            let filterMessage = `Filter applied: `;
+            if (currentFilter === 'non-zero') filterMessage += 'In Stock, ';
+            else if (currentFilter === 'zero') filterMessage += 'Out of Stock, ';
 
-                $.ajax({
-                    type: 'GET',
-                    url: 'index.php',
-                    dataType: "json",
-                    success: function(response) {
-                        isCalculatingPrices = false;
+            if (currentStatusFilter === 'running') filterMessage += 'Moving';
+            else if (currentStatusFilter === 'slow') filterMessage += 'Slow Moving';
+            else if (currentStatusFilter === 'dead') filterMessage += 'Dead Stock';
+            else if (currentStatusFilter === 'extremely-dead') filterMessage += 'Extremely Dead';
+            else filterMessage += 'All Status';
 
-                        if (response.status === 'success' && response.data) {
-                            allData = response.data;
+            filterMessage += ` (${filteredData.length} items, ${priceItems} with prices)`;
+            showNotification(filterMessage, 'success');
+        }
 
-                            updateStatistics(allData);
-                            updateStatusStatistics(allData);
-                            applyFilters();
+        // Load data function
+        function loadData() {
+            isCalculatingPrices = true;
 
-                            const itemsWithPrice = allData.filter(item => item.total_bpitems_price > 0).length;
-                            showNotification(`✅ Loaded ${response.count} products with prices (${itemsWithPrice} have parchino data)`, 'success');
+            $('#loadingOverlay').html(`
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+                    <h5 class="text-muted">Loading Inventory Data</h5>
+                    <p class="text-muted">Please wait while we fetch the latest information. It may take one to two minutes only.</p>
+                </div>
+            `).fadeIn(300);
 
-                            // Load saved customizations after data is loaded
-                            loadSavedCustomizations();
+            $.ajax({
+                type: 'GET',
+                url: 'index.php',
+                dataType: "json",
+                success: function(response) {
+                    isCalculatingPrices = false;
 
-                            updateCustomizationsCount();
+                    if (response.status === 'success' && response.data) {
+                        allData = response.data;
 
-                            $('#loadingOverlay').fadeOut(300);
-                        } else {
-                            showNotification('Error: ' + (response.error || 'Unable to load data'), 'error');
-                            $('#loadingOverlay').fadeOut(300);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        isCalculatingPrices = false;
+                        updateStatistics(allData);
+                        updateStatusStatistics(allData);
+                        applyFilters();
+
+                        const itemsWithPrice = allData.filter(item => item.total_bpitems_price > 0).length;
+                        showNotification(`✅ Loaded ${response.count} products with prices (${itemsWithPrice} have parchino data)`, 'success');
+
+                        loadSavedCustomizations();
+                        updateCustomizationsCount();
+
                         $('#loadingOverlay').fadeOut(300);
-
-                        let errorMsg = 'Failed to load data. ';
-                        if (status === 'timeout') {
-                            errorMsg = 'Request took too long.';
-                        } else {
-                            errorMsg += 'Please check your connection.';
-                        }
-
-                        showNotification(errorMsg, 'error');
+                    } else {
+                        showNotification('Error: ' + (response.error || 'Unable to load data'), 'error');
+                        $('#loadingOverlay').fadeOut(300);
                     }
-                });
+                },
+                error: function(xhr, status, error) {
+                    isCalculatingPrices = false;
+                    $('#loadingOverlay').fadeOut(300);
+
+                    let errorMsg = 'Failed to load data. ';
+                    if (status === 'timeout') {
+                        errorMsg = 'Request took too long.';
+                    } else {
+                        errorMsg += 'Please check your connection.';
+                    }
+
+                    showNotification(errorMsg, 'error');
+                }
+            });
+        }
+
+        function updateFilterCounts() {
+            const nonZeroCount = allData.filter(item => calculateTotalQty(item) > 0).length;
+            const zeroCount = allData.filter(item => calculateTotalQty(item) === 0).length;
+            const bothCount = allData.length;
+
+            $('#nonZeroCount').text(nonZeroCount);
+            $('#zeroCount').text(zeroCount);
+            $('#bothCount').text(bothCount);
+        }
+
+        function updateStatistics(data) {
+            $('#totalProducts').text(data.length);
+
+            const brands = [...new Set(data.map(item => item.manufacturers_name))];
+            const categories = [...new Set(data.map(item => item.categorydescription))];
+            const inStockItems = data.filter(item => calculateTotalQty(item) > 0).length;
+
+            $('#totalBrands').text(brands.length);
+            $('#totalCategories').text(categories.length);
+            $('#inStockItems').text(inStockItems);
+
+            updateFilterCounts();
+        }
+
+        // ============ IMPORT FUNCTIONALITY ============
+
+        $('#csvFile').on('change', function() {
+            const file = this.files[0];
+            if (!file) {
+                $('#processImport').prop('disabled', true);
+                $('#importPreview').hide();
+                $('#fileInfo').hide();
+                return;
             }
 
-            function updateFilterCounts() {
-                const nonZeroCount = allData.filter(item => calculateTotalQty(item) > 0).length;
-                const zeroCount = allData.filter(item => calculateTotalQty(item) === 0).length;
-                const bothCount = allData.length;
+            const fileName = file.name;
+            const fileSize = (file.size / 1024).toFixed(2) + ' KB';
 
-                $('#nonZeroCount').text(nonZeroCount);
-                $('#zeroCount').text(zeroCount);
-                $('#bothCount').text(bothCount);
+            $(this).next('.custom-file-label').html(fileName);
+            $('#fileName').text(fileName);
+            $('#fileSize').text(fileSize);
+            $('#fileInfo').show();
+
+            $('#processImport').prop('disabled', false);
+            parseCSVFile(file);
+        });
+
+        $('#cancelImport').on('click', function() {
+            if (confirm('Are you sure you want to cancel the import process?')) {
+                importCancelled = true;
+                resetImportDisplay();
+                showNotification('⛔ Import cancelled by user', 'error');
             }
+        });
 
-            function updateStatistics(data) {
-                $('#totalProducts').text(data.length);
+        function resetImportDisplay() {
+            $('#uploadProgress').hide();
+            $('#importPreview').show();
+            $('#processImport').prop('disabled', false);
+            $('#csvFile').prop('disabled', false);
+            $('#uploadStats').hide();
+            $('#timer').text('00:00');
+            $('#uploadProgressBar').css('width', '0%').text('0%');
+            $('#uploadStatus').text('Processing...');
 
-                const brands = [...new Set(data.map(item => item.manufacturers_name))];
-                const categories = [...new Set(data.map(item => item.categorydescription))];
-                const inStockItems = data.filter(item => calculateTotalQty(item) > 0).length;
-
-                $('#totalBrands').text(brands.length);
-                $('#totalCategories').text(categories.length);
-                $('#inStockItems').text(inStockItems);
-
-                updateFilterCounts();
+            if (importTimerInterval) {
+                clearInterval(importTimerInterval);
+                importTimerInterval = null;
             }
+        }
 
-            // ============ IMPORT FUNCTIONALITY ============
+        function parseCSVFile(file) {
+            if (!file) return;
 
-            // Update file input label and show file info
-            $('#csvFile').on('change', function() {
-                const file = this.files[0];
-                if (!file) {
-                    $('#processImport').prop('disabled', true);
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const lines = content.split('\n');
+                const previewData = [];
+
+                const dataRows = lines.filter((line, index) => index > 0 && line.trim() && !line.startsWith('#')).length;
+                $('#fileRows').text(dataRows);
+                $('#previewTable tbody').empty();
+
+                const headers = lines[0].split(',').map(h => h.trim().replace(/["']/g, ''));
+
+                const adjustPriceIndex = headers.findIndex(h =>
+                    h.toLowerCase().includes('adjust unit price') ||
+                    h.toLowerCase().includes('adjust') ||
+                    h.toLowerCase() === 'adjust unit price' ||
+                    h.toLowerCase() === 'adjust price'
+                );
+
+                const stockIdIndex = headers.findIndex(h =>
+                    h.toLowerCase().includes('stock id') ||
+                    h.toLowerCase() === 'stock id' ||
+                    h.toLowerCase() === 'stockid' ||
+                    h.toLowerCase() === 'stock_id'
+                );
+
+                if (stockIdIndex === -1) {
+                    showNotification('Could not find "Stock ID" column in the CSV file', 'error');
                     $('#importPreview').hide();
-                    $('#fileInfo').hide();
+                    $('#processImport').prop('disabled', true);
                     return;
                 }
 
-                const fileName = file.name;
-                const fileSize = (file.size / 1024).toFixed(2) + ' KB';
-
-                $(this).next('.custom-file-label').html(fileName);
-                $('#fileName').text(fileName);
-                $('#fileSize').text(fileSize);
-                $('#fileInfo').show();
-
-                // Enable process button
-                $('#processImport').prop('disabled', false);
-
-                // Parse and preview CSV
-                parseCSVFile(file);
-            });
-
-            // Cancel import
-            $('#cancelImport').on('click', function() {
-                if (confirm('Are you sure you want to cancel the import process?')) {
-                    importCancelled = true;
-                    resetImportDisplay();
-                    showNotification('⛔ Import cancelled by user', 'error');
+                if (adjustPriceIndex === -1) {
+                    showNotification('Could not find "Adjust Unit Price" column in the CSV file', 'error');
+                    $('#importPreview').hide();
+                    $('#processImport').prop('disabled', true);
+                    return;
                 }
-            });
 
-            // Reset import display
-            function resetImportDisplay() {
-                $('#uploadProgress').hide();
-                $('#importPreview').show();
-                $('#processImport').prop('disabled', false);
-                $('#csvFile').prop('disabled', false);
-                $('#uploadStats').hide();
-                $('#timer').text('00:00');
-                $('#uploadProgressBar').css('width', '0%').text('0%');
-                $('#uploadStatus').text('Processing...');
+                let changedCount = 0;
+                let invalidCount = 0;
 
-                if (importTimerInterval) {
-                    clearInterval(importTimerInterval);
-                    importTimerInterval = null;
-                }
-            }
+                for (let i = 1; i < Math.min(lines.length, 21); i++) {
+                    const line = lines[i].trim();
+                    if (!line || line.startsWith('#')) continue;
 
-            // Parse CSV file
-            function parseCSVFile(file) {
-                if (!file) return;
+                    const values = parseCSVLine(line);
+                    if (values.length <= Math.max(stockIdIndex, adjustPriceIndex)) continue;
 
-                const reader = new FileReader();
+                    const stockId = values[stockIdIndex]?.trim().replace(/["']/g, '');
+                    const priceStr = values[adjustPriceIndex]?.trim().replace(/["']/g, '');
 
-                reader.onload = function(e) {
-                    const content = e.target.result;
-                    const lines = content.split('\n');
-                    const previewData = [];
-
-                    // Update rows count (excluding header)
-                    const dataRows = lines.filter((line, index) => index > 0 && line.trim() && !line.startsWith('#')).length;
-                    $('#fileRows').text(dataRows);
-
-                    // Clear previous preview
-                    $('#previewTable tbody').empty();
-
-                    // Parse headers (first line)
-                    const headers = lines[0].split(',').map(h => h.trim().replace(/["']/g, ''));
-
-                    // Validate that we have exactly 2 columns
-                    if (headers.length !== 2) {
-                        showNotification('Invalid format: CSV must have exactly 2 columns', 'error');
-                        $('#importPreview').hide();
-                        $('#processImport').prop('disabled', true);
-                        $('#previewTable tbody').append(`
-                            <tr class="table-danger">
-                                <td colspan="3" class="text-center">
-                                    <strong>❌ Error: CSV must have exactly 2 columns (Stock ID and Adjust Unit Price)</strong>
-                                </td>
-                            </tr>
-                        `);
-                        $('#importPreview').show();
-                        return;
+                    let newPrice = '';
+                    if (priceStr && priceStr.trim() !== '') {
+                        const numericStr = priceStr.replace(/[^0-9.-]/g, '');
+                        newPrice = parseFloat(numericStr);
+                        if (isNaN(newPrice)) newPrice = '';
                     }
 
-                    // Check for Stock ID column
-                    const stockIdIndex = headers.findIndex(h =>
-                        h.toLowerCase().includes('stock id') ||
-                        h.toLowerCase() === 'stock id' ||
-                        h.toLowerCase() === 'stockid' ||
-                        h.toLowerCase() === 'stock_id'
-                    );
+                    let status = '';
+                    let statusClass = '';
+                    let currentPrice = '';
+                    let changeIcon = '';
 
-                    // Check for Adjust Unit Price column
-                    const priceColumnIndex = headers.findIndex(h =>
-                        h.toLowerCase().includes('adjust unit price') ||
-                        h.toLowerCase().includes('adjust') ||
-                        h.toLowerCase() === 'adjust unit price' ||
-                        h.toLowerCase() === 'adjust price' ||
-                        h.toLowerCase() === 'price'
-                    );
+                    if (!stockId) {
+                        status = 'Missing Stock ID';
+                        statusClass = 'text-danger';
+                        invalidCount++;
+                    } else {
+                        const stockExists = allData.some(item => item.stockid === stockId);
 
-                    if (stockIdIndex === -1) {
-                        showNotification('Could not find "Stock ID" column in the CSV file', 'error');
-                        $('#importPreview').hide();
-                        $('#processImport').prop('disabled', true);
-                        return;
-                    }
+                        if (stockExists) {
+                            const stockItem = allData.find(item => item.stockid === stockId);
+                            currentPrice = customUnitPrices[stockId] !== undefined ?
+                                customUnitPrices[stockId] :
+                                (parseFloat(stockItem?.weighted_unit_price) || 0);
 
-                    if (priceColumnIndex === -1) {
-                        showNotification('Could not find "Adjust Unit Price" column in the CSV file', 'error');
-                        $('#importPreview').hide();
-                        $('#processImport').prop('disabled', true);
-                        return;
-                    }
-
-                    // Parse data rows (skip header)
-                    let validCount = 0;
-                    let invalidCount = 0;
-
-                    for (let i = 1; i < Math.min(lines.length, 11); i++) {
-                        const line = lines[i].trim();
-                        if (!line || line.startsWith('#')) continue;
-
-                        const values = parseCSVLine(line);
-
-                        if (values.length < 2) continue;
-
-                        const stockId = values[stockIdIndex]?.trim().replace(/["']/g, '');
-                        const priceStr = values[priceColumnIndex]?.trim().replace(/["']/g, '');
-                        const price = extractNumericPrice(priceStr);
-
-                        let status = '';
-                        let statusClass = '';
-
-                        if (!stockId) {
-                            status = '❌ Missing Stock ID';
-                            statusClass = 'text-danger';
-                            invalidCount++;
-                        } else if (isNaN(price) || price < 0) {
-                            status = '❌ Invalid Price';
-                            statusClass = 'text-danger';
-                            invalidCount++;
-                        } else {
-                            const stockExists = allData.some(item => item.stockid === stockId);
-                            if (stockExists) {
-                                status = '✅ Valid';
+                            if (newPrice === '') {
+                                status = 'No change (empty)';
+                                statusClass = 'text-muted';
+                                changeIcon = '➡️';
+                            } else if (parseFloat(newPrice) !== parseFloat(currentPrice)) {
+                                status = 'Will update';
                                 statusClass = 'text-success';
-                                validCount++;
+                                changeIcon = '✅';
+                                changedCount++;
                             } else {
-                                status = '❌ Stock ID not found';
-                                statusClass = 'text-danger';
-                                invalidCount++;
+                                status = 'No change (same price)';
+                                statusClass = 'text-muted';
+                                changeIcon = '➡️';
                             }
+                        } else {
+                            status = 'Stock ID not found';
+                            statusClass = 'text-danger';
+                            invalidCount++;
                         }
-
-                        previewData.push({
-                            stockId: stockId || '-',
-                            price: !isNaN(price) ? price : priceStr,
-                            status: status,
-                            statusClass: statusClass
-                        });
                     }
 
-                    // Show preview summary
+                    previewData.push({
+                        stockId: stockId || '-',
+                        currentPrice: currentPrice !== '' ? numberFormat(currentPrice) : '-',
+                        newPrice: newPrice !== '' ? numberFormat(newPrice) : '(empty)',
+                        changeIcon: changeIcon,
+                        status: status,
+                        statusClass: statusClass
+                    });
+                }
+
+                $('#previewTable tbody').append(`
+                    <tr class="table-info">
+                        <td colspan="5" class="text-center">
+                            <strong>Preview Summary:</strong> ${changedCount} price changes detected, ${invalidCount} errors (showing first 20 rows)
+                        </td>
+                    </tr>
+                `);
+
+                previewData.forEach(item => {
                     $('#previewTable tbody').append(`
-                        <tr class="table-info">
-                            <td colspan="3" class="text-center">
-                                <strong>Preview Summary:</strong> ${validCount} valid, ${invalidCount} invalid (showing first 10 rows)
+                        <tr>
+                            <td>${item.stockId}</td>
+                            <td>${item.currentPrice}</td>
+                            <td>${item.newPrice}</td>
+                            <td class="text-center">${item.changeIcon}</td>
+                            <td class="${item.statusClass} font-weight-bold">${item.status}</td>
+                        </tr>
+                    `);
+                });
+
+                if (lines.length - 1 > 20) {
+                    $('#previewTable tbody').append(`
+                        <tr>
+                            <td colspan="5" class="text-muted text-center">
+                                <i class="fas fa-ellipsis-h mr-2"></i>${lines.length - 1 - 20} more rows...
                             </td>
                         </tr>
                     `);
-
-                    previewData.forEach(item => {
-                        $('#previewTable tbody').append(`
-                            <tr>
-                                <td>${item.stockId}</td>
-                                <td>${item.price}</td>
-                                <td class="${item.statusClass} font-weight-bold">${item.status}</td>
-                            </tr>
-                        `);
-                    });
-
-                    if (lines.length - 1 > 10) {
-                        $('#previewTable tbody').append(`
-                            <tr>
-                                <td colspan="3" class="text-muted text-center">
-                                    <i class="fas fa-ellipsis-h mr-2"></i>${lines.length - 1 - 10} more rows...
-                                </td>
-                            </tr>
-                        `);
-                    }
-
-                    $('#importPreview').show();
-
-                    // Store parsed data for processing
-                    $('#importModal').data('csvData', {
-                        headers: headers,
-                        stockIdIndex: stockIdIndex,
-                        priceIndex: priceColumnIndex,
-                        lines: lines,
-                        totalRows: lines.length - 1
-                    });
-                };
-
-                reader.readAsText(file);
-            }
-
-            // Helper function to parse CSV line (handles quoted values)
-            function parseCSVLine(line) {
-                const result = [];
-                let current = '';
-                let inQuotes = false;
-
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (char === ',' && !inQuotes) {
-                        result.push(current);
-                        current = '';
-                    } else {
-                        current += char;
-                    }
                 }
 
-                result.push(current);
-                return result;
+                $('#importPreview').show();
+
+                $('#importModal').data('csvData', {
+                    stockIdIndex: stockIdIndex,
+                    priceIndex: adjustPriceIndex,
+                    lines: lines,
+                    totalRows: lines.length - 1
+                });
+
+                $('#processImport').prop('disabled', changedCount === 0);
+
+                if (changedCount === 0 && lines.length > 1) {
+                    showNotification('No price changes detected in the uploaded file', 'info');
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
             }
 
-            // Helper function to extract numeric price from string
-            function extractNumericPrice(priceStr) {
-                if (!priceStr) return NaN;
-                const numericStr = priceStr.replace(/[^0-9.-]/g, '');
-                return parseFloat(numericStr);
-            }
+            result.push(current);
+            return result;
+        }
 
-            // Start timer for import
-            function startImportTimer() {
-                importStartTime = Date.now();
-                importTimerInterval = setInterval(function() {
-                    if (importCancelled) return;
-                    const elapsedSeconds = (Date.now() - importStartTime) / 1000;
-                    $('#timer').text(formatTime(elapsedSeconds));
-                }, 100);
-            }
+        function extractNumericPrice(priceStr) {
+            if (!priceStr) return NaN;
+            const numericStr = priceStr.replace(/[^0-9.-]/g, '');
+            return parseFloat(numericStr);
+        }
 
-            // Update import progress
-            function updateImportProgress(processed, total, success, errors) {
-                const percent = Math.round((processed / total) * 100);
-                $('#uploadProgressBar').css('width', percent + '%').text(percent + '%');
-                $('#uploadStatus').html(`Processed ${processed} of ${total} rows`);
-                $('#processedRows').text(processed);
-                $('#successRows').text(success);
-                $('#errorRows').text(errors);
-                $('#uploadStats').show();
-            }
+        function startImportTimer() {
+            importStartTime = Date.now();
+            importTimerInterval = setInterval(function() {
+                if (importCancelled) return;
+                const elapsedSeconds = (Date.now() - importStartTime) / 1000;
+                $('#timer').text(formatTime(elapsedSeconds));
+            }, 100);
+        }
 
-            // Process import
-            $('#processImport').on('click', function() {
-                const csvData = $('#importModal').data('csvData');
-                if (!csvData) return;
+        function updateImportProgress(processed, total, success, errors) {
+            const percent = Math.round((processed / total) * 100);
+            $('#uploadProgressBar').css('width', percent + '%').text(percent + '%');
+            $('#uploadStatus').html(`Processed ${processed} of ${total} rows`);
+            $('#processedRows').text(processed);
+            $('#successRows').text(success);
+            $('#errorRows').text(errors);
+            $('#uploadStats').show();
+        }
 
-                const {
-                    headers,
-                    stockIdIndex,
-                    priceIndex,
-                    lines,
-                    totalRows
-                } = csvData;
+        $('#processImport').on('click', function() {
+            const csvData = $('#importModal').data('csvData');
+            if (!csvData) return;
 
-                // Reset import state
-                importCancelled = false;
-                importResults = {
-                    success: [],
-                    errors: []
-                };
+            const {
+                stockIdIndex,
+                priceIndex,
+                lines,
+                totalRows
+            } = csvData;
 
-                // Show progress display
-                $('#importPreview').hide();
-                $('#fileInfo').hide();
-                $('#uploadProgress').show();
-                $('#processImport').prop('disabled', true);
-                $('#csvFile').prop('disabled', true);
+            importCancelled = false;
+            importResults = {
+                success: [],
+                errors: []
+            };
 
-                // Start timer
-                startImportTimer();
+            $('#importPreview').hide();
+            $('#fileInfo').hide();
+            $('#uploadProgress').show();
+            $('#processImport').prop('disabled', true);
+            $('#csvFile').prop('disabled', true);
 
-                let processed = 0;
-                let success = 0;
-                let errors = 0;
+            startImportTimer();
 
-                // Process in batches
-                function processBatch(startIndex, batchSize) {
-                    if (importCancelled) {
-                        resetImportDisplay();
-                        return;
+            let processed = 0;
+            let success = 0;
+            let errors = 0;
+            let unchanged = 0;
+
+            function processBatch(startIndex, batchSize) {
+                if (importCancelled) {
+                    resetImportDisplay();
+                    return;
+                }
+
+                const endIndex = Math.min(startIndex + batchSize, lines.length);
+
+                for (let i = startIndex; i < endIndex; i++) {
+                    const line = lines[i].trim();
+                    if (!line || line.startsWith('#')) {
+                        if (!line.startsWith('#')) processed++;
+                        continue;
                     }
 
-                    const endIndex = Math.min(startIndex + batchSize, lines.length);
+                    const values = parseCSVLine(line);
 
-                    for (let i = startIndex; i < endIndex; i++) {
-                        const line = lines[i].trim();
-                        if (!line || line.startsWith('#')) {
-                            if (!line.startsWith('#')) processed++;
-                            continue;
-                        }
+                    if (values.length <= Math.max(stockIdIndex, priceIndex)) {
+                        importResults.errors.push({
+                            stockId: 'Unknown',
+                            error: 'Invalid row format'
+                        });
+                        errors++;
+                        processed++;
+                        continue;
+                    }
 
-                        const values = parseCSVLine(line);
+                    const stockId = values[stockIdIndex]?.trim().replace(/["']/g, '');
+                    const priceStr = values[priceIndex]?.trim().replace(/["']/g, '');
 
-                        if (values.length < 2) {
-                            importResults.errors.push({
-                                stockId: 'Unknown',
-                                error: 'Invalid row format'
-                            });
-                            errors++;
-                            processed++;
-                            continue;
-                        }
+                    let newPrice = '';
+                    if (priceStr && priceStr.trim() !== '') {
+                        const numericStr = priceStr.replace(/[^0-9.-]/g, '');
+                        newPrice = parseFloat(numericStr);
+                        if (isNaN(newPrice)) newPrice = '';
+                    }
 
-                        const stockId = values[stockIdIndex]?.trim().replace(/["']/g, '');
-                        const priceStr = values[priceIndex]?.trim().replace(/["']/g, '');
+                    if (!stockId) {
+                        importResults.errors.push({
+                            stockId: 'Missing',
+                            error: 'Stock ID is required'
+                        });
+                        errors++;
+                    } else {
+                        const stockExists = allData.some(item => item.stockid === stockId);
 
-                        // Handle empty price
-                        let price = '';
-                        if (priceStr && priceStr.trim() !== '') {
-                            price = extractNumericPrice(priceStr);
-                        }
+                        if (stockExists) {
+                            const stockItem = allData.find(item => item.stockid === stockId);
+                            const currentPrice = customUnitPrices[stockId] !== undefined ?
+                                customUnitPrices[stockId] :
+                                (parseFloat(stockItem?.weighted_unit_price) || 0);
 
-                        if (!stockId) {
-                            importResults.errors.push({
-                                stockId: 'Missing',
-                                error: 'Stock ID is required'
-                            });
-                            errors++;
-                        } else if (price !== '' && (isNaN(price) || price < 0)) {
-                            importResults.errors.push({
-                                stockId: stockId,
-                                error: `Invalid price: ${priceStr}`
-                            });
-                            errors++;
-                        } else {
-                            const stockExists = allData.some(item => item.stockid === stockId);
-
-                            if (stockExists) {
-                                if (price === '') {
-                                    delete customUnitPrices[stockId];
-                                    autoSaveToDatabase(stockId, 'adjust_unit_price', 0, true);
-                                    importResults.success.push({
-                                        stockId: stockId,
-                                        price: '(reset to original)'
-                                    });
-                                } else {
-                                    customUnitPrices[stockId] = price;
-                                    autoSaveToDatabase(stockId, 'adjust_unit_price', price, true);
-                                    importResults.success.push({
-                                        stockId: stockId,
-                                        price: price
-                                    });
-                                }
+                            if (newPrice !== '' && parseFloat(newPrice) !== parseFloat(currentPrice)) {
+                                customUnitPrices[stockId] = newPrice;
+                                autoSaveToDatabase(stockId, 'adjust_unit_price', newPrice, true);
+                                importResults.success.push({
+                                    stockId: stockId,
+                                    oldPrice: currentPrice,
+                                    newPrice: newPrice
+                                });
                                 success++;
 
-                                // Update in datatable if visible
-                                updateRowPrice(stockId, price === '' ? null : price);
-                            } else {
-                                importResults.errors.push({
+                                updateRowPrice(stockId, newPrice);
+                                updateRowCalculations(stockId);
+                            } else if (newPrice === '' && customUnitPrices[stockId] !== undefined) {
+                                delete customUnitPrices[stockId];
+                                autoSaveToDatabase(stockId, 'adjust_unit_price', 0, true);
+                                importResults.success.push({
                                     stockId: stockId,
-                                    error: 'Stock ID not found'
+                                    oldPrice: currentPrice,
+                                    newPrice: '(reset to original)'
                                 });
-                                errors++;
-                            }
-                        }
+                                success++;
 
-                        processed++;
-                    }
-
-                    // Update progress
-                    updateImportProgress(processed, totalRows, success, errors);
-
-                    if (processed < totalRows && !importCancelled) {
-                        setTimeout(() => {
-                            processBatch(endIndex, batchSize);
-                        }, 50);
-                    } else if (!importCancelled) {
-                        clearInterval(importTimerInterval);
-                        showNotification(`✅ Import complete: ${success} prices saved successfully`, 'success');
-                        showImportResults(importResults);
-                    }
-                }
-
-                processBatch(1, 50);
-            });
-
-            // Update the updateRowPrice function to handle empty values
-            function updateRowPrice(stockId, newPrice) {
-                if (newPrice === null || newPrice === '') {
-                    delete customUnitPrices[stockId];
-                } else {
-                    customUnitPrices[stockId] = newPrice;
-                }
-
-                const rows = $('#datatable').DataTable().rows().data();
-                for (let i = 0; i < rows.length; i++) {
-                    if (rows[i].stockid === stockId) {
-                        const row = $('#datatable').DataTable().row(i);
-                        const unitPrice = parseFloat(rows[i].weighted_unit_price) || 0;
-
-                        const $priceCell = $(row.node()).find('td:eq(8)');
-                        const $priceInput = $priceCell.find('.unit-price-input');
-                        if ($priceInput.length) {
-                            if (newPrice === null || newPrice === '') {
-                                $priceInput.val('').removeClass('edited');
+                                updateRowPrice(stockId, null);
+                                updateRowCalculations(stockId);
                             } else {
-                                $priceInput.val(newPrice).addClass('edited');
+                                unchanged++;
                             }
+                        } else {
+                            importResults.errors.push({
+                                stockId: stockId,
+                                error: 'Stock ID not found'
+                            });
+                            errors++;
                         }
-
-                        if (unitPrice === 0) {
-                            const totalQty = calculateTotalQty(rows[i]);
-                            updateAdjustedPrice(stockId);
-                            updateQtyTimesAdjustedPrice(stockId, totalQty);
-                        }
-
-                        break;
                     }
+
+                    processed++;
+                }
+
+                updateImportProgress(processed, totalRows, success, errors);
+
+                if (processed < totalRows && !importCancelled) {
+                    setTimeout(() => {
+                        processBatch(endIndex, batchSize);
+                    }, 50);
+                } else if (!importCancelled) {
+                    clearInterval(importTimerInterval);
+                    showNotification(`✅ Import complete: ${success} prices updated, ${unchanged} unchanged, ${errors} errors`, 'success');
+                    showImportResults(importResults, unchanged);
+                    updateStatusStatistics(allData);
                 }
             }
 
-            function showImportResults(results) {
-                resetImportDisplay();
-                $('#csvFile').val('');
-                $('.custom-file-label').html('Choose file...');
-
-                const elapsedSeconds = importStartTime ? ((Date.now() - importStartTime) / 1000).toFixed(1) : 0;
-
-                $('#successCount').text(results.success.length);
-                $('#errorCount').text(results.errors.length);
-
-                $('.modal-header.bg-success').after(`
-                    <div class="alert alert-info text-center mb-0">
-                        <i class="fas fa-clock mr-2"></i>
-                        Processing completed in ${elapsedSeconds} seconds
-                        (${(results.success.length / elapsedSeconds).toFixed(1)} rows/sec)
-                    </div>
-                `);
-
-                if (results.errors.length > 0) {
-                    $('#errorDetails').show();
-                    $('#errorList').empty();
-
-                    results.errors.slice(0, 10).forEach(error => {
-                        $('#errorList').append(`
-                            <tr>
-                                <td>${error.stockId}</td>
-                                <td class="text-danger">${error.error}</td>
-                            </tr>
-                        `);
-                    });
-
-                    if (results.errors.length > 10) {
-                        $('#errorList').append(`
-                            <tr>
-                                <td colspan="2" class="text-muted text-center">
-                                    ... and ${results.errors.length - 10} more errors
-                                </td>
-                            </tr>
-                        `);
-                    }
-                } else {
-                    $('#errorDetails').hide();
-                }
-
-                $('#importModal').modal('hide');
-                $('#importResultsModal').modal('show');
-
-                updateCustomizationsCount();
-            }
-
-            // Handle results modal close
-            $('#importResultsModal').on('hidden.bs.modal', function() {
-                $('.modal-header.bg-success').next('.alert-info').remove();
-                applyFilters();
-            });
-
-            // Add keyboard shortcut for import (Ctrl+I)
-            $(document).on('keydown', function(e) {
-                if (e.ctrlKey && e.key === 'i') {
-                    e.preventDefault();
-                    $('#importModal').modal('show');
-                }
-            });
+            processBatch(1, 50);
         });
-    </script>
+
+        function updateRowPrice(stockId, newPrice) {
+            if (newPrice === null || newPrice === '') {
+                delete customUnitPrices[stockId];
+            } else {
+                customUnitPrices[stockId] = newPrice;
+            }
+
+            const rows = $('#datatable').DataTable().rows().data();
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].stockid === stockId) {
+                    const row = $('#datatable').DataTable().row(i);
+                    const unitPrice = parseFloat(rows[i].weighted_unit_price) || 0;
+
+                    const $priceCell = $(row.node()).find('td:eq(8)');
+                    const $priceInput = $priceCell.find('.unit-price-input');
+                    if ($priceInput.length) {
+                        if (newPrice === null || newPrice === '') {
+                            $priceInput.val('').removeClass('edited');
+                        } else {
+                            $priceInput.val(newPrice).addClass('edited');
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        function showImportResults(results, unchanged = 0) {
+            resetImportDisplay();
+            $('#csvFile').val('');
+            $('.custom-file-label').html('Choose file...');
+
+            const elapsedSeconds = importStartTime ? ((Date.now() - importStartTime) / 1000).toFixed(1) : 0;
+
+            $('#successCount').text(results.success.length);
+            $('#errorCount').text(results.errors.length);
+
+            $('.modal-header.bg-info').next('.alert-info').remove();
+            $('.modal-header.bg-info').after(`
+                <div class="alert alert-info text-center mb-0">
+                    <i class="fas fa-clock mr-2"></i>
+                    Processing completed in ${elapsedSeconds} seconds
+                    <br>
+                    <strong>${results.success.length} updated</strong>, ${unchanged} unchanged, ${results.errors.length} errors
+                </div>
+            `);
+
+            if (results.errors.length > 0) {
+                $('#errorDetails').show();
+                $('#errorList').empty();
+
+                results.errors.slice(0, 10).forEach(error => {
+                    $('#errorList').append(`
+                        <tr>
+                            <td>${error.stockId}</td>
+                            <td class="text-danger">${error.error}</td>
+                        </tr>
+                    `);
+                });
+
+                if (results.errors.length > 10) {
+                    $('#errorList').append(`
+                        <tr>
+                            <td colspan="2" class="text-muted text-center">
+                                ... and ${results.errors.length - 10} more errors
+                            </td>
+                        </tr>
+                    `);
+                }
+            } else {
+                $('#errorDetails').hide();
+            }
+
+            $('#importModal').modal('hide');
+            $('#importResultsModal').modal('show');
+
+            updateCustomizationsCount();
+        }
+
+        $('#importResultsModal').on('hidden.bs.modal', function() {
+            $('.modal-header.bg-success').next('.alert-info').remove();
+            applyFilters();
+        });
+
+        $(document).on('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'i') {
+                e.preventDefault();
+                $('#importModal').modal('show');
+            }
+        });
+    });
+</script>
 </body>
 
 </html>
