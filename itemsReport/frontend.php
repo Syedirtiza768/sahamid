@@ -802,7 +802,7 @@ if (!isset($_SESSION['UsersRealName'])) {
                                         <div class="col-12 text-center">
                                             <div class="alert alert-warning mb-0">
                                                 <i class="fas fa-info-circle mr-2"></i>
-                                                <strong>How it works:</strong> Upload the exact CSV file downloaded from this page. The system will find the <strong>Adjust Unit Price</strong> column and only update rows where the price has changed.
+                                                <strong>How it works:</strong> Upload the exact CSV file downloaded from this page. The system will find the <strong>Adjust Unit Price & Landing Factor</strong> column and only update rows where the price has changed.
                                             </div>
                                         </div>
                                     </div>
@@ -1961,7 +1961,7 @@ function updateStatusStatistics(data) {
 
             $.ajax({
                 type: 'GET',
-                url: 'index.php',
+                 url: 'index.php',
                 dataType: "json",
                 success: function(response) {
                     isCalculatingPrices = false;

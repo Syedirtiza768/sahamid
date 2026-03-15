@@ -318,6 +318,7 @@ fclose($output);
 
 // ✅ EXACT SAME FUNCTION AS index.php
 function calculatePriceForStock($parchinos, $requested_qty) {
+    
     if ($requested_qty <= 0 || empty($parchinos)) {
         return [
             'total_bpitems_price' => 0,

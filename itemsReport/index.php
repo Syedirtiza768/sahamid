@@ -26,15 +26,15 @@ try {
     $batchSize = 1000;
     $allData = [];
     $processedCount = 0;
-    
+
     // Get total count first
     $countResult = mysqli_query($db, "SELECT COUNT(*) as total FROM stockmaster");
     $totalCount = mysqli_fetch_assoc($countResult)['total'];
-    
+
     // ✅ Process in batches
     for ($offset = 0; $offset < $totalCount; $offset += $batchSize) {
         error_log("Processing batch: $offset to " . ($offset + $batchSize));
-        
+
         // Main product query for this batch
         $SQL = "SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
                 lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
@@ -54,28 +54,28 @@ try {
         // ✅ Collect stock IDs for this batch
         $batchStockIds = [];
         $batchRows = [];
-        
+
         while ($row = mysqli_fetch_assoc($res)) {
             $batchStockIds[] = $row['stockid'];
             $batchRows[$row['stockid']] = $row;
         }
-        
+
         if (empty($batchStockIds)) {
             mysqli_free_result($res);
             continue;
         }
-        
+
         // ✅ Get quantities for this batch
         $quantities = [];
-        $stockIdsStr = "'" . implode("','", array_map(function($id) use ($db) {
+        $stockIdsStr = "'" . implode("','", array_map(function ($id) use ($db) {
             return mysqli_real_escape_string($db, $id);
         }, $batchStockIds)) . "'";
-        
+
         $SQL_qty = "SELECT stockid, loccode, SUM(quantity) as quantity 
                    FROM locstock 
                    WHERE stockid IN ($stockIdsStr)
                    GROUP BY stockid, loccode";
-        
+
         $res_qty = mysqli_query($db, $SQL_qty);
         if ($res_qty) {
             while ($row_qty = mysqli_fetch_assoc($res_qty)) {
@@ -83,14 +83,17 @@ try {
             }
             mysqli_free_result($res_qty);
         }
-        
+
         // ✅ Get parchino data for this batch - INCLUDING adjust_unit_price and landing_factor
         $parchinoData = [];
-        $SQL_parchinos = "SELECT stockid, quantity, price, adjust_unit_price, landing_factor 
-                         FROM igp_parchi 
-                         WHERE stockid IN ($stockIdsStr)
-                         ORDER BY stockid, pdate DESC";
-        
+        $SQL_parchinos = "SELECT stockid, quantity, price, adjust_unit_price, landing_factor, pdate
+                            FROM igp_parchi 
+                            WHERE CONVERT(stockid USING latin1) IN (
+                                SELECT CONVERT(stockid USING latin1) FROM stockmaster 
+                                WHERE stockid IN ($stockIdsStr)
+                            )
+                            ORDER BY stockid, pdate DESC";
+
         $res_parchinos = mysqli_query($db, $SQL_parchinos);
         if ($res_parchinos) {
             while ($row = mysqli_fetch_assoc($res_parchinos)) {
@@ -106,13 +109,13 @@ try {
             }
             mysqli_free_result($res_parchinos);
         }
-        
+
         // ✅ Get stock status data from the new stock_status table
         $stockStatusData = [];
         $SQL_status = "SELECT stockid, latest_trandate 
                        FROM stock_status 
                        WHERE stockid IN ($stockIdsStr)";
-        
+
         $res_status = mysqli_query($db, $SQL_status);
         if ($res_status) {
             while ($row = mysqli_fetch_assoc($res_status)) {
@@ -120,15 +123,15 @@ try {
             }
             mysqli_free_result($res_status);
         }
-        
+
         // ✅ Process each item in this batch
         $locations = ['HO', 'MT', 'SR', 'OS', 'VSR', 'WS'];
-        
+
         foreach ($batchStockIds as $stockid) {
             if (!isset($batchRows[$stockid])) continue;
-            
+
             $item = $batchRows[$stockid];
-            
+
             // Add quantities
             $totalQty = 0;
             foreach ($locations as $location) {
@@ -137,13 +140,13 @@ try {
                 $totalQty += $qty;
             }
             $item['total_qty'] = $totalQty;
-            
+
             // Calculate price using parchino data with adjust_unit_price and landing_factor
             $priceData = calculatePriceForStock($parchinoData[$stockid] ?? [], $totalQty);
             $item['total_bpitems_price'] = $priceData['total_bpitems_price'];
             $item['weighted_unit_price'] = $priceData['weighted_unit_price'];
             $item['total_quantity'] = $priceData['total_quantity'];
-            
+
             // Get the latest adjust_unit_price and landing_factor from the most recent parchino record
             if (!empty($parchinoData[$stockid])) {
                 // Use the most recent record's values (assuming first in array due to ORDER BY pdate DESC)
@@ -154,36 +157,36 @@ try {
                 $item['adjust_unit_price'] = 0;
                 $item['landing_factor'] = 1;
             }
-            
+
             // Get the latest transaction date from stock_status table
             $item['latest_trandate'] = $stockStatusData[$stockid] ?? null;
-            
+
             $allData[] = $item;
             $processedCount++;
-            
+
             // Free memory for processed item
             unset($batchRows[$stockid], $quantities[$stockid], $parchinoData[$stockid]);
         }
-        
+
         // Free batch memory
         mysqli_free_result($res);
         unset($batchStockIds, $batchRows, $quantities, $parchinoData, $stockStatusData);
-        
+
         // Force garbage collection
         if ($offset % 5000 == 0) {
             gc_collect_cycles();
         }
-        
+
         // Send progress to client if needed
         if (isset($_GET['progress']) && $offset % 5000 == 0) {
             $percent = round(($offset / $totalCount) * 100, 2);
             error_log("Progress: $percent% ($processedCount/$totalCount)");
         }
     }
-    
+
     // ✅ Send response
     $buffer = ob_get_clean();
-    
+
     if (!empty($buffer)) {
         echo json_encode([
             'status' => 'error',
@@ -198,7 +201,6 @@ try {
             'message' => "Processed $processedCount products"
         ]);
     }
-
 } catch (Exception $e) {
     ob_end_clean();
     http_response_code(500);
@@ -206,7 +208,8 @@ try {
 }
 
 // ✅ Optimized price calculation (UPDATED to use adjust_unit_price and landing_factor)
-function calculatePriceForStock($parchinos, $requested_qty) {
+function calculatePriceForStock($parchinos, $requested_qty)
+{
     if ($requested_qty <= 0 || empty($parchinos)) {
         return [
             'total_bpitems_price' => 0,
@@ -214,26 +217,26 @@ function calculatePriceForStock($parchinos, $requested_qty) {
             'total_quantity' => 0
         ];
     }
-    
+
     $remaining_qty = $requested_qty;
     $total_allocated_qty = 0;
     $total_weighted_price = 0;
-    
+
     foreach ($parchinos as $parchino) {
         if ($remaining_qty <= 0) break;
-        
+
         $available_qty = (float)$parchino['quantity'];
-        
+
         // Use adjust_unit_price if available and > 0, otherwise use original price
         $unit_price = (float)($parchino['adjust_unit_price'] ?? 0);
         if ($unit_price <= 0) {
             $unit_price = (float)$parchino['price'];
         }
-        
+
         // Apply landing factor
         $landing_factor = (float)($parchino['landing_factor'] ?? 1);
         $effective_price = $unit_price * $landing_factor;
-        
+
         $allocated_qty = min($available_qty, $remaining_qty);
         if ($allocated_qty > 0) {
             $allocated_price = $allocated_qty * $effective_price;
@@ -242,11 +245,11 @@ function calculatePriceForStock($parchinos, $requested_qty) {
             $remaining_qty -= $allocated_qty;
         }
     }
-    
-    $weighted_unit_price = $total_allocated_qty > 0 
-        ? $total_weighted_price / $total_allocated_qty 
+
+    $weighted_unit_price = $total_allocated_qty > 0
+        ? $total_weighted_price / $total_allocated_qty
         : 0;
-    
+
     return [
         'total_bpitems_price' => round($total_weighted_price, 2),
         'weighted_unit_price' => round($weighted_unit_price, 2),
@@ -255,4 +258,3 @@ function calculatePriceForStock($parchinos, $requested_qty) {
 }
 
 exit();
-?>

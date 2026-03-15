@@ -1,0 +1,978 @@
+[14-Mar-2026 08:53:24 Europe/Berlin] === STARTING PROCESSING ===
+[14-Mar-2026 08:53:24 Europe/Berlin] Total records: 45578, Batch size: 1000, Total batches: 46
+[14-Mar-2026 08:53:24 Europe/Berlin] 
+=== Processing batch 1 of 46 (offset: 0) ===
+[14-Mar-2026 08:53:24 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 0, 1000
+[14-Mar-2026 08:53:25 Europe/Berlin] Batch 1: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:25 Europe/Berlin] First 5 stock IDs in batch: 10001CALIBR830PIECAL, 10004RTBPESBW40-14, 10011DSORTH1012MSO, 1001AA099335, 1001AA185297
+[14-Mar-2026 08:53:25 Europe/Berlin] Quantity query for batch 1
+[14-Mar-2026 08:53:25 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:25 Europe/Berlin] Parchino query for batch 1
+[14-Mar-2026 08:53:25 Europe/Berlin] Found 171 parchino records
+[14-Mar-2026 08:53:25 Europe/Berlin] Status query for batch 1
+[14-Mar-2026 08:53:25 Europe/Berlin] Found 932 status records
+[14-Mar-2026 08:53:25 Europe/Berlin] Batch 1 completed: Processed 1000 items
+[14-Mar-2026 08:53:25 Europe/Berlin] Overall progress: 2.19% (1000/45578)
+[14-Mar-2026 08:53:25 Europe/Berlin] 
+=== Processing batch 2 of 46 (offset: 1000) ===
+[14-Mar-2026 08:53:25 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 1000, 1000
+[14-Mar-2026 08:53:25 Europe/Berlin] Batch 2: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:25 Europe/Berlin] First 5 stock IDs in batch: 1001SLC202096-R, 1001SLC232506-0097, 1001SLC270804-0012, 1001SLC270804-0024, 1001SLC270805-0003
+[14-Mar-2026 08:53:25 Europe/Berlin] Quantity query for batch 2
+[14-Mar-2026 08:53:25 Europe/Berlin] Found 8999 quantity records
+[14-Mar-2026 08:53:25 Europe/Berlin] Parchino query for batch 2
+[14-Mar-2026 08:53:26 Europe/Berlin] Found 313 parchino records
+[14-Mar-2026 08:53:26 Europe/Berlin] Status query for batch 2
+[14-Mar-2026 08:53:26 Europe/Berlin] Found 924 status records
+[14-Mar-2026 08:53:26 Europe/Berlin] Batch 2 completed: Processed 1000 items
+[14-Mar-2026 08:53:26 Europe/Berlin] Overall progress: 4.39% (2000/45578)
+[14-Mar-2026 08:53:26 Europe/Berlin] 
+=== Processing batch 3 of 46 (offset: 2000) ===
+[14-Mar-2026 08:53:26 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 2000, 1000
+[14-Mar-2026 08:53:26 Europe/Berlin] Batch 3: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:26 Europe/Berlin] First 5 stock IDs in batch: 1021INDPLG219406, 1021INDPLG230, 1021INDPLG230306, 1021INDPLG230406, 1021INDPLG230409
+[14-Mar-2026 08:53:26 Europe/Berlin] Quantity query for batch 3
+[14-Mar-2026 08:53:26 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:26 Europe/Berlin] Parchino query for batch 3
+[14-Mar-2026 08:53:27 Europe/Berlin] Found 451 parchino records
+[14-Mar-2026 08:53:27 Europe/Berlin] Status query for batch 3
+[14-Mar-2026 08:53:27 Europe/Berlin] Found 870 status records
+[14-Mar-2026 08:53:27 Europe/Berlin] Batch 3 completed: Processed 1000 items
+[14-Mar-2026 08:53:27 Europe/Berlin] Overall progress: 6.58% (3000/45578)
+[14-Mar-2026 08:53:27 Europe/Berlin] 
+=== Processing batch 4 of 46 (offset: 3000) ===
+[14-Mar-2026 08:53:27 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 3000, 1000
+[14-Mar-2026 08:53:27 Europe/Berlin] Batch 4: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:27 Europe/Berlin] First 5 stock IDs in batch: 1031DOLSTRLE1M35N710, 1031DOLSTRLE1M35N714, 1031DOLSTRLE1M35N721, 1031DOLSTRLE1M35Q706, 1031DOLSTRLE1M35Q707
+[14-Mar-2026 08:53:27 Europe/Berlin] Quantity query for batch 4
+[14-Mar-2026 08:53:27 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:27 Europe/Berlin] Parchino query for batch 4
+[14-Mar-2026 08:53:27 Europe/Berlin] Found 4123 parchino records
+[14-Mar-2026 08:53:27 Europe/Berlin] Status query for batch 4
+[14-Mar-2026 08:53:27 Europe/Berlin] Found 933 status records
+[14-Mar-2026 08:53:27 Europe/Berlin] Batch 4 completed: Processed 1000 items
+[14-Mar-2026 08:53:27 Europe/Berlin] Overall progress: 8.78% (4000/45578)
+[14-Mar-2026 08:53:27 Europe/Berlin] 
+=== Processing batch 5 of 46 (offset: 4000) ===
+[14-Mar-2026 08:53:27 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 4000, 1000
+[14-Mar-2026 08:53:28 Europe/Berlin] Batch 5: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:28 Europe/Berlin] First 5 stock IDs in batch: 1031MCCBGV2LE06, 1031MCCBGV7RE100, 1031MCCBGV7RE150, 1031MCCBLC1G225KUEN, 1031MCCBLC1G400KUEN
+[14-Mar-2026 08:53:28 Europe/Berlin] Quantity query for batch 5
+[14-Mar-2026 08:53:28 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:28 Europe/Berlin] Parchino query for batch 5
+[14-Mar-2026 08:53:28 Europe/Berlin] Found 2477 parchino records
+[14-Mar-2026 08:53:28 Europe/Berlin] Status query for batch 5
+[14-Mar-2026 08:53:28 Europe/Berlin] Found 935 status records
+[14-Mar-2026 08:53:28 Europe/Berlin] Batch 5 completed: Processed 1000 items
+[14-Mar-2026 08:53:28 Europe/Berlin] Overall progress: 10.97% (5000/45578)
+[14-Mar-2026 08:53:28 Europe/Berlin] 
+=== Processing batch 6 of 46 (offset: 5000) ===
+[14-Mar-2026 08:53:28 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 5000, 1000
+[14-Mar-2026 08:53:29 Europe/Berlin] Batch 6: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:29 Europe/Berlin] First 5 stock IDs in batch: 1031SFTWRCEXSPUCZXSPMZZ, 1031SFTWRCT101113, 1031SFTWRCT109921, 1031SFTWRCT109923, 1031SFTWRCT109924
+[14-Mar-2026 08:53:29 Europe/Berlin] Quantity query for batch 6
+[14-Mar-2026 08:53:29 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:29 Europe/Berlin] Parchino query for batch 6
+[14-Mar-2026 08:53:29 Europe/Berlin] Found 848 parchino records
+[14-Mar-2026 08:53:29 Europe/Berlin] Status query for batch 6
+[14-Mar-2026 08:53:29 Europe/Berlin] Found 936 status records
+[14-Mar-2026 08:53:29 Europe/Berlin] Batch 6 completed: Processed 1000 items
+[14-Mar-2026 08:53:29 Europe/Berlin] Overall progress: 13.16% (6000/45578)
+[14-Mar-2026 08:53:29 Europe/Berlin] 
+=== Processing batch 7 of 46 (offset: 6000) ===
+[14-Mar-2026 08:53:29 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 6000, 1000
+[14-Mar-2026 08:53:30 Europe/Berlin] Batch 7: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:30 Europe/Berlin] First 5 stock IDs in batch: 1032ELCB23029, 1032ELCB23034, 1032ELCB23038, 1032ELCB23042, 1032ELCB23045
+[14-Mar-2026 08:53:30 Europe/Berlin] Quantity query for batch 7
+[14-Mar-2026 08:53:30 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:30 Europe/Berlin] Parchino query for batch 7
+[14-Mar-2026 08:53:30 Europe/Berlin] Found 828 parchino records
+[14-Mar-2026 08:53:30 Europe/Berlin] Status query for batch 7
+[14-Mar-2026 08:53:30 Europe/Berlin] Found 968 status records
+[14-Mar-2026 08:53:30 Europe/Berlin] Batch 7 completed: Processed 1000 items
+[14-Mar-2026 08:53:30 Europe/Berlin] Overall progress: 15.36% (7000/45578)
+[14-Mar-2026 08:53:30 Europe/Berlin] 
+=== Processing batch 8 of 46 (offset: 7000) ===
+[14-Mar-2026 08:53:30 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 7000, 1000
+[14-Mar-2026 08:53:31 Europe/Berlin] Batch 8: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:31 Europe/Berlin] First 5 stock IDs in batch: 1032MCBA9F92132, 1032MCBA9F92140, 1032MCBA9F92150, 1032MCBA9F92163, 1032MCBA9F92170
+[14-Mar-2026 08:53:31 Europe/Berlin] Quantity query for batch 8
+[14-Mar-2026 08:53:31 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:31 Europe/Berlin] Parchino query for batch 8
+[14-Mar-2026 08:53:31 Europe/Berlin] Found 650 parchino records
+[14-Mar-2026 08:53:31 Europe/Berlin] Status query for batch 8
+[14-Mar-2026 08:53:31 Europe/Berlin] Found 989 status records
+[14-Mar-2026 08:53:31 Europe/Berlin] Batch 8 completed: Processed 1000 items
+[14-Mar-2026 08:53:31 Europe/Berlin] Overall progress: 17.55% (8000/45578)
+[14-Mar-2026 08:53:31 Europe/Berlin] 
+=== Processing batch 9 of 46 (offset: 8000) ===
+[14-Mar-2026 08:53:31 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 8000, 1000
+[14-Mar-2026 08:53:31 Europe/Berlin] Batch 9: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:31 Europe/Berlin] First 5 stock IDs in batch: 1032MMCLC1K09004F7, 1032MMCLC1K09004M7, 1032MMCLC1K09004MD, 1032MMCLC1K09004V7, 1032MMCLC1K09008E7
+[14-Mar-2026 08:53:31 Europe/Berlin] Quantity query for batch 9
+[14-Mar-2026 08:53:31 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:31 Europe/Berlin] Parchino query for batch 9
+[14-Mar-2026 08:53:32 Europe/Berlin] Found 859 parchino records
+[14-Mar-2026 08:53:32 Europe/Berlin] Status query for batch 9
+[14-Mar-2026 08:53:32 Europe/Berlin] Found 938 status records
+[14-Mar-2026 08:53:32 Europe/Berlin] Batch 9 completed: Processed 1000 items
+[14-Mar-2026 08:53:32 Europe/Berlin] Overall progress: 19.75% (9000/45578)
+[14-Mar-2026 08:53:32 Europe/Berlin] 
+=== Processing batch 10 of 46 (offset: 9000) ===
+[14-Mar-2026 08:53:32 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 9000, 1000
+[14-Mar-2026 08:53:32 Europe/Berlin] Batch 10: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:32 Europe/Berlin] First 5 stock IDs in batch: 1033LVCRABA6PT212, 1033MCB11271, 1033MCB11971, 1033MCB12009, 1033MCB12205
+[14-Mar-2026 08:53:32 Europe/Berlin] Quantity query for batch 10
+[14-Mar-2026 08:53:32 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:32 Europe/Berlin] Parchino query for batch 10
+[14-Mar-2026 08:53:33 Europe/Berlin] Found 189 parchino records
+[14-Mar-2026 08:53:33 Europe/Berlin] Status query for batch 10
+[14-Mar-2026 08:53:33 Europe/Berlin] Found 943 status records
+[14-Mar-2026 08:53:33 Europe/Berlin] Batch 10 completed: Processed 1000 items
+[14-Mar-2026 08:53:33 Europe/Berlin] Overall progress: 21.94% (10000/45578)
+[14-Mar-2026 08:53:33 Europe/Berlin] 
+=== Processing batch 11 of 46 (offset: 10000) ===
+[14-Mar-2026 08:53:33 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 10000, 1000
+[14-Mar-2026 08:53:33 Europe/Berlin] Batch 11: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:33 Europe/Berlin] First 5 stock IDs in batch: 1041APUSHB216380, 1041APUSHB216382, 1041APUSHB216503, 1041APUSHB216504, 1041APUSHB216557
+[14-Mar-2026 08:53:33 Europe/Berlin] Quantity query for batch 11
+[14-Mar-2026 08:53:33 Europe/Berlin] Found 8996 quantity records
+[14-Mar-2026 08:53:33 Europe/Berlin] Parchino query for batch 11
+[14-Mar-2026 08:53:33 Europe/Berlin] Status query for batch 11
+[14-Mar-2026 08:53:33 Europe/Berlin] Found 951 status records
+[14-Mar-2026 08:53:33 Europe/Berlin] Batch 11 completed: Processed 1000 items
+[14-Mar-2026 08:53:33 Europe/Berlin] Overall progress: 24.13% (11000/45578)
+[14-Mar-2026 08:53:33 Europe/Berlin] 
+=== Processing batch 12 of 46 (offset: 11000) ===
+[14-Mar-2026 08:53:33 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 11000, 1000
+[14-Mar-2026 08:53:34 Europe/Berlin] Batch 12: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:34 Europe/Berlin] First 5 stock IDs in batch: 1042MC239402, 1042MC239405, 1042MC239480, 1042MC239588, 1042MC274185
+[14-Mar-2026 08:53:34 Europe/Berlin] Quantity query for batch 12
+[14-Mar-2026 08:53:34 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:34 Europe/Berlin] Parchino query for batch 12
+[14-Mar-2026 08:53:34 Europe/Berlin] Found 269 parchino records
+[14-Mar-2026 08:53:34 Europe/Berlin] Status query for batch 12
+[14-Mar-2026 08:53:34 Europe/Berlin] Found 901 status records
+[14-Mar-2026 08:53:34 Europe/Berlin] Batch 12 completed: Processed 1000 items
+[14-Mar-2026 08:53:34 Europe/Berlin] Overall progress: 26.33% (12000/45578)
+[14-Mar-2026 08:53:34 Europe/Berlin] 
+=== Processing batch 13 of 46 (offset: 12000) ===
+[14-Mar-2026 08:53:34 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 12000, 1000
+[14-Mar-2026 08:53:35 Europe/Berlin] Batch 13: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:35 Europe/Berlin] First 5 stock IDs in batch: 1081ACC3RU2936-3AA01, 1081ACC3TY75611AA00, 1081ACC6AG1400-0AP00-4AA1, 1081ACC6AG1400-1PB00-4AA0, 1081ACC6DR4004-8J
+[14-Mar-2026 08:53:35 Europe/Berlin] Quantity query for batch 13
+[14-Mar-2026 08:53:35 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:35 Europe/Berlin] Parchino query for batch 13
+[14-Mar-2026 08:53:35 Europe/Berlin] Found 216 parchino records
+[14-Mar-2026 08:53:35 Europe/Berlin] Status query for batch 13
+[14-Mar-2026 08:53:35 Europe/Berlin] Found 310 status records
+[14-Mar-2026 08:53:35 Europe/Berlin] Batch 13 completed: Processed 1000 items
+[14-Mar-2026 08:53:35 Europe/Berlin] Overall progress: 28.52% (13000/45578)
+[14-Mar-2026 08:53:35 Europe/Berlin] 
+=== Processing batch 14 of 46 (offset: 13000) ===
+[14-Mar-2026 08:53:35 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 13000, 1000
+[14-Mar-2026 08:53:35 Europe/Berlin] Batch 14: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:35 Europe/Berlin] First 5 stock IDs in batch: 1081MC3RT2016-1AF01, 1081MC3RT2016-1AF02, 1081MC3RT2016-1AP02, 1081MC3RT2016-1AV02, 1081MC3RT2016-1BB42
+[14-Mar-2026 08:53:35 Europe/Berlin] Quantity query for batch 14
+[14-Mar-2026 08:53:36 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:36 Europe/Berlin] Parchino query for batch 14
+[14-Mar-2026 08:53:36 Europe/Berlin] Found 254 parchino records
+[14-Mar-2026 08:53:36 Europe/Berlin] Status query for batch 14
+[14-Mar-2026 08:53:36 Europe/Berlin] Found 341 status records
+[14-Mar-2026 08:53:36 Europe/Berlin] Batch 14 completed: Processed 1000 items
+[14-Mar-2026 08:53:36 Europe/Berlin] Overall progress: 30.72% (14000/45578)
+[14-Mar-2026 08:53:36 Europe/Berlin] 
+=== Processing batch 15 of 46 (offset: 14000) ===
+[14-Mar-2026 08:53:36 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 14000, 1000
+[14-Mar-2026 08:53:36 Europe/Berlin] Batch 15: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:36 Europe/Berlin] First 5 stock IDs in batch: 1081POWMOD6SL32101PE325AL0, 1081POWMOD6SL3224-0BE25-5UA0, 1081POWMOD6SL3224-0BE32-2AA0, 1081POWMOD6SL3224-0BE33-7UA0, 1081POWMOD6SL3224-0BE41-1UA0
+[14-Mar-2026 08:53:36 Europe/Berlin] Quantity query for batch 15
+[14-Mar-2026 08:53:36 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:36 Europe/Berlin] Parchino query for batch 15
+[14-Mar-2026 08:53:37 Europe/Berlin] Found 502 parchino records
+[14-Mar-2026 08:53:37 Europe/Berlin] Status query for batch 15
+[14-Mar-2026 08:53:37 Europe/Berlin] Found 538 status records
+[14-Mar-2026 08:53:37 Europe/Berlin] Batch 15 completed: Processed 1000 items
+[14-Mar-2026 08:53:37 Europe/Berlin] Overall progress: 32.91% (15000/45578)
+[14-Mar-2026 08:53:37 Europe/Berlin] 
+=== Processing batch 16 of 46 (offset: 15000) ===
+[14-Mar-2026 08:53:37 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 15000, 1000
+[14-Mar-2026 08:53:37 Europe/Berlin] Batch 16: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:37 Europe/Berlin] First 5 stock IDs in batch: 1082MMC3RH2122-1AP00, 1082MMC3RH2122-1BB40, 1082MMC3RH2131-1BB40, 1082MMC3RH2140-1BB40, 1082MMC3RH2140-1BF40
+[14-Mar-2026 08:53:37 Europe/Berlin] Quantity query for batch 16
+[14-Mar-2026 08:53:37 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:37 Europe/Berlin] Parchino query for batch 16
+[14-Mar-2026 08:53:38 Europe/Berlin] Found 359 parchino records
+[14-Mar-2026 08:53:38 Europe/Berlin] Status query for batch 16
+[14-Mar-2026 08:53:38 Europe/Berlin] Found 693 status records
+[14-Mar-2026 08:53:38 Europe/Berlin] Batch 16 completed: Processed 1000 items
+[14-Mar-2026 08:53:38 Europe/Berlin] Overall progress: 35.1% (16000/45578)
+[14-Mar-2026 08:53:38 Europe/Berlin] 
+=== Processing batch 17 of 46 (offset: 16000) ===
+[14-Mar-2026 08:53:38 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 16000, 1000
+[14-Mar-2026 08:53:38 Europe/Berlin] Batch 17: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:38 Europe/Berlin] First 5 stock IDs in batch: 1091CBGLND102052, 1091CBGLND106009060, 1091CBGLND106009080, 1091CBGLND106009105, 1091CBGLND106011055
+[14-Mar-2026 08:53:38 Europe/Berlin] Quantity query for batch 17
+[14-Mar-2026 08:53:38 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:38 Europe/Berlin] Parchino query for batch 17
+[14-Mar-2026 08:53:38 Europe/Berlin] Found 579 parchino records
+[14-Mar-2026 08:53:38 Europe/Berlin] Status query for batch 17
+[14-Mar-2026 08:53:38 Europe/Berlin] Found 621 status records
+[14-Mar-2026 08:53:38 Europe/Berlin] Batch 17 completed: Processed 1000 items
+[14-Mar-2026 08:53:38 Europe/Berlin] Overall progress: 37.3% (17000/45578)
+[14-Mar-2026 08:53:38 Europe/Berlin] 
+=== Processing batch 18 of 46 (offset: 17000) ===
+[14-Mar-2026 08:53:38 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 17000, 1000
+[14-Mar-2026 08:53:39 Europe/Berlin] Batch 18: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:39 Europe/Berlin] First 5 stock IDs in batch: 1101MOTORM2QA90L4A4, 1101MOTORMQEJ102502-BSA, 1101MOTORMQEJ132301-BDAX, 1101MPCB1SAM250000R10, 1101MPCB1SAM250000R1004
+[14-Mar-2026 08:53:39 Europe/Berlin] Quantity query for batch 18
+[14-Mar-2026 08:53:39 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:39 Europe/Berlin] Parchino query for batch 18
+[14-Mar-2026 08:53:39 Europe/Berlin] Found 592 parchino records
+[14-Mar-2026 08:53:39 Europe/Berlin] Status query for batch 18
+[14-Mar-2026 08:53:39 Europe/Berlin] Found 522 status records
+[14-Mar-2026 08:53:39 Europe/Berlin] Batch 18 completed: Processed 1000 items
+[14-Mar-2026 08:53:39 Europe/Berlin] Overall progress: 39.49% (18000/45578)
+[14-Mar-2026 08:53:39 Europe/Berlin] 
+=== Processing batch 19 of 46 (offset: 18000) ===
+[14-Mar-2026 08:53:39 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 18000, 1000
+[14-Mar-2026 08:53:40 Europe/Berlin] Batch 19: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:40 Europe/Berlin] First 5 stock IDs in batch: 11161MOIMETHDTXTR60, 11172FOOTSWGWU2F, 11192PRSTRS000800542, 11201CPMMGate5102-PBM-PN, 11201DIOM6AG1223-1BL32-2XB0
+[14-Mar-2026 08:53:40 Europe/Berlin] Quantity query for batch 19
+[14-Mar-2026 08:53:40 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:40 Europe/Berlin] Parchino query for batch 19
+[14-Mar-2026 08:53:40 Europe/Berlin] Found 982 parchino records
+[14-Mar-2026 08:53:40 Europe/Berlin] Status query for batch 19
+[14-Mar-2026 08:53:40 Europe/Berlin] Found 760 status records
+[14-Mar-2026 08:53:40 Europe/Berlin] Batch 19 completed: Processed 1000 items
+[14-Mar-2026 08:53:40 Europe/Berlin] Overall progress: 41.69% (19000/45578)
+[14-Mar-2026 08:53:40 Europe/Berlin] 
+=== Processing batch 20 of 46 (offset: 19000) ===
+[14-Mar-2026 08:53:40 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 19000, 1000
+[14-Mar-2026 08:53:41 Europe/Berlin] Batch 20: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:41 Europe/Berlin] First 5 stock IDs in batch: 1161PILPLR25-Yellow, 1161PILPLT22-B, 1161PILPLT22-Clear, 1161PILPLT22-G, 1161PILPLT22-Orange
+[14-Mar-2026 08:53:41 Europe/Berlin] Quantity query for batch 20
+[14-Mar-2026 08:53:41 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:41 Europe/Berlin] Parchino query for batch 20
+[14-Mar-2026 08:53:41 Europe/Berlin] Found 1442 parchino records
+[14-Mar-2026 08:53:41 Europe/Berlin] Status query for batch 20
+[14-Mar-2026 08:53:41 Europe/Berlin] Found 762 status records
+[14-Mar-2026 08:53:41 Europe/Berlin] Batch 20 completed: Processed 1000 items
+[14-Mar-2026 08:53:41 Europe/Berlin] Overall progress: 43.88% (20000/45578)
+[14-Mar-2026 08:53:41 Europe/Berlin] 
+=== Processing batch 21 of 46 (offset: 20000) ===
+[14-Mar-2026 08:53:41 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 20000, 1000
+[14-Mar-2026 08:53:42 Europe/Berlin] Batch 21: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:42 Europe/Berlin] First 5 stock IDs in batch: 1241CBLCBL-F2,5/3C-Grey, 1241CBLCBL-F2,5/4CBlack, 1241CBLCBL-F2-5/3Black, 1241CBLCBL-F23,76/1C-Blue, 1241CBLCBL-F23/76/1C-Black
+[14-Mar-2026 08:53:42 Europe/Berlin] Quantity query for batch 21
+[14-Mar-2026 08:53:42 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:42 Europe/Berlin] Parchino query for batch 21
+[14-Mar-2026 08:53:42 Europe/Berlin] Found 1680 parchino records
+[14-Mar-2026 08:53:42 Europe/Berlin] Status query for batch 21
+[14-Mar-2026 08:53:42 Europe/Berlin] Found 667 status records
+[14-Mar-2026 08:53:42 Europe/Berlin] Batch 21 completed: Processed 1000 items
+[14-Mar-2026 08:53:42 Europe/Berlin] Overall progress: 46.07% (21000/45578)
+[14-Mar-2026 08:53:42 Europe/Berlin] 
+=== Processing batch 22 of 46 (offset: 21000) ===
+[14-Mar-2026 08:53:42 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 21000, 1000
+[14-Mar-2026 08:53:43 Europe/Berlin] Batch 22: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:43 Europe/Berlin] First 5 stock IDs in batch: 1311MCCBDB63SB3P050, 1311MCCBDB63SB3P060, 1311MCCBDB803S3P800, 1311MCDMC125A440VAC, 1311MCDMC12B110VAC
+[14-Mar-2026 08:53:43 Europe/Berlin] Quantity query for batch 22
+[14-Mar-2026 08:53:43 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:43 Europe/Berlin] Parchino query for batch 22
+[14-Mar-2026 08:53:43 Europe/Berlin] Found 1186 parchino records
+[14-Mar-2026 08:53:43 Europe/Berlin] Status query for batch 22
+[14-Mar-2026 08:53:43 Europe/Berlin] Found 722 status records
+[14-Mar-2026 08:53:43 Europe/Berlin] Batch 22 completed: Processed 1000 items
+[14-Mar-2026 08:53:43 Europe/Berlin] Overall progress: 48.27% (22000/45578)
+[14-Mar-2026 08:53:43 Europe/Berlin] 
+=== Processing batch 23 of 46 (offset: 22000) ===
+[14-Mar-2026 08:53:43 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 22000, 1000
+[14-Mar-2026 08:53:44 Europe/Berlin] Batch 23: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:44 Europe/Berlin] First 5 stock IDs in batch: 1541CTsclc-816-4000/5, 1541CTSCLC-816-5000/5, 1541CTSCLC-816-6000/5, 1541CTSCLC-88-400, 1541CTSCLC-88-800
+[14-Mar-2026 08:53:44 Europe/Berlin] Quantity query for batch 23
+[14-Mar-2026 08:53:44 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:44 Europe/Berlin] Parchino query for batch 23
+[14-Mar-2026 08:53:44 Europe/Berlin] Found 1374 parchino records
+[14-Mar-2026 08:53:44 Europe/Berlin] Status query for batch 23
+[14-Mar-2026 08:53:44 Europe/Berlin] Found 667 status records
+[14-Mar-2026 08:53:44 Europe/Berlin] Batch 23 completed: Processed 1000 items
+[14-Mar-2026 08:53:44 Europe/Berlin] Overall progress: 50.46% (23000/45578)
+[14-Mar-2026 08:53:44 Europe/Berlin] 
+=== Processing batch 24 of 46 (offset: 23000) ===
+[14-Mar-2026 08:53:44 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 23000, 1000
+[14-Mar-2026 08:53:45 Europe/Berlin] Batch 24: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:45 Europe/Berlin] First 5 stock IDs in batch: 1582COILCoil-SC-N2-AC220V, 1582COILCoil-SC-N2-DC100V, 1582COILCoil-SC-N2-DC24V, 1582COILCoil-SC-N4,N5-AC110V, 1582COILCoil-SC-N4,N5-AC220V
+[14-Mar-2026 08:53:45 Europe/Berlin] Quantity query for batch 24
+[14-Mar-2026 08:53:45 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:45 Europe/Berlin] Parchino query for batch 24
+[14-Mar-2026 08:53:45 Europe/Berlin] Found 184 parchino records
+[14-Mar-2026 08:53:45 Europe/Berlin] Status query for batch 24
+[14-Mar-2026 08:53:45 Europe/Berlin] Found 836 status records
+[14-Mar-2026 08:53:45 Europe/Berlin] Batch 24 completed: Processed 1000 items
+[14-Mar-2026 08:53:45 Europe/Berlin] Overall progress: 52.66% (24000/45578)
+[14-Mar-2026 08:53:45 Europe/Berlin] 
+=== Processing batch 25 of 46 (offset: 24000) ===
+[14-Mar-2026 08:53:45 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 24000, 1000
+[14-Mar-2026 08:53:46 Europe/Berlin] Batch 25: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:46 Europe/Berlin] First 5 stock IDs in batch: 16193RECTIFZXD2400V4,1, 16193RECTIFZXD2400V4,2, 16194PHOTOE70113328-100044, 16203SMPSEWS1500-24, 16211PRSNSRKP48E-010-F3
+[14-Mar-2026 08:53:46 Europe/Berlin] Quantity query for batch 25
+[14-Mar-2026 08:53:46 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:46 Europe/Berlin] Parchino query for batch 25
+[14-Mar-2026 08:53:46 Europe/Berlin] Found 1021 parchino records
+[14-Mar-2026 08:53:46 Europe/Berlin] Status query for batch 25
+[14-Mar-2026 08:53:46 Europe/Berlin] Found 774 status records
+[14-Mar-2026 08:53:46 Europe/Berlin] Batch 25 completed: Processed 1000 items
+[14-Mar-2026 08:53:46 Europe/Berlin] Overall progress: 54.85% (25000/45578)
+[14-Mar-2026 08:53:46 Europe/Berlin] 
+=== Processing batch 26 of 46 (offset: 25000) ===
+[14-Mar-2026 08:53:46 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 25000, 1000
+[14-Mar-2026 08:53:47 Europe/Berlin] Batch 26: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:47 Europe/Berlin] First 5 stock IDs in batch: 1741HVDUT-12D, 1741HVDUT12A, 1741HVDUT12B, 1741INSTESUT-516B, 1741INSTESUT513A
+[14-Mar-2026 08:53:47 Europe/Berlin] Quantity query for batch 26
+[14-Mar-2026 08:53:47 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:47 Europe/Berlin] Parchino query for batch 26
+[14-Mar-2026 08:53:47 Europe/Berlin] Found 744 parchino records
+[14-Mar-2026 08:53:47 Europe/Berlin] Status query for batch 26
+[14-Mar-2026 08:53:47 Europe/Berlin] Found 853 status records
+[14-Mar-2026 08:53:47 Europe/Berlin] Batch 26 completed: Processed 1000 items
+[14-Mar-2026 08:53:47 Europe/Berlin] Overall progress: 57.05% (26000/45578)
+[14-Mar-2026 08:53:47 Europe/Berlin] 
+=== Processing batch 27 of 46 (offset: 26000) ===
+[14-Mar-2026 08:53:47 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 26000, 1000
+[14-Mar-2026 08:53:47 Europe/Berlin] Batch 27: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:47 Europe/Berlin] First 5 stock IDs in batch: 1801SWSOCK572623, 1801SWSOCK572635, 1801SWSOCK617067, 1801SWSOCK617069, 1801SWSOCK617109
+[14-Mar-2026 08:53:47 Europe/Berlin] Quantity query for batch 27
+[14-Mar-2026 08:53:47 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:47 Europe/Berlin] Parchino query for batch 27
+[14-Mar-2026 08:53:48 Europe/Berlin] Found 521 parchino records
+[14-Mar-2026 08:53:48 Europe/Berlin] Status query for batch 27
+[14-Mar-2026 08:53:48 Europe/Berlin] Found 722 status records
+[14-Mar-2026 08:53:48 Europe/Berlin] Batch 27 completed: Processed 1000 items
+[14-Mar-2026 08:53:48 Europe/Berlin] Overall progress: 59.24% (27000/45578)
+[14-Mar-2026 08:53:48 Europe/Berlin] 
+=== Processing batch 28 of 46 (offset: 27000) ===
+[14-Mar-2026 08:53:48 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 27000, 1000
+[14-Mar-2026 08:53:48 Europe/Berlin] Batch 28: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:48 Europe/Berlin] First 5 stock IDs in batch: 2291ADSGEQ18-980044, 2291ADSGEQSLD-0002, 2292ADSGEQ18-980388, 2292ADSGEQAB105LDAAC230G/R, 2292ADSGEQAB105LDADC24G/R
+[14-Mar-2026 08:53:48 Europe/Berlin] Quantity query for batch 28
+[14-Mar-2026 08:53:48 Europe/Berlin] Found 8996 quantity records
+[14-Mar-2026 08:53:48 Europe/Berlin] Parchino query for batch 28
+[14-Mar-2026 08:53:48 Europe/Berlin] Status query for batch 28
+[14-Mar-2026 08:53:48 Europe/Berlin] Found 770 status records
+[14-Mar-2026 08:53:48 Europe/Berlin] Batch 28 completed: Processed 1000 items
+[14-Mar-2026 08:53:48 Europe/Berlin] Overall progress: 61.43% (28000/45578)
+[14-Mar-2026 08:53:48 Europe/Berlin] 
+=== Processing batch 29 of 46 (offset: 28000) ===
+[14-Mar-2026 08:53:48 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 28000, 1000
+[14-Mar-2026 08:53:49 Europe/Berlin] Batch 29: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:49 Europe/Berlin] First 5 stock IDs in batch: 2791CIPSE2E-X1B2, 2791CIPSE2E-X2D1-M1GJ, 2791CIPSE2E-X2D1-N-2M, 2791CIPSE2E-X2E1, 2791CIPSE2E-X2F1-2
+[14-Mar-2026 08:53:49 Europe/Berlin] Quantity query for batch 29
+[14-Mar-2026 08:53:49 Europe/Berlin] Found 8996 quantity records
+[14-Mar-2026 08:53:49 Europe/Berlin] Parchino query for batch 29
+[14-Mar-2026 08:53:49 Europe/Berlin] Status query for batch 29
+[14-Mar-2026 08:53:49 Europe/Berlin] Found 767 status records
+[14-Mar-2026 08:53:49 Europe/Berlin] Batch 29 completed: Processed 1000 items
+[14-Mar-2026 08:53:50 Europe/Berlin] Overall progress: 63.63% (29000/45578)
+[14-Mar-2026 08:53:50 Europe/Berlin] 
+=== Processing batch 30 of 46 (offset: 29000) ===
+[14-Mar-2026 08:53:50 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 29000, 1000
+[14-Mar-2026 08:53:50 Europe/Berlin] Batch 30: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:50 Europe/Berlin] First 5 stock IDs in batch: 2801MCBMY61047, 2801MCBMY61047NAP, 2801MCBMY61847NAP, 2801MCBMY62047NP, 2801MCBMY6257
+[14-Mar-2026 08:53:50 Europe/Berlin] Quantity query for batch 30
+[14-Mar-2026 08:53:50 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:50 Europe/Berlin] Parchino query for batch 30
+[14-Mar-2026 08:53:50 Europe/Berlin] Found 509 parchino records
+[14-Mar-2026 08:53:50 Europe/Berlin] Status query for batch 30
+[14-Mar-2026 08:53:50 Europe/Berlin] Found 849 status records
+[14-Mar-2026 08:53:50 Europe/Berlin] Batch 30 completed: Processed 1000 items
+[14-Mar-2026 08:53:50 Europe/Berlin] Overall progress: 65.82% (30000/45578)
+[14-Mar-2026 08:53:50 Europe/Berlin] 
+=== Processing batch 31 of 46 (offset: 30000) ===
+[14-Mar-2026 08:53:50 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 30000, 1000
+[14-Mar-2026 08:53:51 Europe/Berlin] Batch 31: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:51 Europe/Berlin] First 5 stock IDs in batch: 2921HAHESC6054552, 2921IMS7900037, 2921IMS7900039, 2921IPMS6028959, 2921IPS1025889
+[14-Mar-2026 08:53:51 Europe/Berlin] Quantity query for batch 31
+[14-Mar-2026 08:53:51 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:51 Europe/Berlin] Parchino query for batch 31
+[14-Mar-2026 08:53:51 Europe/Berlin] Found 1072 parchino records
+[14-Mar-2026 08:53:51 Europe/Berlin] Status query for batch 31
+[14-Mar-2026 08:53:51 Europe/Berlin] Found 850 status records
+[14-Mar-2026 08:53:51 Europe/Berlin] Batch 31 completed: Processed 1000 items
+[14-Mar-2026 08:53:51 Europe/Berlin] Overall progress: 68.02% (31000/45578)
+[14-Mar-2026 08:53:51 Europe/Berlin] 
+=== Processing batch 32 of 46 (offset: 31000) ===
+[14-Mar-2026 08:53:51 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 31000, 1000
+[14-Mar-2026 08:53:52 Europe/Berlin] Batch 32: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:52 Europe/Berlin] First 5 stock IDs in batch: 3021ACCIE-XM-RJ45/IDC, 3021ACCPLC1240840000, 3021ACCPLC1240900000, 3021ACCRLY8871000000, 3021ACCTB1050000000
+[14-Mar-2026 08:53:52 Europe/Berlin] Quantity query for batch 32
+[14-Mar-2026 08:53:52 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:52 Europe/Berlin] Parchino query for batch 32
+[14-Mar-2026 08:53:52 Europe/Berlin] Found 1300 parchino records
+[14-Mar-2026 08:53:52 Europe/Berlin] Status query for batch 32
+[14-Mar-2026 08:53:52 Europe/Berlin] Found 533 status records
+[14-Mar-2026 08:53:52 Europe/Berlin] Batch 32 completed: Processed 1000 items
+[14-Mar-2026 08:53:52 Europe/Berlin] Overall progress: 70.21% (32000/45578)
+[14-Mar-2026 08:53:52 Europe/Berlin] 
+=== Processing batch 33 of 46 (offset: 32000) ===
+[14-Mar-2026 08:53:52 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 32000, 1000
+[14-Mar-2026 08:53:53 Europe/Berlin] Batch 33: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:53 Europe/Berlin] First 5 stock IDs in batch: 3061CBLTRYGI-CT-100x100L, 3061CBLTRYGI-CT-100x100T, 3061CBLTRYGI-CT-100X100X18-WC, 3061CBLTRYGI-CT-100X100X18-WOC, 3061CBLTRYGI-CT-100X300-16
+[14-Mar-2026 08:53:53 Europe/Berlin] Quantity query for batch 33
+[14-Mar-2026 08:53:53 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:53 Europe/Berlin] Parchino query for batch 33
+[14-Mar-2026 08:53:53 Europe/Berlin] Found 1892 parchino records
+[14-Mar-2026 08:53:53 Europe/Berlin] Status query for batch 33
+[14-Mar-2026 08:53:53 Europe/Berlin] Found 478 status records
+[14-Mar-2026 08:53:53 Europe/Berlin] Batch 33 completed: Processed 1000 items
+[14-Mar-2026 08:53:53 Europe/Berlin] Overall progress: 72.4% (33000/45578)
+[14-Mar-2026 08:53:53 Europe/Berlin] 
+=== Processing batch 34 of 46 (offset: 33000) ===
+[14-Mar-2026 08:53:53 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 33000, 1000
+[14-Mar-2026 08:53:54 Europe/Berlin] Batch 34: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:54 Europe/Berlin] First 5 stock IDs in batch: 3061LUGSLugs-16mm, 3061LUGSLUGS-185-O, 3061LUGSLUGS-2,5, 3061LUGSlugs-2,5-Female, 3061LUGSLUGS-2,5-I
+[14-Mar-2026 08:53:54 Europe/Berlin] Quantity query for batch 34
+[14-Mar-2026 08:53:54 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:54 Europe/Berlin] Parchino query for batch 34
+[14-Mar-2026 08:53:54 Europe/Berlin] Found 3020 parchino records
+[14-Mar-2026 08:53:54 Europe/Berlin] Status query for batch 34
+[14-Mar-2026 08:53:54 Europe/Berlin] Found 569 status records
+[14-Mar-2026 08:53:54 Europe/Berlin] Batch 34 completed: Processed 1000 items
+[14-Mar-2026 08:53:54 Europe/Berlin] Overall progress: 74.6% (34000/45578)
+[14-Mar-2026 08:53:54 Europe/Berlin] 
+=== Processing batch 35 of 46 (offset: 34000) ===
+[14-Mar-2026 08:53:54 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 34000, 1000
+[14-Mar-2026 08:53:55 Europe/Berlin] Batch 35: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:55 Europe/Berlin] First 5 stock IDs in batch: 3061PBUTONJk-10A, 3061PBUTONLC-PB, 3061PBUTONlocalpushbutton, 3061PCCBL77022, 3061PCCBLDB9~DB25
+[14-Mar-2026 08:53:55 Europe/Berlin] Quantity query for batch 35
+[14-Mar-2026 08:53:55 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:55 Europe/Berlin] Parchino query for batch 35
+[14-Mar-2026 08:53:55 Europe/Berlin] Found 1529 parchino records
+[14-Mar-2026 08:53:55 Europe/Berlin] Status query for batch 35
+[14-Mar-2026 08:53:55 Europe/Berlin] Found 277 status records
+[14-Mar-2026 08:53:55 Europe/Berlin] Batch 35 completed: Processed 1000 items
+[14-Mar-2026 08:53:55 Europe/Berlin] Overall progress: 76.79% (35000/45578)
+[14-Mar-2026 08:53:55 Europe/Berlin] 
+=== Processing batch 36 of 46 (offset: 35000) ===
+[14-Mar-2026 08:53:55 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 35000, 1000
+[14-Mar-2026 08:53:55 Europe/Berlin] Batch 36: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:55 Europe/Berlin] First 5 stock IDs in batch: 3061THRCPLPT100-1X2, 3061THRCPLPT100-2-1/2X5mm-Wire, 3061THRCPLPT100-200X8MM-HEAD, 3061THRCPLPT100-22X8mm-2M, 3061THRCPLPT100-250X8MM-HEAD
+[14-Mar-2026 08:53:55 Europe/Berlin] Quantity query for batch 36
+[14-Mar-2026 08:53:56 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:56 Europe/Berlin] Parchino query for batch 36
+[14-Mar-2026 08:53:56 Europe/Berlin] Found 1875 parchino records
+[14-Mar-2026 08:53:56 Europe/Berlin] Status query for batch 36
+[14-Mar-2026 08:53:56 Europe/Berlin] Found 492 status records
+[14-Mar-2026 08:53:56 Europe/Berlin] Batch 36 completed: Processed 1000 items
+[14-Mar-2026 08:53:56 Europe/Berlin] Overall progress: 78.99% (36000/45578)
+[14-Mar-2026 08:53:56 Europe/Berlin] 
+=== Processing batch 37 of 46 (offset: 36000) ===
+[14-Mar-2026 08:53:56 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 36000, 1000
+[14-Mar-2026 08:53:56 Europe/Berlin] Batch 37: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:56 Europe/Berlin] First 5 stock IDs in batch: 3111CONPIPPVC-FC-P2,5IN, 3111CONPIPSS-Flexible-Pipe-1Inch, 3111CONSTPCO100A, 3111CONSTPCO60A, 3111CONSTPH2519-2
+[14-Mar-2026 08:53:56 Europe/Berlin] Quantity query for batch 37
+[14-Mar-2026 08:53:56 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:56 Europe/Berlin] Parchino query for batch 37
+[14-Mar-2026 08:53:57 Europe/Berlin] Found 2942 parchino records
+[14-Mar-2026 08:53:57 Europe/Berlin] Status query for batch 37
+[14-Mar-2026 08:53:57 Europe/Berlin] Found 721 status records
+[14-Mar-2026 08:53:57 Europe/Berlin] Batch 37 completed: Processed 1000 items
+[14-Mar-2026 08:53:57 Europe/Berlin] Overall progress: 81.18% (37000/45578)
+[14-Mar-2026 08:53:57 Europe/Berlin] 
+=== Processing batch 38 of 46 (offset: 37000) ===
+[14-Mar-2026 08:53:57 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 37000, 1000
+[14-Mar-2026 08:53:57 Europe/Berlin] Batch 38: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:57 Europe/Berlin] First 5 stock IDs in batch: 3111PILGD22-VS-R, 3111PILGD22-VS-Y, 3111PILNXD-211-24-G, 3111PILNXD-213-220-Green, 3111PILNXD-213-220-Red
+[14-Mar-2026 08:53:57 Europe/Berlin] Quantity query for batch 38
+[14-Mar-2026 08:53:57 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:57 Europe/Berlin] Parchino query for batch 38
+[14-Mar-2026 08:53:58 Europe/Berlin] Found 1878 parchino records
+[14-Mar-2026 08:53:58 Europe/Berlin] Status query for batch 38
+[14-Mar-2026 08:53:58 Europe/Berlin] Found 685 status records
+[14-Mar-2026 08:53:58 Europe/Berlin] Batch 38 completed: Processed 1000 items
+[14-Mar-2026 08:53:58 Europe/Berlin] Overall progress: 83.37% (38000/45578)
+[14-Mar-2026 08:53:58 Europe/Berlin] 
+=== Processing batch 39 of 46 (offset: 38000) ===
+[14-Mar-2026 08:53:58 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 38000, 1000
+[14-Mar-2026 08:53:58 Europe/Berlin] Batch 39: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:58 Europe/Berlin] First 5 stock IDs in batch: 3114GLRLYDZ-6-220VAC, 3114GLRLYDZ-6-2Z-220VAC, 3114GLRLYR15S3PT-220VAC, 3114GLRLYType-6012-220VAC, 3114GLRLYType-6013-48VAC
+[14-Mar-2026 08:53:58 Europe/Berlin] Quantity query for batch 39
+[14-Mar-2026 08:53:58 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:58 Europe/Berlin] Parchino query for batch 39
+[14-Mar-2026 08:53:58 Europe/Berlin] Found 329 parchino records
+[14-Mar-2026 08:53:58 Europe/Berlin] Status query for batch 39
+[14-Mar-2026 08:53:59 Europe/Berlin] Found 824 status records
+[14-Mar-2026 08:53:59 Europe/Berlin] Batch 39 completed: Processed 1000 items
+[14-Mar-2026 08:53:59 Europe/Berlin] Overall progress: 85.57% (39000/45578)
+[14-Mar-2026 08:53:59 Europe/Berlin] 
+=== Processing batch 40 of 46 (offset: 39000) ===
+[14-Mar-2026 08:53:59 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 39000, 1000
+[14-Mar-2026 08:53:59 Europe/Berlin] Batch 40: Retrieved 1000 stock IDs
+[14-Mar-2026 08:53:59 Europe/Berlin] First 5 stock IDs in batch: 3223SMPS787-734, 3223TB280-646, 3223TB35-95, 3224ACSMOR2009-110, 3224ACSMOR2009-115
+[14-Mar-2026 08:53:59 Europe/Berlin] Quantity query for batch 40
+[14-Mar-2026 08:53:59 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:53:59 Europe/Berlin] Parchino query for batch 40
+[14-Mar-2026 08:53:59 Europe/Berlin] Found 1406 parchino records
+[14-Mar-2026 08:53:59 Europe/Berlin] Status query for batch 40
+[14-Mar-2026 08:53:59 Europe/Berlin] Found 629 status records
+[14-Mar-2026 08:53:59 Europe/Berlin] Batch 40 completed: Processed 1000 items
+[14-Mar-2026 08:53:59 Europe/Berlin] Overall progress: 87.76% (40000/45578)
+[14-Mar-2026 08:53:59 Europe/Berlin] 
+=== Processing batch 41 of 46 (offset: 40000) ===
+[14-Mar-2026 08:53:59 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 40000, 1000
+[14-Mar-2026 08:54:00 Europe/Berlin] Batch 41: Retrieved 1000 stock IDs
+[14-Mar-2026 08:54:00 Europe/Berlin] First 5 stock IDs in batch: 3661DSPLAYVL72-75/5A, 3661DSPLAYVL96-1500/5A, 3661DSPLAYVL96-2500/5A, 3661DSPLAYVL96-450VAC, 3661DSPLAYVL96-600/5A
+[14-Mar-2026 08:54:00 Europe/Berlin] Quantity query for batch 41
+[14-Mar-2026 08:54:00 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:54:00 Europe/Berlin] Parchino query for batch 41
+[14-Mar-2026 08:54:00 Europe/Berlin] Found 1050 parchino records
+[14-Mar-2026 08:54:00 Europe/Berlin] Status query for batch 41
+[14-Mar-2026 08:54:00 Europe/Berlin] Found 708 status records
+[14-Mar-2026 08:54:00 Europe/Berlin] Batch 41 completed: Processed 1000 items
+[14-Mar-2026 08:54:00 Europe/Berlin] Overall progress: 89.96% (41000/45578)
+[14-Mar-2026 08:54:00 Europe/Berlin] 
+=== Processing batch 42 of 46 (offset: 41000) ===
+[14-Mar-2026 08:54:00 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 41000, 1000
+[14-Mar-2026 08:54:01 Europe/Berlin] Batch 42: Retrieved 1000 stock IDs
+[14-Mar-2026 08:54:01 Europe/Berlin] First 5 stock IDs in batch: 3921LEDFL150Watts, 3921LEDFL60Watts, 3922CBLCBL-S70/3,5C-BLK, 3931EMLGHTGMJ218/3, 3941AOVSEN682C03
+[14-Mar-2026 08:54:01 Europe/Berlin] Quantity query for batch 42
+[14-Mar-2026 08:54:01 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:54:01 Europe/Berlin] Parchino query for batch 42
+[14-Mar-2026 08:54:01 Europe/Berlin] Found 671 parchino records
+[14-Mar-2026 08:54:01 Europe/Berlin] Status query for batch 42
+[14-Mar-2026 08:54:01 Europe/Berlin] Found 755 status records
+[14-Mar-2026 08:54:01 Europe/Berlin] Batch 42 completed: Processed 1000 items
+[14-Mar-2026 08:54:01 Europe/Berlin] Overall progress: 92.15% (42000/45578)
+[14-Mar-2026 08:54:01 Europe/Berlin] 
+=== Processing batch 43 of 46 (offset: 42000) ===
+[14-Mar-2026 08:54:01 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 42000, 1000
+[14-Mar-2026 08:54:02 Europe/Berlin] Batch 43: Retrieved 1000 stock IDs
+[14-Mar-2026 08:54:02 Europe/Berlin] First 5 stock IDs in batch: 4911HTCKLTJKIT954C-1K, 4911HTCKLTJoint-Kit-35MM-4C, 4911HTCKMWTM-63/19, 4911HTCKSleeve-120mm, 4911HTCKSleeve-300mm
+[14-Mar-2026 08:54:02 Europe/Berlin] Quantity query for batch 43
+[14-Mar-2026 08:54:02 Europe/Berlin] Found 9000 quantity records
+[14-Mar-2026 08:54:02 Europe/Berlin] Parchino query for batch 43
+[14-Mar-2026 08:54:02 Europe/Berlin] Found 1170 parchino records
+[14-Mar-2026 08:54:02 Europe/Berlin] Status query for batch 43
+[14-Mar-2026 08:54:02 Europe/Berlin] Found 523 status records
+[14-Mar-2026 08:54:02 Europe/Berlin] Batch 43 completed: Processed 1000 items
+[14-Mar-2026 08:54:02 Europe/Berlin] Overall progress: 94.34% (43000/45578)
+[14-Mar-2026 08:54:02 Europe/Berlin] 
+=== Processing batch 44 of 46 (offset: 43000) ===
+[14-Mar-2026 08:54:02 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 43000, 1000
+[14-Mar-2026 08:54:03 Europe/Berlin] Batch 44: Retrieved 1000 stock IDs
+[14-Mar-2026 08:54:03 Europe/Berlin] First 5 stock IDs in batch: 5613FTCINSES80, 5613IPSBI15-CP40-BZ3X, 5613IPSMP-15D-AP7-X, 5613IPSMP10DAN7X, 5613LMTSWHLSE-Q31-2R
+[14-Mar-2026 08:54:03 Europe/Berlin] Quantity query for batch 44
+[14-Mar-2026 08:54:03 Europe/Berlin] Found 8996 quantity records
+[14-Mar-2026 08:54:03 Europe/Berlin] Parchino query for batch 44
+[14-Mar-2026 08:54:03 Europe/Berlin] Status query for batch 44
+[14-Mar-2026 08:54:03 Europe/Berlin] Found 776 status records
+[14-Mar-2026 08:54:03 Europe/Berlin] Batch 44 completed: Processed 1000 items
+[14-Mar-2026 08:54:03 Europe/Berlin] Overall progress: 96.54% (44000/45578)
+[14-Mar-2026 08:54:03 Europe/Berlin] 
+=== Processing batch 45 of 46 (offset: 44000) ===
+[14-Mar-2026 08:54:03 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 44000, 1000
+[14-Mar-2026 08:54:04 Europe/Berlin] Batch 45: Retrieved 1000 stock IDs
+[14-Mar-2026 08:54:04 Europe/Berlin] ✓✓✓ FOUND TARGET STOCK ID 9381AMCGCTHF411 IN BATCH 45 ✓✓✓
+[14-Mar-2026 08:54:04 Europe/Berlin] First 5 stock IDs in batch: 7404PANMETE244-02A, 7411PTNMTRB2K, 7413PTNMTR534-1-1-10K, 7413PTNMTR534-1-1-1K, 7413PTNMTR534-1-1B1K
+[14-Mar-2026 08:54:04 Europe/Berlin] Quantity query for batch 45
+[14-Mar-2026 08:54:04 Europe/Berlin] Found 8996 quantity records
+[14-Mar-2026 08:54:04 Europe/Berlin] Parchino query for batch 45
+[14-Mar-2026 08:54:04 Europe/Berlin] Status query for batch 45
+[14-Mar-2026 08:54:04 Europe/Berlin] Found 729 status records
+[14-Mar-2026 08:54:04 Europe/Berlin] 
+>>> PROCESSING TARGET STOCK ID: 9381AMCGCTHF411 <<<
+[14-Mar-2026 08:54:04 Europe/Berlin] Location quantities: {"HO":"14","MT":"0","SR":"1","OS":"0","VSR":"0","WS":"0"}
+[14-Mar-2026 08:54:04 Europe/Berlin] Total quantity: 15
+[14-Mar-2026 08:54:04 Europe/Berlin] Parchino data exists: NO
+[14-Mar-2026 08:54:04 Europe/Berlin] calculatePriceForStock - Requested Qty: 15
+[14-Mar-2026 08:54:04 Europe/Berlin] calculatePriceForStock - Parchinos count: 0
+[14-Mar-2026 08:54:04 Europe/Berlin] calculatePriceForStock - Returning zero: empty parchinos
+[14-Mar-2026 08:54:04 Europe/Berlin] Price calculation result: {"total_bpitems_price":0,"weighted_unit_price":0,"total_quantity":0}
+[14-Mar-2026 08:54:04 Europe/Berlin] Batch 45 completed: Processed 1000 items
+[14-Mar-2026 08:54:04 Europe/Berlin] Overall progress: 98.73% (45000/45578)
+[14-Mar-2026 08:54:04 Europe/Berlin] 
+=== Processing batch 46 of 46 (offset: 45000) ===
+[14-Mar-2026 08:54:04 Europe/Berlin] Main query: SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+                stockmaster.description
+                FROM stockmaster 
+                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                ORDER BY stockmaster.stockid
+                LIMIT 45000, 1000
+[14-Mar-2026 08:54:04 Europe/Berlin] Batch 46: Retrieved 538 stock IDs
+[14-Mar-2026 08:54:04 Europe/Berlin] First 5 stock IDs in batch: 9381MCBHDB3WN2C10, 9381MCBHDB3WN2C16, 9381MCBHDB3WN2C20, 9381MCBHDB3WN2C40, 9381MCBHDB3WN2C6
+[14-Mar-2026 08:54:04 Europe/Berlin] Quantity query for batch 46
+[14-Mar-2026 08:54:04 Europe/Berlin] Found 4842 quantity records
+[14-Mar-2026 08:54:04 Europe/Berlin] Parchino query for batch 46
+[14-Mar-2026 08:54:05 Europe/Berlin] Found 647 parchino records
+[14-Mar-2026 08:54:05 Europe/Berlin] Status query for batch 46
+[14-Mar-2026 08:54:05 Europe/Berlin] Found 299 status records
+[14-Mar-2026 08:54:05 Europe/Berlin] Batch 46 completed: Processed 538 items
+[14-Mar-2026 08:54:05 Europe/Berlin] Overall progress: 99.91% (45538/45578)
+[14-Mar-2026 08:54:05 Europe/Berlin] 
+=== PROCESSING COMPLETE ===
+[14-Mar-2026 08:54:05 Europe/Berlin] Total processed: 45538 of 45578
+[14-Mar-2026 08:54:05 Europe/Berlin] ✓ TARGET STOCK ID 9381AMCGCTHF411 FOUND IN FINAL DATA
+[14-Mar-2026 08:54:05 Europe/Berlin] Final data for target: {"stockid":"9381AMCGCTHF411","manufacturers_name":"Himel","lastcost":"0.00","materialcost":"1.00","lastcostupdate":"2025-02-24","lastupdatedby":"Faiz Ahmed","mnfCode":"HF4-11","mnfpno":"HF411","abbreviation":"FNFP","categorydescription":"Aux Contact for Magnetic Contactor","description":"Aux. Contact for Magnetic Contactor - 1 NO + 1 NC","qtyHO":"14","qtyMT":"0","qtySR":"1","qtyOS":"0","qtyVSR":"0","qtyWS":"0","total_qty":15,"total_bpitems_price":0,"weighted_unit_price":0,"total_quantity":0,"adjust_unit_price":0,"landing_factor":1,"latest_trandate":"2025-05-10 00:00:00"}
