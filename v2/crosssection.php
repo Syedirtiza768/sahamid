@@ -4,6 +4,10 @@ $AllowAnyone = true;
 
 include_once("config.php");
 
+// Increase memory limit significantly
+ini_set('memory_limit', '1024M'); // 1GB
+set_time_limit(600); // 10 minutes
+
 if (!userHasPermission($db, "top_items_quotation_report")) {
     header("Location: /sahamid");
     return;
