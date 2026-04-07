@@ -1,8 +1,8 @@
 <?php
 //Database details
-$db_host = 'localhost';
-$db_username = 'root';
-$db_password = '';
+$db_host = getenv('DB_HOST') ?: 'localhost';
+$db_username = 'irtiza';
+$db_password = 'netetech321';
 $db_name = 'sahamid';
 
 //Create connection and select DB

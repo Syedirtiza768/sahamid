@@ -32,7 +32,7 @@ echo "
 
 
 ";
-$conn = mysqli_connect('localhost','root','','sahamid');
+$conn = mysqli_connect(getenv('DB_HOST') ?: 'localhost','irtiza', 'netetech321', 'sahamid');
 $sql = 'SELECT * FROM `reversedAllocationHistoryComments` 
 where reversedAllocationHistoryID = "'.$_GET['revid'].'"';
 $result = mysqli_query($conn,$sql);

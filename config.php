@@ -11,8 +11,8 @@ $AllowDemoMode = FALSE;
 
 // Connection information for the database
 // $host is the computer ip address or name where the database is located
-// assuming that the webserver is also the sql server
-$host = 'localhost';
+// In Docker, DB_HOST env var points to the database container
+$host = getenv('DB_HOST') ?: 'localhost';
 
 // assuming that the web server is also the sql server
 $DBType = 'mysqli';
@@ -39,7 +39,7 @@ if (isset($DirectoryLevelsDeep)){
 if ($RootPath == '/' OR $RootPath == '\\') {
 	$RootPath = '';
 }
-error_reporting (E_ALL & ~E_NOTICE);
+error_reporting (E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT);
 //Installed companies 
 $CompanyList[0] = array('database'=>'sahamid' ,'company'=>'S A HAMID AND COMPANY' );
 //End Installed companies-do not change this line

@@ -3,7 +3,7 @@
 session_start();
 $fname = 'CRV';
 //need to update the database  accordingly and replicate it to cdr
-$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+$db=mysqli_connect(getenv('DB_HOST') ?: 'localhost','irtiza','netetech321','sahamid');
 if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 
     $result	= $_FILES['CRV']['error'];

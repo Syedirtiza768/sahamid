@@ -24,6 +24,11 @@ if (isset($_POST['update'])) {
     return;
 }
 
+if (isset($_GET['json']) && (!isset($_GET['clientID']) || $_GET['clientID'] == '')) {
+    echo json_encode([]);
+    return;
+}
+
 if (isset($_GET['json']) && $_GET['clientID'] != '') {
     $sql = "SELECT DISTINCT stockissuance.stockid,
 						stockmaster.description,
@@ -53,7 +58,6 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
                         '' as mpo
 					FROM stockissuance,
 						stockmaster,
-						locations,
 						manufacturers,
 						stockcategory
 					WHERE stockissuance.stockid=stockmaster.stockid
@@ -128,7 +132,6 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
                         '' as mpo
 					FROM stockissuance,
 						stockmaster,
-						locations,
 						manufacturers,
 						stockcategory,
                         ogpsalescaseref
@@ -181,7 +184,6 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
                         '' as salescaseref
 					FROM stockissuance,
 						stockmaster,
-						locations,
 						manufacturers,
 						stockcategory,
                         ogpcsvref
@@ -234,7 +236,6 @@ if (isset($_GET['json']) && $_GET['clientID'] != '') {
                         '' as salescaseref
 					FROM stockissuance,
 						stockmaster,
-						locations,
 						manufacturers,
 						stockcategory,
                         ogpcrvref
@@ -557,13 +558,7 @@ include_once("includes/sidebar.php");
 
                 <?php while ($clients = mysqli_fetch_assoc($res2)) { ?>
                     <!-- <div class="client" data-client="<?php echo $clients['salesperson']; ?>"> -->
-                    <div class="client" data-client="<?php
-                                                        $value = (int)$clients['salesperson'];
-                                                        if ($value < 0) {
-                                                            $value = $value * -1;
-                                                        }
-                                                        echo $value;
-                                                        ?>">
+                    <div class="client" data-client="<?php echo htmlspecialchars($clients['salesperson'], ENT_QUOTES); ?>">
 
                         <span><?php echo $clients['salesperson']; ?></span>
 
@@ -839,14 +834,17 @@ include_once("includes/footer.php");
 </script>
 <script>
     $(document).ready(function() {
-        let form = document.getElementById('form').style.maxHeight;
-        let content = document.getElementById('content').style.height;
-        if (form > content) {
-            document.getElementById('form').style.maxHeight = content;
-        } else {
-            document.getElementById('content').style.height = form;
+        let formEl = document.getElementById('form');
+        let contentEl = document.getElementById('content');
+        if (formEl && contentEl) {
+            let form = formEl.style.maxHeight;
+            let content = contentEl.style.height;
+            if (form > content) {
+                formEl.style.maxHeight = content;
+            } else {
+                contentEl.style.height = form;
+            }
         }
-
     })
 </script>
 <?php

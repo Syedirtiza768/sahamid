@@ -1,0 +1,50 @@
+# escape=`
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+# Set timezone to Pakistan Standard Time
+RUN Set-TimeZone -Id 'Pakistan Standard Time'
+
+# Download XAMPP 7.3.7 (PHP 7.3.7 - exact version used in original app)
+RUN Write-Host 'Downloading XAMPP 7.3.7...'; `
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; `
+    Invoke-WebRequest `
+        -Uri 'https://www.apachefriends.org/xampp-files/7.3.7/xampp-windows-x64-7.3.7-0-VC15-installer.exe' `
+        -OutFile 'C:\xampp-installer.exe' `
+        -UserAgent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+
+# Install XAMPP silently (Apache + PHP + MariaDB, skip unnecessary GUI tools)
+RUN Write-Host 'Installing XAMPP 7.3.7...'; `
+    $proc = Start-Process -FilePath 'C:\xampp-installer.exe' `
+        -ArgumentList '--mode', 'unattended', `
+                      '--unattendedmodeui', 'none', `
+                      '--disable-components', 'gdi,webcam,ftp,mailhog,fake_sendmail,mercury,perl' `
+        -Wait -PassThru -NoNewWindow; `
+    if ($proc.ExitCode -ne 0) { throw "XAMPP install failed with exit code $($proc.ExitCode)" }; `
+    Remove-Item 'C:\xampp-installer.exe'
+
+# Tune php.ini to match original XAMPP settings
+RUN $ini = 'C:\xampp\php\php.ini'; `
+    $content = Get-Content $ini; `
+    $content = $content -replace '^upload_max_filesize\s*=.*', 'upload_max_filesize = 64M'; `
+    $content = $content -replace '^post_max_size\s*=.*', 'post_max_size = 64M'; `
+    $content = $content -replace '^max_execution_time\s*=.*', 'max_execution_time = 120000'; `
+    $content = $content -replace '^memory_limit\s*=.*', 'memory_limit = 256M'; `
+    $content = $content -replace '^;date\.timezone\s*=.*', 'date.timezone = Asia/Karachi'; `
+    $content = $content -replace '^error_reporting\s*=.*', 'error_reporting = E_ALL & ~E_NOTICE'; `
+    $content = $content -replace '^display_errors\s*=.*', 'display_errors = On'; `
+    Set-Content -Path $ini -Value $content
+
+# Add ServerName to Apache config to suppress warning
+RUN Add-Content -Path 'C:\xampp\apache\conf\httpd.conf' -Value "`nServerName localhost"
+
+# Copy application files
+COPY . C:/xampp/htdocs/
+
+# Copy Windows startup and init scripts
+COPY docker/windows/ C:/docker/
+
+EXPOSE 80
+
+CMD ["powershell", "-File", "C:\\docker\\start.ps1"]

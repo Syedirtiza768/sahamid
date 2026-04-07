@@ -470,20 +470,23 @@ session_start();
     }
 
 
-    document.getElementById('notification-icon').addEventListener('click', event => {
-      event.preventDefault();
-      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-      badge.classList.remove('blink');
-    });
+    const notificationIcon = document.getElementById('notification-icon');
+    if (notificationIcon) {
+      notificationIcon.addEventListener('click', event => {
+        event.preventDefault();
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        badge.classList.remove('blink');
+      });
 
-    document.addEventListener('click', event => {
-      if (!dropdown.contains(event.target) && !event.target.closest('#notification-icon')) {
-        dropdown.style.display = 'none';
-      }
-    });
+      document.addEventListener('click', event => {
+        if (!dropdown.contains(event.target) && !event.target.closest('#notification-icon')) {
+          dropdown.style.display = 'none';
+        }
+      });
 
-    fetchNotifications();
-    setInterval(fetchNotifications, 10000);
+      fetchNotifications();
+      setInterval(fetchNotifications, 10000);
+    }
   });
 
   function closeNotification() {

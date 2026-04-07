@@ -1,7 +1,7 @@
 <?php 
 if (!isset($db)) {
 	session_start();
-	$db = mysqli_connect('localhost', 'irtiza', 'netetech321', 'sahamid');
+	$db = mysqli_connect(getenv('DB_HOST') ?: 'localhost', 'irtiza', 'netetech321', 'sahamid');
 }
 
 if (!isset($_SESSION['UserID'])) {
