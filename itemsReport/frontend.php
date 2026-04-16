@@ -1668,6 +1668,9 @@ $(document).ready(function() {
         $('#extremelyDeadSum').text(numberFormat(extremelyDeadSum));
 
         // ── Pricing coverage stats (all items, not just in-stock movement)
+        // NOTE: weighted_unit_price from the server already includes
+        //   adjust_unit_price (if > 0, else original price) × landing_factor.
+        //   So we must NOT multiply by factor again when using weighted_unit_price.
         var priceZero = 0, priceZeroInStock = 0, priceZeroQty = 0;
         var priceAdj = 0, priceAdjSum = 0;
         var priceOrig = 0, priceOrigSum = 0;
@@ -1676,19 +1679,33 @@ $(document).ready(function() {
             var pItem = data[j];
             var pQty  = calculateTotalQty(pItem);
 
-            var pUnitPrice  = parseFloat(pItem.weighted_unit_price) || 0;
-            // In-memory override takes precedence; then server-supplied adjust_unit_price
+            // Server-computed price (already includes adjust + factor)
+            var pWeighted   = parseFloat(pItem.weighted_unit_price) || 0;
+            // Manual override: in-memory first, then server-supplied adjust_unit_price
             var pAdjInMem   = customUnitPrices[pItem.stockid] !== undefined ? parseFloat(customUnitPrices[pItem.stockid]) : 0;
             var pAdjServer  = parseFloat(pItem.adjust_unit_price) || 0;
             var pHasManual  = (pAdjInMem > 0) || (pAdjServer > 0);
-            // Effective price: weighted_unit_price already incorporates server-side adjust; use it first
-            var pEffective  = pUnitPrice > 0 ? pUnitPrice : (pAdjInMem > 0 ? pAdjInMem : pAdjServer);
-            var pFactor     = landingFactors[pItem.stockid] !== undefined
+
+            // Determine effective value per unit:
+            //  - If weighted_unit_price > 0, it's the server-computed value (already factor-adjusted)
+            //  - Else fall back to the raw manual price × factor (for items with no parchino qty)
+            var pValue;
+            if (pWeighted > 0) {
+                // Server already applied factor; use as-is
+                pValue = pQty * pWeighted;
+            } else {
+                // No server-computed price; use raw adjust_unit_price × factor
+                var pRawAdj = pAdjInMem > 0 ? pAdjInMem : pAdjServer;
+                var pFactor = landingFactors[pItem.stockid] !== undefined
                                 ? parseFloat(landingFactors[pItem.stockid])
                                 : (parseFloat(pItem.landing_factor) || 1);
-            var pValue = pQty * pEffective * pFactor;
+                pValue = pQty * pRawAdj * pFactor;
+            }
 
-            if (pEffective <= 0) {
+            // Classify: is there any usable price at all?
+            var hasAnyPrice = (pWeighted > 0) || (pAdjInMem > 0) || (pAdjServer > 0);
+
+            if (!hasAnyPrice) {
                 // No price data at all
                 priceZero++;
                 if (pQty > 0) { priceZeroInStock++; priceZeroQty += pQty; }
