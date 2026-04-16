@@ -1668,9 +1668,9 @@ $(document).ready(function() {
         $('#extremelyDeadSum').text(numberFormat(extremelyDeadSum));
 
         // ── Pricing coverage stats (all items, not just in-stock movement)
-        // NOTE: weighted_unit_price from the server already includes
-        //   adjust_unit_price (if > 0, else original price) × landing_factor.
-        //   So we must NOT multiply by factor again when using weighted_unit_price.
+        // Uses the same value formula as the movement cards above for consistency.
+        // Classification uses server-side has_manual_price flag (checks ALL parchino records)
+        // plus client-side customUnitPrices overrides.
         var priceZero = 0, priceZeroInStock = 0, priceZeroQty = 0;
         var priceAdj = 0, priceAdjSum = 0;
         var priceOrig = 0, priceOrigSum = 0;
@@ -1679,42 +1679,29 @@ $(document).ready(function() {
             var pItem = data[j];
             var pQty  = calculateTotalQty(pItem);
 
-            // Server-computed price (already includes adjust + factor)
-            var pWeighted   = parseFloat(pItem.weighted_unit_price) || 0;
-            // Manual override: in-memory first, then server-supplied adjust_unit_price
-            var pAdjInMem   = customUnitPrices[pItem.stockid] !== undefined ? parseFloat(customUnitPrices[pItem.stockid]) : 0;
-            var pAdjServer  = parseFloat(pItem.adjust_unit_price) || 0;
-            var pHasManual  = (pAdjInMem > 0) || (pAdjServer > 0);
-
-            // Determine effective value per unit:
-            //  - If weighted_unit_price > 0, it's the server-computed value (already factor-adjusted)
-            //  - Else fall back to the raw manual price × factor (for items with no parchino qty)
-            var pValue;
-            if (pWeighted > 0) {
-                // Server already applied factor; use as-is
-                pValue = pQty * pWeighted;
-            } else {
-                // No server-computed price; use raw adjust_unit_price × factor
-                var pRawAdj = pAdjInMem > 0 ? pAdjInMem : pAdjServer;
-                var pFactor = landingFactors[pItem.stockid] !== undefined
-                                ? parseFloat(landingFactors[pItem.stockid])
+            // Compute value using the SAME formula as movement cards
+            var pUnitPrice  = parseFloat(pItem.weighted_unit_price) || 0;
+            var pAdjPrice   = customUnitPrices[pItem.stockid] !== undefined
+                                ? customUnitPrices[pItem.stockid]
+                                : (parseFloat(pItem.adjust_unit_price) || 0);
+            var pEffective  = pUnitPrice > 0 ? pUnitPrice : (parseFloat(pAdjPrice) || 0);
+            var pFactor     = landingFactors[pItem.stockid] !== undefined
+                                ? landingFactors[pItem.stockid]
                                 : (parseFloat(pItem.landing_factor) || 1);
-                pValue = pQty * pRawAdj * pFactor;
-            }
+            var pValue = pQty * pEffective * pFactor;
 
-            // Classify: is there any usable price at all?
-            var hasAnyPrice = (pWeighted > 0) || (pAdjInMem > 0) || (pAdjServer > 0);
+            // Classification: server flag (checks ALL parchino records) OR in-memory override
+            var pHasManual = pItem.has_manual_price
+                || (customUnitPrices[pItem.stockid] !== undefined && parseFloat(customUnitPrices[pItem.stockid]) > 0);
+            var hasAnyPrice = pEffective > 0;
 
             if (!hasAnyPrice) {
-                // No price data at all
                 priceZero++;
                 if (pQty > 0) { priceZeroInStock++; priceZeroQty += pQty; }
             } else if (pHasManual) {
-                // User has manually set an adjusted price
                 priceAdj++;
                 priceAdjSum += pValue;
             } else {
-                // Price comes purely from original parchino `price` field
                 priceOrig++;
                 priceOrigSum += pValue;
             }

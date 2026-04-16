@@ -153,9 +153,19 @@ try {
                 $latestParchino = $parchinoData[$stockid][0];
                 $item['adjust_unit_price'] = $latestParchino['adjust_unit_price'] ?? 0;
                 $item['landing_factor'] = $latestParchino['landing_factor'] ?? 1;
+
+                // Check if ANY parchino record has a manual price adjustment
+                $item['has_manual_price'] = false;
+                foreach ($parchinoData[$stockid] as $p) {
+                    if (floatval($p['adjust_unit_price'] ?? 0) > 0) {
+                        $item['has_manual_price'] = true;
+                        break;
+                    }
+                }
             } else {
                 $item['adjust_unit_price'] = 0;
                 $item['landing_factor'] = 1;
+                $item['has_manual_price'] = false;
             }
 
             // Get the latest transaction date from stock_status table
