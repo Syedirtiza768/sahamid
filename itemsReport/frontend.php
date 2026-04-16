@@ -337,6 +337,46 @@ if (!isset($_SESSION['UsersRealName'])) {
         font-variant-numeric: tabular-nums;
     }
 
+    /* Pricing card variants */
+    .stat-card--indigo::before  { background: #6366f1; }
+    .stat-card--indigo .stat-card-icon  { background: #eef2ff; color: #6366f1; }
+    .stat-card--indigo .stat-card-value { color: #4338ca; }
+
+    .stat-card--teal::before    { background: #0d9488; }
+    .stat-card--teal .stat-card-icon    { background: #f0fdfa; color: #0d9488; }
+    .stat-card--teal .stat-card-value   { color: #0d9488; }
+
+    .stat-card--violet::before  { background: #7c3aed; }
+    .stat-card--violet .stat-card-icon  { background: #f5f3ff; color: #7c3aed; }
+    .stat-card--violet .stat-card-value { color: #7c3aed; }
+
+    /* 3-column grid variant */
+    .stats-grid--3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width: 900px) {
+        .stats-grid--3 { grid-template-columns: 1fr; }
+    }
+
+    /* Section label */
+    .stats-section-label {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        font-size: var(--text-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--color-gray-400);
+        margin-bottom: var(--space-3);
+    }
+    .stats-section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--color-gray-200);
+    }
+
 
     /* ═══════════════════════════════════════
        TOOLBAR (Filters + Actions)
@@ -1097,7 +1137,8 @@ if (!isset($_SESSION['UsersRealName'])) {
         </div>
     </div>
 
-    <!-- Stat Cards -->
+    <!-- Stock Movement Cards -->
+    <div class="stats-section-label">Stock Movement</div>
     <div class="stats-grid">
         <div class="stat-card stat-card--success">
             <div class="stat-card-header">
@@ -1131,6 +1172,44 @@ if (!isset($_SESSION['UsersRealName'])) {
             <div class="stat-card-value" id="extremelyDeadCount">&mdash;</div>
             <div class="stat-card-sum">Rs. <span id="extremelyDeadSum">0.00</span></div>
         </div>
+    </div>
+
+    <!-- Pricing Coverage Cards -->
+    <div class="stats-section-label" style="margin-top:var(--space-5)">Pricing Coverage</div>
+    <div class="stats-grid stats-grid--3">
+
+        <!-- No Price -->
+        <div class="stat-card stat-card--indigo">
+            <div class="stat-card-header">
+                <span class="stat-card-label">No Price Set</span>
+                <span class="stat-card-icon"><i class="fas fa-circle-exclamation"></i></span>
+            </div>
+            <div class="stat-card-value" id="priceZeroCount">&mdash;</div>
+            <div class="stat-card-sum">
+                <span id="priceZeroInStock">0</span> in stock &middot; <span id="priceZeroQty">0</span> units on shelf
+            </div>
+        </div>
+
+        <!-- Manually Adjusted Price -->
+        <div class="stat-card stat-card--teal">
+            <div class="stat-card-header">
+                <span class="stat-card-label">Manually Adjusted Price</span>
+                <span class="stat-card-icon"><i class="fas fa-sliders"></i></span>
+            </div>
+            <div class="stat-card-value" id="priceAdjCount">&mdash;</div>
+            <div class="stat-card-sum">Rs. <span id="priceAdjSum">0.00</span> inventory value</div>
+        </div>
+
+        <!-- Original Parchino Price -->
+        <div class="stat-card stat-card--violet">
+            <div class="stat-card-header">
+                <span class="stat-card-label">Original Parchino Price</span>
+                <span class="stat-card-icon"><i class="fas fa-receipt"></i></span>
+            </div>
+            <div class="stat-card-value" id="priceOrigCount">&mdash;</div>
+            <div class="stat-card-sum">Rs. <span id="priceOrigSum">0.00</span> inventory value</div>
+        </div>
+
     </div>
 
     <!-- Toolbar -->
@@ -1587,6 +1666,50 @@ $(document).ready(function() {
         $('#slowSum').text(numberFormat(slowSum));
         $('#deadSum').text(numberFormat(deadSum));
         $('#extremelyDeadSum').text(numberFormat(extremelyDeadSum));
+
+        // ── Pricing coverage stats (all items, not just in-stock movement)
+        var priceZero = 0, priceZeroInStock = 0, priceZeroQty = 0;
+        var priceAdj = 0, priceAdjSum = 0;
+        var priceOrig = 0, priceOrigSum = 0;
+
+        for (var j = 0; j < data.length; j++) {
+            var pItem = data[j];
+            var pQty  = calculateTotalQty(pItem);
+
+            var pUnitPrice  = parseFloat(pItem.weighted_unit_price) || 0;
+            // In-memory override takes precedence; then server-supplied adjust_unit_price
+            var pAdjInMem   = customUnitPrices[pItem.stockid] !== undefined ? parseFloat(customUnitPrices[pItem.stockid]) : 0;
+            var pAdjServer  = parseFloat(pItem.adjust_unit_price) || 0;
+            var pHasManual  = (pAdjInMem > 0) || (pAdjServer > 0);
+            // Effective price: weighted_unit_price already incorporates server-side adjust; use it first
+            var pEffective  = pUnitPrice > 0 ? pUnitPrice : (pAdjInMem > 0 ? pAdjInMem : pAdjServer);
+            var pFactor     = landingFactors[pItem.stockid] !== undefined
+                                ? parseFloat(landingFactors[pItem.stockid])
+                                : (parseFloat(pItem.landing_factor) || 1);
+            var pValue = pQty * pEffective * pFactor;
+
+            if (pEffective <= 0) {
+                // No price data at all
+                priceZero++;
+                if (pQty > 0) { priceZeroInStock++; priceZeroQty += pQty; }
+            } else if (pHasManual) {
+                // User has manually set an adjusted price
+                priceAdj++;
+                priceAdjSum += pValue;
+            } else {
+                // Price comes purely from original parchino `price` field
+                priceOrig++;
+                priceOrigSum += pValue;
+            }
+        }
+
+        $('#priceZeroCount').text(priceZero);
+        $('#priceZeroInStock').text(priceZeroInStock);
+        $('#priceZeroQty').text(priceZeroQty.toLocaleString());
+        $('#priceAdjCount').text(priceAdj);
+        $('#priceAdjSum').text(numberFormat(priceAdjSum));
+        $('#priceOrigCount').text(priceOrig);
+        $('#priceOrigSum').text(numberFormat(priceOrigSum));
     }
 
     // ── CSV Export ──────────────────────────────────
