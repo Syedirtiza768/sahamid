@@ -175,21 +175,25 @@ try {
                 ]);
             }
         } else {
-            // Get all distinct stock IDs with custom values
-            $sql = "SELECT DISTINCT stockid, adjust_unit_price, landing_factor 
-                    FROM igp_parchi 
-                    WHERE adjust_unit_price != 0 OR landing_factor != 1
-                    ORDER BY stockid";
+            // Get latest row per stock ID, then return only customized items
+            $sql = "SELECT p.stockid, p.adjust_unit_price, p.landing_factor
+                    FROM igp_parchi p
+                    INNER JOIN (
+                        SELECT stockid, MAX(CONCAT(DATE_FORMAT(pdate, '%Y-%m-%d'), '|', LPAD(id, 10, '0'))) AS max_key
+                        FROM igp_parchi
+                        GROUP BY stockid
+                    ) latest ON latest.stockid = p.stockid
+                           AND CONCAT(DATE_FORMAT(p.pdate, '%Y-%m-%d'), '|', LPAD(p.id, 10, '0')) = latest.max_key
+                    WHERE IFNULL(p.adjust_unit_price,0) != 0 OR IFNULL(p.landing_factor,1) != 1
+                    ORDER BY p.stockid";
             $result = mysqli_query($db, $sql);
             
             $data = [];
             while ($row = mysqli_fetch_assoc($result)) {
-                if (!isset($data[$row['stockid']])) {
-                    $data[$row['stockid']] = [
-                        'adjust_unit_price' => floatval($row['adjust_unit_price']),
-                        'landing_factor' => floatval($row['landing_factor'])
-                    ];
-                }
+                $data[$row['stockid']] = [
+                    'adjust_unit_price' => floatval($row['adjust_unit_price']),
+                    'landing_factor' => floatval($row['landing_factor'])
+                ];
             }
             
             echo json_encode([

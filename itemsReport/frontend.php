@@ -1699,11 +1699,15 @@ $(document).ready(function() {
                 priceZero++;
                 if (pQty > 0) { priceZeroInStock++; priceZeroQty += pQty; }
             } else if (pHasManual) {
-                priceAdj++;
-                priceAdjSum += pValue;
+                if (pQty > 0) {
+                    priceAdj++;
+                    priceAdjSum += pValue;
+                }
             } else {
-                priceOrig++;
-                priceOrigSum += pValue;
+                if (pQty > 0) {
+                    priceOrig++;
+                    priceOrigSum += pValue;
+                }
             }
         }
 
