@@ -135,11 +135,13 @@ if (isset($_POST['UpdateDatabase'])){
 					     $SQL = "INSERT INTO suppallocs (datealloc,
 														amt,
 														transid_allocfrom,
-														transid_allocto)
+														transid_allocto,
+														date)
 										VALUES ('" . FormatDateForSQL(date($_SESSION['DefaultDateFormat'])) . "',
 										     		'" . $AllocnItem->AllocAmt . "',
 												'" . $_SESSION['Alloc']->AllocTrans . "',
-												'" . $AllocnItem->ID . "')";
+												'" . $AllocnItem->ID . "',
+												'" . FormatDateForSQL(date($_SESSION['DefaultDateFormat'])) . "')";
 
 						  $ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' .  _('The supplier allocation record for') . ' ' . $AllocnItem->TransType . ' ' .  $AllocnItem->TypeNo . ' ' ._('could not be inserted because');
 						  $DbgMsg = _('The following SQL to insert the allocation record was used');
@@ -161,6 +163,9 @@ if (isset($_POST['UpdateDatabase'])){
 							 DB_query($SQL, $db);
 
 						 }
+						 $PeriodNo = GetPeriod(date($_SESSION['DefaultDateFormat']), $db);
+
+						 if($_SESSION['Alloc']->BankAccount != 0){
 						 $SQL = "SELECT * FROM gltrans 
 						WHERE account='".$_SESSION['Alloc']->BankAccount."'
 						AND type='".$typeOfTrans."'
@@ -169,8 +174,6 @@ if (isset($_POST['UpdateDatabase'])){
 
 						 $resa = mysqli_query($db, $SQL);
 						 $resc = mysqli_num_rows($resa);
-
-						 $PeriodNo = GetPeriod(date($_SESSION['DefaultDateFormat']), $db);
 
 						 if($resc != 1){
 
@@ -210,6 +213,7 @@ if (isset($_POST['UpdateDatabase'])){
 								 $Error = _('Could not update exchange difference in General Ledger');
 							 }
 
+						 }
 						 }
 				     }
 				     $NewAllocTotal = $AllocnItem->PrevAlloc + $AllocnItem->AllocAmt;

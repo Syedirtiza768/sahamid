@@ -1,8 +1,16 @@
 .git
 .gitignore
 docker-compose.yml
+docker-compose.windows.yml
 Dockerfile
+Dockerfile.windows
 .dockerignore
 docker/
+backup/
+video/
+*.mp4
+*.sql
 *.md
 .vscode/
+vendor/
+node_modules/

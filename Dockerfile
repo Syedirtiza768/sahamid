@@ -54,9 +54,8 @@ COPY . /var/www/html/
 
 # Fix missing assets that existed in the original XAMPP installation
 # 1. bootstrap.min.css expected at /css/ - copy from erp/css/
-RUN cp /var/www/html/erp/css/bootstrap.min.css /var/www/html/css/bootstrap.min.css
-# 2. login-bg.mp4 - only login-bg2.mp4 exists; use it as the login video
-RUN cp /var/www/html/video/login-bg2.mp4 /var/www/html/video/login-bg.mp4
+RUN cp /var/www/html/erp/css/bootstrap.min.css /var/www/html/css/bootstrap.min.css 2>/dev/null || true
+# 2. login-bg.mp4 - only login-bg2.mp4 exists; use it as the login video (provided via volume mount)
 # 3. javascript/ directory with login-anim-bg.js does not exist
 RUN mkdir -p /var/www/html/javascript && \
     printf '(function(){\n  var v=document.getElementById("Video1");\n  var v2=document.getElementById("Video2");\n  if(v){v.play();} if(v2){v2.play();}\n})();\n' \
