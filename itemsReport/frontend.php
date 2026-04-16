@@ -1540,6 +1540,7 @@ $(document).ready(function() {
                         if (d.landing_factor !== 1) { landingFactors[stockId] = d.landing_factor; originalFactors[stockId] = d.landing_factor; }
                     }
                     applyFilters();
+                    updateStatusStatistics(allData);
                     showNotification('Loaded ' + keys.length + ' saved customizations', 'info');
                 }
             },
@@ -1558,9 +1559,15 @@ $(document).ready(function() {
             if (totalQty > 0) {
                 var status = getStockStatus(item.latest_trandate);
                 var unitPrice = parseFloat(item.weighted_unit_price) || 0;
-                var adjustPrice = customUnitPrices[item.stockid] !== undefined ? customUnitPrices[item.stockid] : 0;
+                // Use in-memory override first; fall back to server-supplied value, then 0
+                var adjustPrice = customUnitPrices[item.stockid] !== undefined
+                    ? customUnitPrices[item.stockid]
+                    : (parseFloat(item.adjust_unit_price) || 0);
                 var effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-                var factor = landingFactors[item.stockid] !== undefined ? landingFactors[item.stockid] : 1;
+                // Use in-memory override first; fall back to server-supplied factor, then 1
+                var factor = landingFactors[item.stockid] !== undefined
+                    ? landingFactors[item.stockid]
+                    : (parseFloat(item.landing_factor) || 1);
                 var itemValue = totalQty * effectivePrice * factor;
 
                 switch (status.status) {
