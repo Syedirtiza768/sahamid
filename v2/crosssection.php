@@ -14,19 +14,32 @@ if (!userHasPermission($db, "top_items_quotation_report")) {
 }
 
 if (isset($_POST['to'])) {
-    set_time_limit(300); // Increase timeout for large datasets
+    set_time_limit(300);
+    ob_clean();
+    header('Content-Type: application/json');
     
     $response = [];
-    $from = $_POST['from'];
-    $to = $_POST['to'];
-    $location = isset($_POST['Location']) ? $_POST['Location'] : '';
+    $from = mysqli_real_escape_string($db, $_POST['from']);
+    $to = mysqli_real_escape_string($db, $_POST['to']);
+    $location = isset($_POST['Location']) ? mysqli_real_escape_string($db, $_POST['Location']) : '';
     
     // Validate location input
     $valid_locations = ['HO', 'MT', 'SR'];
     $location_condition = empty($location) ? "AND loccode IN ('HO','MT','SR')" : "AND loccode = '$location'";
 
+    // Helper: run query returning JSON error instead of HTML
+    function run_sql($sql, $conn) {
+        $r = mysqli_query($conn, $sql);
+        if (!$r) {
+            ob_clean();
+            echo json_encode(['error' => mysqli_error($conn), 'sql' => substr($sql, 0, 200)]);
+            exit;
+        }
+        return $r;
+    }
+
     // Create optimized temporary tables with proper indexes
-    DB_query("CREATE TEMPORARY TABLE stock_summary (
+    run_sql("CREATE TEMPORARY TABLE stock_summary (
                 stockid VARCHAR(50) NOT NULL PRIMARY KEY,
                 mnfCode VARCHAR(50),
                 mnfpno VARCHAR(50),
@@ -44,25 +57,23 @@ if (isset($_POST['to'])) {
                 averageDCFactor DECIMAL(20,4) DEFAULT 0,
                 dcitemQty DECIMAL(20,4) DEFAULT 0,
                 dcexclusivegsttotalamount DECIMAL(20,4) DEFAULT 0
-              ) ENGINE=InnoDB", $db);
+              )", $db);
 
-    // First get all stock items with basic info - including materialcost from stockmaster
-    DB_query("INSERT INTO stock_summary (stockid, mnfCode, mnfpno, description, materialcost, manufacturers_name)
+    run_sql("INSERT INTO stock_summary (stockid, mnfCode, mnfpno, description, materialcost, manufacturers_name)
               SELECT sm.stockid, sm.mnfCode, sm.mnfpno, sm.description, sm.materialcost, m.manufacturers_name
               FROM stockmaster sm
               LEFT JOIN manufacturers m ON m.manufacturers_id = sm.brand
               WHERE sm.mbflag IN ('B', 'M')", $db);
 
     // Create temporary table for opening stock moves
-    DB_query("CREATE TEMPORARY TABLE opening_moves (
+    run_sql("CREATE TEMPORARY TABLE opening_moves (
                 stockid VARCHAR(50) NOT NULL,
                 loccode VARCHAR(10) NOT NULL,
                 stkmoveno INT NOT NULL,
                 PRIMARY KEY (stockid, loccode)
-              ) ENGINE=InnoDB", $db);
+              )", $db);
 
-    // Find latest opening moves for each item/location
-    DB_query("INSERT INTO opening_moves
+    run_sql("INSERT INTO opening_moves
               SELECT stockid, loccode, MAX(stkmoveno) as stkmoveno
               FROM stockmoves
               WHERE trandate <= '$from'
@@ -70,8 +81,7 @@ if (isset($_POST['to'])) {
               $location_condition
               GROUP BY stockid, loccode", $db);
 
-    // Update opening quantities
-    DB_query("UPDATE stock_summary ss
+    run_sql("UPDATE stock_summary ss
               JOIN (
                   SELECT sm.stockid, SUM(sm.newqoh) as qohA
                   FROM stockmoves sm
@@ -83,15 +93,14 @@ if (isset($_POST['to'])) {
               SET ss.qohA = q.qohA", $db);
 
     // Create temporary table for closing stock moves
-    DB_query("CREATE TEMPORARY TABLE closing_moves (
+    run_sql("CREATE TEMPORARY TABLE closing_moves (
                 stockid VARCHAR(50) NOT NULL,
                 loccode VARCHAR(10) NOT NULL,
                 stkmoveno INT NOT NULL,
                 PRIMARY KEY (stockid, loccode)
-              ) ENGINE=InnoDB", $db);
+              )", $db);
 
-    // Find latest closing moves for each item/location
-    DB_query("INSERT INTO closing_moves
+    run_sql("INSERT INTO closing_moves
               SELECT stockid, loccode, MAX(stkmoveno) as stkmoveno
               FROM stockmoves
               WHERE trandate <= '$to'
@@ -99,8 +108,7 @@ if (isset($_POST['to'])) {
               $location_condition
               GROUP BY stockid, loccode", $db);
 
-    // Update closing quantities (qohB)
-    DB_query("UPDATE stock_summary ss
+    run_sql("UPDATE stock_summary ss
               JOIN (
                   SELECT sm.stockid, SUM(sm.newqoh) as qohB
                   FROM stockmoves sm
@@ -111,9 +119,9 @@ if (isset($_POST['to'])) {
               ) q ON ss.stockid = q.stockid
               SET ss.qohB = q.qohB", $db);
 
-    // Get invoice data (filter by location if selected)
+    // Get invoice data
     $invoice_location_join = empty($location) ? "" : "JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno AND dm.debtorno LIKE '%$location%'";
-    DB_query("UPDATE stock_summary ss
+    run_sql("UPDATE stock_summary ss
               JOIN (
                   SELECT stkcode as stockid,
                          AVG(unitprice*(1-discountpercent)) as averageInvoiceFactor,
@@ -134,9 +142,9 @@ if (isset($_POST['to'])) {
                   ss.invoiceitemQty = inv.invoiceitemQty,
                   ss.invoiceexclusivegsttotalamount = inv.invoiceexclusivegsttotalamount", $db);
 
-    // Get shop sale data (filter by location if selected)
+    // Get shop sale data
     $shop_location_condition = empty($location) ? "" : "AND dm.debtorno LIKE '%$location%'";
-    DB_query("UPDATE stock_summary ss
+    run_sql("UPDATE stock_summary ss
               JOIN (
                   SELECT s.stockid,
                          AVG(s.rate) as averageShopSaleFactor,
@@ -153,8 +161,8 @@ if (isset($_POST['to'])) {
                   ss.itemQtyShopsale = shop.itemQtyShopsale,
                   ss.shopsaletotalamount = shop.shopsaletotalamount", $db);
 
-    // Get DC data (all locations)
-    DB_query("UPDATE stock_summary ss
+    // Get DC data
+    run_sql("UPDATE stock_summary ss
               JOIN (
                   SELECT d.stkcode as stockid,
                          AVG(d.unitprice*(1-d.discountpercent)) as averageDCFactor,
@@ -171,18 +179,20 @@ if (isset($_POST['to'])) {
                   ss.dcitemQty = dc.dcitemQty,
                   ss.dcexclusivegsttotalamount = dc.dcexclusivegsttotalamount", $db);
 
-    // Clean up temporary tables
-    DB_query("DROP TEMPORARY TABLE IF EXISTS opening_moves", $db);
-    DB_query("DROP TEMPORARY TABLE IF EXISTS closing_moves", $db);
+    // Clean up
+    mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS opening_moves");
+    mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS closing_moves");
 
-    // Fetch the final result - including the original materialcost from stockmaster
-    $result = DB_query("SELECT * FROM stock_summary", $db);
+    // Fetch final result
+    $result = run_sql("SELECT * FROM stock_summary", $db);
     while ($row = DB_fetch_array($result)) {
         $response[] = $row;
     }
 
+    mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS stock_summary");
+
     echo json_encode($response);
-    return;
+    exit;
 }
 
 include_once("includes/header.php");
@@ -289,6 +299,7 @@ include_once("includes/sidebar.php");
 $(document).ready(function() {
     let table = $('#datatable').DataTable({
         dom: 'Bflrtip',
+        deferRender: true,
         lengthMenu: [10, 25, 50, 75, 100],
         buttons: [
             'copy',
@@ -367,12 +378,21 @@ $(document).ready(function() {
             method: "POST",
             data: { from, to, Location },
             dataType: "json",
+            timeout: 300000,
             success: function(response) {
-                table.rows.add(response).draw();
+                if (response.error) {
+                    alert("Server error: " + response.error);
+                } else {
+                    table.rows.add(response).draw();
+                }
                 $("#loadingMessage").hide();
             },
             error: function(xhr, status, error) {
-                alert("Error loading data: " + error);
+                if (status === 'timeout') {
+                    alert("Request timed out. Try a smaller date range.");
+                } else {
+                    alert("Error loading data: " + error + "\n" + (xhr.responseText || '').substring(0, 200));
+                }
                 $("#loadingMessage").hide();
             }
         });
