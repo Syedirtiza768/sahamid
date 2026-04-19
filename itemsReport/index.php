@@ -88,10 +88,7 @@ try {
         $parchinoData = [];
         $SQL_parchinos = "SELECT id, stockid, quantity, price, adjust_unit_price, landing_factor, pdate
                             FROM igp_parchi 
-                            WHERE CONVERT(stockid USING latin1) IN (
-                                SELECT CONVERT(stockid USING latin1) FROM stockmaster 
-                                WHERE stockid IN ($stockIdsStr)
-                            )
+                            WHERE stockid IN ($stockIdsStr)
                             ORDER BY stockid, pdate DESC, id DESC";
 
         $res_parchinos = mysqli_query($db, $SQL_parchinos);

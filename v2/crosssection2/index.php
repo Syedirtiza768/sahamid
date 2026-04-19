@@ -16,28 +16,37 @@ if (!userHasPermission($db, "top_items_quotation_report")) {
 
 if (isset($_POST['to'])) {
     set_time_limit(300);
+    ob_clean();
     header('Content-Type: application/json');
 
     $from = mysqli_real_escape_string($db, $_POST['from']);
     $to = mysqli_real_escape_string($db, $_POST['to']);
 
+    // Helper: run query without DB_query (which outputs HTML on error)
+    function run_sql($sql, $conn) {
+        $r = mysqli_query($conn, $sql);
+        if (!$r) {
+            ob_clean();
+            echo json_encode(['error' => mysqli_error($conn), 'sql' => substr($sql, 0, 200)]);
+            exit;
+        }
+        return $r;
+    }
+
     // ═══════════════════════════════════════════════════════════
     // STEP 1: Create temp table with all stock items in one shot
     // ═══════════════════════════════════════════════════════════
-    DB_query("CREATE TEMPORARY TABLE tmp_report (
+    run_sql("CREATE TEMPORARY TABLE tmp_report (
         stockid VARCHAR(50) NOT NULL PRIMARY KEY,
         mnfCode VARCHAR(50),
         mnfpno VARCHAR(50),
         description VARCHAR(255),
         manufacturers_name VARCHAR(100),
         qohA DECIMAL(20,4) DEFAULT 0,
-        qohB DECIMAL(20,4) DEFAULT 0,
-        unitPriceCost DECIMAL(20,4) DEFAULT 0,
-        totalAmountFrom DECIMAL(20,4) DEFAULT 0,
-        totalAmountTo DECIMAL(20,4) DEFAULT 0
-    ) ENGINE=MEMORY", $db);
+        qohB DECIMAL(20,4) DEFAULT 0
+    )", $db);
 
-    DB_query("INSERT INTO tmp_report (stockid, mnfCode, mnfpno, description, manufacturers_name)
+    run_sql("INSERT INTO tmp_report (stockid, mnfCode, mnfpno, description, manufacturers_name)
               SELECT sm.stockid, sm.mnfCode, sm.mnfpno, sm.description, m.manufacturers_name
               FROM stockmaster sm
               LEFT JOIN manufacturers m ON m.manufacturers_id = sm.brand
@@ -46,14 +55,14 @@ if (isset($_POST['to'])) {
     // ═══════════════════════════════════════════════════════════
     // STEP 2: Opening stock — one bulk query using temp tables
     // ═══════════════════════════════════════════════════════════
-    DB_query("CREATE TEMPORARY TABLE tmp_open_moves (
+    run_sql("CREATE TEMPORARY TABLE tmp_open_moves (
         stockid VARCHAR(50) NOT NULL,
         loccode VARCHAR(10) NOT NULL,
         stkmoveno INT NOT NULL,
         PRIMARY KEY (stockid, loccode)
-    ) ENGINE=MEMORY", $db);
+    )", $db);
 
-    DB_query("INSERT INTO tmp_open_moves
+    run_sql("INSERT INTO tmp_open_moves
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves
               WHERE loccode IN ('HO','MT','SR')
@@ -61,7 +70,7 @@ if (isset($_POST['to'])) {
                 AND trandate >= '2021-01-01'
               GROUP BY stockid, loccode", $db);
 
-    DB_query("UPDATE tmp_report r
+    run_sql("UPDATE tmp_report r
               INNER JOIN (
                   SELECT sm.stockid, SUM(sm.newqoh) AS qohA
                   FROM stockmoves sm
@@ -73,19 +82,19 @@ if (isset($_POST['to'])) {
               ) q ON r.stockid = q.stockid
               SET r.qohA = q.qohA", $db);
 
-    DB_query("DROP TEMPORARY TABLE tmp_open_moves", $db);
+    run_sql("DROP TEMPORARY TABLE tmp_open_moves", $db);
 
     // ═══════════════════════════════════════════════════════════
     // STEP 3: Closing stock — one bulk query using temp tables
     // ═══════════════════════════════════════════════════════════
-    DB_query("CREATE TEMPORARY TABLE tmp_close_moves (
+    run_sql("CREATE TEMPORARY TABLE tmp_close_moves (
         stockid VARCHAR(50) NOT NULL,
         loccode VARCHAR(10) NOT NULL,
         stkmoveno INT NOT NULL,
         PRIMARY KEY (stockid, loccode)
-    ) ENGINE=MEMORY", $db);
+    )", $db);
 
-    DB_query("INSERT INTO tmp_close_moves
+    run_sql("INSERT INTO tmp_close_moves
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves
               WHERE loccode IN ('HO','MT','SR')
@@ -93,7 +102,7 @@ if (isset($_POST['to'])) {
                 AND trandate >= '2021-01-01'
               GROUP BY stockid, loccode", $db);
 
-    DB_query("UPDATE tmp_report r
+    run_sql("UPDATE tmp_report r
               INNER JOIN (
                   SELECT sm.stockid, SUM(sm.newqoh) AS qohB
                   FROM stockmoves sm
@@ -105,18 +114,17 @@ if (isset($_POST['to'])) {
               ) q ON r.stockid = q.stockid
               SET r.qohB = q.qohB", $db);
 
-    DB_query("DROP TEMPORARY TABLE tmp_close_moves", $db);
+    run_sql("DROP TEMPORARY TABLE tmp_close_moves", $db);
 
     // ═══════════════════════════════════════════════════════════
     // STEP 4: Load igp_parchi pricing & calculate weighted prices
     // ═══════════════════════════════════════════════════════════
-    // Load all parchino data in one query — direct stockid match (no CONVERT)
     $parchinoData = [];
     $sqlParchi = "SELECT p.stockid, p.quantity, p.price, p.adjust_unit_price, p.landing_factor
                   FROM igp_parchi p
                   INNER JOIN tmp_report r ON p.stockid = r.stockid
                   ORDER BY p.stockid, p.pdate DESC, p.id DESC";
-    $resParchi = DB_query($sqlParchi, $db);
+    $resParchi = run_sql($sqlParchi, $db);
     while ($r = DB_fetch_array($resParchi)) {
         $sid = $r['stockid'];
         if (!isset($parchinoData[$sid])) {
@@ -134,7 +142,7 @@ if (isset($_POST['to'])) {
     // STEP 5: Fetch tmp_report and compute final values in PHP
     // ═══════════════════════════════════════════════════════════
     $response = [];
-    $result = DB_query("SELECT * FROM tmp_report", $db);
+    $result = run_sql("SELECT * FROM tmp_report", $db);
     while ($item = DB_fetch_array($result)) {
         $openQty  = (float)$item['qohA'];
         $closeQty = (float)$item['qohB'];
@@ -172,10 +180,10 @@ if (isset($_POST['to'])) {
         unset($parchinoData[$sid]);
     }
 
-    DB_query("DROP TEMPORARY TABLE IF EXISTS tmp_report", $db);
+    mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS tmp_report");
 
     echo json_encode($response);
-    return;
+    exit;
 }
 
 include_once("includes/header.php");

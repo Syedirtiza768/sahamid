@@ -1479,6 +1479,7 @@ if (!isset($_SESSION['UsersRealName'])) {
 <script>
 $(document).ready(function() {
     var allData = [];
+    var allDataMap = {};
     var currentFilter = 'non-zero';
     var currentStatusFilter = 'all';
     var isCalculatingPrices = false;
@@ -1546,27 +1547,35 @@ $(document).ready(function() {
         }, 3500);
     }
 
+    // ── Row index map for O(1) lookups ─────────────
+    var rowIndexMap = {};
+    function rebuildRowIndexMap() {
+        rowIndexMap = {};
+        datatable.rows().every(function(idx) {
+            var d = this.data();
+            if (d) rowIndexMap[d.stockid] = idx;
+        });
+    }
+
     // ── Row calculation update ─────────────────────
     function updateRowCalculations(stockId) {
-        var rows = datatable.rows().data();
-        for (var i = 0; i < rows.length; i++) {
-            if (rows[i].stockid === stockId) {
-                var rowNode = datatable.row(i).node();
-                var rowData = rows[i];
-                var totalQty = calculateTotalQty(rowData);
+        var idx = rowIndexMap[stockId];
+        if (idx === undefined) return;
+        var row = datatable.row(idx);
+        var rowNode = row.node();
+        if (!rowNode) return;
+        var rowData = row.data();
+        var totalQty = calculateTotalQty(rowData);
 
-                var unitPrice = parseFloat(rowData.weighted_unit_price) || 0;
-                var adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
-                var effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-                var factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
-                var adjustedPrice = effectivePrice * factor;
-                var qtyTimesAdjustedPrice = totalQty * adjustedPrice;
+        var unitPrice = parseFloat(rowData.weighted_unit_price) || 0;
+        var adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
+        var effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
+        var factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+        var adjustedPrice = effectivePrice * factor;
+        var qtyTimesAdjustedPrice = totalQty * adjustedPrice;
 
-                $(rowNode).find('td:eq(10)').html('<span class="text-tabular">' + numberFormat(adjustedPrice) + '</span>');
-                $(rowNode).find('td:eq(11)').html('<span class="text-tabular" style="font-weight:600;color:var(--color-gray-900)">' + numberFormat(qtyTimesAdjustedPrice) + '</span>');
-                break;
-            }
-        }
+        $(rowNode).find('td:eq(10)').html('<span class="text-tabular">' + numberFormat(adjustedPrice) + '</span>');
+        $(rowNode).find('td:eq(11)').html('<span class="text-tabular" style="font-weight:600;color:var(--color-gray-900)">' + numberFormat(qtyTimesAdjustedPrice) + '</span>');
     }
 
     // ── Auto-save ──────────────────────────────────
@@ -1627,34 +1636,59 @@ $(document).ready(function() {
         });
     }
 
-    // ── Statistics ──────────────────────────────────
+    // ── Statistics (single-pass) ─────────────────────
+    var statsDebounceTimer = null;
     function updateStatusStatistics(data) {
+        // Debounce rapid calls (e.g. during import)
+        if (statsDebounceTimer) clearTimeout(statsDebounceTimer);
+        statsDebounceTimer = setTimeout(function() { _computeStats(data); }, 50);
+    }
+    function _computeStats(data) {
         var running = 0, slow = 0, dead = 0, extremelyDead = 0;
         var runningSum = 0, slowSum = 0, deadSum = 0, extremelyDeadSum = 0;
+        var priceZero = 0, priceZeroInStock = 0, priceZeroQty = 0;
+        var priceAdj = 0, priceAdjSum = 0;
+        var priceOrig = 0, priceOrigSum = 0;
+        var today = Date.now();
 
-        for (var i = 0; i < data.length; i++) {
+        for (var i = 0, len = data.length; i < len; i++) {
             var item = data[i];
+            var sid = item.stockid;
             var totalQty = calculateTotalQty(item);
-            if (totalQty > 0) {
-                var status = getStockStatus(item.latest_trandate);
-                var unitPrice = parseFloat(item.weighted_unit_price) || 0;
-                // Use in-memory override first; fall back to server-supplied value, then 0
-                var adjustPrice = customUnitPrices[item.stockid] !== undefined
-                    ? customUnitPrices[item.stockid]
-                    : (parseFloat(item.adjust_unit_price) || 0);
-                var effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-                // Use in-memory override first; fall back to server-supplied factor, then 1
-                var factor = landingFactors[item.stockid] !== undefined
-                    ? landingFactors[item.stockid]
-                    : (parseFloat(item.landing_factor) || 1);
-                var itemValue = totalQty * effectivePrice * factor;
 
-                switch (status.status) {
-                    case 'FAST MOVING': running++; runningSum += itemValue; break;
-                    case 'SLOW MOVING': slow++; slowSum += itemValue; break;
-                    case 'DEAD STOCK': dead++; deadSum += itemValue; break;
-                    case 'EXTREMELY DEAD': extremelyDead++; extremelyDeadSum += itemValue; break;
-                }
+            // Shared price computation
+            var unitPrice = parseFloat(item.weighted_unit_price) || 0;
+            var adjustPrice = customUnitPrices[sid] !== undefined
+                ? customUnitPrices[sid]
+                : (parseFloat(item.adjust_unit_price) || 0);
+            var effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
+            var factor = landingFactors[sid] !== undefined
+                ? landingFactors[sid]
+                : (parseFloat(item.landing_factor) || 1);
+            var itemValue = totalQty * effectivePrice * factor;
+
+            // Stock movement cards (in-stock only)
+            if (totalQty > 0) {
+                var d = item.latest_trandate;
+                var diffDays = d ? Math.ceil(Math.abs(today - new Date(d).getTime()) / 86400000) : 99999;
+                if (diffDays <= 180) { running++; runningSum += itemValue; }
+                else if (diffDays <= 360) { slow++; slowSum += itemValue; }
+                else if (diffDays <= 1000) { dead++; deadSum += itemValue; }
+                else { extremelyDead++; extremelyDeadSum += itemValue; }
+            }
+
+            // Pricing coverage cards
+            var pHasManual = item.has_manual_price
+                || (customUnitPrices[sid] !== undefined && parseFloat(customUnitPrices[sid]) > 0);
+            var hasAnyPrice = effectivePrice > 0;
+
+            if (!hasAnyPrice) {
+                priceZero++;
+                if (totalQty > 0) { priceZeroInStock++; priceZeroQty += totalQty; }
+            } else if (pHasManual) {
+                if (totalQty > 0) { priceAdj++; priceAdjSum += itemValue; }
+            } else {
+                if (totalQty > 0) { priceOrig++; priceOrigSum += itemValue; }
             }
         }
 
@@ -1666,51 +1700,6 @@ $(document).ready(function() {
         $('#slowSum').text(numberFormat(slowSum));
         $('#deadSum').text(numberFormat(deadSum));
         $('#extremelyDeadSum').text(numberFormat(extremelyDeadSum));
-
-        // ── Pricing coverage stats (all items, not just in-stock movement)
-        // Uses the same value formula as the movement cards above for consistency.
-        // Classification uses server-side has_manual_price flag (checks ALL parchino records)
-        // plus client-side customUnitPrices overrides.
-        var priceZero = 0, priceZeroInStock = 0, priceZeroQty = 0;
-        var priceAdj = 0, priceAdjSum = 0;
-        var priceOrig = 0, priceOrigSum = 0;
-
-        for (var j = 0; j < data.length; j++) {
-            var pItem = data[j];
-            var pQty  = calculateTotalQty(pItem);
-
-            // Compute value using the SAME formula as movement cards
-            var pUnitPrice  = parseFloat(pItem.weighted_unit_price) || 0;
-            var pAdjPrice   = customUnitPrices[pItem.stockid] !== undefined
-                                ? customUnitPrices[pItem.stockid]
-                                : (parseFloat(pItem.adjust_unit_price) || 0);
-            var pEffective  = pUnitPrice > 0 ? pUnitPrice : (parseFloat(pAdjPrice) || 0);
-            var pFactor     = landingFactors[pItem.stockid] !== undefined
-                                ? landingFactors[pItem.stockid]
-                                : (parseFloat(pItem.landing_factor) || 1);
-            var pValue = pQty * pEffective * pFactor;
-
-            // Classification: server flag (checks ALL parchino records) OR in-memory override
-            var pHasManual = pItem.has_manual_price
-                || (customUnitPrices[pItem.stockid] !== undefined && parseFloat(customUnitPrices[pItem.stockid]) > 0);
-            var hasAnyPrice = pEffective > 0;
-
-            if (!hasAnyPrice) {
-                priceZero++;
-                if (pQty > 0) { priceZeroInStock++; priceZeroQty += pQty; }
-            } else if (pHasManual) {
-                if (pQty > 0) {
-                    priceAdj++;
-                    priceAdjSum += pValue;
-                }
-            } else {
-                if (pQty > 0) {
-                    priceOrig++;
-                    priceOrigSum += pValue;
-                }
-            }
-        }
-
         $('#priceZeroCount').text(priceZero);
         $('#priceZeroInStock').text(priceZeroInStock);
         $('#priceZeroQty').text(priceZeroQty.toLocaleString());
@@ -1776,6 +1765,7 @@ $(document).ready(function() {
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [],
+        deferRender: true,
         lengthMenu: [[10, 25, 50, 100, -1], ["10", "25", "50", "100", "All"]],
         pageLength: 25,
         order: [[0, 'asc']],
@@ -2000,6 +1990,7 @@ $(document).ready(function() {
         else if (currentFilter === 'zero') filteredData = filteredData.filter(function(i) { return calculateTotalQty(i) === 0; });
         datatable.clear();
         datatable.rows.add(filteredData).draw();
+        rebuildRowIndexMap();
         updateFilterCounts();
         hideFilterLoading();
     }
@@ -2014,6 +2005,11 @@ $(document).ready(function() {
                 isCalculatingPrices = false;
                 if (response.status === 'success' && response.data) {
                     allData = response.data;
+                    // Build lookup map for fast stock ID searches
+                    allDataMap = {};
+                    for (var mi = 0; mi < allData.length; mi++) {
+                        allDataMap[allData[mi].stockid] = allData[mi];
+                    }
                     updateStatusStatistics(allData);
                     applyFilters();
                     var wp = allData.filter(function(i) { return i.total_bpitems_price > 0; }).length;
@@ -2160,8 +2156,7 @@ $(document).ready(function() {
                 if (!stockId) {
                     rowStatus = 'Missing Stock ID'; statusStyle = 'color:var(--color-danger)'; invalidCount++;
                 } else {
-                    var stockItem = null;
-                    for (var si = 0; si < allData.length; si++) { if (allData[si].stockid === stockId) { stockItem = allData[si]; break; } }
+                    var stockItem = allDataMap[stockId] || null;
                     if (stockItem) {
                         currentPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : (parseFloat(stockItem.weighted_unit_price) || 0);
                         if (newPrice !== '' && parseFloat(newPrice) !== parseFloat(currentPrice)) { changes.push('Price'); changedCount++; }
@@ -2223,7 +2218,7 @@ $(document).ready(function() {
         $('#uploadStats').show();
     }
 
-    // ── Process import ─────────────────────────────
+    // ── Process import (batched) ──────────────────
     $('#processImport').on('click', function() {
         var csvData = $('#importModal').data('csvData');
         if (!csvData) return;
@@ -2243,36 +2238,18 @@ $(document).ready(function() {
         $('#uploadProgress').show();
         startImportTimer();
 
-        var successCount = 0, errorCount = 0, processed = 0;
+        // Collect all changes first (no AJAX yet)
+        var batchPrices = {};
+        var batchFactors = {};
+        var processed = 0;
 
-        function processRow(index) {
-            if (importCancelled || index >= lines.length) {
-                if (importTimerInterval) { clearInterval(importTimerInterval); importTimerInterval = null; }
-                if (!importCancelled) {
-                    $('#importModal').modal('hide');
-                    resetImportDisplay();
-                    $('#successCount').text(successCount);
-                    $('#errorCount').text(errorCount);
-                    if (errorCount > 0) {
-                        $('#errorDetails').show();
-                        $('#errorList').empty();
-                        for (var ei = 0; ei < importResults.errors.length; ei++) {
-                            var err = importResults.errors[ei];
-                            $('#errorList').append('<tr><td>' + err.stockId + '</td><td>' + err.error + '</td></tr>');
-                        }
-                    } else { $('#errorDetails').hide(); }
-                    $('#importResultsModal').modal('show');
-                    if (successCount > 0) { applyFilters(); updateStatusStatistics(allData); }
-                }
-                return;
-            }
-
+        for (var index = 1; index < lines.length; index++) {
             var line = lines[index].trim();
-            if (!line || line.startsWith('#') || index === 0) { processRow(index + 1); return; }
+            if (!line || line.startsWith('#')) continue;
 
             var values = parseCSVLine(line);
             var stockId = (values[stockIdIndex] || '').trim().replace(/["']/g, '');
-            if (!stockId) { processRow(index + 1); return; }
+            if (!stockId) continue;
 
             var newPrice = null;
             if (priceIndex !== -1 && values[priceIndex]) {
@@ -2285,44 +2262,75 @@ $(document).ready(function() {
                 if (fs) { var fv = parseFloat(fs.replace(/[^0-9.-]/g, '')); if (!isNaN(fv)) newFactor = fv; }
             }
 
-            processed++;
-            var savePromises = [];
-            var hasChanges = false;
-
             if (newPrice !== null) {
                 var cp = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
                 if (parseFloat(newPrice) !== parseFloat(cp)) {
-                    hasChanges = true;
+                    batchPrices[stockId] = newPrice;
                     customUnitPrices[stockId] = newPrice;
-                    savePromises.push($.ajax({ type: 'POST', url: 'save_parchino.php', data: { action: 'save_single', stockid: stockId, field: 'adjust_unit_price', value: newPrice }, dataType: 'json' }));
                 }
             }
             if (newFactor !== null) {
                 var cf = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
                 if (parseFloat(newFactor) !== parseFloat(cf)) {
-                    hasChanges = true;
+                    batchFactors[stockId] = newFactor;
                     landingFactors[stockId] = newFactor;
-                    savePromises.push($.ajax({ type: 'POST', url: 'save_parchino.php', data: { action: 'save_single', stockid: stockId, field: 'landing_factor', value: newFactor }, dataType: 'json' }));
                 }
             }
-
-            if (!hasChanges) { updateImportProgress(processed, totalRows, successCount, errorCount); processRow(index + 1); return; }
-
-            $.when.apply($, savePromises).done(function() {
-                successCount++;
-                importResults.success.push(stockId);
-                if (newPrice !== null) originalPrices[stockId] = newPrice;
-                if (newFactor !== null) originalFactors[stockId] = newFactor;
-            }).fail(function() {
-                errorCount++;
-                importResults.errors.push({ stockId: stockId, error: 'Save failed' });
-            }).always(function() {
-                updateImportProgress(processed, totalRows, successCount, errorCount);
-                processRow(index + 1);
-            });
+            processed++;
         }
 
-        processRow(0);
+        var totalChanges = Object.keys(batchPrices).length + Object.keys(batchFactors).length;
+        if (totalChanges === 0) {
+            if (importTimerInterval) { clearInterval(importTimerInterval); importTimerInterval = null; }
+            resetImportDisplay();
+            showNotification('No changes to import', 'info');
+            return;
+        }
+
+        updateImportProgress(processed, totalRows, 0, 0);
+        $('#uploadStatus').html('Saving ' + totalChanges + ' changes to database\u2026');
+
+        // Single batch AJAX call using save_all endpoint
+        $.ajax({
+            type: 'POST',
+            url: 'save_parchino.php',
+            contentType: 'application/json',
+            data: JSON.stringify({ action: 'save_all', prices: batchPrices, factors: batchFactors }),
+            dataType: 'json',
+            timeout: 120000,
+            success: function(r) {
+                if (importTimerInterval) { clearInterval(importTimerInterval); importTimerInterval = null; }
+                var sc = r.success_count || 0;
+                var ec = r.error_count || 0;
+
+                // Update original tracking
+                var pKeys = Object.keys(batchPrices);
+                for (var pi = 0; pi < pKeys.length; pi++) originalPrices[pKeys[pi]] = batchPrices[pKeys[pi]];
+                var fKeys = Object.keys(batchFactors);
+                for (var fi = 0; fi < fKeys.length; fi++) originalFactors[fKeys[fi]] = batchFactors[fKeys[fi]];
+
+                updateImportProgress(processed, totalRows, sc, ec);
+                $('#importModal').modal('hide');
+                resetImportDisplay();
+                $('#successCount').text(sc);
+                $('#errorCount').text(ec);
+                if (ec > 0 && r.errors) {
+                    $('#errorDetails').show();
+                    $('#errorList').empty();
+                    for (var ei = 0; ei < r.errors.length; ei++) {
+                        $('#errorList').append('<tr><td colspan="2">' + r.errors[ei] + '</td></tr>');
+                    }
+                } else { $('#errorDetails').hide(); }
+                $('#importResultsModal').modal('show');
+                applyFilters();
+                updateStatusStatistics(allData);
+            },
+            error: function(xhr, status, error) {
+                if (importTimerInterval) { clearInterval(importTimerInterval); importTimerInterval = null; }
+                resetImportDisplay();
+                showNotification('Import failed: ' + (status === 'timeout' ? 'Request timed out' : error), 'error');
+            }
+        });
     });
 });
 </script>

@@ -17,8 +17,20 @@ try {
 
     $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+    // Handle JSON body (e.g. batch import sends application/json)
+    if (empty($action) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $rawBody = file_get_contents('php://input');
+        $jsonBody = json_decode($rawBody, true);
+        if ($jsonBody && isset($jsonBody['action'])) {
+            $action = $jsonBody['action'];
+        }
+    }
+
     if ($action === 'save_all' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $data = json_decode(file_get_contents('php://input'), true);
+        if (!isset($jsonBody)) {
+            $jsonBody = json_decode(file_get_contents('php://input'), true);
+        }
+        $data = $jsonBody;
         
         if (!$data || !isset($data['prices']) || !isset($data['factors'])) {
             throw new Exception('Invalid data format');
