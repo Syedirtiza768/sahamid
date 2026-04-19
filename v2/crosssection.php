@@ -56,7 +56,9 @@ if (isset($_POST['to'])) {
                 shopsaletotalamount DECIMAL(20,4) DEFAULT 0,
                 averageDCFactor DECIMAL(20,4) DEFAULT 0,
                 dcitemQty DECIMAL(20,4) DEFAULT 0,
-                dcexclusivegsttotalamount DECIMAL(20,4) DEFAULT 0
+                dcexclusivegsttotalamount DECIMAL(20,4) DEFAULT 0,
+                csitemQty DECIMAL(20,4) DEFAULT 0,
+                cstotalamount DECIMAL(20,4) DEFAULT 0
               )", $db);
 
     run_sql("INSERT INTO stock_summary (stockid, mnfCode, mnfpno, description, materialcost, manufacturers_name)
@@ -119,7 +121,7 @@ if (isset($_POST['to'])) {
               ) q ON ss.stockid = q.stockid
               SET ss.qohB = q.qohB", $db);
 
-    // Get invoice data
+    // Get invoice data (Credit Sales only, ordertype = 12)
     $invoice_location_join = empty($location) ? "" : "JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno AND dm.debtorno LIKE '%$location%'";
     run_sql("UPDATE stock_summary ss
               JOIN (
@@ -135,12 +137,35 @@ if (isset($_POST['to'])) {
                   $invoice_location_join
                   WHERE i.inprogress = 0
                   AND i.returned = 0
+                  AND i.ordertype = '12'
                   AND i.invoicesdate BETWEEN '$from' AND '$to'
                   GROUP BY stkcode
               ) inv ON ss.stockid = inv.stockid
               SET ss.averageInvoiceFactor = inv.averageInvoiceFactor,
                   ss.invoiceitemQty = inv.invoiceitemQty,
                   ss.invoiceexclusivegsttotalamount = inv.invoiceexclusivegsttotalamount", $db);
+
+    // Get Counter Sales data (Cash Sales, ordertype = 11)
+    $cs_location_join = empty($location) ? "" : "JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno AND dm.debtorno LIKE '%$location%'";
+    run_sql("UPDATE stock_summary ss
+              JOIN (
+                  SELECT stkcode as stockid,
+                         SUM(quantity) as csitemQty,
+                         SUM(CASE WHEN i.gst LIKE '%inclusive%' THEN  
+                             (unitprice * (1 - discountpercent) * quantity)
+                             ELSE (unitprice * (1 - discountpercent) * quantity)*1.17 END) as cstotalamount
+                  FROM invoicedetails id
+                  JOIN invoice i ON i.invoiceno = id.invoiceno
+                  JOIN salescase sc ON sc.salescaseref = i.salescaseref
+                  $cs_location_join
+                  WHERE i.inprogress = 0
+                  AND i.returned = 0
+                  AND i.ordertype = '11'
+                  AND i.invoicesdate BETWEEN '$from' AND '$to'
+                  GROUP BY stkcode
+              ) cs ON ss.stockid = cs.stockid
+              SET ss.csitemQty = cs.csitemQty,
+                  ss.cstotalamount = cs.cstotalamount", $db);
 
     // Get shop sale data
     $shop_location_condition = empty($location) ? "" : "AND dm.debtorno LIKE '%$location%'";
@@ -262,6 +287,8 @@ include_once("includes/sidebar.php");
                     <th>Inv. Quantity</th>
                     <th>Inv. Value</th>
                     <th>Inv. Factor</th>
+                    <th>Counter Sale Qty</th>
+                    <th>Counter Sale Value</th>
                     <th>Shop Sale Quantity</th>
                     <th>Shop Sale Value</th>
                     <th>Shop Sale Factor</th>
@@ -282,6 +309,8 @@ include_once("includes/sidebar.php");
                     <th>Inv. Quantity</th>
                     <th>Inv. Value</th>
                     <th>Inv. Factor</th>
+                    <th>Counter Sale Qty</th>
+                    <th>Counter Sale Value</th>
                     <th>Shop Sale Quantity</th>
                     <th>Shop Sale Value</th>
                     <th>Shop Sale Factor</th>
@@ -337,6 +366,8 @@ $(document).ready(function() {
             { data: "invoiceitemQty", render: $.fn.dataTable.render.number(',', '.', 0) },
             { data: "invoiceexclusivegsttotalamount", render: $.fn.dataTable.render.number(',', '.', 2) },
             { data: "averageInvoiceFactor", render: $.fn.dataTable.render.number(',', '.', 2) },
+            { data: "csitemQty", render: $.fn.dataTable.render.number(',', '.', 0) },
+            { data: "cstotalamount", render: $.fn.dataTable.render.number(',', '.', 2) },
             { data: "itemQtyShopsale", render: $.fn.dataTable.render.number(',', '.', 0) },
             { data: "shopsaletotalamount", render: $.fn.dataTable.render.number(',', '.', 2) },
             { data: "averageShopSaleFactor", render: $.fn.dataTable.render.number(',', '.', 2) },
