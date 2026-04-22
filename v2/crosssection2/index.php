@@ -53,6 +53,56 @@ if (isset($_POST['to'])) {
         return $r;
     }
 
+    // Same weighted pricing approach as itemsReport/index.php
+    function calculatePriceForStock($parchinos, $requested_qty)
+    {
+        if ($requested_qty <= 0 || empty($parchinos)) {
+            return [
+                'total_bpitems_price' => 0,
+                'weighted_unit_price' => 0,
+                'total_quantity' => 0
+            ];
+        }
+
+        $remaining_qty = $requested_qty;
+        $total_allocated_qty = 0;
+        $total_weighted_price = 0;
+
+        foreach ($parchinos as $parchino) {
+            if ($remaining_qty <= 0) break;
+
+            $available_qty = (float)$parchino['quantity'];
+
+            // Use adjust_unit_price if available and > 0, otherwise use original price
+            $unit_price = (float)($parchino['adjust_unit_price'] ?? 0);
+            if ($unit_price <= 0) {
+                $unit_price = (float)$parchino['price'];
+            }
+
+            // Apply landing factor
+            $landing_factor = (float)($parchino['landing_factor'] ?? 1);
+            $effective_price = $unit_price * $landing_factor;
+
+            $allocated_qty = min($available_qty, $remaining_qty);
+            if ($allocated_qty > 0) {
+                $allocated_price = $allocated_qty * $effective_price;
+                $total_weighted_price += $allocated_price;
+                $total_allocated_qty += $allocated_qty;
+                $remaining_qty -= $allocated_qty;
+            }
+        }
+
+        $weighted_unit_price = $total_allocated_qty > 0
+            ? $total_weighted_price / $total_allocated_qty
+            : 0;
+
+        return [
+            'total_bpitems_price' => round($total_weighted_price, 2),
+            'weighted_unit_price' => round($weighted_unit_price, 2),
+            'total_quantity' => round($total_allocated_qty, 2)
+        ];
+    }
+
     // ═══════════════════════════════════════════════════════════
     // STEP 1: Create temp table with all stock items in one shot
     // ═══════════════════════════════════════════════════════════
@@ -174,33 +224,15 @@ if (isset($_POST['to'])) {
         $closeQty = (float)$item['qohB'];
         $sid      = $item['stockid'];
 
-        // Weighted unit price from igp_parchi
-        $qtyForPrice = max($openQty, $closeQty);
-        $unitPrice = 0;
-        if ($qtyForPrice > 0 && !empty($parchinoData[$sid])) {
-            $remaining = $qtyForPrice;
-            $totalWeighted = 0;
-            $totalAllocated = 0;
-            foreach ($parchinoData[$sid] as $p) {
-                if ($remaining <= 0) break;
-                $avail = $p['quantity'];
-                $up = $p['adjust_unit_price'] > 0 ? $p['adjust_unit_price'] : $p['price'];
-                $ep = $up * ($p['landing_factor'] ?: 1);
-                $alloc = min($avail, $remaining);
-                if ($alloc > 0) {
-                    $totalWeighted += $alloc * $ep;
-                    $totalAllocated += $alloc;
-                    $remaining -= $alloc;
-                }
-            }
-            if ($totalAllocated > 0) {
-                $unitPrice = round($totalWeighted / $totalAllocated, 2);
-            }
-        }
+        $openPriceData = calculatePriceForStock($parchinoData[$sid] ?? [], $openQty);
+        $closePriceData = calculatePriceForStock($parchinoData[$sid] ?? [], $closeQty);
 
-        $item['unitPriceCost']   = $unitPrice;
-        $item['totalAmountFrom'] = round($openQty * $unitPrice, 2);
-        $item['totalAmountTo']   = round($closeQty * $unitPrice, 2);
+        // Keep a single display unit price column; prefer close-date weighted unit for consistency with "to" snapshot.
+        $item['unitPriceCost'] = $closeQty > 0
+            ? $closePriceData['weighted_unit_price']
+            : $openPriceData['weighted_unit_price'];
+        $item['totalAmountFrom'] = $openPriceData['total_bpitems_price'];
+        $item['totalAmountTo']   = $closePriceData['total_bpitems_price'];
 
         $response[] = $item;
         unset($parchinoData[$sid]);
@@ -314,23 +346,44 @@ include_once("includes/sidebar.php");
 
 <script>
 $(document).ready(function() {
+    function toNumber(value) {
+        var n = parseFloat(value);
+        return isNaN(n) ? 0 : n;
+    }
+    function round2(value) {
+        return Math.round((toNumber(value) + Number.EPSILON) * 100) / 100;
+    }
     function formatAmount2(n) {
-        var x = Math.round((parseFloat(n) + Number.EPSILON) * 100) / 100;
+        var x = round2(n);
         var parts = x.toFixed(2).split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
 
-    function updateStockValueCards(response, fromDate, toDate) {
-        var totalFrom = 0, totalTo = 0;
-        for (var i = 0; i < response.length; i++) {
-            var row = response[i] || {};
-            var unit = parseFloat(row.unitPriceCost) || 0;
-            var qFrom = parseFloat(row.qohA) || 0;
-            var qTo = parseFloat(row.qohB) || 0;
-            totalFrom += qFrom * unit;
-            totalTo += qTo * unit;
+    // Authoritative row totals for UI/card/export consistency.
+    function getRowTotals(row) {
+        var r = row || {};
+        var from = parseFloat(r.totalAmountFrom);
+        var to = parseFloat(r.totalAmountTo);
+        if (!isNaN(from) && !isNaN(to)) {
+            return { from: round2(from), to: round2(to) };
         }
+        var unit = toNumber(r.unitPriceCost);
+        return {
+            from: round2(toNumber(r.qohA) * unit),
+            to: round2(toNumber(r.qohB) * unit)
+        };
+    }
+
+    function updateStockValueCards(response, fromDate, toDate) {
+        var totalFromCents = 0, totalToCents = 0;
+        for (var i = 0; i < response.length; i++) {
+            var totals = getRowTotals(response[i]);
+            totalFromCents += Math.round(totals.from * 100);
+            totalToCents += Math.round(totals.to * 100);
+        }
+        var totalFrom = totalFromCents / 100;
+        var totalTo = totalToCents / 100;
         $('#cardTotalStartLabel').text('Total stock value on ' + fromDate + ' (start)');
         $('#cardTotalEndLabel').text('Total stock value on ' + toDate + ' (end)');
         $('#cardTotalStartValue').text(formatAmount2(totalFrom));
@@ -362,17 +415,18 @@ $(document).ready(function() {
 
                     for (let i = 0; i < data.length; i++) {
                         let r = data[i];
+                        let totals = getRowTotals(r);
                         let row = [
                             '"' + (r.stockid || '') + '"',
                             '"' + (r.mnfCode || '') + '"',
                             '"' + (r.mnfpno || '') + '"',
                             '"' + (r.description || '').replace(/"/g, '""') + '"',
                             '"' + (r.manufacturers_name || '') + '"',
-                            parseFloat(r.qohA || 0),
-                            parseFloat(r.unitPriceCost || 0).toFixed(2),
-                            parseFloat(r.qohB || 0),
-                            parseFloat(r.totalAmountFrom || 0).toFixed(2),
-                            parseFloat(r.totalAmountTo || 0).toFixed(2)
+                            toNumber(r.qohA).toFixed(2),
+                            toNumber(r.unitPriceCost).toFixed(2),
+                            toNumber(r.qohB).toFixed(2),
+                            totals.from.toFixed(2),
+                            totals.to.toFixed(2)
                         ];
                         csv += row.join(',') + '\n';
                     }
