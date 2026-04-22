@@ -324,8 +324,12 @@ $(document).ready(function() {
     function updateStockValueCards(response, fromDate, toDate) {
         var totalFrom = 0, totalTo = 0;
         for (var i = 0; i < response.length; i++) {
-            totalFrom += parseFloat(response[i].totalAmountFrom) || 0;
-            totalTo += parseFloat(response[i].totalAmountTo) || 0;
+            var row = response[i] || {};
+            var unit = parseFloat(row.unitPriceCost) || 0;
+            var qFrom = parseFloat(row.qohA) || 0;
+            var qTo = parseFloat(row.qohB) || 0;
+            totalFrom += qFrom * unit;
+            totalTo += qTo * unit;
         }
         $('#cardTotalStartLabel').text('Total stock value on ' + fromDate + ' (start)');
         $('#cardTotalEndLabel').text('Total stock value on ' + toDate + ' (end)');
