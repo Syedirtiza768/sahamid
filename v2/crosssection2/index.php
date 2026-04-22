@@ -70,7 +70,6 @@ if (isset($_POST['to'])) {
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves
               WHERE trandate <= '$from'
-                AND trandate >= '2021-01-01'
               GROUP BY stockid, loccode", $db);
 
     run_sql("UPDATE tmp_report r
@@ -101,7 +100,6 @@ if (isset($_POST['to'])) {
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves
               WHERE trandate <= '$to'
-                AND trandate >= '2021-01-01'
               GROUP BY stockid, loccode", $db);
 
     run_sql("UPDATE tmp_report r
