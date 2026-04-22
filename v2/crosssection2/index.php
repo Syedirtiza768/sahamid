@@ -19,6 +19,10 @@ if (isset($_POST['to'])) {
     ob_clean();
     header('Content-Type: application/json');
 
+    // Connection defaults to utf8; DB default for TEMPORARY tables is often latin1 — then UTF-8 in
+    // stockmaster.description cannot be stored. Use utf8mb4 for this request and for temp tables.
+    mysqli_set_charset($db, 'utf8mb4');
+
     $from = mysqli_real_escape_string($db, $_POST['from']);
     $to = mysqli_real_escape_string($db, $_POST['to']);
 
@@ -44,7 +48,7 @@ if (isset($_POST['to'])) {
         manufacturers_name VARCHAR(100),
         qohA DECIMAL(20,4) DEFAULT 0,
         qohB DECIMAL(20,4) DEFAULT 0
-    )", $db);
+    ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
     run_sql("INSERT INTO tmp_report (stockid, mnfCode, mnfpno, description, manufacturers_name)
               SELECT sm.stockid, sm.mnfCode, sm.mnfpno, sm.description, m.manufacturers_name
@@ -60,7 +64,7 @@ if (isset($_POST['to'])) {
         loccode VARCHAR(10) NOT NULL,
         stkmoveno INT NOT NULL,
         PRIMARY KEY (stockid, loccode)
-    )", $db);
+    ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
     run_sql("INSERT INTO tmp_open_moves
               SELECT stockid, loccode, MAX(stkmoveno)
@@ -92,7 +96,7 @@ if (isset($_POST['to'])) {
         loccode VARCHAR(10) NOT NULL,
         stkmoveno INT NOT NULL,
         PRIMARY KEY (stockid, loccode)
-    )", $db);
+    ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
     run_sql("INSERT INTO tmp_close_moves
               SELECT stockid, loccode, MAX(stkmoveno)
@@ -231,6 +235,26 @@ include_once("includes/sidebar.php");
     <div id="loadingMessage">Loading data... This may take a few minutes for large date ranges.</div>
 
     <section class="content">
+        <div class="row" id="stockValueSummaryRow" style="margin-bottom: 10px;">
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-aqua"><i class="ion ion-cash"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" id="cardTotalStartLabel">Total stock value (start date)</span>
+                        <span class="info-box-number" id="cardTotalStartValue">—</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="info-box">
+                    <span class="info-box-icon bg-green"><i class="ion ion-cash"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text" id="cardTotalEndLabel">Total stock value (end date)</span>
+                        <span class="info-box-number" id="cardTotalEndValue">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <table class="table table-striped table-responsive" border="1" id="datatable">
             <thead>
                 <tr>
@@ -268,6 +292,25 @@ include_once("includes/sidebar.php");
 
 <script>
 $(document).ready(function() {
+    function formatAmount2(n) {
+        var x = Math.round((parseFloat(n) + Number.EPSILON) * 100) / 100;
+        var parts = x.toFixed(2).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+    }
+
+    function updateStockValueCards(response, fromDate, toDate) {
+        var totalFrom = 0, totalTo = 0;
+        for (var i = 0; i < response.length; i++) {
+            totalFrom += parseFloat(response[i].totalAmountFrom) || 0;
+            totalTo += parseFloat(response[i].totalAmountTo) || 0;
+        }
+        $('#cardTotalStartLabel').text('Total stock value on ' + fromDate + ' (start)');
+        $('#cardTotalEndLabel').text('Total stock value on ' + toDate + ' (end)');
+        $('#cardTotalStartValue').text(formatAmount2(totalFrom));
+        $('#cardTotalEndValue').text(formatAmount2(totalTo));
+    }
+
     let table = $('#datatable').DataTable({
         dom: 'Bflrtip',
         lengthMenu: [10, 25, 50, 75, 100],
@@ -364,6 +407,7 @@ $(document).ready(function() {
         $('#thTotalTo').text('Total Amount @' + to);
 
         $("#loadingMessage").show();
+        $('#cardTotalStartValue, #cardTotalEndValue').text('…');
         table.clear().draw();
 
         $.ajax({
@@ -373,7 +417,15 @@ $(document).ready(function() {
             dataType: "json",
             timeout: 300000,
             success: function(response) {
-                table.rows.add(response).draw();
+                if (Array.isArray(response)) {
+                    table.rows.add(response).draw();
+                    updateStockValueCards(response, from, to);
+                } else if (response && response.error) {
+                    alert("Server error: " + (response.error || "unknown"));
+                    $('#cardTotalStartValue, #cardTotalEndValue').text('—');
+                } else {
+                    $('#cardTotalStartValue, #cardTotalEndValue').text('—');
+                }
                 $("#loadingMessage").hide();
             },
             error: function(xhr, status, error) {
@@ -382,6 +434,7 @@ $(document).ready(function() {
                 } else {
                     alert("Error loading data: " + error + "\n" + (xhr.responseText || '').substring(0, 200));
                 }
+                $('#cardTotalStartValue, #cardTotalEndValue').text('—');
                 $("#loadingMessage").hide();
             }
         });
