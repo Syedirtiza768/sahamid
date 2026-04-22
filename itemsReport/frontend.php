@@ -350,6 +350,22 @@ if (!isset($_SESSION['UsersRealName'])) {
     .stat-card--violet .stat-card-icon  { background: #f5f3ff; color: #7c3aed; }
     .stat-card--violet .stat-card-value { color: #7c3aed; }
 
+    .stat-card-metric-label {
+        font-size: var(--text-xs);
+        font-weight: 600;
+        color: var(--color-gray-400);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-top: var(--space-1);
+    }
+    .stat-card-pricing-breakdown {
+        font-size: var(--text-sm);
+        color: var(--color-gray-600);
+        margin-top: var(--space-3);
+        line-height: 1.55;
+    }
+    .stat-card-pricing-breakdown > div { font-variant-numeric: tabular-nums; }
+
     /* 3-column grid variant */
     .stats-grid--3 {
         grid-template-columns: repeat(3, 1fr);
@@ -1178,36 +1194,46 @@ if (!isset($_SESSION['UsersRealName'])) {
     <div class="stats-section-label" style="margin-top:var(--space-5)">Pricing Coverage</div>
     <div class="stats-grid stats-grid--3">
 
-        <!-- No Price -->
+        <!-- No Price Attached -->
         <div class="stat-card stat-card--indigo">
             <div class="stat-card-header">
-                <span class="stat-card-label">No Price Set</span>
+                <span class="stat-card-label">No Price Attached</span>
                 <span class="stat-card-icon"><i class="fas fa-circle-exclamation"></i></span>
             </div>
-            <div class="stat-card-value" id="priceZeroCount">&mdash;</div>
-            <div class="stat-card-sum">
-                <span id="priceZeroInStock">0</span> in stock &middot; <span id="priceZeroQty">0</span> units on shelf
+            <div class="stat-card-value" id="priceZeroTotal">&mdash;</div>
+            <div class="stat-card-metric-label">Total SKUs</div>
+            <div class="stat-card-pricing-breakdown">
+                <div>On stock: <span id="priceZeroOnStock">0</span> · Rs. <span id="priceZeroOnStockValue">0.00</span></div>
+                <div>Not on stock: <span id="priceZeroNotOnStock">0</span></div>
             </div>
         </div>
 
-        <!-- Manually Adjusted Price -->
+        <!-- Manually Adjusted -->
         <div class="stat-card stat-card--teal">
             <div class="stat-card-header">
-                <span class="stat-card-label">Manually Adjusted Price</span>
+                <span class="stat-card-label">Manually Adjusted</span>
                 <span class="stat-card-icon"><i class="fas fa-sliders"></i></span>
             </div>
-            <div class="stat-card-value" id="priceAdjCount">&mdash;</div>
-            <div class="stat-card-sum">Rs. <span id="priceAdjSum">0.00</span> inventory value</div>
+            <div class="stat-card-value" id="priceAdjTotal">&mdash;</div>
+            <div class="stat-card-metric-label">Total SKUs</div>
+            <div class="stat-card-pricing-breakdown">
+                <div>On stock: <span id="priceAdjOnStock">0</span> · Rs. <span id="priceAdjOnStockValue">0.00</span></div>
+                <div>Not on stock: <span id="priceAdjNotOnStock">0</span></div>
+            </div>
         </div>
 
-        <!-- Original Parchino Price -->
+        <!-- Original Prices as per MPIW -->
         <div class="stat-card stat-card--violet">
             <div class="stat-card-header">
-                <span class="stat-card-label">Original Parchino Price</span>
+                <span class="stat-card-label">Original Prices as per MPIW</span>
                 <span class="stat-card-icon"><i class="fas fa-receipt"></i></span>
             </div>
-            <div class="stat-card-value" id="priceOrigCount">&mdash;</div>
-            <div class="stat-card-sum">Rs. <span id="priceOrigSum">0.00</span> inventory value</div>
+            <div class="stat-card-value" id="priceOrigTotal">&mdash;</div>
+            <div class="stat-card-metric-label">Total SKUs</div>
+            <div class="stat-card-pricing-breakdown">
+                <div>On stock: <span id="priceOrigOnStock">0</span> · Rs. <span id="priceOrigOnStockValue">0.00</span></div>
+                <div>Not on stock: <span id="priceOrigNotOnStock">0</span></div>
+            </div>
         </div>
 
     </div>
@@ -1646,9 +1672,9 @@ $(document).ready(function() {
     function _computeStats(data) {
         var running = 0, slow = 0, dead = 0, extremelyDead = 0;
         var runningSum = 0, slowSum = 0, deadSum = 0, extremelyDeadSum = 0;
-        var priceZero = 0, priceZeroInStock = 0, priceZeroQty = 0;
-        var priceAdj = 0, priceAdjSum = 0;
-        var priceOrig = 0, priceOrigSum = 0;
+        var priceZero = 0, priceZeroOnStock = 0, priceZeroNotOnStock = 0, priceZeroOnStockValue = 0;
+        var priceAdj = 0, priceAdjOnStock = 0, priceAdjNotOnStock = 0, priceAdjOnStockValue = 0;
+        var priceOrig = 0, priceOrigOnStock = 0, priceOrigNotOnStock = 0, priceOrigOnStockValue = 0;
         var today = Date.now();
 
         for (var i = 0, len = data.length; i < len; i++) {
@@ -1684,11 +1710,16 @@ $(document).ready(function() {
 
             if (!hasAnyPrice) {
                 priceZero++;
-                if (totalQty > 0) { priceZeroInStock++; priceZeroQty += totalQty; }
+                if (totalQty > 0) { priceZeroOnStock++; priceZeroOnStockValue += itemValue; }
+                else { priceZeroNotOnStock++; }
             } else if (pHasManual) {
-                if (totalQty > 0) { priceAdj++; priceAdjSum += itemValue; }
+                priceAdj++;
+                if (totalQty > 0) { priceAdjOnStock++; priceAdjOnStockValue += itemValue; }
+                else { priceAdjNotOnStock++; }
             } else {
-                if (totalQty > 0) { priceOrig++; priceOrigSum += itemValue; }
+                priceOrig++;
+                if (totalQty > 0) { priceOrigOnStock++; priceOrigOnStockValue += itemValue; }
+                else { priceOrigNotOnStock++; }
             }
         }
 
@@ -1700,13 +1731,18 @@ $(document).ready(function() {
         $('#slowSum').text(numberFormat(slowSum));
         $('#deadSum').text(numberFormat(deadSum));
         $('#extremelyDeadSum').text(numberFormat(extremelyDeadSum));
-        $('#priceZeroCount').text(priceZero);
-        $('#priceZeroInStock').text(priceZeroInStock);
-        $('#priceZeroQty').text(priceZeroQty.toLocaleString());
-        $('#priceAdjCount').text(priceAdj);
-        $('#priceAdjSum').text(numberFormat(priceAdjSum));
-        $('#priceOrigCount').text(priceOrig);
-        $('#priceOrigSum').text(numberFormat(priceOrigSum));
+        $('#priceZeroTotal').text(priceZero);
+        $('#priceZeroOnStock').text(priceZeroOnStock);
+        $('#priceZeroOnStockValue').text(numberFormat(priceZeroOnStockValue));
+        $('#priceZeroNotOnStock').text(priceZeroNotOnStock);
+        $('#priceAdjTotal').text(priceAdj);
+        $('#priceAdjOnStock').text(priceAdjOnStock);
+        $('#priceAdjOnStockValue').text(numberFormat(priceAdjOnStockValue));
+        $('#priceAdjNotOnStock').text(priceAdjNotOnStock);
+        $('#priceOrigTotal').text(priceOrig);
+        $('#priceOrigOnStock').text(priceOrigOnStock);
+        $('#priceOrigOnStockValue').text(numberFormat(priceOrigOnStockValue));
+        $('#priceOrigNotOnStock').text(priceOrigNotOnStock);
     }
 
     // ── CSV Export ──────────────────────────────────
