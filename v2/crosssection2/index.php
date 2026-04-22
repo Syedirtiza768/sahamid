@@ -84,8 +84,13 @@ if (isset($_POST['to'])) {
 
     run_sql("INSERT INTO tmp_open_moves
               SELECT stockid, loccode, MAX(stkmoveno)
-              FROM stockmoves
+              FROM stockmoves sm
+              LEFT JOIN systypes st ON sm.type = st.typeid
               WHERE trandate <= '$from'
+                AND NOT (
+                    LOWER(COALESCE(st.typename, '')) = 'dc'
+                    OR LOWER(COALESCE(st.typename, '')) LIKE '%shop sale%'
+                )
               GROUP BY stockid, loccode", $db);
 
     run_sql("UPDATE tmp_report r
@@ -114,8 +119,13 @@ if (isset($_POST['to'])) {
 
     run_sql("INSERT INTO tmp_close_moves
               SELECT stockid, loccode, MAX(stkmoveno)
-              FROM stockmoves
+              FROM stockmoves sm
+              LEFT JOIN systypes st ON sm.type = st.typeid
               WHERE trandate <= '$to'
+                AND NOT (
+                    LOWER(COALESCE(st.typename, '')) = 'dc'
+                    OR LOWER(COALESCE(st.typename, '')) LIKE '%shop sale%'
+                )
               GROUP BY stockid, loccode", $db);
 
     run_sql("UPDATE tmp_report r
