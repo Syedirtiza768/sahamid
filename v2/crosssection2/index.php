@@ -53,6 +53,56 @@ if (isset($_POST['to'])) {
         return $r;
     }
 
+    // Aligned with itemsReport/index.php pricing method
+    function calculatePriceForStock($parchinos, $requested_qty)
+    {
+        if ($requested_qty <= 0 || empty($parchinos)) {
+            return [
+                'total_bpitems_price' => 0,
+                'weighted_unit_price' => 0,
+                'total_quantity' => 0
+            ];
+        }
+
+        $remaining_qty = $requested_qty;
+        $total_allocated_qty = 0;
+        $total_weighted_price = 0;
+
+        foreach ($parchinos as $parchino) {
+            if ($remaining_qty <= 0) break;
+
+            $available_qty = (float)$parchino['quantity'];
+
+            // Use adjust_unit_price if available and > 0, otherwise use original price
+            $unit_price = (float)($parchino['adjust_unit_price'] ?? 0);
+            if ($unit_price <= 0) {
+                $unit_price = (float)$parchino['price'];
+            }
+
+            // Apply landing factor exactly like itemsReport
+            $landing_factor = (float)($parchino['landing_factor'] ?? 1);
+            $effective_price = $unit_price * $landing_factor;
+
+            $allocated_qty = min($available_qty, $remaining_qty);
+            if ($allocated_qty > 0) {
+                $allocated_price = $allocated_qty * $effective_price;
+                $total_weighted_price += $allocated_price;
+                $total_allocated_qty += $allocated_qty;
+                $remaining_qty -= $allocated_qty;
+            }
+        }
+
+        $weighted_unit_price = $total_allocated_qty > 0
+            ? $total_weighted_price / $total_allocated_qty
+            : 0;
+
+        return [
+            'total_bpitems_price' => round($total_weighted_price, 2),
+            'weighted_unit_price' => round($weighted_unit_price, 2),
+            'total_quantity' => round($total_allocated_qty, 2)
+        ];
+    }
+
     // ═══════════════════════════════════════════════════════════
     // STEP 1: Create temp table with all stock items in one shot
     // ═══════════════════════════════════════════════════════════
@@ -174,29 +224,10 @@ if (isset($_POST['to'])) {
         $closeQty = (float)$item['qohB'];
         $sid      = $item['stockid'];
 
-        // Weighted unit price from igp_parchi
+        // Weighted unit price from igp_parchi (same method as itemsReport)
         $qtyForPrice = max($openQty, $closeQty);
-        $unitPrice = 0;
-        if ($qtyForPrice > 0 && !empty($parchinoData[$sid])) {
-            $remaining = $qtyForPrice;
-            $totalWeighted = 0;
-            $totalAllocated = 0;
-            foreach ($parchinoData[$sid] as $p) {
-                if ($remaining <= 0) break;
-                $avail = $p['quantity'];
-                $up = $p['adjust_unit_price'] > 0 ? $p['adjust_unit_price'] : $p['price'];
-                $ep = $up * ($p['landing_factor'] ?: 1);
-                $alloc = min($avail, $remaining);
-                if ($alloc > 0) {
-                    $totalWeighted += $alloc * $ep;
-                    $totalAllocated += $alloc;
-                    $remaining -= $alloc;
-                }
-            }
-            if ($totalAllocated > 0) {
-                $unitPrice = round($totalWeighted / $totalAllocated, 2);
-            }
-        }
+        $priceData = calculatePriceForStock($parchinoData[$sid] ?? [], $qtyForPrice);
+        $unitPrice = (float)$priceData['weighted_unit_price'];
 
         $item['unitPriceCost']   = $unitPrice;
         $item['totalAmountFrom'] = round($openQty * $unitPrice, 2);
