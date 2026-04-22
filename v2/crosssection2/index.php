@@ -23,8 +23,24 @@ if (isset($_POST['to'])) {
     // stockmaster.description cannot be stored. Use utf8mb4 for this request and for temp tables.
     mysqli_set_charset($db, 'utf8mb4');
 
-    $from = mysqli_real_escape_string($db, $_POST['from']);
-    $to = mysqli_real_escape_string($db, $_POST['to']);
+    $fromInput = trim($_POST['from'] ?? '');
+    $toInput = trim($_POST['to'] ?? '');
+    $fromDate = DateTime::createFromFormat('Y-m-d', $fromInput);
+    $toDate = DateTime::createFromFormat('Y-m-d', $toInput);
+    $fromValid = $fromDate && $fromDate->format('Y-m-d') === $fromInput;
+    $toValid = $toDate && $toDate->format('Y-m-d') === $toInput;
+    if (!$fromValid || !$toValid) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid date format. Expected YYYY-MM-DD.']);
+        exit;
+    }
+    if ($fromDate > $toDate) {
+        http_response_code(400);
+        echo json_encode(['error' => 'From date must be on or before To date.']);
+        exit;
+    }
+    $from = mysqli_real_escape_string($db, $fromInput);
+    $to = mysqli_real_escape_string($db, $toInput);
 
     // Helper: run query without DB_query (which outputs HTML on error)
     function run_sql($sql, $conn) {
@@ -367,9 +383,9 @@ $(document).ready(function() {
             { data: "mnfpno" },
             { data: "description" },
             { data: "manufacturers_name" },
-            { data: "qohA", render: $.fn.dataTable.render.number(',', '.', 0) },
+            { data: "qohA", render: $.fn.dataTable.render.number(',', '.', 2) },
             { data: "unitPriceCost", render: $.fn.dataTable.render.number(',', '.', 2) },
-            { data: "qohB", render: $.fn.dataTable.render.number(',', '.', 0) },
+            { data: "qohB", render: $.fn.dataTable.render.number(',', '.', 2) },
             { data: "totalAmountFrom", render: $.fn.dataTable.render.number(',', '.', 2) },
             { data: "totalAmountTo", render: $.fn.dataTable.render.number(',', '.', 2) }
         ],

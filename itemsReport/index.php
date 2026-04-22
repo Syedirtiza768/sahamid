@@ -29,10 +29,8 @@ try {
     $processedCount = 0;
 
     // Same product scope as v2/crosssection2: bought + manufactured parts only
-    $countResult = mysqli_query($db, "SELECT COUNT(*) as total FROM stockmaster
-        INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id
-        INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid
-        INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+    $countResult = mysqli_query($db, "SELECT COUNT(*) as total
+        FROM stockmaster
         WHERE stockmaster.mbflag IN ('B','M')");
     $totalCount = mysqli_fetch_assoc($countResult)['total'];
 
@@ -41,13 +39,17 @@ try {
         error_log("Processing batch: $offset to " . ($offset + $batchSize));
 
         // Main product query for this batch
-        $SQL = "SELECT stockmaster.stockid, manufacturers_name, lastcost, materialcost,
-                lastcostupdate, lastupdatedby, mnfCode, mnfpno, abbreviation, categorydescription,
+        $SQL = "SELECT stockmaster.stockid,
+                COALESCE(manufacturers_name, '') AS manufacturers_name,
+                lastcost, materialcost,
+                lastcostupdate, lastupdatedby, mnfCode, mnfpno,
+                COALESCE(abbreviation, '') AS abbreviation,
+                COALESCE(categorydescription, '') AS categorydescription,
                 stockmaster.description
                 FROM stockmaster 
-                INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
-                INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
-                INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                LEFT JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
+                LEFT JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
+                LEFT JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
                 WHERE stockmaster.mbflag IN ('B','M')
                 ORDER BY stockmaster.stockid
                 LIMIT $offset, $batchSize";

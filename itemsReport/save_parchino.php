@@ -49,15 +49,16 @@ try {
             // First, get all stock IDs that have existing parchino records
             $allStockIds = array_unique(array_merge(array_keys($prices), array_keys($factors)));
             
-            foreach ($allStockIds as $stockId) {
-                $stockId = mysqli_real_escape_string($db, $stockId);
+            foreach ($allStockIds as $stockIdRaw) {
+                $stockId = mysqli_real_escape_string($db, $stockIdRaw);
                 
                 // Check if there's an existing parchino record for this stock ID
                 $checkSql = "SELECT id FROM igp_parchi WHERE stockid = '$stockId' ORDER BY pdate DESC LIMIT 1";
                 $checkResult = mysqli_query($db, $checkSql);
                 
-                $price = isset($prices[$stockId]) ? floatval($prices[$stockId]) : null;
-                $factor = isset($factors[$stockId]) ? floatval($factors[$stockId]) : null;
+                // Use raw key for payload lookup; escaped value is only for SQL.
+                $price = isset($prices[$stockIdRaw]) ? floatval($prices[$stockIdRaw]) : null;
+                $factor = isset($factors[$stockIdRaw]) ? floatval($factors[$stockIdRaw]) : null;
                 
                 if (mysqli_num_rows($checkResult) > 0) {
                     // Update the most recent parchino record
