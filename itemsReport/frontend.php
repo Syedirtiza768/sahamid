@@ -1535,12 +1535,53 @@ $(document).ready(function() {
     }
 
     function calculateTotalQty(row) {
-        return (parseInt(row.qtyHO) || 0) +
-            (parseInt(row.qtyMT) || 0) +
-            (parseInt(row.qtySR) || 0) +
-            (parseInt(row.qtyOS) || 0) +
-            (parseInt(row.qtyVSR) || 0) +
-            (parseInt(row.qtyWS) || 0);
+        if (row && row.total_qty !== undefined && row.total_qty !== null) {
+            return parseFloat(row.total_qty) || 0;
+        }
+        return (parseFloat(row.qtyHO) || 0) +
+            (parseFloat(row.qtyMT) || 0) +
+            (parseFloat(row.qtySR) || 0) +
+            (parseFloat(row.qtyOS) || 0) +
+            (parseFloat(row.qtyVSR) || 0) +
+            (parseFloat(row.qtyWS) || 0);
+    }
+
+    // Valuation from API row only (matches igp_parchi / index.php; comparable to crosssection2 DB pricing)
+    function getServerEffectiveUnitPrice(row) {
+        var up = parseFloat(row.weighted_unit_price) || 0;
+        var adj = parseFloat(row.adjust_unit_price) || 0;
+        return up > 0 ? up : adj;
+    }
+    function getServerLandingFactor(row) {
+        return parseFloat(row.landing_factor) || 1;
+    }
+    function getServerItemValue(row) {
+        return calculateTotalQty(row) * getServerEffectiveUnitPrice(row) * getServerLandingFactor(row);
+    }
+    // Pending input overrides (table columns only, not card totals)
+    function getDisplayEffectiveUnitPrice(row, sid) {
+        var up = parseFloat(row.weighted_unit_price) || 0;
+        var ap = customUnitPrices[sid] !== undefined
+            ? customUnitPrices[sid]
+            : (parseFloat(row.adjust_unit_price) || 0);
+        return up > 0 ? up : (parseFloat(ap) || 0);
+    }
+    function getDisplayLandingFactor(row, sid) {
+        return landingFactors[sid] !== undefined
+            ? landingFactors[sid]
+            : (parseFloat(row.landing_factor) || 1);
+    }
+
+    function syncItemFieldFromServer(stockId, field, value) {
+        var item = allDataMap[stockId];
+        if (!item) return;
+        if (field === 'adjust_unit_price') {
+            item.adjust_unit_price = parseFloat(value) || 0;
+            if (item.adjust_unit_price > 0) item.has_manual_price = true;
+        } else if (field === 'landing_factor') {
+            item.landing_factor = parseFloat(value) || 1;
+        }
+        updateStatusStatistics(allData);
     }
 
     function getStockStatus(dateString) {
@@ -1592,11 +1633,8 @@ $(document).ready(function() {
         if (!rowNode) return;
         var rowData = row.data();
         var totalQty = calculateTotalQty(rowData);
-
-        var unitPrice = parseFloat(rowData.weighted_unit_price) || 0;
-        var adjustPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
-        var effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-        var factor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+        var effectivePrice = getDisplayEffectiveUnitPrice(rowData, stockId);
+        var factor = getDisplayLandingFactor(rowData, stockId);
         var adjustedPrice = effectivePrice * factor;
         var qtyTimesAdjustedPrice = totalQty * adjustedPrice;
 
@@ -1613,8 +1651,8 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(r) {
                     if (r.status === 'success') {
-                        if (field === 'adjust_unit_price') originalPrices[stockId] = value;
-                        else if (field === 'landing_factor') originalFactors[stockId] = value;
+                        if (field === 'adjust_unit_price') { originalPrices[stockId] = value; syncItemFieldFromServer(stockId, field, value); }
+                        else if (field === 'landing_factor') { originalFactors[stockId] = value; syncItemFieldFromServer(stockId, field, value); }
                     }
                 },
                 error: function(x, s, e) { console.error('Auto-save error for ' + stockId + ':', e); }
@@ -1628,8 +1666,8 @@ $(document).ready(function() {
                     dataType: 'json',
                     success: function(r) {
                         if (r.status === 'success') {
-                            if (field === 'adjust_unit_price') { originalPrices[stockId] = value; showNotification('Saved price for ' + stockId, 'success'); }
-                            else if (field === 'landing_factor') { originalFactors[stockId] = value; showNotification('Saved factor for ' + stockId, 'success'); }
+                            if (field === 'adjust_unit_price') { originalPrices[stockId] = value; syncItemFieldFromServer(stockId, field, value); showNotification('Saved price for ' + stockId, 'success'); }
+                            else if (field === 'landing_factor') { originalFactors[stockId] = value; syncItemFieldFromServer(stockId, field, value); showNotification('Saved factor for ' + stockId, 'success'); }
                         } else {
                             showNotification('Failed to save: ' + r.message, 'error');
                         }
@@ -1682,15 +1720,9 @@ $(document).ready(function() {
             var sid = item.stockid;
             var totalQty = calculateTotalQty(item);
 
-            // Shared price computation
-            var unitPrice = parseFloat(item.weighted_unit_price) || 0;
-            var adjustPrice = customUnitPrices[sid] !== undefined
-                ? customUnitPrices[sid]
-                : (parseFloat(item.adjust_unit_price) || 0);
-            var effectivePrice = unitPrice > 0 ? unitPrice : (parseFloat(adjustPrice) || 0);
-            var factor = landingFactors[sid] !== undefined
-                ? landingFactors[sid]
-                : (parseFloat(item.landing_factor) || 1);
+            // Shared price computation — DB row only (same source as index.php / crosssection2 igp_parchi)
+            var effectivePrice = getServerEffectiveUnitPrice(item);
+            var factor = getServerLandingFactor(item);
             var itemValue = totalQty * effectivePrice * factor;
 
             // Stock movement cards (in-stock only)
@@ -1703,9 +1735,8 @@ $(document).ready(function() {
                 else { extremelyDead++; extremelyDeadSum += itemValue; }
             }
 
-            // Pricing coverage cards
-            var pHasManual = item.has_manual_price
-                || (customUnitPrices[sid] !== undefined && parseFloat(customUnitPrices[sid]) > 0);
+            // Pricing coverage cards (has_manual_price from index.php / igp_parchi)
+            var pHasManual = !!item.has_manual_price;
             var hasAnyPrice = effectivePrice > 0;
 
             if (!hasAnyPrice) {
@@ -1764,13 +1795,11 @@ $(document).ready(function() {
                 rd.push(totalQty);
                 rd.push(parseFloat(row.total_bpitems_price || 0).toFixed(2));
                 rd.push(parseFloat(row.weighted_unit_price || 0).toFixed(2));
-                var ap = customUnitPrices[row.stockid] !== undefined ? customUnitPrices[row.stockid] : '';
-                rd.push(ap !== '' ? parseFloat(ap).toFixed(2) : '');
-                var fct = landingFactors[row.stockid] !== undefined ? landingFactors[row.stockid] : 1;
+                var apDb = parseFloat(row.adjust_unit_price) || 0;
+                rd.push(apDb > 0 ? apDb.toFixed(2) : '');
+                var fct = getServerLandingFactor(row);
                 rd.push(parseFloat(fct).toFixed(2));
-                var up = parseFloat(row.weighted_unit_price) || 0;
-                var ep = up > 0 ? up : (parseFloat(ap) || 0);
-                var adj = ep * fct;
+                var adj = getServerEffectiveUnitPrice(row) * fct;
                 rd.push(adj.toFixed(2));
                 rd.push((totalQty * adj).toFixed(2));
                 rd.push(parseFloat(row.materialcost || 0).toFixed(2));
@@ -1861,7 +1890,8 @@ $(document).ready(function() {
                 data: null, className: "col-center",
                 render: function(data, type, row) {
                     var sid = row.stockid;
-                    var cp = customUnitPrices[sid] !== undefined ? customUnitPrices[sid] : '';
+                    var fromDb = parseFloat(row.adjust_unit_price) || 0;
+                    var cp = customUnitPrices[sid] !== undefined ? customUnitPrices[sid] : (fromDb > 0 ? fromDb : '');
                     var op = parseFloat(row.weighted_unit_price) || 0;
                     if (type === 'display') {
                         return '<input type="number" class="inline-input unit-price-input' +
@@ -1876,7 +1906,9 @@ $(document).ready(function() {
                 data: null, className: "col-center",
                 render: function(data, type, row) {
                     var sid = row.stockid;
-                    var f = landingFactors[sid] !== undefined ? landingFactors[sid] : 1;
+                    var f = landingFactors[sid] !== undefined
+                        ? landingFactors[sid]
+                        : (parseFloat(row.landing_factor) || 1);
                     if (type === 'display') {
                         return '<input type="number" class="inline-input landing-factor-input' +
                             (f !== 1 ? ' edited' : '') +
@@ -1889,11 +1921,7 @@ $(document).ready(function() {
                 data: null, className: "col-numeric text-tabular",
                 render: function(data, type, row) {
                     var sid = row.stockid;
-                    var up = parseFloat(row.weighted_unit_price) || 0;
-                    var ap = customUnitPrices[sid] !== undefined ? customUnitPrices[sid] : 0;
-                    var ep = up > 0 ? up : (parseFloat(ap) || 0);
-                    var f = landingFactors[sid] !== undefined ? landingFactors[sid] : 1;
-                    var val = ep * f;
+                    var val = getDisplayEffectiveUnitPrice(row, sid) * getDisplayLandingFactor(row, sid);
                     return type === 'display' ? numberFormat(val) : (val || 0);
                 }
             },
@@ -1902,11 +1930,7 @@ $(document).ready(function() {
                 render: function(data, type, row) {
                     var sid = row.stockid;
                     var tq = calculateTotalQty(row);
-                    var up = parseFloat(row.weighted_unit_price) || 0;
-                    var ap = customUnitPrices[sid] !== undefined ? customUnitPrices[sid] : 0;
-                    var ep = up > 0 ? up : (parseFloat(ap) || 0);
-                    var f = landingFactors[sid] !== undefined ? landingFactors[sid] : 1;
-                    var val = tq * ep * f;
+                    var val = tq * getDisplayEffectiveUnitPrice(row, sid) * getDisplayLandingFactor(row, sid);
                     return type === 'display' ? '<strong>' + numberFormat(val) + '</strong>' : (val || 0);
                 }
             },
@@ -1941,7 +1965,6 @@ $(document).ready(function() {
 
         updateRowCalculations(stockId);
         updateCustomizationsCount();
-        updateStatusStatistics(allData);
     });
 
     $('#datatable tbody').on('blur', '.unit-price-input', function() {
@@ -1966,7 +1989,6 @@ $(document).ready(function() {
         $input.toggleClass('edited', nf !== 1);
         updateRowCalculations(stockId);
         updateCustomizationsCount();
-        updateStatusStatistics(allData);
     });
 
     $('#datatable tbody').on('blur', '.landing-factor-input', function() {
@@ -2041,6 +2063,10 @@ $(document).ready(function() {
                 isCalculatingPrices = false;
                 if (response.status === 'success' && response.data) {
                     allData = response.data;
+                    customUnitPrices = {};
+                    landingFactors = {};
+                    originalPrices = {};
+                    originalFactors = {};
                     // Build lookup map for fast stock ID searches
                     allDataMap = {};
                     for (var mi = 0; mi < allData.length; mi++) {
@@ -2194,9 +2220,9 @@ $(document).ready(function() {
                 } else {
                     var stockItem = allDataMap[stockId] || null;
                     if (stockItem) {
-                        currentPrice = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : (parseFloat(stockItem.weighted_unit_price) || 0);
+                        currentPrice = parseFloat(stockItem.adjust_unit_price) || 0;
                         if (newPrice !== '' && parseFloat(newPrice) !== parseFloat(currentPrice)) { changes.push('Price'); changedCount++; }
-                        currentFactor = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+                        currentFactor = parseFloat(stockItem.landing_factor) || 1;
                         if (newFactor !== '' && parseFloat(newFactor) !== parseFloat(currentFactor)) { changes.push('Factor'); factorChangedCount++; }
                         if (changes.length > 0) { rowStatus = 'Will update: ' + changes.join(' + '); statusStyle = 'color:var(--color-success);font-weight:600'; changeIcon = '\u2713'; }
                         else { rowStatus = 'No changes'; statusStyle = 'color:var(--color-gray-400)'; changeIcon = '\u2014'; }
@@ -2299,14 +2325,16 @@ $(document).ready(function() {
             }
 
             if (newPrice !== null) {
-                var cp = customUnitPrices[stockId] !== undefined ? customUnitPrices[stockId] : 0;
+                var item = allDataMap[stockId];
+                var cp = item ? (parseFloat(item.adjust_unit_price) || 0) : 0;
                 if (parseFloat(newPrice) !== parseFloat(cp)) {
                     batchPrices[stockId] = newPrice;
                     customUnitPrices[stockId] = newPrice;
                 }
             }
             if (newFactor !== null) {
-                var cf = landingFactors[stockId] !== undefined ? landingFactors[stockId] : 1;
+                var itemF = allDataMap[stockId];
+                var cf = itemF ? (parseFloat(itemF.landing_factor) || 1) : 1;
                 if (parseFloat(newFactor) !== parseFloat(cf)) {
                     batchFactors[stockId] = newFactor;
                     landingFactors[stockId] = newFactor;
@@ -2358,8 +2386,7 @@ $(document).ready(function() {
                     }
                 } else { $('#errorDetails').hide(); }
                 $('#importResultsModal').modal('show');
-                applyFilters();
-                updateStatusStatistics(allData);
+                loadData();
             },
             error: function(xhr, status, error) {
                 if (importTimerInterval) { clearInterval(importTimerInterval); importTimerInterval = null; }

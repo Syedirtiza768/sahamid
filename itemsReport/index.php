@@ -16,6 +16,7 @@ if (!isset($_SESSION['UsersRealName'])) {
 }
 
 try {
+    // Inventory list: same B/M scope and igp_parchi-based unit costs as v2/crosssection2 (valuation alignment).
     // Create database connection
     $db = getDBConnection();
     if (!$db) {
@@ -27,8 +28,12 @@ try {
     $allData = [];
     $processedCount = 0;
 
-    // Get total count first
-    $countResult = mysqli_query($db, "SELECT COUNT(*) as total FROM stockmaster");
+    // Same product scope as v2/crosssection2: bought + manufactured parts only
+    $countResult = mysqli_query($db, "SELECT COUNT(*) as total FROM stockmaster
+        INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id
+        INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid
+        INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+        WHERE stockmaster.mbflag IN ('B','M')");
     $totalCount = mysqli_fetch_assoc($countResult)['total'];
 
     // ✅ Process in batches
@@ -43,6 +48,7 @@ try {
                 INNER JOIN manufacturers ON stockmaster.brand = manufacturers.manufacturers_id 
                 INNER JOIN stockcategory ON stockmaster.categoryid = stockcategory.categoryid 
                 INNER JOIN itemcondition ON stockmaster.conditionID = itemcondition.conditionID
+                WHERE stockmaster.mbflag IN ('B','M')
                 ORDER BY stockmaster.stockid
                 LIMIT $offset, $batchSize";
 
@@ -67,6 +73,7 @@ try {
 
         // ✅ Get quantities for this batch
         $quantities = [];
+        $totalQuantities = [];
         $stockIdsStr = "'" . implode("','", array_map(function ($id) use ($db) {
             return mysqli_real_escape_string($db, $id);
         }, $batchStockIds)) . "'";
@@ -79,7 +86,13 @@ try {
         $res_qty = mysqli_query($db, $SQL_qty);
         if ($res_qty) {
             while ($row_qty = mysqli_fetch_assoc($res_qty)) {
-                $quantities[$row_qty['stockid']][$row_qty['loccode']] = $row_qty['quantity'];
+                $stockIdQty = $row_qty['stockid'];
+                $qty = (float)$row_qty['quantity'];
+                $quantities[$stockIdQty][$row_qty['loccode']] = $qty;
+                if (!isset($totalQuantities[$stockIdQty])) {
+                    $totalQuantities[$stockIdQty] = 0;
+                }
+                $totalQuantities[$stockIdQty] += $qty;
             }
             mysqli_free_result($res_qty);
         }
@@ -129,13 +142,11 @@ try {
 
             $item = $batchRows[$stockid];
 
-            // Add quantities
-            $totalQty = 0;
+            // Keep legacy per-location columns for UI, but value/stat calculations use all location codes.
             foreach ($locations as $location) {
-                $qty = $quantities[$stockid][$location] ?? 0;
-                $item['qty' . $location] = $qty;
-                $totalQty += $qty;
+                $item['qty' . $location] = $quantities[$stockid][$location] ?? 0;
             }
+            $totalQty = $totalQuantities[$stockid] ?? 0;
             $item['total_qty'] = $totalQty;
 
             // Calculate price using parchino data with adjust_unit_price and landing_factor
@@ -172,12 +183,12 @@ try {
             $processedCount++;
 
             // Free memory for processed item
-            unset($batchRows[$stockid], $quantities[$stockid], $parchinoData[$stockid]);
+            unset($batchRows[$stockid], $quantities[$stockid], $totalQuantities[$stockid], $parchinoData[$stockid]);
         }
 
         // Free batch memory
         mysqli_free_result($res);
-        unset($batchStockIds, $batchRows, $quantities, $parchinoData, $stockStatusData);
+        unset($batchStockIds, $batchRows, $quantities, $totalQuantities, $parchinoData, $stockStatusData);
 
         // Force garbage collection
         if ($offset % 5000 == 0) {

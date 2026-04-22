@@ -69,8 +69,7 @@ if (isset($_POST['to'])) {
     run_sql("INSERT INTO tmp_open_moves
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves
-              WHERE loccode IN ('HO','MT','SR','OS','VSR','WS')
-                AND trandate <= '$from'
+              WHERE trandate <= '$from'
                 AND trandate >= '2021-01-01'
               GROUP BY stockid, loccode", $db);
 
@@ -101,8 +100,7 @@ if (isset($_POST['to'])) {
     run_sql("INSERT INTO tmp_close_moves
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves
-              WHERE loccode IN ('HO','MT','SR','OS','VSR','WS')
-                AND trandate <= '$to'
+              WHERE trandate <= '$to'
                 AND trandate >= '2021-01-01'
               GROUP BY stockid, loccode", $db);
 
