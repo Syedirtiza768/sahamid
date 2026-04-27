@@ -81,6 +81,9 @@ if (isset($_POST['to'])) {
 
             // Apply landing factor exactly like itemsReport
             $landing_factor = (float)($parchino['landing_factor'] ?? 1);
+            if ($landing_factor <= 0) {
+                $landing_factor = 1;
+            }
             $effective_price = $unit_price * $landing_factor;
 
             $allocated_qty = min($available_qty, $remaining_qty);
@@ -229,9 +232,41 @@ if (isset($_POST['to'])) {
         $priceData = calculatePriceForStock($parchinoData[$sid] ?? [], $qtyForPrice);
         $unitPrice = (float)$priceData['weighted_unit_price'];
 
-        $item['unitPriceCost']   = $unitPrice;
-        $item['totalAmountFrom'] = round($openQty * $unitPrice, 2);
-        $item['totalAmountTo']   = round($closeQty * $unitPrice, 2);
+        // Pickup per-SKU landing factor exactly from latest igp_parchi row,
+        // same source used by itemsReport frontend payload.
+        $latestAdjust = 0;
+        $latestLandingFactor = 1;
+        if (!empty($parchinoData[$sid])) {
+            $latest = $parchinoData[$sid][0]; // ORDER BY pdate DESC, id DESC
+            $latestAdjust = (float)($latest['adjust_unit_price'] ?? 0);
+            $latestLandingFactor = (float)($latest['landing_factor'] ?? 1);
+        }
+        if ($latestLandingFactor <= 0) {
+            // If latest row has 0/blank factor, pick nearest valid factor for this SKU.
+            if (!empty($parchinoData[$sid])) {
+                foreach ($parchinoData[$sid] as $pRow) {
+                    $candidateFactor = (float)($pRow['landing_factor'] ?? 0);
+                    if ($candidateFactor > 0) {
+                        $latestLandingFactor = $candidateFactor;
+                        break;
+                    }
+                }
+            }
+            if ($latestLandingFactor <= 0) {
+                $latestLandingFactor = 1;
+            }
+        }
+
+        // Match itemsReport/frontend.php valuation fallback:
+        // weighted_unit_price first, else adjust_unit_price.
+        $effectiveUnitForValuation = $unitPrice > 0 ? $unitPrice : $latestAdjust;
+
+        $item['adjust_unit_price'] = $latestAdjust;
+        $item['landing_factor']    = $latestLandingFactor;
+        // Apply adjusted-price fallback for the exposed unit cost as well.
+        $item['unitPriceCost']     = round($effectiveUnitForValuation, 2);
+        $item['totalAmountFrom']   = round($openQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
+        $item['totalAmountTo']     = round($closeQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
 
         $response[] = $item;
         unset($parchinoData[$sid]);
