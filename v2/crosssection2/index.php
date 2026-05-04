@@ -397,11 +397,10 @@ $(document).ready(function() {
         var totalFrom = 0, totalTo = 0;
         for (var i = 0; i < response.length; i++) {
             var row = response[i] || {};
-            var unit = parseFloat(row.unitPriceCost) || 0;
-            var qFrom = parseFloat(row.qohA) || 0;
-            var qTo = parseFloat(row.qohB) || 0;
-            totalFrom += qFrom * unit;
-            totalTo += qTo * unit;
+            // Same basis as Total Amount columns (PHP: qty × effective unit × landing factor).
+            // Omits excluded SKUs because they never appear in the payload (tmp_report scope).
+            totalFrom += parseFloat(row.totalAmountFrom) || 0;
+            totalTo += parseFloat(row.totalAmountTo) || 0;
         }
         $('#cardTotalStartLabel').text('Total stock value on ' + fromDate + ' (start)');
         $('#cardTotalEndLabel').text('Total stock value on ' + toDate + ' (end)');
