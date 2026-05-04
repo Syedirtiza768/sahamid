@@ -9,9 +9,11 @@ $multiCat = "";
 $editPerm="";
 $user_id = $_SESSION['UserID'];
 $doc_category="";
+$accurateCat = array();
 
 //Logic to compare multi category data individually
 $result = mysqli_query($conn,"SELECT category FROM doc");
+if ($result) {
       while($row = mysqli_fetch_array($result)) {
         $searchForValue = ',';
         $cat = $row['category'];
@@ -20,7 +22,7 @@ $result = mysqli_query($conn,"SELECT category FROM doc");
         $words = explode($searchForValue, $str);
         $my_query = "SELECT * FROM category_perm WHERE user_id = '$user_id' ";
         $result1 = $conn->query($my_query);
-        if ($result1->num_rows > 0) {
+        if ($result1 && $result1->num_rows > 0) {
           while ($row1 = $result1->fetch_assoc()) {
             foreach ($words as $word) {
               if($word == $row1['cat_id']){
@@ -31,11 +33,14 @@ $result = mysqli_query($conn,"SELECT category FROM doc");
         }
     }
 }
+}
 $result = mysqli_query($conn,"SELECT permission FROM editPerm WHERE userid='$user_id' ");
+if ($result) {
 while($row = mysqli_fetch_array($result)) {
   if($row['permission']==1){
     $editPerm= 1;
   }
+}
 }
 $final_result="";
 if(!empty($accurateCat)){
@@ -54,7 +59,7 @@ $final = array_unique($accurateCat);
 //query for selecting data from our database
 $my_query = "SELECT * FROM category_perm WHERE user_id = '$user_id' ";
  $result1 = $conn->query($my_query);
- if ($result1->num_rows > 0) {
+ if ($result1 && $result1->num_rows > 0) {
  while ($row1 = $result1->fetch_assoc()) {
 
 $resultarr= "category = '".$row1['cat_id']."' OR $multiCat";
@@ -65,7 +70,9 @@ $last =  $last . $resultarr;
 }
 
 
-$query = "SELECT * FROM doc WHERE $final_result";
+$query = (trim((string)$final_result) !== '')
+    ? "SELECT * FROM doc WHERE $final_result"
+    : "SELECT * FROM doc WHERE 1=0";
 //execute query
 $result = $conn->query($query);
 $pdf__file_path = "./upload/pdf/";

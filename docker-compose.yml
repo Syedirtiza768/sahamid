@@ -32,8 +32,10 @@ services:
     volumes:
       - sahamid-dbdata:/var/lib/mysql
       - ./docker/init-db/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./backup/sahamid_structure.sql:/docker-entrypoint-initdb.d/02-structure.sql
-      - ./backup/sahamid_data.sql:/docker-entrypoint-initdb.d/03-data.sql
+      - ./backup/sahamid_structure.sql:/docker-entrypoint-initdb.d/02-sahamid-structure.sql:ro
+      - ./backup/sahamid_data.sql:/docker-entrypoint-initdb.d/03-sahamid-data.sql:ro
+      - "./localhost(4).sql:/docker-entrypoint-initdb.d/04-sah_saherp.sql:ro"
+      - ./docker/init-db/05-dms-tables.sql:/docker-entrypoint-initdb.d/05-dms-tables.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
       interval: 10s

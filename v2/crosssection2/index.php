@@ -119,11 +119,13 @@ if (isset($_POST['to'])) {
         qohB DECIMAL(20,4) DEFAULT 0
     ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
+    // Omit test/dummy SKUs from this report (not real inventory).
     run_sql("INSERT INTO tmp_report (stockid, mnfCode, mnfpno, description, manufacturers_name)
               SELECT sm.stockid, sm.mnfCode, sm.mnfpno, sm.description, m.manufacturers_name
               FROM stockmaster sm
               LEFT JOIN manufacturers m ON m.manufacturers_id = sm.brand
-              WHERE sm.mbflag IN ('B','M')", $db);
+              WHERE sm.mbflag IN ('B','M')
+                AND sm.stockid NOT IN ('3061TESTdummyITEM','3061TESTDummyitemInvoice')", $db);
 
     // ═══════════════════════════════════════════════════════════
     // STEP 2: Opening stock — one bulk query using temp tables
@@ -483,16 +485,29 @@ $(document).ready(function() {
         }
     });
 
-    $(".searchData").on("click", function() {
-        let from = $(".fromDate").val();
-        let to = $(".toDate").val();
+    var searchDebounceTimer = null;
+    var searchActiveXhr = null;
+    var searchRequestSeq = 0;
+    var SEARCH_DEBOUNCE_MS = 400;
+
+    function executeCrossSectionSearch() {
+        var from = $(".fromDate").val();
+        var to = $(".toDate").val();
 
         if (!from || !to) {
             alert("Please select both From and To dates.");
             return;
         }
 
-        // Update column headers with selected dates
+        var mySeq = ++searchRequestSeq;
+
+        if (searchActiveXhr) {
+            searchActiveXhr.abort();
+            searchActiveXhr = null;
+        }
+
+        $(".searchData").prop("disabled", true);
+
         $('#thQtyFrom').text('Int. Ref. Quantity ' + from);
         $('#thQtyTo').text('Qty ' + to);
         $('#thTotalFrom').text('Total Amount @' + from);
@@ -502,13 +517,16 @@ $(document).ready(function() {
         $('#cardTotalStartValue, #cardTotalEndValue').text('…');
         table.clear().draw();
 
-        $.ajax({
+        searchActiveXhr = $.ajax({
             url: "index.php",
             method: "POST",
-            data: { from, to },
+            data: { from: from, to: to },
             dataType: "json",
             timeout: 300000,
             success: function(response) {
+                if (mySeq !== searchRequestSeq) {
+                    return;
+                }
                 if (Array.isArray(response)) {
                     table.rows.add(response).draw();
                     updateStockValueCards(response, from, to);
@@ -518,18 +536,35 @@ $(document).ready(function() {
                 } else {
                     $('#cardTotalStartValue, #cardTotalEndValue').text('—');
                 }
-                $("#loadingMessage").hide();
             },
             error: function(xhr, status, error) {
+                if (mySeq !== searchRequestSeq) {
+                    return;
+                }
+                if (status === 'abort') {
+                    return;
+                }
                 if (status === 'timeout') {
                     alert("Request timed out. Try a smaller date range.");
                 } else {
                     alert("Error loading data: " + error + "\n" + (xhr.responseText || '').substring(0, 200));
                 }
                 $('#cardTotalStartValue, #cardTotalEndValue').text('—');
+            },
+            complete: function(xhr, status) {
+                if (mySeq !== searchRequestSeq) {
+                    return;
+                }
+                searchActiveXhr = null;
                 $("#loadingMessage").hide();
+                $(".searchData").prop("disabled", false);
             }
         });
+    }
+
+    $(".searchData").on("click", function() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(executeCrossSectionSearch, SEARCH_DEBOUNCE_MS);
     });
 });
 </script>

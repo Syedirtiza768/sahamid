@@ -125,8 +125,10 @@ include_once("includes/sidebar.php");
                 $addPerm = "";
                 $user_id = $_SESSION['UserID'];
                 $result = mysqli_query($conn, "SELECT permission FROM addPerm WHERE userid='$user_id' ");
-                while ($row = mysqli_fetch_array($result)) {
-                    $addPerm = $row['permission'];
+                if ($result) {
+                    while ($row = mysqli_fetch_array($result)) {
+                        $addPerm = $row['permission'];
+                    }
                 }
                 if ($addPerm == 1) {
                 ?>
@@ -149,10 +151,12 @@ include_once("includes/sidebar.php");
                         <select id="category" name="category" class="selectpicker" multiple data-selected-text-format="count > 2" title='Choose one...' data-width=174px>
                             <?php
                             $result = mysqli_query($conn, "SELECT * FROM category");
-                            while ($row = mysqli_fetch_array($result)) {
+                            if ($result) {
+                                while ($row = mysqli_fetch_array($result)) {
                             ?>
                                 <option value="<?php echo $row["cat_name"]; ?>"><?php echo $row["cat_name"]; ?></option>
                             <?php
+                                }
                             }
                             ?>
                         </select><br>
