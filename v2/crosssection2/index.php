@@ -518,7 +518,9 @@ include_once("includes/sidebar.php");
                     </div>
                     <div class="box-body" style="position: relative; min-height: 300px; max-height: 400px;">
                         <p class="text-muted" style="margin-top: 0; font-size: 12px;">Points: report start date, the 1st of each month in the range, and end date. Same SKUs, exclusions, and unit costing as the table (quantities from stock moves per date).</p>
-                        <canvas id="valuationTimelineChart" height="280"></canvas>
+                        <div id="valuationTimelineChartScroller" style="overflow-x: auto; overflow-y: hidden; width: 100%;">
+                            <canvas id="valuationTimelineChart" height="280"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -584,6 +586,40 @@ $(document).ready(function() {
 
     var valuationChartInstance = null;
 
+    function formatTimelineLabel(isoDate) {
+        if (!isoDate || typeof isoDate !== 'string') {
+            return '';
+        }
+        var p = isoDate.split('-');
+        if (p.length !== 3) {
+            return isoDate;
+        }
+        var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var mi = parseInt(p[1], 10) - 1;
+        var d = parseInt(p[2], 10);
+        if (isNaN(mi) || mi < 0 || mi > 11 || isNaN(d)) {
+            return isoDate;
+        }
+        return d === 1 ? (m[mi] + ' ' + p[0]) : (p[2] + ' ' + m[mi] + ' ' + p[0]);
+    }
+
+    function thinTimelineLabels(rawLabels) {
+        var labels = rawLabels.slice();
+        var n = labels.length;
+        if (n <= 24) {
+            return labels;
+        }
+        var maxVisible = n <= 120 ? 24 : 18;
+        var step = Math.max(1, Math.ceil(n / maxVisible));
+        for (var i = 0; i < n; i++) {
+            if (i === 0 || i === n - 1 || (i % step === 0)) {
+                continue;
+            }
+            labels[i] = '';
+        }
+        return labels;
+    }
+
     function updateValuationChart(timeline) {
         var $row = $('#valuationChartRow');
         if (!timeline || timeline.length === 0) {
@@ -595,10 +631,20 @@ $(document).ready(function() {
             return;
         }
         $row.show();
-        var labels = timeline.map(function(p) { return p.date; });
+        var rawLabels = timeline.map(function(p) { return formatTimelineLabel(p.date); });
+        var labels = thinTimelineLabels(rawLabels);
         var values = timeline.map(function(p) { return parseFloat(p.totalValue) || 0; });
+        var denseSeries = values.length > 72;
 
-        var ctx = document.getElementById('valuationTimelineChart').getContext('2d');
+        var canvas = document.getElementById('valuationTimelineChart');
+        var scroller = document.getElementById('valuationTimelineChartScroller');
+        var parentWidth = (scroller && scroller.clientWidth) ? scroller.clientWidth : 900;
+        var dynamicWidth = Math.max(parentWidth, values.length * 28);
+        canvas.width = dynamicWidth;
+        canvas.style.width = dynamicWidth + 'px';
+        canvas.style.minWidth = parentWidth + 'px';
+
+        var ctx = canvas.getContext('2d');
         if (valuationChartInstance) {
             valuationChartInstance.destroy();
             valuationChartInstance = null;
@@ -619,7 +665,10 @@ $(document).ready(function() {
             responsive: true,
             maintainAspectRatio: false,
             legendTemplate: '',
-            showScale: true
+            showScale: true,
+            animation: !denseSeries,
+            pointDot: !denseSeries,
+            bezierCurve: false
         });
     }
 
