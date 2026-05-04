@@ -27,6 +27,11 @@ if (isset($_POST['to'])) {
     $valid_locations = ['HO', 'MT', 'SR'];
     $location_condition = empty($location) ? "AND loccode IN ('HO','MT','SR')" : "AND loccode = '$location'";
 
+    $crosssection_excluded_stockids = include __DIR__ . '/crosssection_excluded_skus.php';
+    $crosssection_excluded_sql = implode(',', array_map(function ($id) use ($db) {
+        return "'" . mysqli_real_escape_string($db, $id) . "'";
+    }, $crosssection_excluded_stockids));
+
     // Helper: run query returning JSON error instead of HTML
     function run_sql($sql, $conn) {
         $r = mysqli_query($conn, $sql);
@@ -65,7 +70,8 @@ if (isset($_POST['to'])) {
               SELECT sm.stockid, sm.mnfCode, sm.mnfpno, sm.description, sm.materialcost, m.manufacturers_name
               FROM stockmaster sm
               LEFT JOIN manufacturers m ON m.manufacturers_id = sm.brand
-              WHERE sm.mbflag IN ('B', 'M')", $db);
+              WHERE sm.mbflag IN ('B', 'M')
+              AND sm.stockid NOT IN ($crosssection_excluded_sql)", $db);
 
     // Create temporary table for opening stock moves
     run_sql("CREATE TEMPORARY TABLE opening_moves (

@@ -119,13 +119,17 @@ if (isset($_POST['to'])) {
         qohB DECIMAL(20,4) DEFAULT 0
     ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
-    // Omit test/dummy SKUs from this report (not real inventory).
+    // Omit service/test SKUs from this report (shared list with v2/crosssection.php).
+    $crosssection_excluded_stockids = include __DIR__ . '/../crosssection_excluded_skus.php';
+    $crosssection_excluded_sql = implode(',', array_map(function ($id) use ($db) {
+        return "'" . mysqli_real_escape_string($db, $id) . "'";
+    }, $crosssection_excluded_stockids));
     run_sql("INSERT INTO tmp_report (stockid, mnfCode, mnfpno, description, manufacturers_name)
               SELECT sm.stockid, sm.mnfCode, sm.mnfpno, sm.description, m.manufacturers_name
               FROM stockmaster sm
               LEFT JOIN manufacturers m ON m.manufacturers_id = sm.brand
               WHERE sm.mbflag IN ('B','M')
-                AND sm.stockid NOT IN ('3061TESTdummyITEM','3061TESTDummyitemInvoice')", $db);
+                AND sm.stockid NOT IN ($crosssection_excluded_sql)", $db);
 
     // ═══════════════════════════════════════════════════════════
     // STEP 2: Opening stock — one bulk query using temp tables
@@ -497,12 +501,13 @@ $(document).ready(function() {
         var seen = Object.create(null);
         var out = [];
         for (var i = 0; i < rows.length; i++) {
-            var id = rows[i] && rows[i].stockid != null ? String(rows[i].stockid) : '';
-            if (id !== '' && seen[id]) {
+            var raw = rows[i] && rows[i].stockid != null ? String(rows[i].stockid) : '';
+            var key = raw !== '' ? raw.toLowerCase() : '';
+            if (key !== '' && seen[key]) {
                 continue;
             }
-            if (id !== '') {
-                seen[id] = true;
+            if (key !== '') {
+                seen[key] = true;
             }
             out.push(rows[i]);
         }
@@ -537,14 +542,14 @@ $(document).ready(function() {
         $('#cardTotalStartValue, #cardTotalEndValue').text('…');
         table.clear().draw(false);
 
-        searchActiveXhr = $.ajax({
+        var thisXhr = $.ajax({
             url: "index.php",
             method: "POST",
             data: { from: from, to: to },
             dataType: "json",
             timeout: 300000,
             success: function(response) {
-                if (mySeq !== searchRequestSeq) {
+                if (mySeq !== searchRequestSeq || thisXhr !== searchActiveXhr) {
                     return;
                 }
                 if (Array.isArray(response)) {
@@ -560,7 +565,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
-                if (mySeq !== searchRequestSeq) {
+                if (mySeq !== searchRequestSeq || thisXhr !== searchActiveXhr) {
                     return;
                 }
                 if (status === 'abort') {
@@ -574,7 +579,7 @@ $(document).ready(function() {
                 $('#cardTotalStartValue, #cardTotalEndValue').text('—');
             },
             complete: function(xhr, status) {
-                if (mySeq !== searchRequestSeq) {
+                if (mySeq !== searchRequestSeq || thisXhr !== searchActiveXhr) {
                     return;
                 }
                 searchActiveXhr = null;
@@ -582,6 +587,7 @@ $(document).ready(function() {
                 $(".searchData").prop("disabled", false);
             }
         });
+        searchActiveXhr = thisXhr;
     }
 
     $(".searchData").on("click", function() {
@@ -590,7 +596,6 @@ $(document).ready(function() {
             return;
         }
         clearTimeout(searchDebounceTimer);
-        $btn.prop("disabled", true);
         searchDebounceTimer = setTimeout(function() {
             executeCrossSectionSearch();
         }, SEARCH_DEBOUNCE_MS);
