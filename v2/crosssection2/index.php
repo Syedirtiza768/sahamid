@@ -302,10 +302,33 @@ if (isset($_POST['to'])) {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 6: Valuation timeline (same unit cost per SKU as grid; qty from moves per date)
+    // STEP 6: Valuation timeline (cached: historical points reuse DB; current month + misses recalc)
     // ═══════════════════════════════════════════════════════════
     $valuationTimeline = [];
+    $timelineCacheStats = [
+        'fromCache'   => 0,
+        'computed'    => 0,
+        'bypassed'    => false,
+    ];
     $timelineDates = crosssection_valuation_timeline_dates($fromDate, $toDate);
+    $forceRefreshTimelineCache = !empty($_POST['forceTimelineCacheRefresh']);
+
+    ksort($skuMeta);
+    $hashLines = [];
+    foreach ($skuMeta as $sid => $meta) {
+        $hashLines[] = $sid . "\t" . sprintf('%.8F', $meta['effective']) . "\t" . sprintf('%.8F', $meta['landing']);
+    }
+    $costBasisHash = hash('sha256', implode("\n", $hashLines));
+
+    run_sql("CREATE TABLE IF NOT EXISTS crosssection_valuation_timeline_cache (
+        report_from DATE NOT NULL,
+        report_to DATE NOT NULL,
+        snapshot_date DATE NOT NULL,
+        total_value DECIMAL(20,2) NOT NULL,
+        cost_basis_hash CHAR(64) NOT NULL,
+        computed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (report_from, report_to, snapshot_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", $db);
 
     $qoh_at_date = function ($dateSqlEscaped) use ($db, $run_sql) {
         run_sql("CREATE TEMPORARY TABLE tmp_snap_moves (
@@ -341,7 +364,49 @@ if (isset($_POST['to'])) {
         return $map;
     };
 
+    $cachedByDate = [];
+    $nowMonth = (new DateTime('today'))->format('Y-m');
+    if (!$forceRefreshTimelineCache && !empty($timelineDates)) {
+        $inList = [];
+        foreach ($timelineDates as $d) {
+            $inList[] = "'" . mysqli_real_escape_string($db, $d) . "'";
+        }
+        $inSql = implode(',', $inList);
+        $cacheRes = run_sql(
+            "SELECT snapshot_date, total_value, cost_basis_hash
+               FROM crosssection_valuation_timeline_cache
+              WHERE report_from = '$from'
+                AND report_to = '$to'
+                AND snapshot_date IN ($inSql)",
+            $db
+        );
+        while ($row = DB_fetch_array($cacheRes)) {
+            $sd = $row['snapshot_date'];
+            if ($row['cost_basis_hash'] === $costBasisHash) {
+                $cachedByDate[$sd] = (float)$row['total_value'];
+            }
+        }
+    }
+    $timelineCacheStats['bypassed'] = $forceRefreshTimelineCache;
+
     foreach ($timelineDates as $dStr) {
+        $snapMonth = substr($dStr, 0, 7);
+        $inCurrentMonth = ($snapMonth === $nowMonth);
+
+        $useCached = !$forceRefreshTimelineCache
+            && !$inCurrentMonth
+            && isset($cachedByDate[$dStr]);
+
+        if ($useCached) {
+            $totalVal = $cachedByDate[$dStr];
+            $valuationTimeline[] = [
+                'date'       => $dStr,
+                'totalValue' => round($totalVal, 2),
+            ];
+            $timelineCacheStats['fromCache']++;
+            continue;
+        }
+
         $dEsc = mysqli_real_escape_string($db, $dStr);
         $qohMap = $qoh_at_date($dEsc);
         $totalVal = 0.0;
@@ -349,17 +414,33 @@ if (isset($_POST['to'])) {
             $q = $qohMap[$sid] ?? 0.0;
             $totalVal += round($q * $meta['effective'] * $meta['landing'], 2);
         }
+        $totalVal = round($totalVal, 2);
+
         $valuationTimeline[] = [
-            'date'        => $dStr,
-            'totalValue'  => round($totalVal, 2),
+            'date'       => $dStr,
+            'totalValue' => $totalVal,
         ];
+        $timelineCacheStats['computed']++;
+
+        $hashEsc = mysqli_real_escape_string($db, $costBasisHash);
+        run_sql(
+            "INSERT INTO crosssection_valuation_timeline_cache
+                (report_from, report_to, snapshot_date, total_value, cost_basis_hash, computed_at)
+             VALUES ('$from', '$to', '" . mysqli_real_escape_string($db, $dStr) . "', $totalVal, '$hashEsc', NOW())
+             ON DUPLICATE KEY UPDATE
+                total_value = VALUES(total_value),
+                cost_basis_hash = VALUES(cost_basis_hash),
+                computed_at = NOW()",
+            $db
+        );
     }
 
     mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS tmp_report");
 
     echo json_encode([
-        'rows'               => $response,
-        'valuationTimeline'  => $valuationTimeline,
+        'rows'                   => $response,
+        'valuationTimeline'      => $valuationTimeline,
+        'valuationTimelineCache' => $timelineCacheStats,
     ]);
     exit;
 }
