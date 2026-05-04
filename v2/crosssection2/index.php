@@ -488,7 +488,26 @@ $(document).ready(function() {
     var searchDebounceTimer = null;
     var searchActiveXhr = null;
     var searchRequestSeq = 0;
-    var SEARCH_DEBOUNCE_MS = 400;
+    var SEARCH_DEBOUNCE_MS = 500;
+
+    function dedupeRowsByStockId(rows) {
+        if (!Array.isArray(rows) || rows.length === 0) {
+            return rows;
+        }
+        var seen = Object.create(null);
+        var out = [];
+        for (var i = 0; i < rows.length; i++) {
+            var id = rows[i] && rows[i].stockid != null ? String(rows[i].stockid) : '';
+            if (id !== '' && seen[id]) {
+                continue;
+            }
+            if (id !== '') {
+                seen[id] = true;
+            }
+            out.push(rows[i]);
+        }
+        return out;
+    }
 
     function executeCrossSectionSearch() {
         var from = $(".fromDate").val();
@@ -496,6 +515,7 @@ $(document).ready(function() {
 
         if (!from || !to) {
             alert("Please select both From and To dates.");
+            $(".searchData").prop("disabled", false);
             return;
         }
 
@@ -515,7 +535,7 @@ $(document).ready(function() {
 
         $("#loadingMessage").show();
         $('#cardTotalStartValue, #cardTotalEndValue').text('…');
-        table.clear().draw();
+        table.clear().draw(false);
 
         searchActiveXhr = $.ajax({
             url: "index.php",
@@ -528,8 +548,10 @@ $(document).ready(function() {
                     return;
                 }
                 if (Array.isArray(response)) {
-                    table.rows.add(response).draw();
-                    updateStockValueCards(response, from, to);
+                    var rows = dedupeRowsByStockId(response);
+                    table.clear();
+                    table.rows.add(rows).draw();
+                    updateStockValueCards(rows, from, to);
                 } else if (response && response.error) {
                     alert("Server error: " + (response.error || "unknown"));
                     $('#cardTotalStartValue, #cardTotalEndValue').text('—');
@@ -563,8 +585,15 @@ $(document).ready(function() {
     }
 
     $(".searchData").on("click", function() {
+        var $btn = $(".searchData");
+        if ($btn.prop("disabled")) {
+            return;
+        }
         clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(executeCrossSectionSearch, SEARCH_DEBOUNCE_MS);
+        $btn.prop("disabled", true);
+        searchDebounceTimer = setTimeout(function() {
+            executeCrossSectionSearch();
+        }, SEARCH_DEBOUNCE_MS);
     });
 });
 </script>
