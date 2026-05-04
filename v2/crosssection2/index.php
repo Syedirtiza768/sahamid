@@ -15,7 +15,7 @@ if (!userHasPermission($db, "top_items_quotation_report")) {
 }
 
 if (isset($_POST['to'])) {
-    set_time_limit(300);
+    set_time_limit(600);
     ob_clean();
     header('Content-Type: application/json');
 
@@ -104,6 +104,23 @@ if (isset($_POST['to'])) {
             'weighted_unit_price' => round($weighted_unit_price, 2),
             'total_quantity' => round($total_allocated_qty, 2)
         ];
+    }
+
+    /** Snapshot dates: From, each calendar month-start strictly after From until <= To, and To (unique, sorted). */
+    function crosssection_valuation_timeline_dates(DateTime $from, DateTime $to): array
+    {
+        $keys = [];
+        $keys[$from->format('Y-m-d')] = true;
+        $keys[$to->format('Y-m-d')] = true;
+        $cursor = clone $from;
+        $cursor->modify('first day of next month');
+        while ($cursor <= $to) {
+            $keys[$cursor->format('Y-m-d')] = true;
+            $cursor->modify('+1 month');
+        }
+        $dates = array_keys($keys);
+        sort($dates);
+        return $dates;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -227,6 +244,7 @@ if (isset($_POST['to'])) {
     // STEP 5: Fetch tmp_report and compute final values in PHP
     // ═══════════════════════════════════════════════════════════
     $response = [];
+    $skuMeta = [];
     $result = run_sql("SELECT * FROM tmp_report", $db);
     while ($item = DB_fetch_array($result)) {
         $openQty  = (float)$item['qohA'];
@@ -274,13 +292,75 @@ if (isset($_POST['to'])) {
         $item['totalAmountFrom']   = round($openQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
         $item['totalAmountTo']     = round($closeQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
 
+        $skuMeta[$sid] = [
+            'effective' => (float)$effectiveUnitForValuation,
+            'landing'   => (float)$latestLandingFactor,
+        ];
+
         $response[] = $item;
         unset($parchinoData[$sid]);
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // STEP 6: Valuation timeline (same unit cost per SKU as grid; qty from moves per date)
+    // ═══════════════════════════════════════════════════════════
+    $valuationTimeline = [];
+    $timelineDates = crosssection_valuation_timeline_dates($fromDate, $toDate);
+
+    $qoh_at_date = function ($dateSqlEscaped) use ($db, $run_sql) {
+        run_sql("CREATE TEMPORARY TABLE tmp_snap_moves (
+            stockid VARCHAR(50) NOT NULL,
+            loccode VARCHAR(10) NOT NULL,
+            stkmoveno INT NOT NULL,
+            PRIMARY KEY (stockid, loccode)
+        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+
+        run_sql("INSERT INTO tmp_snap_moves
+              SELECT stockid, loccode, MAX(stkmoveno)
+              FROM stockmoves sm
+              LEFT JOIN systypes st ON sm.type = st.typeid
+              WHERE trandate <= '$dateSqlEscaped'
+                AND NOT (
+                    LOWER(COALESCE(st.typename, '')) = 'dc'
+                    OR LOWER(COALESCE(st.typename, '')) LIKE '%shop sale%'
+                )
+              GROUP BY stockid, loccode", $db);
+
+        $map = [];
+        $res = run_sql("SELECT sm.stockid, SUM(sm.newqoh) AS qoh
+                  FROM stockmoves sm
+                  INNER JOIN tmp_snap_moves m
+                      ON sm.stockid = m.stockid
+                     AND sm.loccode = m.loccode
+                     AND sm.stkmoveno = m.stkmoveno
+                  GROUP BY sm.stockid", $db);
+        while ($row = DB_fetch_array($res)) {
+            $map[$row['stockid']] = (float)$row['qoh'];
+        }
+        run_sql("DROP TEMPORARY TABLE tmp_snap_moves", $db);
+        return $map;
+    };
+
+    foreach ($timelineDates as $dStr) {
+        $dEsc = mysqli_real_escape_string($db, $dStr);
+        $qohMap = $qoh_at_date($dEsc);
+        $totalVal = 0.0;
+        foreach ($skuMeta as $sid => $meta) {
+            $q = $qohMap[$sid] ?? 0.0;
+            $totalVal += round($q * $meta['effective'] * $meta['landing'], 2);
+        }
+        $valuationTimeline[] = [
+            'date'        => $dStr,
+            'totalValue'  => round($totalVal, 2),
+        ];
+    }
+
     mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS tmp_report");
 
-    echo json_encode($response);
+    echo json_encode([
+        'rows'               => $response,
+        'valuationTimeline'  => $valuationTimeline,
+    ]);
     exit;
 }
 
@@ -349,6 +429,19 @@ include_once("includes/sidebar.php");
                 </div>
             </div>
         </div>
+        <div class="row" id="valuationChartRow" style="margin-bottom: 15px; display: none;">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Inventory valuation over period</h3>
+                    </div>
+                    <div class="box-body" style="position: relative; min-height: 300px; max-height: 400px;">
+                        <p class="text-muted" style="margin-top: 0; font-size: 12px;">Points: report start date, the 1st of each month in the range, and end date. Same SKUs, exclusions, and unit costing as the table (quantities from stock moves per date).</p>
+                        <canvas id="valuationTimelineChart" height="280"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
         <table class="table table-striped table-responsive" border="1" id="datatable">
             <thead>
                 <tr>
@@ -406,6 +499,47 @@ $(document).ready(function() {
         $('#cardTotalEndLabel').text('Total stock value on ' + toDate + ' (end)');
         $('#cardTotalStartValue').text(formatAmount2(totalFrom));
         $('#cardTotalEndValue').text(formatAmount2(totalTo));
+    }
+
+    var valuationChartInstance = null;
+
+    function updateValuationChart(timeline) {
+        var $row = $('#valuationChartRow');
+        if (!timeline || timeline.length === 0) {
+            $row.hide();
+            if (valuationChartInstance) {
+                valuationChartInstance.destroy();
+                valuationChartInstance = null;
+            }
+            return;
+        }
+        $row.show();
+        var labels = timeline.map(function(p) { return p.date; });
+        var values = timeline.map(function(p) { return parseFloat(p.totalValue) || 0; });
+
+        var ctx = document.getElementById('valuationTimelineChart').getContext('2d');
+        if (valuationChartInstance) {
+            valuationChartInstance.destroy();
+            valuationChartInstance = null;
+        }
+        valuationChartInstance = new Chart(ctx).Line({
+            labels: labels,
+            datasets: [{
+                label: 'Total stock value',
+                fillColor: 'rgba(60,141,188,0.12)',
+                strokeColor: 'rgba(60,141,188,1)',
+                pointColor: 'rgba(60,141,188,1)',
+                pointStrokeColor: '#fff',
+                pointHighlightFill: '#fff',
+                pointHighlightStroke: 'rgba(60,141,188,1)',
+                data: values
+            }]
+        }, {
+            responsive: true,
+            maintainAspectRatio: false,
+            legendTemplate: '',
+            showScale: true
+        });
     }
 
     let table = $('#datatable').DataTable({
@@ -539,6 +673,7 @@ $(document).ready(function() {
 
         $("#loadingMessage").show();
         $('#cardTotalStartValue, #cardTotalEndValue').text('…');
+        $('#valuationChartRow').hide();
         table.clear().draw(false);
 
         var thisXhr = $.ajax({
@@ -546,21 +681,30 @@ $(document).ready(function() {
             method: "POST",
             data: { from: from, to: to },
             dataType: "json",
-            timeout: 300000,
+            timeout: 600000,
             success: function(response) {
                 if (mySeq !== searchRequestSeq || thisXhr !== searchActiveXhr) {
                     return;
                 }
-                if (Array.isArray(response)) {
+                if (response && response.rows && Array.isArray(response.rows)) {
+                    var rows = dedupeRowsByStockId(response.rows);
+                    table.clear();
+                    table.rows.add(rows).draw();
+                    updateStockValueCards(rows, from, to);
+                    updateValuationChart(response.valuationTimeline || []);
+                } else if (Array.isArray(response)) {
                     var rows = dedupeRowsByStockId(response);
                     table.clear();
                     table.rows.add(rows).draw();
                     updateStockValueCards(rows, from, to);
+                    updateValuationChart([]);
                 } else if (response && response.error) {
                     alert("Server error: " + (response.error || "unknown"));
                     $('#cardTotalStartValue, #cardTotalEndValue').text('—');
+                    updateValuationChart(null);
                 } else {
                     $('#cardTotalStartValue, #cardTotalEndValue').text('—');
+                    updateValuationChart([]);
                 }
             },
             error: function(xhr, status, error) {
@@ -576,6 +720,7 @@ $(document).ready(function() {
                     alert("Error loading data: " + error + "\n" + (xhr.responseText || '').substring(0, 200));
                 }
                 $('#cardTotalStartValue, #cardTotalEndValue').text('—');
+                updateValuationChart(null);
             },
             complete: function(xhr, status) {
                 if (mySeq !== searchRequestSeq || thisXhr !== searchActiveXhr) {
