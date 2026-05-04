@@ -42,6 +42,13 @@ if (isset($_POST['to'])) {
     $from = mysqli_real_escape_string($db, $fromInput);
     $to = mysqli_real_escape_string($db, $toInput);
 
+    $forceQohCacheRefresh = !empty($_POST['forceQohCacheRefresh']);
+
+    $action = isset($_POST['action']) ? trim((string) $_POST['action']) : 'search';
+    if (!in_array($action, ['search', 'valuationBreakdown', 'valuationDetailTimeline'], true)) {
+        $action = 'search';
+    }
+
     // Helper: run query without DB_query (which outputs HTML on error)
     function run_sql($sql, $conn) {
         $r = mysqli_query($conn, $sql);
@@ -52,6 +59,152 @@ if (isset($_POST['to'])) {
         }
         return $r;
     }
+
+    run_sql("CREATE TABLE IF NOT EXISTS crosssection_qoh_snapshot_cache (
+        snapshot_date DATE NOT NULL,
+        stockid VARCHAR(50) NOT NULL,
+        qoh DECIMAL(20,4) NOT NULL,
+        computed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (snapshot_date, stockid),
+        KEY idx_cs_qoh_snap_date (snapshot_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+
+    /** @return array<string,float>|null Full map for all $stockIds, or null if cache incomplete */
+    $load_qoh_snapshot_from_cache = function (string $dateSqlEscaped, array $stockIds) use ($db, $run_sql) {
+        if ($stockIds === []) {
+            return [];
+        }
+        $map = [];
+        foreach (array_chunk($stockIds, 500) as $chunk) {
+            $parts = [];
+            foreach ($chunk as $sid) {
+                $parts[] = "'" . mysqli_real_escape_string($db, $sid) . "'";
+            }
+            $inSql = implode(',', $parts);
+            $res = run_sql(
+                "SELECT stockid, qoh FROM crosssection_qoh_snapshot_cache
+                  WHERE snapshot_date = '$dateSqlEscaped' AND stockid IN ($inSql)",
+                $db
+            );
+            while ($row = DB_fetch_array($res)) {
+                $map[$row['stockid']] = (float) $row['qoh'];
+            }
+        }
+        foreach ($stockIds as $sid) {
+            if (!array_key_exists($sid, $map)) {
+                return null;
+            }
+        }
+
+        return $map;
+    };
+
+    /** @param array<string,float> $qohByStockid */
+    $save_qoh_snapshot_to_cache = function (string $dateSqlEscaped, array $qohByStockid) use ($db, $run_sql) {
+        if ($qohByStockid === []) {
+            return;
+        }
+        foreach (array_chunk($qohByStockid, 250, true) as $chunk) {
+            $vals = [];
+            foreach ($chunk as $sid => $q) {
+                $sidE = mysqli_real_escape_string($db, (string) $sid);
+                $vals[] = "('$dateSqlEscaped', '$sidE', " . (float) $q . ", NOW())";
+            }
+            run_sql(
+                "INSERT INTO crosssection_qoh_snapshot_cache (snapshot_date, stockid, qoh, computed_at)
+                 VALUES " . implode(',', $vals) . "
+                 ON DUPLICATE KEY UPDATE qoh = VALUES(qoh), computed_at = NOW()",
+                $db
+            );
+        }
+    };
+
+    /** Apply per-stock QOH to tmp_report.qohA or .qohB in one join update. */
+    $apply_qoh_map_to_tmp_report_column = function (string $column, array $qohByStockid) use ($db, $run_sql) {
+        if (!in_array($column, ['qohA', 'qohB'], true) || $qohByStockid === []) {
+            return;
+        }
+        run_sql("CREATE TEMPORARY TABLE tmp_qoh_apply (
+            stockid VARCHAR(50) NOT NULL PRIMARY KEY,
+            qoh DECIMAL(20,4) NOT NULL
+        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+        foreach (array_chunk($qohByStockid, 400, true) as $chunk) {
+            $vals = [];
+            foreach ($chunk as $sid => $q) {
+                $vals[] = "('" . mysqli_real_escape_string($db, (string) $sid) . "'," . (float) $q . ")";
+            }
+            run_sql('INSERT INTO tmp_qoh_apply (stockid, qoh) VALUES ' . implode(',', $vals), $db);
+        }
+        run_sql("UPDATE tmp_report r INNER JOIN tmp_qoh_apply t ON r.stockid = t.stockid SET r.$column = t.qoh", $db);
+        run_sql('DROP TEMPORARY TABLE tmp_qoh_apply', $db);
+    };
+
+    /**
+     * QOH per stockid at end of a calendar date (same rules as opening/closing moves).
+     * With $stockIdsForFullSnapshot, reads/writes crosssection_qoh_snapshot_cache so any report or timeline
+     * can reuse the same date without rescanning stockmoves.
+     */
+    $qoh_at_date = function (string $dateSqlEscaped, array $stockIdsForFullSnapshot = null) use (
+        $db,
+        $run_sql,
+        $forceQohCacheRefresh,
+        $load_qoh_snapshot_from_cache,
+        $save_qoh_snapshot_to_cache
+    ) {
+        if (!$forceQohCacheRefresh
+            && $stockIdsForFullSnapshot !== null
+            && $stockIdsForFullSnapshot !== []) {
+            $cached = $load_qoh_snapshot_from_cache($dateSqlEscaped, $stockIdsForFullSnapshot);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
+        run_sql("CREATE TEMPORARY TABLE tmp_snap_moves (
+            stockid VARCHAR(50) NOT NULL,
+            loccode VARCHAR(10) NOT NULL,
+            stkmoveno INT NOT NULL,
+            PRIMARY KEY (stockid, loccode)
+        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+
+        run_sql("INSERT INTO tmp_snap_moves
+              SELECT stockid, loccode, MAX(stkmoveno)
+              FROM stockmoves sm
+              LEFT JOIN systypes st ON sm.type = st.typeid
+              WHERE trandate <= '$dateSqlEscaped'
+                AND NOT (
+                    LOWER(COALESCE(st.typename, '')) = 'dc'
+                    OR LOWER(COALESCE(st.typename, '')) LIKE '%shop sale%'
+                )
+              GROUP BY stockid, loccode", $db);
+
+        $map = [];
+        $res = run_sql("SELECT sm.stockid, SUM(sm.newqoh) AS qoh
+                  FROM stockmoves sm
+                  INNER JOIN tmp_snap_moves m
+                      ON sm.stockid = m.stockid
+                     AND sm.loccode = m.loccode
+                     AND sm.stkmoveno = m.stkmoveno
+                  GROUP BY sm.stockid", $db);
+        while ($row = DB_fetch_array($res)) {
+            $map[$row['stockid']] = (float) $row['qoh'];
+        }
+        run_sql("DROP TEMPORARY TABLE tmp_snap_moves", $db);
+
+        if ($stockIdsForFullSnapshot !== null && $stockIdsForFullSnapshot !== []) {
+            $out = [];
+            foreach ($stockIdsForFullSnapshot as $sid) {
+                $out[$sid] = $map[$sid] ?? 0.0;
+            }
+            if (!$forceQohCacheRefresh) {
+                $save_qoh_snapshot_to_cache($dateSqlEscaped, $out);
+            }
+
+            return $out;
+        }
+
+        return $map;
+    };
 
     // Aligned with itemsReport/index.php pricing method
     function calculatePriceForStock($parchinos, $requested_qty)
@@ -123,6 +276,40 @@ if (isset($_POST['to'])) {
         return $dates;
     }
 
+    /** One row per calendar day from $from through $to (inclusive). */
+    function crosssection_valuation_timeline_dates_daily(DateTime $from, DateTime $to): array
+    {
+        $dates = [];
+        $cur = clone $from;
+        $cur->setTime(0, 0, 0);
+        $end = clone $to;
+        $end->setTime(0, 0, 0);
+        while ($cur <= $end) {
+            $dates[] = $cur->format('Y-m-d');
+            $cur->modify('+1 day');
+        }
+
+        return $dates;
+    }
+
+    /** Weekly samples: start date, then +7 days, always including $to. */
+    function crosssection_valuation_timeline_dates_weekly(DateTime $from, DateTime $to): array
+    {
+        $keys = [];
+        $keys[$from->format('Y-m-d')] = true;
+        $keys[$to->format('Y-m-d')] = true;
+        $cursor = clone $from;
+        $cursor->modify('+7 days');
+        while ($cursor <= $to) {
+            $keys[$cursor->format('Y-m-d')] = true;
+            $cursor->modify('+7 days');
+        }
+        $dates = array_keys($keys);
+        sort($dates);
+
+        return $dates;
+    }
+
     // ═══════════════════════════════════════════════════════════
     // STEP 1: Create temp table with all stock items in one shot
     // ═══════════════════════════════════════════════════════════
@@ -148,17 +335,38 @@ if (isset($_POST['to'])) {
               WHERE sm.mbflag IN ('B','M')
                 AND sm.stockid NOT IN ($crosssection_excluded_sql)", $db);
 
-    // ═══════════════════════════════════════════════════════════
-    // STEP 2: Opening stock — one bulk query using temp tables
-    // ═══════════════════════════════════════════════════════════
-    run_sql("CREATE TEMPORARY TABLE tmp_open_moves (
-        stockid VARCHAR(50) NOT NULL,
-        loccode VARCHAR(10) NOT NULL,
-        stkmoveno INT NOT NULL,
-        PRIMARY KEY (stockid, loccode)
-    ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+    $reportStockIds = [];
+    $ridRes = run_sql('SELECT stockid FROM tmp_report', $db);
+    while ($ridRow = DB_fetch_array($ridRes)) {
+        $reportStockIds[] = $ridRow['stockid'];
+    }
 
-    run_sql("INSERT INTO tmp_open_moves
+    $qohSnapshotCacheStats = [
+        'opening' => 'computed',
+        'closing' => 'computed',
+    ];
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 2: Opening stock — reuse cross-date QOH snapshot cache when possible
+    // ═══════════════════════════════════════════════════════════
+    $openingFromCache = false;
+    if (!$forceQohCacheRefresh) {
+        $cachedOpen = $load_qoh_snapshot_from_cache($from, $reportStockIds);
+        if ($cachedOpen !== null) {
+            $apply_qoh_map_to_tmp_report_column('qohA', $cachedOpen);
+            $qohSnapshotCacheStats['opening'] = 'cache';
+            $openingFromCache = true;
+        }
+    }
+    if (!$openingFromCache) {
+        run_sql("CREATE TEMPORARY TABLE tmp_open_moves (
+            stockid VARCHAR(50) NOT NULL,
+            loccode VARCHAR(10) NOT NULL,
+            stkmoveno INT NOT NULL,
+            PRIMARY KEY (stockid, loccode)
+        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+
+        run_sql("INSERT INTO tmp_open_moves
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves sm
               LEFT JOIN systypes st ON sm.type = st.typeid
@@ -169,7 +377,7 @@ if (isset($_POST['to'])) {
                 )
               GROUP BY stockid, loccode", $db);
 
-    run_sql("UPDATE tmp_report r
+        run_sql("UPDATE tmp_report r
               INNER JOIN (
                   SELECT sm.stockid, SUM(sm.newqoh) AS qohA
                   FROM stockmoves sm
@@ -181,19 +389,39 @@ if (isset($_POST['to'])) {
               ) q ON r.stockid = q.stockid
               SET r.qohA = q.qohA", $db);
 
-    run_sql("DROP TEMPORARY TABLE tmp_open_moves", $db);
+        run_sql('DROP TEMPORARY TABLE tmp_open_moves', $db);
+
+        if (!$forceQohCacheRefresh) {
+            $saveOpen = [];
+            $soRes = run_sql('SELECT stockid, qohA FROM tmp_report', $db);
+            while ($soRow = DB_fetch_array($soRes)) {
+                $saveOpen[$soRow['stockid']] = (float) $soRow['qohA'];
+            }
+            $save_qoh_snapshot_to_cache($from, $saveOpen);
+        }
+    }
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 3: Closing stock — one bulk query using temp tables
+    // STEP 3: Closing stock — same snapshot cache (typically different date than opening)
     // ═══════════════════════════════════════════════════════════
-    run_sql("CREATE TEMPORARY TABLE tmp_close_moves (
-        stockid VARCHAR(50) NOT NULL,
-        loccode VARCHAR(10) NOT NULL,
-        stkmoveno INT NOT NULL,
-        PRIMARY KEY (stockid, loccode)
-    ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+    $closingFromCache = false;
+    if (!$forceQohCacheRefresh) {
+        $cachedClose = $load_qoh_snapshot_from_cache($to, $reportStockIds);
+        if ($cachedClose !== null) {
+            $apply_qoh_map_to_tmp_report_column('qohB', $cachedClose);
+            $qohSnapshotCacheStats['closing'] = 'cache';
+            $closingFromCache = true;
+        }
+    }
+    if (!$closingFromCache) {
+        run_sql("CREATE TEMPORARY TABLE tmp_close_moves (
+            stockid VARCHAR(50) NOT NULL,
+            loccode VARCHAR(10) NOT NULL,
+            stkmoveno INT NOT NULL,
+            PRIMARY KEY (stockid, loccode)
+        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
-    run_sql("INSERT INTO tmp_close_moves
+        run_sql("INSERT INTO tmp_close_moves
               SELECT stockid, loccode, MAX(stkmoveno)
               FROM stockmoves sm
               LEFT JOIN systypes st ON sm.type = st.typeid
@@ -204,7 +432,7 @@ if (isset($_POST['to'])) {
                 )
               GROUP BY stockid, loccode", $db);
 
-    run_sql("UPDATE tmp_report r
+        run_sql("UPDATE tmp_report r
               INNER JOIN (
                   SELECT sm.stockid, SUM(sm.newqoh) AS qohB
                   FROM stockmoves sm
@@ -216,7 +444,17 @@ if (isset($_POST['to'])) {
               ) q ON r.stockid = q.stockid
               SET r.qohB = q.qohB", $db);
 
-    run_sql("DROP TEMPORARY TABLE tmp_close_moves", $db);
+        run_sql('DROP TEMPORARY TABLE tmp_close_moves', $db);
+
+        if (!$forceQohCacheRefresh) {
+            $saveClose = [];
+            $scRes = run_sql('SELECT stockid, qohB FROM tmp_report', $db);
+            while ($scRow = DB_fetch_array($scRes)) {
+                $saveClose[$scRow['stockid']] = (float) $scRow['qohB'];
+            }
+            $save_qoh_snapshot_to_cache($to, $saveClose);
+        }
+    }
 
     // ═══════════════════════════════════════════════════════════
     // STEP 4: Load igp_parchi pricing & calculate weighted prices
@@ -297,21 +535,160 @@ if (isset($_POST['to'])) {
             'landing'   => (float)$latestLandingFactor,
         ];
 
-        $response[] = $item;
+        if ($action === 'search') {
+            $response[] = $item;
+        }
         unset($parchinoData[$sid]);
     }
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 6: Valuation timeline (cached: historical points reuse DB; current month + misses recalc)
+    // Optional: per-date SKU breakdown (uses tmp_report for labels)
+    // ═══════════════════════════════════════════════════════════
+    if ($action === 'valuationBreakdown') {
+        $snapshotInput = trim($_POST['snapshotDate'] ?? '');
+        $snapDt = DateTime::createFromFormat('Y-m-d', $snapshotInput);
+        if (!$snapDt || $snapDt->format('Y-m-d') !== $snapshotInput) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid snapshotDate. Expected YYYY-MM-DD.']);
+            exit;
+        }
+        if ($snapDt < $fromDate || $snapDt > $toDate) {
+            http_response_code(400);
+            echo json_encode(['error' => 'snapshotDate must fall within the report From and To dates.']);
+            exit;
+        }
+
+        $dEsc = mysqli_real_escape_string($db, $snapshotInput);
+        $qohMap = $qoh_at_date($dEsc, array_keys($skuMeta));
+        $lines = [];
+        foreach ($skuMeta as $sid => $meta) {
+            $q = $qohMap[$sid] ?? 0.0;
+            $lv = round($q * $meta['effective'] * $meta['landing'], 2);
+            if ($lv <= 0) {
+                continue;
+            }
+            $lines[] = ['stockid' => $sid, 'lineValue' => $lv];
+        }
+        usort($lines, function ($a, $b) {
+            return $b['lineValue'] <=> $a['lineValue'];
+        });
+        $topN = 50;
+        $top = array_slice($lines, 0, $topN);
+        $otherLines = array_slice($lines, $topN);
+        $otherValue = 0.0;
+        foreach ($otherLines as $ol) {
+            $otherValue += $ol['lineValue'];
+        }
+        $otherValue = round($otherValue, 2);
+        $totalValue = 0.0;
+        foreach ($lines as $ln) {
+            $totalValue += $ln['lineValue'];
+        }
+        $totalValue = round($totalValue, 2);
+
+        $metaById = [];
+        if (!empty($top)) {
+            $ids = [];
+            foreach ($top as $row) {
+                $ids[] = "'" . mysqli_real_escape_string($db, $row['stockid']) . "'";
+            }
+            $inSql = implode(',', $ids);
+            $descRes = run_sql("SELECT stockid, mnfCode, mnfpno, description, manufacturers_name FROM tmp_report WHERE stockid IN ($inSql)", $db);
+            while ($row = DB_fetch_array($descRes)) {
+                $metaById[$row['stockid']] = $row;
+            }
+        }
+        $breakdownRows = [];
+        foreach ($top as $row) {
+            $sid = $row['stockid'];
+            $m = $metaById[$sid] ?? [];
+            $q = $qohMap[$sid] ?? 0.0;
+            $breakdownRows[] = [
+                'stockid'            => $sid,
+                'mnfCode'            => $m['mnfCode'] ?? '',
+                'mnfpno'             => $m['mnfpno'] ?? '',
+                'description'        => $m['description'] ?? '',
+                'manufacturers_name' => $m['manufacturers_name'] ?? '',
+                'qoh'                => round((float) $q, 4),
+                'lineValue'          => $row['lineValue'],
+            ];
+        }
+
+        mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS tmp_report");
+        echo json_encode([
+            'snapshotDate'      => $snapshotInput,
+            'totalValue'        => $totalValue,
+            'breakdown'         => $breakdownRows,
+            'otherCount'        => count($otherLines),
+            'otherValue'        => $otherValue,
+            'qohSnapshotCache'  => $qohSnapshotCacheStats,
+        ]);
+        exit;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 6: Valuation timeline (cached: historical points reuse DB; subset ranges reuse rows from
+    // any superseding report window with same cost_basis_hash; current month + misses recalc)
     // ═══════════════════════════════════════════════════════════
     $valuationTimeline = [];
     $timelineCacheStats = [
-        'fromCache'   => 0,
-        'computed'    => 0,
-        'bypassed'    => false,
+        'fromCache'           => 0,
+        'fromCacheSuperset'   => 0,
+        'computed'            => 0,
+        'bypassed'            => false,
     ];
-    $timelineDates = crosssection_valuation_timeline_dates($fromDate, $toDate);
     $forceRefreshTimelineCache = !empty($_POST['forceTimelineCacheRefresh']);
+
+    $detailFromInput = '';
+    $detailToInput = '';
+    $granularityPost = 'daily';
+    if ($action === 'valuationDetailTimeline') {
+        $detailFromInput = trim($_POST['detailFrom'] ?? '');
+        $detailToInput = trim($_POST['detailTo'] ?? '');
+        $granularityPost = isset($_POST['granularity']) ? trim((string) $_POST['granularity']) : 'daily';
+        if (!in_array($granularityPost, ['daily', 'weekly'], true)) {
+            $granularityPost = 'daily';
+        }
+
+        $detailFromDt = DateTime::createFromFormat('Y-m-d', $detailFromInput);
+        $detailToDt = DateTime::createFromFormat('Y-m-d', $detailToInput);
+        $dfOk = $detailFromDt && $detailFromDt->format('Y-m-d') === $detailFromInput;
+        $dtOk = $detailToDt && $detailToDt->format('Y-m-d') === $detailToInput;
+        if (!$dfOk || !$dtOk) {
+            http_response_code(400);
+            echo json_encode(['error' => 'detailFrom and detailTo must be valid YYYY-MM-DD dates.']);
+            exit;
+        }
+        if ($detailFromDt > $detailToDt) {
+            http_response_code(400);
+            echo json_encode(['error' => 'detailFrom must be on or before detailTo.']);
+            exit;
+        }
+        if ($detailFromDt < $fromDate || $detailToDt > $toDate) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Detail range must fall within the report From and To dates.']);
+            exit;
+        }
+
+        $spanDays = (int) $detailFromDt->diff($detailToDt)->format('%a');
+        if ($granularityPost === 'daily') {
+            $timelineDates = crosssection_valuation_timeline_dates_daily($detailFromDt, $detailToDt);
+        } else {
+            if ($spanDays > 2800) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Weekly detail range is too wide (max ~2800 days).']);
+                exit;
+            }
+            $timelineDates = crosssection_valuation_timeline_dates_weekly($detailFromDt, $detailToDt);
+        }
+        if (count($timelineDates) > 400) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Too many timeline points (max 400). Zoom in further or use weekly detail.']);
+            exit;
+        }
+    } else {
+        $timelineDates = crosssection_valuation_timeline_dates($fromDate, $toDate);
+    }
 
     ksort($skuMeta);
     $hashLines = [];
@@ -330,41 +707,9 @@ if (isset($_POST['to'])) {
         PRIMARY KEY (report_from, report_to, snapshot_date)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", $db);
 
-    $qoh_at_date = function ($dateSqlEscaped) use ($db, $run_sql) {
-        run_sql("CREATE TEMPORARY TABLE tmp_snap_moves (
-            stockid VARCHAR(50) NOT NULL,
-            loccode VARCHAR(10) NOT NULL,
-            stkmoveno INT NOT NULL,
-            PRIMARY KEY (stockid, loccode)
-        ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
-
-        run_sql("INSERT INTO tmp_snap_moves
-              SELECT stockid, loccode, MAX(stkmoveno)
-              FROM stockmoves sm
-              LEFT JOIN systypes st ON sm.type = st.typeid
-              WHERE trandate <= '$dateSqlEscaped'
-                AND NOT (
-                    LOWER(COALESCE(st.typename, '')) = 'dc'
-                    OR LOWER(COALESCE(st.typename, '')) LIKE '%shop sale%'
-                )
-              GROUP BY stockid, loccode", $db);
-
-        $map = [];
-        $res = run_sql("SELECT sm.stockid, SUM(sm.newqoh) AS qoh
-                  FROM stockmoves sm
-                  INNER JOIN tmp_snap_moves m
-                      ON sm.stockid = m.stockid
-                     AND sm.loccode = m.loccode
-                     AND sm.stkmoveno = m.stkmoveno
-                  GROUP BY sm.stockid", $db);
-        while ($row = DB_fetch_array($res)) {
-            $map[$row['stockid']] = (float)$row['qoh'];
-        }
-        run_sql("DROP TEMPORARY TABLE tmp_snap_moves", $db);
-        return $map;
-    };
-
     $cachedByDate = [];
+    /** @var array<string, 'exact'|'superset'> */
+    $timelineCacheHitKind = [];
     $nowMonth = (new DateTime('today'))->format('Y-m');
     if (!$forceRefreshTimelineCache && !empty($timelineDates)) {
         $inList = [];
@@ -372,19 +717,30 @@ if (isset($_POST['to'])) {
             $inList[] = "'" . mysqli_real_escape_string($db, $d) . "'";
         }
         $inSql = implode(',', $inList);
+        $hashEsc = mysqli_real_escape_string($db, $costBasisHash);
+        // Snapshot totals depend only on inventory-at-date + cost basis, not on report_from/report_to.
+        // Reuse any cached row whose stored window fully contains this request's [from, to].
         $cacheRes = run_sql(
-            "SELECT snapshot_date, total_value, cost_basis_hash
+            "SELECT snapshot_date, total_value, report_from, report_to
                FROM crosssection_valuation_timeline_cache
-              WHERE report_from = '$from'
-                AND report_to = '$to'
-                AND snapshot_date IN ($inSql)",
+              WHERE cost_basis_hash = '$hashEsc'
+                AND snapshot_date IN ($inSql)
+                AND report_from <= '$from'
+                AND report_to >= '$to'
+              ORDER BY (report_from = '$from' AND report_to = '$to') DESC,
+                       report_from ASC,
+                       report_to DESC",
             $db
         );
         while ($row = DB_fetch_array($cacheRes)) {
             $sd = $row['snapshot_date'];
-            if ($row['cost_basis_hash'] === $costBasisHash) {
-                $cachedByDate[$sd] = (float)$row['total_value'];
+            if (isset($cachedByDate[$sd])) {
+                continue;
             }
+            $cachedByDate[$sd] = (float)$row['total_value'];
+            $timelineCacheHitKind[$sd] = ($row['report_from'] === $from && $row['report_to'] === $to)
+                ? 'exact'
+                : 'superset';
         }
     }
     $timelineCacheStats['bypassed'] = $forceRefreshTimelineCache;
@@ -404,11 +760,14 @@ if (isset($_POST['to'])) {
                 'totalValue' => round($totalVal, 2),
             ];
             $timelineCacheStats['fromCache']++;
+            if (($timelineCacheHitKind[$dStr] ?? '') === 'superset') {
+                $timelineCacheStats['fromCacheSuperset']++;
+            }
             continue;
         }
 
         $dEsc = mysqli_real_escape_string($db, $dStr);
-        $qohMap = $qoh_at_date($dEsc);
+        $qohMap = $qoh_at_date($dEsc, array_keys($skuMeta));
         $totalVal = 0.0;
         foreach ($skuMeta as $sid => $meta) {
             $q = $qohMap[$sid] ?? 0.0;
@@ -437,10 +796,25 @@ if (isset($_POST['to'])) {
 
     mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS tmp_report");
 
+    if ($action === 'valuationDetailTimeline') {
+        echo json_encode([
+            'valuationTimeline'       => $valuationTimeline,
+            'valuationTimelineCache'  => $timelineCacheStats,
+            'qohSnapshotCache'        => $qohSnapshotCacheStats,
+            'detailRange'             => [
+                'from'        => $detailFromInput,
+                'to'          => $detailToInput,
+                'granularity' => $granularityPost,
+            ],
+        ]);
+        exit;
+    }
+
     echo json_encode([
         'rows'                   => $response,
         'valuationTimeline'      => $valuationTimeline,
         'valuationTimelineCache' => $timelineCacheStats,
+        'qohSnapshotCache'       => $qohSnapshotCacheStats,
     ]);
     exit;
 }
@@ -516,11 +890,59 @@ include_once("includes/sidebar.php");
                     <div class="box-header with-border">
                         <h3 class="box-title">Inventory valuation over period</h3>
                     </div>
-                    <div class="box-body" style="position: relative; min-height: 300px; max-height: 400px;">
-                        <p class="text-muted" style="margin-top: 0; font-size: 12px;">Points: report start date, the 1st of each month in the range, and end date. Same SKUs, exclusions, and unit costing as the table (quantities from stock moves per date).</p>
-                        <div id="valuationTimelineChartScroller" style="overflow-x: auto; overflow-y: hidden; width: 100%;">
-                            <canvas id="valuationTimelineChart" height="280"></canvas>
+                    <div class="box-body" style="position: relative;">
+                        <p class="text-muted" style="margin-top: 0; font-size: 12px;">Default series: report start, first of each month in range, and end date (same SKUs, exclusions, and costing as the table). Wheel zoom and drag pan on the chart; click a point for top SKUs at that date; use detail buttons to load daily/weekly points for the visible range (server recomputes).</p>
+                        <div class="btn-toolbar" style="margin-bottom: 8px; flex-wrap: wrap;">
+                            <div class="btn-group btn-group-sm" style="margin-bottom: 4px;">
+                                <button type="button" class="btn btn-default" id="valuationChartResetZoom" title="Show full range"><i class="fa fa-search-minus"></i> Reset zoom</button>
+                                <button type="button" class="btn btn-default" id="valuationChartDailyDetail" title="Replace chart with daily snapshots for indices currently visible"><i class="fa fa-calendar"></i> Daily detail (visible)</button>
+                                <button type="button" class="btn btn-default" id="valuationChartWeeklyDetail" title="Replace chart with weekly snapshots for indices currently visible"><i class="fa fa-calendar-o"></i> Weekly detail (visible)</button>
+                            </div>
+                            <span class="text-muted small" style="margin-left: 8px; line-height: 28px;">Wheel: zoom · Drag: pan · Click point: breakdown</span>
                         </div>
+                        <div id="valuationChartVisibleRange" class="text-muted small" style="margin-bottom: 6px;"></div>
+                        <div id="valuationChartDetailNote" class="text-info small" style="margin-bottom: 6px; display: none;"></div>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="valuationTimelineChart"></canvas>
+                        </div>
+                        <p class="text-muted small" style="margin: 6px 0 4px;">Overview (full series)</p>
+                        <div style="height: 56px; position: relative; max-width: 100%;">
+                            <canvas id="valuationTimelineNavChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="valuationDrilldownModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Valuation breakdown <span id="valuationDrilldownModalDate"></span></h4>
+                    </div>
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <p class="text-muted" id="valuationDrilldownSummary" style="margin-top: 0;"></p>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-condensed table-bordered" style="font-size: 12px;">
+                                <thead>
+                                    <tr>
+                                        <th>Stock ID</th>
+                                        <th>Mnf code</th>
+                                        <th>Part no.</th>
+                                        <th>Description</th>
+                                        <th>Brand</th>
+                                        <th class="text-right">QOH @ date</th>
+                                        <th class="text-right">Line value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="valuationDrilldownTbody"></tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted small" id="valuationDrilldownOther" style="display: none;"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -560,7 +982,15 @@ include_once("includes/sidebar.php");
 
 <?php include_once("includes/footer.php"); ?>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
 <script>
+(function () {
+    if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
+        Chart.register(ChartZoom);
+    }
+})();
 $(document).ready(function() {
     function formatAmount2(n) {
         var x = Math.round((parseFloat(n) + Number.EPSILON) * 100) / 100;
@@ -585,6 +1015,10 @@ $(document).ready(function() {
     }
 
     var valuationChartInstance = null;
+    var valuationNavChartInstance = null;
+    var valuationTimelineRaw = [];
+    var valuationTimelineDetailMeta = null;
+    var valuationBreakdownXhr = null;
 
     function formatTimelineLabel(isoDate) {
         if (!isoDate || typeof isoDate !== 'string') {
@@ -620,57 +1054,350 @@ $(document).ready(function() {
         return labels;
     }
 
+    function getVisibleIndexRange(chart) {
+        if (!chart || !chart.scales || !chart.scales.x) {
+            return null;
+        }
+        var x = chart.scales.x;
+        var n = valuationTimelineRaw.length;
+        if (!n) {
+            return null;
+        }
+        var min = typeof x.min === 'number' ? x.min : 0;
+        var max = typeof x.max === 'number' ? x.max : (n - 1);
+        var i0 = Math.max(0, Math.floor(Math.min(min, max)));
+        var i1 = Math.min(n - 1, Math.ceil(Math.max(min, max)));
+        if (i0 > i1) {
+            var t = i0; i0 = i1; i1 = t;
+        }
+        return { i0: i0, i1: i1 };
+    }
+
+    function updateVisibleRangeLabel(chart) {
+        var r = getVisibleIndexRange(chart);
+        var el = $('#valuationChartVisibleRange');
+        if (!r || !valuationTimelineRaw.length) {
+            el.text('');
+            return;
+        }
+        var d0 = valuationTimelineRaw[r.i0] && valuationTimelineRaw[r.i0].date;
+        var d1 = valuationTimelineRaw[r.i1] && valuationTimelineRaw[r.i1].date;
+        var cnt = r.i1 - r.i0 + 1;
+        if (d0 && d1) {
+            el.text('Showing: ' + d0 + ' — ' + d1 + ' (' + cnt + ' point' + (cnt !== 1 ? 's' : '') + ' visible)');
+        }
+    }
+
+    function buildChartOptions(denseSeries) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: denseSeries ? false : undefined,
+            interaction: { mode: 'nearest', intersect: false, axis: 'x' },
+            onClick: function(evt, elements) {
+                if (!elements || !elements.length) {
+                    return;
+                }
+                var idx = elements[0].index;
+                var pt = valuationTimelineRaw[idx];
+                if (pt && pt.date) {
+                    openValuationBreakdownModal(pt.date);
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(items) {
+                            var i = items[0].dataIndex;
+                            var p = valuationTimelineRaw[i];
+                            return p && p.date ? p.date : '';
+                        },
+                        label: function(ctx) {
+                            return formatAmount2(ctx.parsed.y);
+                        }
+                    }
+                },
+                zoom: {
+                    limits: {
+                        x: { min: 'original', max: 'original', minRange: 1 }
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: 'x',
+                        onPanComplete: function(ctx) {
+                            updateVisibleRangeLabel(ctx.chart);
+                        }
+                    },
+                    zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: 'x',
+                        onZoomComplete: function(ctx) {
+                            updateVisibleRangeLabel(ctx.chart);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        autoSkip: true,
+                        maxTicksLimit: denseSeries ? 18 : 24
+                    }
+                },
+                y: {
+                    ticks: {
+                        callback: function(v) {
+                            return formatAmount2(v);
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    function destroyValuationCharts() {
+        if (valuationChartInstance) {
+            valuationChartInstance.destroy();
+            valuationChartInstance = null;
+        }
+        if (valuationNavChartInstance) {
+            valuationNavChartInstance.destroy();
+            valuationNavChartInstance = null;
+        }
+    }
+
     function updateValuationChart(timeline) {
         var $row = $('#valuationChartRow');
+        var $detailNote = $('#valuationChartDetailNote');
         if (!timeline || timeline.length === 0) {
             $row.hide();
-            if (valuationChartInstance) {
-                valuationChartInstance.destroy();
-                valuationChartInstance = null;
-            }
+            valuationTimelineRaw = [];
+            valuationTimelineDetailMeta = null;
+            $detailNote.hide().text('');
+            destroyValuationCharts();
             return;
         }
         $row.show();
+        valuationTimelineRaw = timeline.slice();
+        if (!valuationTimelineDetailMeta) {
+            $detailNote.hide().text('');
+        }
+
         var rawLabels = timeline.map(function(p) { return formatTimelineLabel(p.date); });
         var labels = thinTimelineLabels(rawLabels);
         var values = timeline.map(function(p) { return parseFloat(p.totalValue) || 0; });
         var denseSeries = values.length > 72;
 
-        var canvas = document.getElementById('valuationTimelineChart');
-        var scroller = document.getElementById('valuationTimelineChartScroller');
-        var parentWidth = (scroller && scroller.clientWidth) ? scroller.clientWidth : 900;
-        var dynamicWidth = Math.max(parentWidth, values.length * 28);
-        canvas.width = dynamicWidth;
-        canvas.style.width = dynamicWidth + 'px';
-        canvas.style.minWidth = parentWidth + 'px';
+        var navVals = values.slice();
+        var navLabels = rawLabels.slice();
 
-        var ctx = canvas.getContext('2d');
-        if (valuationChartInstance) {
-            valuationChartInstance.destroy();
-            valuationChartInstance = null;
+        destroyValuationCharts();
+
+        var canvas = document.getElementById('valuationTimelineChart');
+        if (!canvas || typeof Chart === 'undefined') {
+            return;
         }
-        valuationChartInstance = new Chart(ctx).Line({
-            labels: labels,
-            datasets: [{
-                label: 'Total stock value',
-                fillColor: 'rgba(60,141,188,0.12)',
-                strokeColor: 'rgba(60,141,188,1)',
-                pointColor: 'rgba(60,141,188,1)',
-                pointStrokeColor: '#fff',
-                pointHighlightFill: '#fff',
-                pointHighlightStroke: 'rgba(60,141,188,1)',
-                data: values
-            }]
-        }, {
-            responsive: true,
-            maintainAspectRatio: false,
-            legendTemplate: '',
-            showScale: true,
-            animation: !denseSeries,
-            pointDot: !denseSeries,
-            bezierCurve: false
+
+        valuationChartInstance = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total stock value',
+                    data: values,
+                    borderColor: 'rgb(60, 141, 188)',
+                    backgroundColor: 'rgba(60, 141, 188, 0.12)',
+                    fill: true,
+                    tension: 0,
+                    pointRadius: denseSeries ? 0 : 3,
+                    pointHoverRadius: denseSeries ? 4 : 5,
+                    borderWidth: 2
+                }]
+            },
+            options: buildChartOptions(denseSeries)
+        });
+
+        var navCanvas = document.getElementById('valuationTimelineNavChart');
+        if (navCanvas) {
+            valuationNavChartInstance = new Chart(navCanvas, {
+                type: 'line',
+                data: {
+                    labels: navLabels,
+                    datasets: [{
+                        label: 'Overview',
+                        data: navVals,
+                        borderColor: 'rgba(100, 100, 100, 0.55)',
+                        backgroundColor: 'rgba(60, 141, 188, 0.08)',
+                        fill: true,
+                        tension: 0,
+                        pointRadius: 0,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+
+        updateVisibleRangeLabel(valuationChartInstance);
+    }
+
+    function setDetailNote(meta) {
+        var el = $('#valuationChartDetailNote');
+        valuationTimelineDetailMeta = meta;
+        if (!meta) {
+            el.hide().text('');
+            return;
+        }
+        el.show().text('Detail series: ' + meta.granularity + ' points from ' + meta.from + ' to ' + meta.to + ' (report range unchanged). Run Search to restore default series.');
+    }
+
+    function fetchDetailTimeline(granularity) {
+        var from = $('.fromDate').val();
+        var to = $('.toDate').val();
+        if (!from || !to || !valuationChartInstance || !valuationTimelineRaw.length) {
+            alert('Load a report first, then zoom to the range you want to expand.');
+            return;
+        }
+        var r = getVisibleIndexRange(valuationChartInstance);
+        if (!r) {
+            return;
+        }
+        var d0 = valuationTimelineRaw[r.i0].date;
+        var d1 = valuationTimelineRaw[r.i1].date;
+        if (!d0 || !d1) {
+            return;
+        }
+        $("#loadingMessage").show();
+        $.ajax({
+            url: 'index.php',
+            method: 'POST',
+            dataType: 'json',
+            timeout: 600000,
+            data: {
+                from: from,
+                to: to,
+                action: 'valuationDetailTimeline',
+                detailFrom: d0,
+                detailTo: d1,
+                granularity: granularity
+            }
+        }).done(function(resp) {
+            if (resp && resp.error) {
+                alert(resp.error);
+                return;
+            }
+            if (resp && resp.valuationTimeline && resp.valuationTimeline.length) {
+                var dr = resp.detailRange || { from: d0, to: d1, granularity: granularity };
+                setDetailNote(dr);
+                updateValuationChart(resp.valuationTimeline);
+            } else {
+                alert('No timeline data returned for this range.');
+            }
+        }).fail(function(xhr) {
+            var msg = 'Request failed';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+            } else if (xhr.status === 400 && xhr.responseText) {
+                try {
+                    var j = JSON.parse(xhr.responseText);
+                    if (j.error) {
+                        msg = j.error;
+                    }
+                } catch (e) { /* ignore */ }
+            }
+            alert(msg);
+        }).always(function() {
+            $("#loadingMessage").hide();
         });
     }
+
+    function openValuationBreakdownModal(isoDate) {
+        var from = $('.fromDate').val();
+        var to = $('.toDate').val();
+        if (!from || !to) {
+            return;
+        }
+        $('#valuationDrilldownModalDate').text('— ' + isoDate);
+        $('#valuationDrilldownSummary').text('Loading…');
+        $('#valuationDrilldownTbody').empty();
+        $('#valuationDrilldownOther').hide().text('');
+        $('#valuationDrilldownModal').modal('show');
+
+        if (valuationBreakdownXhr) {
+            valuationBreakdownXhr.abort();
+        }
+        valuationBreakdownXhr = $.ajax({
+            url: 'index.php',
+            method: 'POST',
+            dataType: 'json',
+            timeout: 600000,
+            data: {
+                from: from,
+                to: to,
+                action: 'valuationBreakdown',
+                snapshotDate: isoDate
+            }
+        }).done(function(resp) {
+            if (resp && resp.error) {
+                $('#valuationDrilldownSummary').text(resp.error);
+                return;
+            }
+            if (!resp || !resp.breakdown) {
+                $('#valuationDrilldownSummary').text('No data.');
+                return;
+            }
+            $('#valuationDrilldownSummary').text('Total value at snapshot: ' + formatAmount2(resp.totalValue));
+            var $tb = $('#valuationDrilldownTbody');
+            $tb.empty();
+            for (var i = 0; i < resp.breakdown.length; i++) {
+                var r = resp.breakdown[i];
+                var $tr = $('<tr>');
+                $tr.append($('<td>').text(r.stockid || ''));
+                $tr.append($('<td>').text(r.mnfCode || ''));
+                $tr.append($('<td>').text(r.mnfpno || ''));
+                $tr.append($('<td>').text(r.description || ''));
+                $tr.append($('<td>').text(r.manufacturers_name || ''));
+                $tr.append($('<td class="text-right">').text(formatAmount2(r.qoh)));
+                $tr.append($('<td class="text-right">').text(formatAmount2(r.lineValue)));
+                $tb.append($tr);
+            }
+            if (resp.otherCount > 0) {
+                $('#valuationDrilldownOther').show().text(
+                    'Other SKUs: ' + resp.otherCount + ' — combined value ' + formatAmount2(resp.otherValue)
+                );
+            }
+        }).fail(function(xhr) {
+            var msg = 'Request failed';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+            }
+            $('#valuationDrilldownSummary').text(msg);
+        });
+    }
+
+    $('#valuationChartResetZoom').on('click', function() {
+        if (valuationChartInstance && typeof valuationChartInstance.resetZoom === 'function') {
+            valuationChartInstance.resetZoom();
+            updateVisibleRangeLabel(valuationChartInstance);
+        }
+    });
+    $('#valuationChartDailyDetail').on('click', function() { fetchDetailTimeline('daily'); });
+    $('#valuationChartWeeklyDetail').on('click', function() { fetchDetailTimeline('weekly'); });
 
     let table = $('#datatable').DataTable({
         dom: 'Bflrtip',
@@ -788,6 +1515,7 @@ $(document).ready(function() {
         }
 
         var mySeq = ++searchRequestSeq;
+        setDetailNote(null);
 
         if (searchActiveXhr) {
             searchActiveXhr.abort();
