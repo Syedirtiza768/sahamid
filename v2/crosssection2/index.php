@@ -478,6 +478,16 @@ if (isset($_POST['to'])) {
         ];
     }
 
+    // Same quantity basis as itemsReport/index.php: current total locstock quantity across all locations.
+    $currentTotalQtyByStockid = [];
+    $resCurrentQty = run_sql("SELECT l.stockid, SUM(l.quantity) AS total_qty
+                  FROM locstock l
+                  INNER JOIN tmp_report r ON l.stockid = r.stockid
+                  GROUP BY l.stockid", $db);
+    while ($qtyRow = DB_fetch_array($resCurrentQty)) {
+        $currentTotalQtyByStockid[$qtyRow['stockid']] = (float)$qtyRow['total_qty'];
+    }
+
     // ═══════════════════════════════════════════════════════════
     // STEP 5: Fetch tmp_report and compute final values in PHP
     // ═══════════════════════════════════════════════════════════
@@ -489,8 +499,8 @@ if (isset($_POST['to'])) {
         $closeQty = (float)$item['qohB'];
         $sid      = $item['stockid'];
 
-        // Weighted unit price from igp_parchi (same method as itemsReport)
-        $qtyForPrice = max($openQty, $closeQty);
+        // Weighted unit price from igp_parchi using the exact same quantity basis as itemsReport.
+        $qtyForPrice = $currentTotalQtyByStockid[$sid] ?? 0;
         $priceData = calculatePriceForStock($parchinoData[$sid] ?? [], $qtyForPrice);
         $unitPrice = (float)$priceData['weighted_unit_price'];
 
@@ -525,8 +535,8 @@ if (isset($_POST['to'])) {
 
         $item['adjust_unit_price'] = $latestAdjust;
         $item['landing_factor']    = $latestLandingFactor;
-        // Apply adjusted-price fallback for the exposed unit cost as well.
-        $item['unitPriceCost']     = round($effectiveUnitForValuation, 2);
+        // Match itemsReport/frontend.php Unit Price column exactly.
+        $item['unitPriceCost']     = round($unitPrice, 2);
         $item['totalAmountFrom']   = round($openQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
         $item['totalAmountTo']     = round($closeQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
 
