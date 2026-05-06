@@ -535,8 +535,12 @@ if (isset($_POST['to'])) {
 
         $item['adjust_unit_price'] = $latestAdjust;
         $item['landing_factor']    = $latestLandingFactor;
-        // Match itemsReport/frontend.php Unit Price column exactly.
-        $item['unitPriceCost']     = round($unitPrice, 2);
+        // Match itemsReport "Adj. Price": (weighted unit price if present, else adjust price) × landing factor.
+        // Example:
+        // - weighted 1391.60, factor 1.4  => 1948.24
+        // - adjust   4945.50, factor 1.4  => 6923.70
+        $unitPriceCost = $effectiveUnitForValuation * $latestLandingFactor;
+        $item['unitPriceCost']     = round($unitPriceCost, 2);
         $item['totalAmountFrom']   = round($openQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
         $item['totalAmountTo']     = round($closeQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
 
