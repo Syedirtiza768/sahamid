@@ -1,9 +1,13 @@
 {
     "require": {
+        "php": ">=7.3",
         "nesbot/carbon": "2.21.3",
-        "phpoffice/phpspreadsheet": "^1.29"
+        "phpoffice/phpspreadsheet": "~1.25.0"
     },
     "config": {
+        "platform": {
+            "php": "7.3.7"
+        },
         "audit": {
             "block-insecure": false
         }
