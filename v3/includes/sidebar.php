@@ -14,6 +14,11 @@
                 <i class="fa fa-tasks"></i> <span>Document Manager</span>
             </a>
         </li>
+        <li class="treeview <?php ecif($active == "ib_form_sheet","active") ?>">
+            <a href="<?php echo $NewRootPath; ?>v3/ib_form_sheet.php">
+                <i class="fa fa-table"></i> <span>IB form sheet</span>
+            </a>
+        </li>
         <?php if(userHasPermission($db, 'dms_dashboard')){ ?>
             <li>
                 <a target="_blank" href="<?php echo $NewRootPath; ?>v2/DMS_Dashboard">

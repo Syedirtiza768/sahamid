@@ -36,6 +36,7 @@ services:
       - ./backup/sahamid_data.sql:/docker-entrypoint-initdb.d/03-sahamid-data.sql:ro
       - "./localhost(4).sql:/docker-entrypoint-initdb.d/04-sah_saherp.sql:ro"
       - ./docker/init-db/05-dms-tables.sql:/docker-entrypoint-initdb.d/05-dms-tables.sql:ro
+      - ./docker/init-db/06-ib_form_sheet.sql:/docker-entrypoint-initdb.d/06-ib_form_sheet.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
       interval: 10s
