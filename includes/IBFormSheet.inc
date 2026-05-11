@@ -123,6 +123,106 @@ if (!function_exists('ib_form_sheet_normalize_month')) {
 	/**
 	 * @return array<string,mixed>|null
 	 */
+	function ib_form_sheet_get_by_id($db, $id) {
+		$id = (int)$id;
+		if ($id < 1) {
+			return null;
+		}
+		$st = mysqli_prepare($db, 'SELECT * FROM ib_form_sheet_entries WHERE id = ? LIMIT 1');
+		if (!$st) {
+			return null;
+		}
+		mysqli_stmt_bind_param($st, 'i', $id);
+		mysqli_stmt_execute($st);
+		$result = mysqli_stmt_get_result($st);
+		$row = $result ? mysqli_fetch_assoc($result) : null;
+		mysqli_stmt_close($st);
+		return $row ?: null;
+	}
+
+	/**
+	 * @return array{ok:bool,error?:string}
+	 */
+	function ib_form_sheet_delete_by_id($db, $id) {
+		$id = (int)$id;
+		if ($id < 1) {
+			return ['ok' => false, 'error' => 'Invalid id'];
+		}
+		$st = mysqli_prepare($db, 'DELETE FROM ib_form_sheet_entries WHERE id = ?');
+		if (!$st) {
+			return ['ok' => false, 'error' => mysqli_error($db)];
+		}
+		mysqli_stmt_bind_param($st, 'i', $id);
+		$ok = mysqli_stmt_execute($st);
+		$affected = mysqli_stmt_affected_rows($st);
+		$err = $ok ? '' : mysqli_stmt_error($st);
+		mysqli_stmt_close($st);
+		if (!$ok) {
+			return ['ok' => false, 'error' => $err ?: 'Delete failed'];
+		}
+		if ($affected < 1) {
+			return ['ok' => false, 'error' => 'No row deleted'];
+		}
+		return ['ok' => true];
+	}
+
+	/**
+	 * Update an existing row by primary key (month must stay unique across other rows).
+	 * @return array{ok:bool,error?:string}
+	 */
+	function ib_form_sheet_update_by_id($db, $id, array $row, $userId = '') {
+		$id = (int)$id;
+		if ($id < 1) {
+			return ['ok' => false, 'error' => 'Invalid id'];
+		}
+		$period = ib_form_sheet_normalize_month($row['period_month'] ?? '');
+		if (!$period) {
+			return ['ok' => false, 'error' => 'Invalid month'];
+		}
+		$gst = ib_form_sheet_parse_amount($row['total_payment_gst'] ?? 0);
+		$non = ib_form_sheet_parse_amount($row['total_payment_nongst_cash'] ?? 0);
+		$intl = ib_form_sheet_parse_amount($row['total_payment_international'] ?? 0);
+		$fr = ib_form_sheet_parse_amount($row['total_payment_freightward'] ?? 0);
+		$adv = ib_form_sheet_parse_amount($row['total_advance_payment'] ?? 0);
+		$uid = mb_substr((string)$userId, 0, 20);
+
+		$dup = mysqli_prepare($db, 'SELECT id FROM ib_form_sheet_entries WHERE period_month = ? AND id <> ? LIMIT 1');
+		if (!$dup) {
+			return ['ok' => false, 'error' => mysqli_error($db)];
+		}
+		mysqli_stmt_bind_param($dup, 'si', $period, $id);
+		mysqli_stmt_execute($dup);
+		$dupRes = mysqli_stmt_get_result($dup);
+		$other = $dupRes ? mysqli_fetch_assoc($dupRes) : null;
+		mysqli_stmt_close($dup);
+		if ($other) {
+			return ['ok' => false, 'error' => 'Another entry already uses that month.'];
+		}
+
+		$sql = 'UPDATE ib_form_sheet_entries SET period_month=?, total_payment_gst=?, total_payment_nongst_cash=?,
+			total_payment_international=?, total_payment_freightward=?, total_advance_payment=?, entered_by=?
+			WHERE id=?';
+		$st = mysqli_prepare($db, $sql);
+		if (!$st) {
+			return ['ok' => false, 'error' => mysqli_error($db)];
+		}
+		mysqli_stmt_bind_param($st, 'sdddddsi', $period, $gst, $non, $intl, $fr, $adv, $uid, $id);
+		$ok = mysqli_stmt_execute($st);
+		$err = $ok ? '' : mysqli_stmt_error($st);
+		$affected = mysqli_stmt_affected_rows($st);
+		mysqli_stmt_close($st);
+		if (!$ok) {
+			return ['ok' => false, 'error' => $err ?: 'Update failed'];
+		}
+		if ($affected < 1) {
+			return ['ok' => false, 'error' => 'No row updated (id not found?)'];
+		}
+		return ['ok' => true];
+	}
+
+	/**
+	 * @return array<string,mixed>|null
+	 */
 	function ib_form_sheet_get_by_month($db, $yearMonth) {
 		$period = ib_form_sheet_normalize_month($yearMonth);
 		if (!$period) {
