@@ -180,9 +180,6 @@ include_once 'includes/sidebar.php';
 										</td>
 									</tr>
 								<?php } ?>
-								<?php if (!$list) { ?>
-									<tr><td colspan="9">No rows yet. Run <code>Database/ib_form_sheet.sql</code> on your company database if the table is missing.</td></tr>
-								<?php } ?>
 							</tbody>
 						</table>
 					</div>
