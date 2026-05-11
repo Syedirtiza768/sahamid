@@ -1,5 +1,11 @@
 {
     "require": {
-        "nesbot/carbon": "^2.21"
+        "nesbot/carbon": "2.21.3",
+        "phpoffice/phpspreadsheet": "^1.29"
+    },
+    "config": {
+        "audit": {
+            "block-insecure": false
+        }
     }
 }

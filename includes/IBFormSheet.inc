@@ -257,4 +257,21 @@ if (!function_exists('ib_form_sheet_normalize_month')) {
 		}
 		return $rows;
 	}
+
+	/**
+	 * Row 1 column titles for Excel bulk import (same order as manual form fields).
+	 * Used by the downloadable template and for exact header matching on import.
+	 *
+	 * @return list<string>
+	 */
+	function ib_form_sheet_import_template_headers() {
+		return [
+			'Month',
+			'Total Payment (GST) at 1st of every month',
+			'Total Payment at 1st NonGST / CASH of every month',
+			'Total Payment at 1st (international) every month',
+			'Total Payment at 1st (Freightward) month',
+			'Total Advance Payment 1st of every month',
+		];
+	}
 }

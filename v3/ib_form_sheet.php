@@ -5,6 +5,41 @@ require_once $PathPrefix . 'includes/IBFormSheet.inc';
 
 $flashOk = '';
 $flashErr = '';
+$flashWarn = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_excel_upload'])) {
+	$autoload = $PathPrefix . 'vendor/autoload.php';
+	if (!is_readable($autoload)) {
+		$flashErr = 'Excel import requires Composer dependencies (vendor/). Run composer install on the server.';
+	} else {
+		require_once $autoload;
+		require_once $PathPrefix . 'includes/IBFormSheetExcel.inc';
+		if (empty($_FILES['excel_file']['tmp_name']) || (int)$_FILES['excel_file']['error'] !== UPLOAD_ERR_OK) {
+			$flashErr = 'Choose a valid Excel file to upload.';
+		} else {
+			$ext = strtolower(pathinfo($_FILES['excel_file']['name'], PATHINFO_EXTENSION));
+			if (!in_array($ext, ['xlsx', 'xls'], true)) {
+				$flashErr = 'Allowed file types: .xlsx and .xls only.';
+			} else {
+				$r = ib_form_sheet_bulk_import_from_path($db, $_FILES['excel_file']['tmp_name'], $_SESSION['UserID'] ?? '');
+				if (empty($r['ok'])) {
+					$flashErr = $r['error'] ?? 'Import failed.';
+					if (!empty($r['errors'])) {
+						$flashErr .= ' ' . implode(' ', $r['errors']);
+					}
+				} else {
+					if (!empty($r['errors'])) {
+						$_SESSION['ib_form_bulk_warn'] = $r['errors'];
+					}
+					$n = (int)($r['imported'] ?? 0);
+					$s = (int)($r['skipped'] ?? 0);
+					header('Location: ib_form_sheet.php?msg=bulk&n=' . $n . '&s=' . $s . '&w=' . (!empty($r['errors']) ? '1' : '0'), true, 303);
+					exit;
+				}
+			}
+		}
+	}
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ib_form'])) {
 	$delId = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : 0;
@@ -42,6 +77,14 @@ if (isset($_GET['msg'])) {
 		$flashOk = 'Entry updated.';
 	} elseif ($_GET['msg'] === 'deleted') {
 		$flashOk = 'Entry deleted.';
+	} elseif ($_GET['msg'] === 'bulk') {
+		$n = (int)($_GET['n'] ?? 0);
+		$s = (int)($_GET['s'] ?? 0);
+		$flashOk = 'Imported ' . $n . ' row(s). Skipped ' . $s . ' empty or unparseable row(s).';
+		if (!empty($_GET['w']) && !empty($_SESSION['ib_form_bulk_warn'])) {
+			$flashWarn = implode("\n", $_SESSION['ib_form_bulk_warn']);
+			unset($_SESSION['ib_form_bulk_warn']);
+		}
 	}
 }
 
@@ -88,6 +131,9 @@ include_once 'includes/sidebar.php';
 		<?php } ?>
 		<?php if ($flashErr) { ?>
 			<div class="alert alert-danger"><?php echo htmlspecialchars($flashErr, ENT_QUOTES, 'UTF-8'); ?></div>
+		<?php } ?>
+		<?php if ($flashWarn) { ?>
+			<div class="alert alert-warning"><pre style="white-space:pre-wrap;margin:0;background:transparent;border:0;padding:0;font:inherit"><?php echo htmlspecialchars($flashWarn, ENT_QUOTES, 'UTF-8'); ?></pre></div>
 		<?php } ?>
 
 		<div class="row">
@@ -137,6 +183,29 @@ include_once 'includes/sidebar.php';
 								value="<?php echo htmlspecialchars((string)$vAdv, ENT_QUOTES, 'UTF-8'); ?>" />
 						</div>
 						<button type="submit" class="btn btn-primary"><?php echo $editId ? 'Update' : 'Create'; ?></button>
+					</form>
+				</div>
+
+				<div class="box box-default">
+					<div class="box-header with-border">
+						<h3 class="box-title">Bulk import from Excel</h3>
+						<div class="box-tools">
+							<a href="<?php echo htmlspecialchars($NewRootPath . 'v3/ib_form_sheet_template.php', ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-default btn-sm">
+								Download sample template (.xlsx)
+							</a>
+						</div>
+					</div>
+					<form class="box-body" method="post" action="" enctype="multipart/form-data">
+						<input type="hidden" name="bulk_excel_upload" value="1" />
+						<p class="text-muted">First sheet only. Row 1: use the <strong>exact</strong> template column names (any order) or six columns <strong>A–F</strong> in template order. Row 2 onward: data; up to 2000 rows. Existing months are updated. Legacy files with keyword-style headers still work when columns are detected.</p>
+						<?php if (function_exists('ib_form_sheet_import_template_headers')) { ?>
+							<p class="text-muted small" style="margin-top:-6px">Template headers: <?php echo htmlspecialchars(implode(' · ', ib_form_sheet_import_template_headers()), ENT_QUOTES, 'UTF-8'); ?></p>
+						<?php } ?>
+						<div class="form-group">
+							<label>Excel file (.xlsx or .xls)</label>
+							<input type="file" name="excel_file" class="form-control" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required />
+						</div>
+						<button type="submit" class="btn btn-default">Upload and import</button>
 					</form>
 				</div>
 
