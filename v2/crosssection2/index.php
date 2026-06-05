@@ -96,6 +96,100 @@ if (isset($_POST['to'])) {
         return $out;
     }
 
+    /** Outstanding invoice AR as at end of calendar date (dashboard basis: type 10 + GST/WHT). */
+    function crosssection_ar_at_date($conn, $dateYmd, $forceRefresh = false) {
+        $dateEsc = mysqli_real_escape_string($conn, $dateYmd);
+        if (!$forceRefresh) {
+            $cached = mysqli_query(
+                $conn,
+                "SELECT total_ar FROM crosssection_ar_snapshot_cache WHERE snapshot_date = '$dateEsc' LIMIT 1"
+            );
+            if ($cached && ($row = mysqli_fetch_assoc($cached))) {
+                return (float) $row['total_ar'];
+            }
+        }
+
+        $sql = "SELECT SUM(
+                    CASE WHEN dt.GSTwithhold = 0 AND dt.WHT = 0
+                        THEN GREATEST(0, dt.ovamount - COALESCE(a.alloc_amt, 0))
+                    WHEN dt.GSTwithhold = 0 AND dt.WHT = 1
+                        THEN GREATEST(0, dt.ovamount - COALESCE(a.alloc_amt, 0) - dt.WHTamt)
+                    WHEN dt.GSTwithhold = 1 AND dt.WHT = 0
+                        THEN GREATEST(0, dt.ovamount - COALESCE(a.alloc_amt, 0) - dt.GSTamt)
+                    WHEN dt.GSTwithhold = 1 AND dt.WHT = 1
+                        THEN GREATEST(0, dt.ovamount - COALESCE(a.alloc_amt, 0) - dt.GSTamt - dt.WHTamt)
+                    END
+                ) AS total_ar
+                FROM debtortrans dt
+                INNER JOIN invoice ON invoice.invoiceno = dt.transno
+                LEFT JOIN (
+                    SELECT transid_allocto, SUM(amt) AS alloc_amt
+                      FROM custallocns
+                     WHERE DATE(datealloc) <= '$dateEsc'
+                     GROUP BY transid_allocto
+                ) a ON a.transid_allocto = dt.id
+                WHERE dt.type = 10
+                  AND dt.reversed = 0
+                  AND DATE(dt.trandate) <= '$dateEsc'";
+
+        $res = mysqli_query($conn, $sql);
+        if (!$res) {
+            return 0.0;
+        }
+        $row = mysqli_fetch_assoc($res);
+        $total = round((float) ($row['total_ar'] ?? 0), 2);
+
+        mysqli_query(
+            $conn,
+            "INSERT INTO crosssection_ar_snapshot_cache (snapshot_date, total_ar, computed_at)
+             VALUES ('$dateEsc', $total, NOW())
+             ON DUPLICATE KEY UPDATE total_ar = VALUES(total_ar), computed_at = NOW()"
+        );
+
+        return $total;
+    }
+
+    /**
+     * @param list<string> $dates
+     * @return array{byDate: array<string, array{total: float}>, cache: array{fromCache: int, computed: int}}
+     */
+    function crosssection_ar_by_dates($conn, array $dates, $forceRefresh = false) {
+        $nowMonth = (new DateTime('today'))->format('Y-m');
+        $out = [];
+        $stats = ['fromCache' => 0, 'computed' => 0];
+        $seen = [];
+
+        foreach ($dates as $d) {
+            $d = substr((string) $d, 0, 10);
+            if ($d === '' || isset($seen[$d])) {
+                continue;
+            }
+            $seen[$d] = true;
+
+            $inCurrentMonth = (substr($d, 0, 7) === $nowMonth);
+            $bypassCache = $forceRefresh || $inCurrentMonth;
+
+            if (!$bypassCache) {
+                $dateEsc = mysqli_real_escape_string($conn, $d);
+                $cached = mysqli_query(
+                    $conn,
+                    "SELECT total_ar FROM crosssection_ar_snapshot_cache WHERE snapshot_date = '$dateEsc' LIMIT 1"
+                );
+                if ($cached && ($row = mysqli_fetch_assoc($cached))) {
+                    $out[$d] = ['total' => (float) $row['total_ar']];
+                    $stats['fromCache']++;
+                    continue;
+                }
+            }
+
+            $total = crosssection_ar_at_date($conn, $d, true);
+            $out[$d] = ['total' => $total];
+            $stats['computed']++;
+        }
+
+        return ['byDate' => $out, 'cache' => $stats];
+    }
+
     run_sql("CREATE TABLE IF NOT EXISTS crosssection_qoh_snapshot_cache (
         snapshot_date DATE NOT NULL,
         stockid VARCHAR(50) NOT NULL,
@@ -103,6 +197,13 @@ if (isset($_POST['to'])) {
         computed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (snapshot_date, stockid),
         KEY idx_cs_qoh_snap_date (snapshot_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
+
+    run_sql("CREATE TABLE IF NOT EXISTS crosssection_ar_snapshot_cache (
+        snapshot_date DATE NOT NULL,
+        total_ar DECIMAL(20,2) NOT NULL,
+        computed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (snapshot_date)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
     /** @return array<string,float>|null Full map for all $stockIds, or null if cache incomplete */
@@ -848,12 +949,25 @@ if (isset($_POST['to'])) {
 
     $ibFormByDate = crosssection_ib_form_by_date($db, $fromInput, $toInput);
 
+    $arTimelineDates = [];
+    foreach ($valuationTimeline as $pt) {
+        if (!empty($pt['date'])) {
+            $arTimelineDates[] = $pt['date'];
+        }
+    }
+    $forceArCacheRefresh = !empty($_POST['forceArCacheRefresh']) || $forceRefreshTimelineCache;
+    $arSnapshot = crosssection_ar_by_dates($db, $arTimelineDates, $forceArCacheRefresh);
+    $arByDate = $arSnapshot['byDate'];
+    $arSnapshotCacheStats = $arSnapshot['cache'];
+
     if ($action === 'valuationDetailTimeline') {
         echo json_encode([
             'valuationTimeline'       => $valuationTimeline,
             'valuationTimelineCache'  => $timelineCacheStats,
             'qohSnapshotCache'        => $qohSnapshotCacheStats,
             'ibFormByDate'            => $ibFormByDate,
+            'arByDate'                => $arByDate,
+            'arSnapshotCache'         => $arSnapshotCacheStats,
             'detailRange'             => [
                 'from'        => $detailFromInput,
                 'to'          => $detailToInput,
@@ -869,6 +983,8 @@ if (isset($_POST['to'])) {
         'valuationTimelineCache' => $timelineCacheStats,
         'qohSnapshotCache'       => $qohSnapshotCacheStats,
         'ibFormByDate'           => $ibFormByDate,
+        'arByDate'               => $arByDate,
+        'arSnapshotCache'        => $arSnapshotCacheStats,
     ]);
     exit;
 }
@@ -945,7 +1061,7 @@ include_once("includes/sidebar.php");
                         <h3 class="box-title">Inventory valuation over period</h3>
                     </div>
                     <div class="box-body" style="position: relative;">
-                        <p class="text-muted" style="margin-top: 0; font-size: 12px;">Default series: report start, first of each month in range, and end date (same SKUs, exclusions, and costing as the table). When IB form sheet months fall in range, total IB payments appear as a second line (month-start dates only). Wheel zoom and drag pan on the chart; click a point for top SKUs at that date; hover for IB payment breakdown; use detail buttons to load daily/weekly points for the visible range (server recomputes).</p>
+                        <p class="text-muted" style="margin-top: 0; font-size: 12px;">Default series: report start, first of each month in range, and end date (same SKUs, exclusions, and costing as the table). Optional overlays: SCM data (month-start only) and accounts receivable (open invoices, same basis as the dashboard outstanding widget, at each timeline date). Wheel zoom and drag pan; click a point for SKU breakdown; hover for overlay details; daily/weekly detail recomputes all series for the visible range.</p>
                         <div class="btn-toolbar" style="margin-bottom: 8px; flex-wrap: wrap;">
                             <div class="btn-group btn-group-sm" style="margin-bottom: 4px;">
                                 <button type="button" class="btn btn-default" id="valuationChartResetZoom" title="Show full range"><i class="fa fa-search-minus"></i> Reset zoom</button>
@@ -953,7 +1069,10 @@ include_once("includes/sidebar.php");
                                 <button type="button" class="btn btn-default" id="valuationChartWeeklyDetail" title="Replace chart with weekly snapshots for indices currently visible"><i class="fa fa-calendar-o"></i> Weekly detail (visible)</button>
                             </div>
                             <label id="valuationChartIbFormToggleWrap" class="checkbox-inline small" style="margin-left: 8px; margin-bottom: 4px; display: none; line-height: 28px;">
-                                <input type="checkbox" id="valuationChartShowIbForm" checked /> Show IB form payments
+                                <input type="checkbox" id="valuationChartShowIbForm" checked /> Show SCM data
+                            </label>
+                            <label id="valuationChartArToggleWrap" class="checkbox-inline small" style="margin-left: 8px; margin-bottom: 4px; display: none; line-height: 28px;">
+                                <input type="checkbox" id="valuationChartShowAr" checked /> Show accounts receivable
                             </label>
                             <span class="text-muted small" style="margin-left: 8px; line-height: 28px;">Wheel: zoom · Drag: pan · Click point: breakdown</span>
                         </div>
@@ -1078,15 +1197,24 @@ $(document).ready(function() {
     var valuationBreakdownXhr = null;
     var ibFormByDate = {};
     var showIbFormPayments = false;
+    var arByDate = {};
+    var showArReceivable = false;
 
     function hasIbFormData() {
         return ibFormByDate && Object.keys(ibFormByDate).length > 0;
     }
 
-    function syncIbFormToggleUi() {
+    function hasArData() {
+        return arByDate && Object.keys(arByDate).length > 0;
+    }
+
+    function syncOverlayToggleUi() {
         var hasIb = hasIbFormData();
+        var hasAr = hasArData();
         $('#valuationChartIbFormToggleWrap').toggle(hasIb);
         $('#valuationChartShowIbForm').prop('checked', hasIb && showIbFormPayments);
+        $('#valuationChartArToggleWrap').toggle(hasAr);
+        $('#valuationChartShowAr').prop('checked', hasAr && showArReceivable);
     }
 
     function applyIbFormResponse(resp) {
@@ -1096,7 +1224,21 @@ $(document).ready(function() {
                 showIbFormPayments = true;
             }
         }
-        syncIbFormToggleUi();
+    }
+
+    function applyArResponse(resp) {
+        if (resp && resp.arByDate && typeof resp.arByDate === 'object') {
+            arByDate = resp.arByDate;
+            if (Object.keys(arByDate).length > 0) {
+                showArReceivable = true;
+            }
+        }
+    }
+
+    function applyOverlayResponse(resp) {
+        applyIbFormResponse(resp);
+        applyArResponse(resp);
+        syncOverlayToggleUi();
     }
 
     function buildIbFormDatasetValues(timeline) {
@@ -1110,21 +1252,49 @@ $(document).ready(function() {
     }
 
     function ibFormTooltipLines(isoDate) {
-        if (!isoDate) {
+        if (!isoDate || !hasIbFormData() || !showIbFormPayments) {
             return [];
         }
         var ib = ibFormByDate[isoDate];
         if (!ib) {
-            return ['No IB form entry for this month'];
+            return ['No SCM data for this month'];
         }
         return [
-            'IB payments (total): ' + formatAmount2(ib.total),
+            'SCM data (total): ' + formatAmount2(ib.total),
             '  GST: ' + formatAmount2(ib.gst),
             '  NonGST/Cash: ' + formatAmount2(ib.nongst_cash),
             '  International: ' + formatAmount2(ib.international),
             '  Freightward: ' + formatAmount2(ib.freightward),
             '  Advance: ' + formatAmount2(ib.advance)
         ];
+    }
+
+    function arTooltipLines(isoDate) {
+        if (!isoDate || !hasArData() || !showArReceivable) {
+            return [];
+        }
+        var ar = arByDate[isoDate];
+        if (!ar) {
+            return [];
+        }
+        return [
+            'Accounts receivable: ' + formatAmount2(ar.total),
+            '  Open invoices (dashboard basis)'
+        ];
+    }
+
+    function buildArDatasetValues(timeline) {
+        return timeline.map(function(p) {
+            if (!showArReceivable || !p || !p.date) {
+                return null;
+            }
+            var ar = arByDate[p.date];
+            return ar ? ar.total : null;
+        });
+    }
+
+    function chartLegendVisible() {
+        return (hasIbFormData() && showIbFormPayments) || (hasArData() && showArReceivable);
     }
 
     function buildValuationChartDatasets(timeline, values, denseSeries) {
@@ -1141,7 +1311,7 @@ $(document).ready(function() {
         }];
         if (hasIbFormData()) {
             datasets.push({
-                label: 'Total IB payments',
+                label: 'Total SCM data',
                 data: buildIbFormDatasetValues(timeline),
                 borderColor: 'rgb(243, 156, 18)',
                 backgroundColor: 'rgba(243, 156, 18, 0.08)',
@@ -1153,6 +1323,22 @@ $(document).ready(function() {
                 borderDash: [6, 4],
                 spanGaps: false,
                 hidden: !showIbFormPayments
+            });
+        }
+        if (hasArData()) {
+            datasets.push({
+                label: 'Accounts receivable',
+                data: buildArDatasetValues(timeline),
+                borderColor: 'rgb(0, 166, 90)',
+                backgroundColor: 'rgba(0, 166, 90, 0.08)',
+                fill: false,
+                tension: 0,
+                pointRadius: denseSeries ? 0 : 3,
+                pointHoverRadius: denseSeries ? 4 : 5,
+                borderWidth: 2,
+                borderDash: [4, 3],
+                spanGaps: true,
+                hidden: !showArReceivable
             });
         }
         return datasets;
@@ -1244,7 +1430,7 @@ $(document).ready(function() {
             },
             plugins: {
                 legend: {
-                    display: hasIbFormData() && showIbFormPayments,
+                    display: chartLegendVisible(),
                     position: 'top'
                 },
                 tooltip: {
@@ -1267,10 +1453,15 @@ $(document).ready(function() {
                             }
                             var i = items[0].dataIndex;
                             var p = valuationTimelineRaw[i];
-                            if (!p || !p.date || !hasIbFormData()) {
+                            if (!p || !p.date) {
                                 return [];
                             }
-                            return ibFormTooltipLines(p.date);
+                            var ibLines = ibFormTooltipLines(p.date);
+                            var arLines = arTooltipLines(p.date);
+                            if (ibLines.length && arLines.length) {
+                                return ibLines.concat(['']).concat(arLines);
+                            }
+                            return ibLines.concat(arLines);
                         }
                     }
                 },
@@ -1448,7 +1639,7 @@ $(document).ready(function() {
                 return;
             }
             if (resp && resp.valuationTimeline && resp.valuationTimeline.length) {
-                applyIbFormResponse(resp);
+                applyOverlayResponse(resp);
                 var dr = resp.detailRange || { from: d0, to: d1, granularity: granularity };
                 setDetailNote(dr);
                 updateValuationChart(resp.valuationTimeline);
@@ -1547,6 +1738,12 @@ $(document).ready(function() {
     $('#valuationChartWeeklyDetail').on('click', function() { fetchDetailTimeline('weekly'); });
     $('#valuationChartShowIbForm').on('change', function() {
         showIbFormPayments = $(this).is(':checked');
+        if (valuationTimelineRaw.length) {
+            updateValuationChart(valuationTimelineRaw);
+        }
+    });
+    $('#valuationChartShowAr').on('change', function() {
+        showArReceivable = $(this).is(':checked');
         if (valuationTimelineRaw.length) {
             updateValuationChart(valuationTimelineRaw);
         }
@@ -1671,7 +1868,9 @@ $(document).ready(function() {
         setDetailNote(null);
         ibFormByDate = {};
         showIbFormPayments = false;
-        syncIbFormToggleUi();
+        arByDate = {};
+        showArReceivable = false;
+        syncOverlayToggleUi();
 
         if (searchActiveXhr) {
             searchActiveXhr.abort();
@@ -1705,7 +1904,7 @@ $(document).ready(function() {
                     table.clear();
                     table.rows.add(rows).draw();
                     updateStockValueCards(rows, from, to);
-                    applyIbFormResponse(response);
+                    applyOverlayResponse(response);
                     updateValuationChart(response.valuationTimeline || []);
                 } else if (Array.isArray(response)) {
                     var rows = dedupeRowsByStockId(response);

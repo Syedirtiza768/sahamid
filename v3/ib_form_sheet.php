@@ -122,7 +122,7 @@ include_once 'includes/sidebar.php';
 ?>
 <div class="content-wrapper">
 	<section class="content-header">
-		<h2>IB form sheet</h2>
+		<h2>SCM data</h2>
 		<p class="text-muted">Fields match the header row from your Excel file. One row per calendar month; create new or edit an existing row.</p>
 	</section>
 	<section class="content">

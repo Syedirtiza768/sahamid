@@ -22,7 +22,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 $headers = ib_form_sheet_import_template_headers();
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
-$sheet->setTitle('IB form sheet');
+$sheet->setTitle('SCM data');
 
 foreach ($headers as $i => $label) {
 	$coord = Coordinate::stringFromColumnIndex($i + 1) . '1';

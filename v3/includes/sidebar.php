@@ -16,7 +16,7 @@
         </li>
         <li class="treeview <?php ecif($active == "ib_form_sheet","active") ?>">
             <a href="<?php echo $NewRootPath; ?>v3/ib_form_sheet.php">
-                <i class="fa fa-table"></i> <span>IB form sheet</span>
+                <i class="fa fa-table"></i> <span>SCM data</span>
             </a>
         </li>
         <?php if(userHasPermission($db, 'dms_dashboard')){ ?>
