@@ -60,6 +60,42 @@ if (isset($_POST['to'])) {
         return $r;
     }
 
+    /** IB form sheet rows keyed by YYYY-MM-DD (month-start), within report range. */
+    function crosssection_ib_form_by_date($conn, $fromYmd, $toYmd) {
+        $fromEsc = mysqli_real_escape_string($conn, $fromYmd);
+        $toEsc = mysqli_real_escape_string($conn, $toYmd);
+        $out = [];
+        $res = mysqli_query(
+            $conn,
+            "SELECT period_month, total_payment_gst, total_payment_nongst_cash,
+                    total_payment_international, total_payment_freightward, total_advance_payment
+               FROM ib_form_sheet_entries
+              WHERE period_month >= '$fromEsc' AND period_month <= '$toEsc'
+              ORDER BY period_month"
+        );
+        if (!$res) {
+            return $out;
+        }
+        while ($row = mysqli_fetch_assoc($res)) {
+            $d = substr((string) $row['period_month'], 0, 10);
+            $gst = (float) $row['total_payment_gst'];
+            $non = (float) $row['total_payment_nongst_cash'];
+            $intl = (float) $row['total_payment_international'];
+            $fr = (float) $row['total_payment_freightward'];
+            $adv = (float) $row['total_advance_payment'];
+            $out[$d] = [
+                'gst'           => round($gst, 2),
+                'nongst_cash'   => round($non, 2),
+                'international' => round($intl, 2),
+                'freightward'   => round($fr, 2),
+                'advance'       => round($adv, 2),
+                'total'         => round($gst + $non + $intl + $fr + $adv, 2),
+            ];
+        }
+
+        return $out;
+    }
+
     run_sql("CREATE TABLE IF NOT EXISTS crosssection_qoh_snapshot_cache (
         snapshot_date DATE NOT NULL,
         stockid VARCHAR(50) NOT NULL,
@@ -810,11 +846,14 @@ if (isset($_POST['to'])) {
 
     mysqli_query($db, "DROP TEMPORARY TABLE IF EXISTS tmp_report");
 
+    $ibFormByDate = crosssection_ib_form_by_date($db, $fromInput, $toInput);
+
     if ($action === 'valuationDetailTimeline') {
         echo json_encode([
             'valuationTimeline'       => $valuationTimeline,
             'valuationTimelineCache'  => $timelineCacheStats,
             'qohSnapshotCache'        => $qohSnapshotCacheStats,
+            'ibFormByDate'            => $ibFormByDate,
             'detailRange'             => [
                 'from'        => $detailFromInput,
                 'to'          => $detailToInput,
@@ -829,6 +868,7 @@ if (isset($_POST['to'])) {
         'valuationTimeline'      => $valuationTimeline,
         'valuationTimelineCache' => $timelineCacheStats,
         'qohSnapshotCache'       => $qohSnapshotCacheStats,
+        'ibFormByDate'           => $ibFormByDate,
     ]);
     exit;
 }
@@ -905,13 +945,16 @@ include_once("includes/sidebar.php");
                         <h3 class="box-title">Inventory valuation over period</h3>
                     </div>
                     <div class="box-body" style="position: relative;">
-                        <p class="text-muted" style="margin-top: 0; font-size: 12px;">Default series: report start, first of each month in range, and end date (same SKUs, exclusions, and costing as the table). Wheel zoom and drag pan on the chart; click a point for top SKUs at that date; use detail buttons to load daily/weekly points for the visible range (server recomputes).</p>
+                        <p class="text-muted" style="margin-top: 0; font-size: 12px;">Default series: report start, first of each month in range, and end date (same SKUs, exclusions, and costing as the table). When IB form sheet months fall in range, total IB payments appear as a second line (month-start dates only). Wheel zoom and drag pan on the chart; click a point for top SKUs at that date; hover for IB payment breakdown; use detail buttons to load daily/weekly points for the visible range (server recomputes).</p>
                         <div class="btn-toolbar" style="margin-bottom: 8px; flex-wrap: wrap;">
                             <div class="btn-group btn-group-sm" style="margin-bottom: 4px;">
                                 <button type="button" class="btn btn-default" id="valuationChartResetZoom" title="Show full range"><i class="fa fa-search-minus"></i> Reset zoom</button>
                                 <button type="button" class="btn btn-default" id="valuationChartDailyDetail" title="Replace chart with daily snapshots for indices currently visible"><i class="fa fa-calendar"></i> Daily detail (visible)</button>
                                 <button type="button" class="btn btn-default" id="valuationChartWeeklyDetail" title="Replace chart with weekly snapshots for indices currently visible"><i class="fa fa-calendar-o"></i> Weekly detail (visible)</button>
                             </div>
+                            <label id="valuationChartIbFormToggleWrap" class="checkbox-inline small" style="margin-left: 8px; margin-bottom: 4px; display: none; line-height: 28px;">
+                                <input type="checkbox" id="valuationChartShowIbForm" checked /> Show IB form payments
+                            </label>
                             <span class="text-muted small" style="margin-left: 8px; line-height: 28px;">Wheel: zoom · Drag: pan · Click point: breakdown</span>
                         </div>
                         <div id="valuationChartVisibleRange" class="text-muted small" style="margin-bottom: 6px;"></div>
@@ -1033,6 +1076,87 @@ $(document).ready(function() {
     var valuationTimelineRaw = [];
     var valuationTimelineDetailMeta = null;
     var valuationBreakdownXhr = null;
+    var ibFormByDate = {};
+    var showIbFormPayments = false;
+
+    function hasIbFormData() {
+        return ibFormByDate && Object.keys(ibFormByDate).length > 0;
+    }
+
+    function syncIbFormToggleUi() {
+        var hasIb = hasIbFormData();
+        $('#valuationChartIbFormToggleWrap').toggle(hasIb);
+        $('#valuationChartShowIbForm').prop('checked', hasIb && showIbFormPayments);
+    }
+
+    function applyIbFormResponse(resp) {
+        if (resp && resp.ibFormByDate && typeof resp.ibFormByDate === 'object') {
+            ibFormByDate = resp.ibFormByDate;
+            if (Object.keys(ibFormByDate).length > 0) {
+                showIbFormPayments = true;
+            }
+        }
+        syncIbFormToggleUi();
+    }
+
+    function buildIbFormDatasetValues(timeline) {
+        return timeline.map(function(p) {
+            if (!showIbFormPayments || !p || !p.date) {
+                return null;
+            }
+            var ib = ibFormByDate[p.date];
+            return ib ? ib.total : null;
+        });
+    }
+
+    function ibFormTooltipLines(isoDate) {
+        if (!isoDate) {
+            return [];
+        }
+        var ib = ibFormByDate[isoDate];
+        if (!ib) {
+            return ['No IB form entry for this month'];
+        }
+        return [
+            'IB payments (total): ' + formatAmount2(ib.total),
+            '  GST: ' + formatAmount2(ib.gst),
+            '  NonGST/Cash: ' + formatAmount2(ib.nongst_cash),
+            '  International: ' + formatAmount2(ib.international),
+            '  Freightward: ' + formatAmount2(ib.freightward),
+            '  Advance: ' + formatAmount2(ib.advance)
+        ];
+    }
+
+    function buildValuationChartDatasets(timeline, values, denseSeries) {
+        var datasets = [{
+            label: 'Total stock value',
+            data: values,
+            borderColor: 'rgb(60, 141, 188)',
+            backgroundColor: 'rgba(60, 141, 188, 0.12)',
+            fill: true,
+            tension: 0,
+            pointRadius: denseSeries ? 0 : 3,
+            pointHoverRadius: denseSeries ? 4 : 5,
+            borderWidth: 2
+        }];
+        if (hasIbFormData()) {
+            datasets.push({
+                label: 'Total IB payments',
+                data: buildIbFormDatasetValues(timeline),
+                borderColor: 'rgb(243, 156, 18)',
+                backgroundColor: 'rgba(243, 156, 18, 0.08)',
+                fill: false,
+                tension: 0,
+                pointRadius: denseSeries ? 0 : 4,
+                pointHoverRadius: denseSeries ? 5 : 6,
+                borderWidth: 2,
+                borderDash: [6, 4],
+                spanGaps: false,
+                hidden: !showIbFormPayments
+            });
+        }
+        return datasets;
+    }
 
     function formatTimelineLabel(isoDate) {
         if (!isoDate || typeof isoDate !== 'string') {
@@ -1119,7 +1243,10 @@ $(document).ready(function() {
                 }
             },
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: hasIbFormData() && showIbFormPayments,
+                    position: 'top'
+                },
                 tooltip: {
                     callbacks: {
                         title: function(items) {
@@ -1128,7 +1255,22 @@ $(document).ready(function() {
                             return p && p.date ? p.date : '';
                         },
                         label: function(ctx) {
-                            return formatAmount2(ctx.parsed.y);
+                            if (ctx.parsed.y === null || typeof ctx.parsed.y === 'undefined') {
+                                return null;
+                            }
+                            var label = ctx.dataset.label || '';
+                            return (label ? label + ': ' : '') + formatAmount2(ctx.parsed.y);
+                        },
+                        afterBody: function(items) {
+                            if (!items || !items.length) {
+                                return [];
+                            }
+                            var i = items[0].dataIndex;
+                            var p = valuationTimelineRaw[i];
+                            if (!p || !p.date || !hasIbFormData()) {
+                                return [];
+                            }
+                            return ibFormTooltipLines(p.date);
                         }
                     }
                 },
@@ -1219,17 +1361,7 @@ $(document).ready(function() {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Total stock value',
-                    data: values,
-                    borderColor: 'rgb(60, 141, 188)',
-                    backgroundColor: 'rgba(60, 141, 188, 0.12)',
-                    fill: true,
-                    tension: 0,
-                    pointRadius: denseSeries ? 0 : 3,
-                    pointHoverRadius: denseSeries ? 4 : 5,
-                    borderWidth: 2
-                }]
+                datasets: buildValuationChartDatasets(timeline, values, denseSeries)
             },
             options: buildChartOptions(denseSeries)
         });
@@ -1316,6 +1448,7 @@ $(document).ready(function() {
                 return;
             }
             if (resp && resp.valuationTimeline && resp.valuationTimeline.length) {
+                applyIbFormResponse(resp);
                 var dr = resp.detailRange || { from: d0, to: d1, granularity: granularity };
                 setDetailNote(dr);
                 updateValuationChart(resp.valuationTimeline);
@@ -1412,6 +1545,12 @@ $(document).ready(function() {
     });
     $('#valuationChartDailyDetail').on('click', function() { fetchDetailTimeline('daily'); });
     $('#valuationChartWeeklyDetail').on('click', function() { fetchDetailTimeline('weekly'); });
+    $('#valuationChartShowIbForm').on('change', function() {
+        showIbFormPayments = $(this).is(':checked');
+        if (valuationTimelineRaw.length) {
+            updateValuationChart(valuationTimelineRaw);
+        }
+    });
 
     let table = $('#datatable').DataTable({
         dom: 'Bflrtip',
@@ -1530,6 +1669,9 @@ $(document).ready(function() {
 
         var mySeq = ++searchRequestSeq;
         setDetailNote(null);
+        ibFormByDate = {};
+        showIbFormPayments = false;
+        syncIbFormToggleUi();
 
         if (searchActiveXhr) {
             searchActiveXhr.abort();
@@ -1563,6 +1705,7 @@ $(document).ready(function() {
                     table.clear();
                     table.rows.add(rows).draw();
                     updateStockValueCards(rows, from, to);
+                    applyIbFormResponse(response);
                     updateValuationChart(response.valuationTimeline || []);
                 } else if (Array.isArray(response)) {
                     var rows = dedupeRowsByStockId(response);
