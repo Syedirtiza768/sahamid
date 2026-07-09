@@ -9,11 +9,13 @@
           <i class="fa fa-tasks"></i> <span>Tasks</span>
         </a>
       </li>
+      <?php if (userHasPermission($db, 'directorreports')) { ?>
       <li class="treeview <?php ecif($active == "salesdashboard", "active") ?>">
         <a href="<?php echo $NewRootPath; ?>v2/salesMainDashboard.php">
           <i class="fa fa-line-chart"></i> <span>Sales Dashboard</span>
         </a>
       </li>
+      <?php } ?>
       <li class="treeview <?php ecif($active == "documentmanager", "active") ?>">
         <a href="<?php echo $NewRootPath; ?>v2/Document_Manager.php">
           <i class="fa fa-tasks"></i> <span>Document Manager</span>

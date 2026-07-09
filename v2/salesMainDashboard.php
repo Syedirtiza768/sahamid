@@ -26,6 +26,20 @@ $active = "salesdashboard";
 $AllowAnyone = true;
 include_once("config.php"); // -> ../includes/session.inc : $db, $_SESSION, helpers, $NewRootPath, $salesPersonsToSwitch
 
+// Access control: only the director and admins may view this dashboard.
+// userHasPermission() returns true for holders of 'directorreports' OR '*' (admins),
+// so this single check admits exactly directors + admins — no extra permission rows needed.
+if (!userHasPermission($db, 'directorreports')) {
+	if (isset($_GET['data'])) {
+		header('Content-Type: application/json; charset=utf-8');
+		http_response_code(403);
+		echo json_encode(['error' => 'forbidden']);
+	} else {
+		header('Location: ' . $NewRootPath);
+	}
+	exit;
+}
+
 const DASH_CACHE_TTL_MINUTES = 15;
 
 /* ------------------------------------------------------------------ helpers */
@@ -66,10 +80,13 @@ function bucketLabel($ts, $res) {
 }
 
 /* ------------------------------------------------------- access & filters */
+// "Full view" = sees overall sales + can filter by salesman. Access is already
+// restricted to directors + admins above, and both should get the overall view
+// (a director oversees all salespeople), so directorreports counts here too.
 $adminLevels = [8, 10, 22];
 $isAdmin = in_array((int)($_SESSION['AccessLevel'] ?? 0), $adminLevels);
 if (function_exists('userHasPermission')) {
-	$isAdmin = $isAdmin || @userHasPermission($db, '*');
+	$isAdmin = $isAdmin || @userHasPermission($db, '*') || @userHasPermission($db, 'directorreports');
 }
 
 $selType  = $_GET['type'] ?? 'all';         // 'all' (Overall Sales) or a salesmancode
