@@ -26,10 +26,11 @@ $active = "salesdashboard";
 $AllowAnyone = true;
 include_once("config.php"); // -> ../includes/session.inc : $db, $_SESSION, helpers, $NewRootPath, $salesPersonsToSwitch
 
-// Access control: only the director and admins may view this dashboard.
-// userHasPermission() returns true for holders of 'directorreports' OR '*' (admins),
-// so this single check admits exactly directors + admins — no extra permission rows needed.
-if (!userHasPermission($db, 'directorreports')) {
+// Access control: gated on the dedicated 'sales_dashboard' permission slug.
+// userHasPermission() also returns true for holders of '*' (admins), so admins pass
+// automatically; grant 'sales_dashboard' to anyone else who should see this page
+// (see docker/init-db/08-sales-dashboard-permission.sql).
+if (!userHasPermission($db, 'sales_dashboard')) {
 	if (isset($_GET['data'])) {
 		header('Content-Type: application/json; charset=utf-8');
 		http_response_code(403);
@@ -81,12 +82,12 @@ function bucketLabel($ts, $res) {
 
 /* ------------------------------------------------------- access & filters */
 // "Full view" = sees overall sales + can filter by salesman. Access is already
-// restricted to directors + admins above, and both should get the overall view
-// (a director oversees all salespeople), so directorreports counts here too.
+// restricted to 'sales_dashboard' (and '*') holders above, and all of them should
+// get the overall view, so grant full view to anyone who can reach this page.
 $adminLevels = [8, 10, 22];
 $isAdmin = in_array((int)($_SESSION['AccessLevel'] ?? 0), $adminLevels);
 if (function_exists('userHasPermission')) {
-	$isAdmin = $isAdmin || @userHasPermission($db, '*') || @userHasPermission($db, 'directorreports');
+	$isAdmin = $isAdmin || @userHasPermission($db, '*') || @userHasPermission($db, 'sales_dashboard');
 }
 
 $selType  = $_GET['type'] ?? 'all';         // 'all' (Overall Sales) or a salesmancode
