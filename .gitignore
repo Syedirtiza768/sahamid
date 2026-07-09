@@ -18,3 +18,7 @@ sahamid_data.sql
 sahamid_structure.sql
 localhost*.sql
 *.sql.gz
+
+# Editor / local notes (not part of the app)
+.obsidian/
+docs/
