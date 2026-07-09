@@ -17,10 +17,21 @@
 -- (It also runs automatically on a fresh `docker compose up` DB init.)
 -- ---------------------------------------------------------------------------
 
+-- Production servers often run a strict sql_mode (NO_ZERO_DATE / STRICT_TRANS_TABLES;
+-- the MySQL 5.7/8.0 defaults). ADD INDEX revalidates the table, and legacy
+-- '0000-00-00' column defaults (e.g. invoicedetails.actualdispatchdate) then raise
+-- "#1067 Invalid default value". Relax sql_mode for THIS session so the ALTERs succeed
+-- without altering any column. A stored routine captures the sql_mode in force when it
+-- is created and runs under it, so this must be set before CREATE PROCEDURE. Restored
+-- at the very end; it only affects this connection.
+SET @dash_old_sql_mode = @@SESSION.sql_mode;
+SET SESSION sql_mode = '';
+
 DELIMITER //
 DROP PROCEDURE IF EXISTS _dash_add_index //
 CREATE PROCEDURE _dash_add_index(IN tbl VARCHAR(64), IN idx VARCHAR(64), IN cols VARCHAR(255))
 BEGIN
+	SET SESSION sql_mode = '';   -- belt-and-suspenders: keep the ALTER permissive
 	IF EXISTS (SELECT 1 FROM information_schema.tables
 	           WHERE table_schema = DATABASE() AND table_name = tbl)
 	AND NOT EXISTS (SELECT 1 FROM information_schema.statistics
@@ -72,3 +83,6 @@ CALL _dash_add_index('dcoptions',        'idx_dash_orderno',      '`orderno`,`li
 CALL _dash_add_index('stockissuance',    'idx_dash_salesperson',  '`salesperson`');
 
 DROP PROCEDURE IF EXISTS _dash_add_index;
+
+-- restore the caller's original sql_mode
+SET SESSION sql_mode = @dash_old_sql_mode;
