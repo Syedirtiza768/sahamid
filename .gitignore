@@ -11,3 +11,10 @@ qrcodes/
 temp1/
 backup/
 system-analysis/
+
+# Database dumps (large; import artifacts — never commit)
+sahamid_data.zip
+sahamid_data.sql
+sahamid_structure.sql
+localhost*.sql
+*.sql.gz
