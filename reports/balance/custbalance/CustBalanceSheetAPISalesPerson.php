@@ -25,7 +25,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -68,7 +68,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -116,7 +116,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -163,7 +163,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -211,7 +211,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -257,7 +257,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
