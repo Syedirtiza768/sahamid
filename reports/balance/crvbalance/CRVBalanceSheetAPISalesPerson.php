@@ -14,7 +14,7 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND shopsale.salesman ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -48,7 +48,7 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND shopsale.salesman ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -85,7 +85,7 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND shopsale.salesman ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -122,7 +122,7 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND shopsale.salesman ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -158,7 +158,7 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if (!in_array($_SESSION['AccessLevel'], $allowed))
+            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
             {
                 $SQL.=' AND shopsale.salesman ="'.$_SESSION['UsersRealName'].'"';
             }
