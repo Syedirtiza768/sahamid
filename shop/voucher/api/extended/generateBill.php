@@ -255,7 +255,7 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
     $result	= $_FILES[$fname]['error'];
     $UploadTheFile = 'Yes'; //Assume all is well to start off with
     $filename = '../../../../companies/uploads/cheque_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
-    $filelink ='../../../companies/uploads/cheque_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+    $filelink ='/sahamid/companies/uploads/cheque_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
 
     //But check for the worst
     if (mb_strtoupper(mb_substr(trim($_FILES[$fname]['name']),mb_strlen($_FILES[$fname]['name'])-3))!='PDF'){
@@ -296,7 +296,7 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
     $result	= $_FILES[$fname]['error'];
     $UploadTheFile = 'Yes'; //Assume all is well to start off with
     $filename = '../../../../companies/uploads/cdr_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
-    $filelink ='../../../companies/uploads/cdr_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+    $filelink ='/sahamid/companies/uploads/cdr_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
 
     //But check for the worst
     if (mb_strtoupper(mb_substr(trim($_FILES[$fname]['name']),mb_strlen($_FILES[$fname]['name'])-3))!='PDF'){
@@ -336,7 +336,7 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
     $result	= $_FILES[$fname]['error'];
     $UploadTheFile = 'Yes'; //Assume all is well to start off with
     $filename = '../../../../companies/uploads/crv_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
-    $filelink ='../../../companies/uploads/crv_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+    $filelink ='/sahamid/companies/uploads/crv_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
 
     //But check for the worst
     if (mb_strtoupper(mb_substr(trim($_FILES[$fname]['name']),mb_strlen($_FILES[$fname]['name'])-3))!='PDF'){
