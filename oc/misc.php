@@ -1,8 +1,12 @@
 <?php
 
 	function createDBConnection(){
-	
-		return mysqli_connect('localhost','irtiza','netetech321','sahamid');
+
+		$db = mysqli_connect(getenv('DB_HOST') ?: 'localhost','irtiza','netetech321','sahamid');
+		if ($db) {
+			mysqli_set_charset($db, 'utf8');
+		}
+		return $db;
 
 	}
 

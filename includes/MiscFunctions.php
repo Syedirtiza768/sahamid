@@ -449,5 +449,35 @@ function ChangeFieldInTable($TableName, $FieldName, $OldValue, $NewValue, $db){
 	echo ' ... ' . _('completed');
 }
 
+/**
+ * Normalize cheque/CDR/CRV upload URLs for Docker (/sahamid base path).
+ * Legacy XAMPP rows often store /companies/uploads/... or ../companies/uploads/...
+ */
+function normalizeCompanyUploadUrl($path) {
+	if ($path === null || $path === '') {
+		return $path;
+	}
+	$path = str_replace('\\', '/', trim($path));
+
+	if (strpos($path, '/sahamid/companies/uploads/') === 0) {
+		return $path;
+	}
+
+	// Old v2/v3 relative links: ../companies/uploads/...
+	$path = preg_replace('#^(\.\./)+#', '/', $path);
+
+	if (strpos($path, '/companies/uploads/') === 0) {
+		return '/sahamid' . $path;
+	}
+	if (strpos($path, 'companies/uploads/') === 0) {
+		return '/sahamid/' . $path;
+	}
+	if (preg_match('#companies/uploads/(.+)$#', $path, $m)) {
+		return '/sahamid/companies/uploads/' . $m[1];
+	}
+
+	return $path;
+}
+
 
 ?>

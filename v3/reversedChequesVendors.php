@@ -23,6 +23,9 @@
 			//$row['chequeDate'] = date("Y/m/d",strtotime($row['chequeDate']));
             //$row['revDate'] = date("Y/m/d",strtotime($row['revDate']));
 
+            $row['chequefilepath'] = normalizeCompanyUploadUrl($row['chequefilepath']);
+            $row['chequedepositfilepath'] = normalizeCompanyUploadUrl($row['chequedepositfilepath']);
+
             $response[] = $row;
 			$count++;
 			

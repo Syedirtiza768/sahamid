@@ -45,7 +45,7 @@
 
 	$db = createDBConnection();
 
-	$SQL = 'INSERT INTO salesorderlinesip (orderno) VALUES ('.$orderno.')';
+	$SQL = 'INSERT INTO salesorderlinesip (orderno, clientrequirements) VALUES ('.$orderno.', \'\')';
 	$result = mysqli_query($db, $SQL);
 
 	if(!$result){

@@ -96,27 +96,61 @@
 	if($co['count'] == 0 && isNewQuotation()){
 
 		$customerInfo = mysqli_fetch_assoc($customerInfoResult);
-		
-        $SQL = "INSERT INTO `salesordersip`(`salescaseref`, `debtorno`, `branchcode`, `buyername`,`fromstkloc`,`deladd1`,`deladd2`,`deladd3`,`deladd4`,`deladd5`,`deladd6`,`deliverto`,`contactphone`,`contactemail`,`shipvia`,`deliverblind`,`afterdays`,`salesperson`,`quotedate`,`confirmeddate`,`deliverydate`,`quickQuotation`,`rate_clause`,`rate_validity`) 
-				VALUES ('".$salescaseref."','".$debtorNo."', '".$branchCode."','".$selectedcustomer."','MT','".$customerInfo['braddress1']."','".$customerInfo['braddress2']."','".$customerInfo['braddress3']."','".$customerInfo['braddress4']."','".$customerInfo['braddress5']."','".$customerInfo['braddress6']."','".$customerInfo['brname']."','".$customerInfo['phoneno']."','".$customerInfo['email']."','".$customerInfo['defaultshipvia']."','".$customerInfo['deliverblind']."','".$customerInfo['estdeliverydays']."','".$customerInfo['salesman']."','".date('Y-m-d')."','".date('Y-m-d')."','".date('Y-m-d')."','".$quickQuotation."','usd','".date('Y-m-d',strtotime(date('Y-m-d')." +15 days"))."')";
+		$today = date('Y-m-d');
+		$rateValidity = date('Y-m-d', strtotime($today . ' +15 days'));
+		$escSalescaseref = mysqli_real_escape_string($conn, $salescaseref);
+		$escDebtorNo = mysqli_real_escape_string($conn, $debtorNo);
+		$escBranchCode = mysqli_real_escape_string($conn, $branchCode);
+		$escSelectedCustomer = mysqli_real_escape_string($conn, $selectedcustomer);
+		$salesman = mysqli_real_escape_string($conn, $customerInfo['salesman']);
+		$brname = mysqli_real_escape_string($conn, $customerInfo['brname']);
+		$del1 = mysqli_real_escape_string($conn, $customerInfo['braddress1']);
+		$del2 = mysqli_real_escape_string($conn, $customerInfo['braddress2']);
+		$del3 = mysqli_real_escape_string($conn, $customerInfo['braddress3']);
+		$del4 = mysqli_real_escape_string($conn, $customerInfo['braddress4']);
+		$del5 = mysqli_real_escape_string($conn, $customerInfo['braddress5']);
+		$del6 = mysqli_real_escape_string($conn, $customerInfo['braddress6']);
+		$phone = mysqli_real_escape_string($conn, $customerInfo['phoneno']);
+		$email = mysqli_real_escape_string($conn, $customerInfo['email']);
+		$shipvia = (int)$customerInfo['defaultshipvia'];
+		$deliverblind = (int)$customerInfo['deliverblind'];
+		$afterdays = mysqli_real_escape_string($conn, $customerInfo['estdeliverydays']);
+		$quickQuotation = (int)$quickQuotation;
+
+		$SQL = "INSERT INTO `salesordersip`(
+					existing, eorderno, orddate, salescaseref, debtorno, branchcode, buyername,
+					fromstkloc, deladd1, deladd2, deladd3, deladd4, deladd5, deladd6, deliverto,
+					contactperson, contactphone, contactemail, shipvia, deliverblind, afterdays,
+					salesperson, quotedate, confirmeddate, deliverydate, quickQuotation,
+					rate_clause, rate_validity, advance, delivery, commisioning, `after`, gst,
+					GSTadd, services, WHT, freightclause, clause_rates
+				) VALUES (
+					0, 0, '".$today."', '".$escSalescaseref."', '".$escDebtorNo."', '".$escBranchCode."', '".$escSelectedCustomer."',
+					'MT', '".$del1."', '".$del2."', '".$del3."', '".$del4."', '".$del5."', '".$del6."', '".$brname."',
+					'', '".$phone."', '".$email."', '".$shipvia."', '".$deliverblind."', '".$afterdays."',
+					'".$salesman."', '".$today."', '".$today."', '".$today."', '".$quickQuotation."',
+					'usd', '".$rateValidity."', 0, 0, 0, 0, '',
+					'', 0, 0, '', ''
+				)";
 
 		mysqli_query($conn, $SQL);
 
 		$orderno = mysqli_insert_id($conn);
 		$SQL = "SELECT max(id) as id FROM exchange_rate";
-	$res = mysqli_query($db, $SQL);
-	$id = mysqli_fetch_assoc($res)['id'];
+		$res = mysqli_query($conn, $SQL);
+		$id = mysqli_fetch_assoc($res)['id'];
 
-	$SQL = "SELECT * FROM exchange_rate WHERE id=$id";
-	$res = mysqli_query($db, $SQL);
-	$rates = mysqli_fetch_assoc($res);
+		$SQL = "SELECT * FROM exchange_rate WHERE id=$id";
+		$res = mysqli_query($conn, $SQL);
+		$rates = mysqli_fetch_assoc($res);
 
-	$rates = json_encode($rates);
+		$rates = json_encode($rates);
+		$ratesEscaped = mysqli_real_escape_string($conn, $rates);
 
-	$SQL = "UPDATE salesordersip 
-			SET clause_rates = '$rates'
-			WHERE orderno = $orderno";
-	mysqli_query($db, $SQL);
+		$SQL = "UPDATE salesordersip 
+				SET clause_rates = '$ratesEscaped'
+				WHERE orderno = $orderno";
+		mysqli_query($conn, $SQL);
 		
 	}else if($co['count'] == 1){
 

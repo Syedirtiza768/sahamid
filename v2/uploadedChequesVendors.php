@@ -40,6 +40,7 @@
 
            if (strlen($cheque)!= '')
                 {
+                    $cheque = normalizeCompanyUploadUrl($cheque);
                     $row['cheque']="<a class='btn btn-info' href='".$cheque."' target='_blank'>Download</a>";
                 }
             else
@@ -53,6 +54,7 @@
 
             if ($row['deposit']!='')
             {
+                $deposit = normalizeCompanyUploadUrl($deposit);
                 $row['deposit']="<a class='btn btn-info' href='".$deposit."' target='_blank'>Download</a>";;
             }
             else
@@ -65,6 +67,7 @@
             }
             if (strlen($crv)!= '')
             {
+                $crv = normalizeCompanyUploadUrl($crv);
                 $row['cash']="<a class='btn btn-info' href='".$crv."' target='_blank'>Download</a>";
             }
             else

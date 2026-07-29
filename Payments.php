@@ -68,7 +68,8 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 
 	$result	= $_FILES[$fname]['error'];
 	$UploadTheFile = 'Yes'; //Assume all is well to start off with
-	$filename = "C:/xampp/htdocs".$RootPath .'/companies/uploads/cheque_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+	$uploadBaseName = 'cheque_'.date('Ymdhis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+	$filename = __DIR__ . '/companies/uploads/' . $uploadBaseName;
 
 	//But check for the worst
 	if (mb_strtoupper(mb_substr(trim($_FILES[$fname]['name']),mb_strlen($_FILES[$fname]['name'])-3))!='PDF'){
@@ -93,7 +94,7 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 		$result  =  move_uploaded_file($_FILES[$fname]['tmp_name'], $filename);
 		$message = ($result)? _('Something is wrong with uploading a file') : _('Something is wrong with uploading a file');
 		$rppdate = date('Y-m-d');
-		$chequefilepath = explode("C:/xampp/htdocs",$filename)[1];
+		$chequefilepath = '/sahamid/companies/uploads/' . $uploadBaseName;
 		$_SESSION['chequefilepath']=$chequefilepath;
 
 	}
@@ -106,7 +107,8 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 
 	$result	= $_FILES[$fname]['error'];
 	$UploadTheFile = 'Yes'; //Assume all is well to start off with
-	$filename = "C:/xampp/htdocs".$RootPath .'/companies/uploads/cdr_'.date('YmdHis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+	$uploadBaseName = 'cdr_'.date('YmdHis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+	$filename = __DIR__ . '/companies/uploads/' . $uploadBaseName;
 
 	//But check for the worst
 	if (mb_strtoupper(mb_substr(trim($_FILES[$fname]['name']),mb_strlen($_FILES[$fname]['name'])-3))!='PDF'){
@@ -131,7 +133,7 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 		$result  =  move_uploaded_file($_FILES[$fname]['tmp_name'], $filename);
 		$message = ($result)? _('Something is wrong with uploading a file') : _('Something is wrong with uploading a file');
 		$rppdate = date('Y-m-d');
-		$chequedepositfilepath = explode("C:/xampp/htdocs",$filename)[1];
+		$chequedepositfilepath = '/sahamid/companies/uploads/' . $uploadBaseName;
 		$_SESSION['chequedepositfilepath']=$chequedepositfilepath;
 	}
 
@@ -143,7 +145,8 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 
 	$result	= $_FILES[$fname]['error'];
 	$UploadTheFile = 'Yes'; //Assume all is well to start off with
-	$filename = "C:/xampp/htdocs".$RootPath .'/companies/uploads/crv_'.date('YmdHis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+	$uploadBaseName = 'crv_'.date('YmdHis')."_".urlencode($_SESSION['UsersRealName']).'.pdf';
+	$filename = __DIR__ . '/companies/uploads/' . $uploadBaseName;
 
 	//But check for the worst
 	if (mb_strtoupper(mb_substr(trim($_FILES[$fname]['name']),mb_strlen($_FILES[$fname]['name'])-3))!='PDF'){
@@ -168,7 +171,7 @@ if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 		$result  =  move_uploaded_file($_FILES[$fname]['tmp_name'], $filename);
 		$message = ($result)? _('Something is wrong with uploading a file') : _('Something is wrong with uploading a file');
 		$rppdate = date('Y-m-d');
-		$cashfilepath = explode("C:/xampp/htdocs",$filename)[1];
+		$cashfilepath = '/sahamid/companies/uploads/' . $uploadBaseName;
 		$_SESSION['cashfilepath']=$cashfilepath;
 	}
 

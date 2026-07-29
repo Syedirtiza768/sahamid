@@ -58,7 +58,8 @@
 
 	$db = createDBConnection();
 
-	$SQL = 'INSERT INTO salesorderoptionsip (orderno,lineno) VALUES ('.$orderno.','.$lineno.')';
+	$SQL = 'INSERT INTO salesorderoptionsip (orderno, lineno, optiontext, stockstatus, quantity, uom, price)
+			VALUES ('.$orderno.','.$lineno.', \'\', \'\', 1, \'\', 0)';
 	$result = mysqli_query($db, $SQL);
 
 	if(!$result){

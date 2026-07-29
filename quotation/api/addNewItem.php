@@ -109,10 +109,10 @@
 	$lastcostupdate = $item['lastcostupdate'];
 	$lastupdatedby = $item['lastupdatedby'];
 
-	$SQL = "INSERT INTO `salesorderdetailsip`(`orderlineno`, `orderno`, `lineoptionno`,`stkcode`,`unitprice`,`unitrate`,`lastcostupdate`,`lastupdatedby`,
-			`discountpercent`,`quantity`)
-			VALUES ('".$line."','".$orderno."','".$option."','".$item_id."','".$unitprice."','".$unitrate."','".$lastcostupdate."','".$lastupdatedby."',
-			'".$discount."','".$quantity."')";
+	$SQL = "INSERT INTO `salesorderdetailsip`(`orderlineno`, `orderno`, `lineoptionno`,`optionitemno`,`internalitemno`,`stkcode`,`unitprice`,`unitrate`,`lastcostupdate`,`lastupdatedby`,
+			`discountpercent`,`quantity`,`discountupdated`)
+			VALUES ('".$line."','".$orderno."','".$option."','0','0','".$item_id."','".$unitprice."','".$unitrate."','".$lastcostupdate."','".$lastupdatedby."',
+			'".$discount."','".$quantity."','')";
 
 	$result = mysqli_query($db, $SQL);
     $insertId = mysqli_insert_id($db);
