@@ -20,7 +20,8 @@
 	if($todate == "")
 		$todate = date("Y-m-d");
 
-	$SQL = "SELECT * FROM suppliers 
+	$SQL = "SELECT suppname, address1, address2, address3, address4, address5, address6
+			FROM suppliers
 			WHERE supplierid='".$debtorno."'";
 
 	$res = mysqli_query($db, $SQL);
@@ -53,7 +54,9 @@
 
 	$customerStatement['openingbalance'] = mysqli_fetch_assoc($res)['openingbalance'] ?: 0;
 
-	$SQL = 'SELECT * FROM supptrans
+	$SQL = 'SELECT id, type, trandate, ovamount, suppreference, transtext,
+				settled, transno, alloc, reversed, updated_by
+			FROM supptrans
 			WHERE supplierno="'.$debtorno.'"
 			AND trandate >= "'.($fromdate).'"
 			AND trandate <= "'.($todate)." 23:59:59".'"
@@ -62,31 +65,50 @@
 	$res = mysqli_query($db, $SQL);
 
 	$customerStatement['statement'] = [];
+	$allocationTransactionIds = [];
 
 	while( $row = mysqli_fetch_assoc($res) ){
 
-        if($row['type'] == 22){
-
-            $SQL = "SELECT supptrans.transno
-                    FROM suppallocs
-                    INNER JOIN supptrans ON supptrans.id = suppallocs.transid_allocto
-                    INNER JOIN gltrans ON gltrans.typeno=supptrans.transno
-                    WHERE suppallocs.transid_allocfrom = '".$row['id'].
-                "' GROUP BY transno";
-
-            $row['billNo'] = "(";
-            $result = mysqli_query($db, $SQL);
-            while($r = mysqli_fetch_assoc($result)){
-                $row['billNo'] .= $r['transno'] . ", ";
-            }
-            $row['billNo'] .= ")";
-
-
-        }
+		if($row['type'] == 22){
+			$allocationTransactionIds[] = (int) $row['id'];
+		}
 
 		$customerStatement['statement'][] = $row;
 
 	}
+
+	// Resolve all allocated bill numbers in one query instead of one query per type-22 row.
+	$billNumbersByTransaction = [];
+	if(count($allocationTransactionIds) > 0){
+		$allocationTransactionIds = array_values(array_unique($allocationTransactionIds));
+		$allocationIds = implode(',', $allocationTransactionIds);
+		$SQL = "SELECT suppallocs.transid_allocfrom, supptrans.transno
+				FROM suppallocs
+				INNER JOIN supptrans ON supptrans.id = suppallocs.transid_allocto
+				INNER JOIN gltrans ON gltrans.typeno = supptrans.transno
+				WHERE suppallocs.transid_allocfrom IN (".$allocationIds.")
+				GROUP BY suppallocs.transid_allocfrom, supptrans.transno
+				ORDER BY suppallocs.transid_allocfrom, supptrans.transno";
+
+		$result = mysqli_query($db, $SQL);
+		while($r = mysqli_fetch_assoc($result)){
+			$billNumbersByTransaction[(int) $r['transid_allocfrom']][] = $r['transno'];
+		}
+	}
+
+	foreach($customerStatement['statement'] as &$statement){
+		if($statement['type'] == 22){
+			$billNo = "(";
+			$transactionId = (int) $statement['id'];
+			if(isset($billNumbersByTransaction[$transactionId])){
+				foreach($billNumbersByTransaction[$transactionId] as $transno){
+					$billNo .= $transno . ", ";
+				}
+			}
+			$statement['billNo'] = $billNo . ")";
+		}
+	}
+	unset($statement);
 
 ?>
 

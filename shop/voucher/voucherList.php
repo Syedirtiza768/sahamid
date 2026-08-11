@@ -30,16 +30,15 @@
         <link rel="stylesheet" href="../../quotation/assets/vendor/sweetalert/sweetalert.css" />
         <link rel="stylesheet" href="../../quotation/assets/vendor/jquery-datatables/media/css/jquery.dataTables.css">
         <link rel="stylesheet" href="../../quotation/assets/vendor/jquery-datatables-bs3/assets/css/datatables.css">
-        <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css">
+        <link rel="stylesheet" href="../../v2/assets/datatables/buttons.datatables.min.css">
         <link rel="stylesheet" href="../../quotation/assets/vendor/pnotify/pnotify.custom.css">
         <link rel="stylesheet" href="../../quotation/assets/stylesheets/theme.css" />
         <link rel="stylesheet" href="../../quotation/assets/stylesheets/skins/default.css" />
 
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="../../assets/bower_components/select2/dist/css/select2.min.css">
 
         <script src="../../quotation/assets/vendor/modernizr/modernizr.js"></script>
 
-		<script src="../../../quotation/assets/vendor/modernizr/modernizr.js"></script>
 		<script>
 			var datatable = null;
 		</script>
@@ -98,7 +97,8 @@
                     echo '<option value="">Select salesman</option>';
                     while ($myrow = DB_fetch_array($result)) {
 
-                        echo '<option value="' . "'" . $myrow['realname'] . "'" . '">' . $myrow['realname'] . '</option>';
+                        echo '<option value="' . htmlspecialchars($myrow['realname'], ENT_QUOTES, 'UTF-8') . '">' .
+                            htmlspecialchars($myrow['realname'], ENT_QUOTES, 'UTF-8') . '</option>';
 
                     }
                     ?>
@@ -151,7 +151,7 @@
         <script src="../../quotation/assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
         <script src="../../quotation/assets/vendor/pnotify/pnotify.custom.js"></script>
         <script src="../../quotation/assets/javascripts/theme.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="../../assets/bower_components/select2/dist/js/select2.min.js"></script>
 
 
 	<script>
@@ -166,6 +166,7 @@
 
 				datatable = $('#datatable').DataTable({
                     dom: 'Bflrtip',
+                    deferRender: true,
                     lengthMenu: [10, 25, 50, 75, 1000,-1 ],
                     buttons: [
                         'copy', 'csv', 'excel'
@@ -194,22 +195,17 @@
                 let FormID = '<?php echo $_SESSION['FormID']; ?>';
                 $("tbody tr td").html("Loading...");
                 //
-                $.post("api/voucherList.php?type=<?php echo $type?>",{salesperson,from,to,FormID},function(res, status){
-                    res = JSON.parse(res);
+                $.post("api/voucherList.php?type=<?php echo (int) $type?>",{salesperson,from,to,FormID},function(res, status){
                     datatable.clear().draw();
                     datatable.rows.add(res).draw();
+                }, 'json').fail(function(){
+                    datatable.clear().draw();
+                    alert('Unable to load vouchers. Please try again.');
                 });
             });
 
 
         }).apply( this, [ jQuery ]);
-        $('#datatable').on('change','.booked',function(){
-            let orderno = $(this).attr('data-orderno');
-            let value = $(this).val();
-            $.post("api/voucherListUpdate.php",{orderno,value,name:'booked'},function(data, status){
-                console.log("Data: " + data + "\nStatus: " + status);
-            });
-        });
         $('#datatable').on('change','.booked',function(){
             let orderno = $(this).attr('data-orderno');
             let value = $(this).val();
