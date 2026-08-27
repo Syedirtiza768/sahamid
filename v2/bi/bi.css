@@ -1,0 +1,285 @@
+.bi-page .content-header h1 {
+    font-weight: 600;
+}
+
+.bi-page .content-header h1 small {
+    color: #777;
+    font-size: 14px;
+}
+
+.bi-hero .box-body {
+    display: flex;
+    align-items: center;
+    min-height: 142px;
+}
+
+.bi-hero-icon {
+    width: 72px;
+    height: 72px;
+    margin-right: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: linear-gradient(135deg, #1d79c8, #3c3160);
+    font-size: 32px;
+    flex: 0 0 72px;
+}
+
+.bi-hero h2 {
+    margin: 0 0 8px;
+    font-size: 22px;
+}
+
+.bi-hero p {
+    margin-bottom: 8px;
+}
+
+.bi-context {
+    font-size: 12px;
+}
+
+.bi-governance-box {
+    min-height: 142px;
+}
+
+.bi-governance-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.bi-governance-row:last-child {
+    border-bottom: 0;
+}
+
+.bi-query-form .form-group {
+    margin-right: 12px;
+    margin-bottom: 8px;
+}
+
+.bi-query-form label {
+    margin-right: 6px;
+}
+
+.bi-help {
+    margin: 10px 0 0;
+}
+
+.bi-loading,
+.bi-empty {
+    padding: 26px 15px;
+    text-align: center;
+    color: #777;
+}
+
+.bi-metric-card {
+    min-height: 255px;
+    margin-bottom: 20px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+.bi-metric-card .bi-card-head {
+    padding: 14px 15px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.bi-metric-card h4 {
+    margin: 0 0 7px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.bi-metric-card .bi-card-body {
+    padding: 12px 15px 15px;
+}
+
+.bi-metric-card .bi-description {
+    min-height: 38px;
+    color: #666;
+    font-size: 12px;
+}
+
+.bi-metric-card .bi-definition {
+    margin: 10px 0;
+    padding: 8px;
+    min-height: 51px;
+    color: #555;
+    background: #f8f8f8;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.bi-status {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}
+
+.bi-status-trusted,
+.bi-status-validated {
+    color: #216b3b;
+    background: #e5f5ea;
+}
+
+.bi-status-awaiting_validation,
+.bi-status-inferred,
+.bi-status-draft {
+    color: #8a5a00;
+    background: #fff4d6;
+}
+
+.bi-status-deprecated {
+    color: #8d2525;
+    background: #fde7e7;
+}
+
+.bi-caveats {
+    min-height: 30px;
+    margin: 0 0 12px;
+    color: #777;
+    font-size: 11px;
+}
+
+.bi-caveats li {
+    margin-bottom: 3px;
+}
+
+.bi-alert {
+    margin-bottom: 15px;
+}
+
+.bi-result-value {
+    color: #1d79c8;
+    font-size: 30px;
+    font-weight: 600;
+}
+
+.bi-result-meta {
+    margin-top: 6px;
+    color: #777;
+    font-size: 12px;
+}
+
+.bi-result-warning {
+    padding: 10px 12px;
+    color: #8a5a00;
+    background: #fff8e1;
+    border-left: 3px solid #e6a700;
+}
+
+.bi-reconciliation-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.bi-reconciliation-status {
+    display: inline-block;
+    padding: 5px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bi-reconciliation-pass {
+    color: #216b3b;
+    background: #e5f5ea;
+}
+
+.bi-reconciliation-review {
+    color: #8a5a00;
+    background: #fff4d6;
+}
+
+.bi-reconciliation-exception {
+    color: #8d2525;
+    background: #fde7e7;
+}
+
+.bi-recon-stat {
+    min-height: 70px;
+    margin-bottom: 15px;
+    padding: 10px 12px;
+    border: 1px solid #e5e5e5;
+    background: #fafafa;
+}
+
+.bi-recon-stat span,
+.bi-recon-stat strong {
+    display: block;
+}
+
+.bi-recon-stat span {
+    color: #777;
+    font-size: 11px;
+}
+
+.bi-recon-stat strong {
+    margin-top: 5px;
+    color: #1d79c8;
+    font-size: 17px;
+}
+
+.bi-reconciliation-note {
+    color: #666;
+    font-size: 12px;
+}
+
+.bi-reconciliation-checks {
+    padding-left: 20px;
+}
+
+.bi-reconciliation-checks li {
+    margin-bottom: 7px;
+    color: #555;
+    font-size: 12px;
+}
+
+.bi-check-pass,
+.bi-check-review,
+.bi-check-pending,
+.bi-check-exception {
+    display: inline-block;
+    min-width: 58px;
+    margin-right: 3px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.bi-check-pass { color: #216b3b; }
+.bi-check-review,
+.bi-check-pending { color: #8a5a00; }
+.bi-check-exception { color: #8d2525; }
+
+@media (max-width: 767px) {
+    .bi-hero .box-body {
+        display: block;
+    }
+
+    .bi-hero-icon {
+        margin-bottom: 14px;
+    }
+
+    .bi-query-form .form-group {
+        display: block;
+        margin-right: 0;
+    }
+
+    .bi-query-form label {
+        display: inline-block;
+        min-width: 42px;
+    }
+}

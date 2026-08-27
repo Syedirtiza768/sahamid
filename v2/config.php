@@ -1,9 +1,11 @@
 <?php
 
 
-	$PathPrefix='../';
+	// Resolve the repository root from this file so nested v2 routes do not
+	// depend on Apache's current working directory for session includes.
+	$PathPrefix=dirname(__DIR__) . DIRECTORY_SEPARATOR;
     $AllowAnyone=true;
-	include_once('../includes/session.inc');
+	include_once($PathPrefix . 'includes/session.inc');
 	
 	$NewRootPath = "/sahamid/";
 

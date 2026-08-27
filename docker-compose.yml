@@ -22,6 +22,10 @@ services:
   db:
     image: mariadb:10.3
     container_name: sahamid-db
+    # Legacy ERP data contains zero dates and other values rejected by
+    # STRICT_TRANS_TABLES. Keep the development MariaDB compatible with the
+    # existing application and imports by disabling SQL strict mode globally.
+    command: ["--sql-mode="]
     ports:
       - "3308:3306"
     environment:

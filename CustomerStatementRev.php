@@ -62,110 +62,39 @@
 
 	//---------------------
 
-	//------30 Days Balance
+	//------Ageing Balance
+	// Invoice type 10 uses invoice.invoicesdate. Outward slips (602) and
+	// shop sales (750) do not have an invoice row, so they must use trandate.
+	$ageingDateExpression = 'CASE WHEN debtortrans.type IN (750, 602) THEN debtortrans.trandate ELSE invoice.invoicesdate END';
+	$ageingAmountExpression = 'CASE
+					WHEN debtortrans.type IN (750, 602) THEN debtortrans.ovamount - debtortrans.alloc
+					WHEN debtortrans.GSTwithhold = 0 AND debtortrans.WHT = 0
+						THEN debtortrans.ovamount - debtortrans.alloc
+					WHEN debtortrans.GSTwithhold = 0 AND debtortrans.WHT = 1
+						THEN debtortrans.ovamount - debtortrans.alloc - debtortrans.WHTamt
+					WHEN debtortrans.GSTwithhold = 1 AND debtortrans.WHT = 0
+						THEN debtortrans.ovamount - debtortrans.alloc - debtortrans.GSTamt
+					WHEN debtortrans.GSTwithhold = 1 AND debtortrans.WHT = 1
+						THEN debtortrans.ovamount - debtortrans.alloc - debtortrans.GSTamt - debtortrans.WHTamt
+					END';
 
-	$SQL = 'SELECT SUM(
-					CASE WHEN GSTwithhold = 0 AND WHT = 0 
-						THEN ovamount - alloc
-					WHEN GSTwithhold = 0 AND WHT = 1 
-						THEN ovamount - alloc - WHTamt
-					WHEN GSTwithhold = 1 AND WHT = 0 
-						THEN ovamount - alloc - GSTamt
-					WHEN GSTwithhold = 1 AND WHT = 1 
-						THEN ovamount - alloc - GSTamt - WHTamt
-					END
-				) AS due 
-			FROM debtortrans 
-			INNER JOIN invoice ON invoice.invoiceno=debtortrans.transno 
-			WHERE debtortrans.debtorno="'.$debtorno.'" 
-			AND debtortrans.type=10 
-			AND debtortrans.settled=0 
-			AND DATEDIFF( "'.date('Y/m/d').'",invoice.invoicesdate) >= 30 
-			AND DATEDIFF( "'.date('Y/m/d').'",invoice.invoicesdate) < 60'; //FormatDateForSQL
-	
-	$res = mysqli_query($db, $SQL);
+	$calculateAgeingBalance = function($minimumDays, $maximumDays = null) use ($db, $debtorno, $ageingDateExpression, $ageingAmountExpression) {
+		$upperBound = $maximumDays === null ? '' : ' AND DATEDIFF( "'.date('Y/m/d').'",'.$ageingDateExpression.') < '.$maximumDays;
+		$SQL = 'SELECT SUM('.$ageingAmountExpression.') AS due
+				FROM debtortrans
+				LEFT OUTER JOIN invoice ON invoice.invoiceno=debtortrans.transno AND debtortrans.type=10
+				WHERE debtortrans.debtorno="'.$debtorno.'"
+				AND debtortrans.settled=0
+				AND ((debtortrans.type=10 AND invoice.invoiceno IS NOT NULL) OR debtortrans.type IN (750, 602))
+				AND DATEDIFF( "'.date('Y/m/d').'",'.$ageingDateExpression.') >= '.$minimumDays.$upperBound;
+		$res = mysqli_query($db, $SQL);
+		return mysqli_fetch_assoc($res)['due'] ?: 0;
+	};
 
-	$customerStatement['30daysdue'] = mysqli_fetch_assoc($res)['due'] ?: 0;
-
-	//---------------------
-
-	//------60 Days Balance
-
-	$SQL = 'SELECT SUM(
-					CASE WHEN GSTwithhold = 0 AND WHT = 0 
-						THEN ovamount - alloc
-					WHEN GSTwithhold = 0 AND WHT = 1 
-						THEN ovamount - alloc - WHTamt
-					WHEN GSTwithhold = 1 AND WHT = 0 
-						THEN ovamount - alloc - GSTamt
-					WHEN GSTwithhold = 1 AND WHT = 1 
-						THEN ovamount - alloc - GSTamt - WHTamt
-					END
-				) AS due 
-			FROM debtortrans 
-			INNER JOIN invoice ON invoice.invoiceno=debtortrans.transno 
-			WHERE debtortrans.debtorno="'.$debtorno.'" 
-			AND debtortrans.type=10 
-			AND debtortrans.settled=0 
-			AND DATEDIFF( "'.date('Y/m/d').'",invoice.invoicesdate) >= 60 
-			AND DATEDIFF( "'.date('Y/m/d').'",invoice.invoicesdate) < 90'; //FormatDateForSQL
-	
-	$res = mysqli_query($db, $SQL);
-
-	$customerStatement['60daysdue'] = mysqli_fetch_assoc($res)['due'] ?: 0;
-
-	//---------------------
-
-	//------90 Days Balance
-
-	$SQL = 'SELECT SUM(
-					CASE WHEN GSTwithhold = 0 AND WHT = 0 
-						THEN ovamount - alloc
-					WHEN GSTwithhold = 0 AND WHT = 1 
-						THEN ovamount - alloc - WHTamt
-					WHEN GSTwithhold = 1 AND WHT = 0 
-						THEN ovamount - alloc - GSTamt
-					WHEN GSTwithhold = 1 AND WHT = 1 
-						THEN ovamount - alloc - GSTamt - WHTamt
-					END
-				) AS due 
-			FROM debtortrans 
-			INNER JOIN invoice ON invoice.invoiceno=debtortrans.transno 
-			WHERE debtortrans.debtorno="'.$debtorno.'" 
-			AND debtortrans.type=10 
-			AND debtortrans.settled=0 
-			AND DATEDIFF( "'.date('Y/m/d').'",invoice.invoicesdate) >= 90 
-			AND DATEDIFF( "'.date('Y/m/d').'",invoice.invoicesdate) < 120'; //FormatDateForSQL
-	
-	$res = mysqli_query($db, $SQL);
-
-	$customerStatement['90daysdue'] = mysqli_fetch_assoc($res)['due'] ?: 0;
-
-	//---------------------
-
-	//------120 Days Balance
-
-	$SQL = 'SELECT SUM(
-					CASE WHEN GSTwithhold = 0 AND WHT = 0 
-						THEN ovamount - alloc
-					WHEN GSTwithhold = 0 AND WHT = 1 
-						THEN ovamount - alloc - WHTamt
-					WHEN GSTwithhold = 1 AND WHT = 0 
-						THEN ovamount - alloc - GSTamt
-					WHEN GSTwithhold = 1 AND WHT = 1 
-						THEN ovamount - alloc - GSTamt - WHTamt
-					END
-				) AS due 
-			FROM debtortrans 
-			INNER JOIN invoice ON invoice.invoiceno=debtortrans.transno 
-			WHERE debtortrans.debtorno="'.$debtorno.'" 
-			AND debtortrans.type=10 
-			AND debtortrans.settled=0 
-			AND DATEDIFF( "'.date('Y/m/d').'",invoice.invoicesdate) >= 120'; //FormatDateForSQL
-	
-	$res = mysqli_query($db, $SQL);
-
-	$customerStatement['120daysdue'] = mysqli_fetch_assoc($res)['due'] ?: 0;
+	$customerStatement['30daysdue'] = $calculateAgeingBalance(30, 60);
+	$customerStatement['60daysdue'] = $calculateAgeingBalance(60, 90);
+	$customerStatement['90daysdue'] = $calculateAgeingBalance(90, 120);
+	$customerStatement['120daysdue'] = $calculateAgeingBalance(120);
 
 	//----------------------
 
@@ -217,7 +146,7 @@
 
 		$ageing = "";
 		
-		if($row['type'] == 12 || $row['type'] == 13 || $row['type'] == 750 || $row['type'] == 602)
+		if($row['type'] == 11 || $row['type'] == 12 || $row['type'] == 13 || $row['type'] == 750 || $row['type'] == 602)
 			$row['orderby'] = $row['trandate'];
 		else{
 			$row['orderby'] = $row['invoicesdate'] != "" ? $row['invoicesdate'] : $row['invoicedate'];
@@ -225,7 +154,7 @@
 		
 		$row['orderby'] = strtotime($row['orderby']);
 
-		if($row['processed'] != 0){
+		if($row['processed'] != 0 AND $row['type'] != 11 AND $row['type'] != 12 AND $row['type'] != 13){
 
 			$now = time();
 			$due = strtotime((($row['type'] == 750 || $row['type'] == 602) ? $row['trandate']:$row['invoicesdate']));
@@ -652,7 +581,7 @@
             	<?php 
             		} else { 
 					
-						if($statement['type'] == 13){
+						if($statement['type'] == 11 || $statement['type'] == 13){
 							$totalCredit += abs($statement['ovamount']);
 						}else{
 							$totalDebit += abs($statement['ovamount']);
@@ -661,7 +590,7 @@
             	?>
 					<td class="nostretch" style="font-size: 12px">
 						<?php 
-							echo (($statement['type'] == 13 || $statement['type'] == 750 || $statement['type'] == 602) ? $statement['trandate'] : $statement['invoicesdate']); ?>
+							echo (($statement['type'] == 11 || $statement['type'] == 13 || $statement['type'] == 750 || $statement['type'] == 602) ? $statement['trandate'] : $statement['invoicesdate']); ?>
 					</td>
             		<td class="nostretch" style="font-size: 12px">
 	                    <?php echo (($statement['type'] == 750 || $statement['type'] == 602) ? strtoupper($statement['payment']):$statement['customerref']) ?><br>
@@ -670,6 +599,8 @@
 	              	<td class="nostretch" style="font-size: 12px">
 						<?php if($statement['type'] == 13){ ?>
 							Returned
+						<?php } elseif($statement['type'] == 11){ ?>
+							Credit Note
 						<?php }else{ ?>
 							<?php echo (($statement['type'] == 750 || $statement['type'] == 602) ? strtoupper($statement['transno']):$statement['shopinvoiceno']) ?><br>
 							<span style="font-size: 10px"><?php echo $statement['invoicesdate']; ?></span>
@@ -691,7 +622,7 @@
 	                    <?php if($statement['type'] == 10 || $statement['type'] == 750|| $statement['type'] == 602) echo locale_number_format(abs(round($statement['ovamount'],2)),2); ?>
 	              	</td>
 	              	<td style="font-size: 12px">
-						<?php echo (($statement['type'] == 13 ) ? locale_number_format(abs(round($statement['ovamount'],2)),2) : '') ?>
+						<?php echo (($statement['type'] == 11 || $statement['type'] == 13) ? locale_number_format(abs(round($statement['ovamount'],2)),2) : '') ?>
 					</td>
 	              	<td class="nostretch" style="text-align: right !important; font-size: 12px">
 	                    <?php echo locale_number_format(round($ob,2),2); ?>

@@ -15,6 +15,11 @@
           <i class="fa fa-line-chart"></i> <span>Sales Dashboard</span>
         </a>
       </li>
+      <li class="treeview <?php ecif($active == "bi", "active") ?>">
+        <a href="<?php echo $NewRootPath; ?>v2/bi/index.php">
+          <i class="fa fa-bar-chart"></i> <span>Governed BI</span>
+        </a>
+      </li>
       <?php } ?>
       <li class="treeview <?php ecif($active == "documentmanager", "active") ?>">
         <a href="<?php echo $NewRootPath; ?>v2/Document_Manager.php">
