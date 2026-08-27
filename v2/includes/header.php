@@ -302,7 +302,9 @@ session_start();
         <?php
 
         if (isset($_SESSION['UserID'])) {
-          include_once("config1.php");
+          // Resolve the auxiliary connection from this file's directory;
+          // Apache's current working directory varies by route.
+          include_once(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config1.php');
 
           // Fetch user information
           $userId = $_SESSION['UserID'];
