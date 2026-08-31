@@ -1,0 +1,385 @@
+.bi-workspace {
+    background: #f4f7fb;
+}
+
+.bi-workspace-header {
+    padding: 22px 25px 18px;
+    background: linear-gradient(135deg, #12243d, #1d79c8);
+    color: #fff;
+}
+
+.bi-workspace-header h1 {
+    margin: 7px 0 8px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.bi-workspace-header p {
+    max-width: 840px;
+    margin: 0;
+    color: rgba(255, 255, 255, .82);
+}
+
+.bi-workspace-breadcrumb,
+.bi-workspace-breadcrumb a {
+    color: rgba(255, 255, 255, .78);
+    font-size: 12px;
+}
+
+.bi-workspace-breadcrumb span {
+    padding: 0 8px;
+    color: rgba(255, 255, 255, .48);
+}
+
+.bi-workspace-title-row,
+.bi-workspace-meta,
+.bi-workspace-panel-heading,
+.bi-workspace-status-panel,
+.bi-workspace-definition > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.bi-workspace-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 20px;
+    vertical-align: middle;
+    font-size: 10px;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+
+.bi-workspace-status-enhanced {
+    background: #d8f5e3;
+    color: #146c3b;
+}
+
+.bi-workspace-status-compatibility {
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+}
+
+.bi-workspace-actions {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.bi-workspace-actions .btn {
+    margin-left: 6px;
+}
+
+.bi-workspace-meta {
+    justify-content: flex-start;
+    margin-top: 17px;
+    color: rgba(255, 255, 255, .72);
+    font-size: 11px;
+}
+
+.bi-workspace-meta span + span {
+    padding-left: 15px;
+    border-left: 1px solid rgba(255, 255, 255, .23);
+}
+
+.bi-workspace-content {
+    padding-top: 20px;
+}
+
+.bi-workspace-panel {
+    margin-bottom: 18px;
+    padding: 20px;
+    border: 1px solid #e0e7ef;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(21, 48, 79, .04);
+}
+
+.bi-workspace-panel-heading {
+    align-items: flex-start;
+    margin-bottom: 17px;
+}
+
+.bi-workspace-panel-heading h2,
+.bi-workspace-status-panel h2,
+.bi-workspace-empty-view h2,
+.bi-workspace-definition h2 {
+    margin: 4px 0 0;
+    color: #20364e;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.bi-workspace-kicker {
+    color: #1d79c8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+.bi-workspace-filter-grid label {
+    display: block;
+    color: #536273;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bi-workspace-filter-grid .form-control {
+    border-color: #d5e0eb;
+}
+
+.bi-workspace-advanced-button .btn {
+    margin-top: 0;
+}
+
+.bi-filter-count {
+    display: inline-block;
+    min-width: 18px;
+    padding: 2px 5px;
+    border-radius: 10px;
+    background: #e9f2fb;
+    color: #1d79c8;
+    font-size: 10px;
+}
+
+.bi-workspace-advanced-panel {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px dashed #c8d7e7;
+    border-radius: 4px;
+    background: #f8fbfe;
+}
+
+.bi-advanced-copy {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: #536273;
+    font-size: 12px;
+}
+
+.bi-advanced-placeholder {
+    margin-top: 10px;
+    color: #7a8795;
+    font-size: 12px;
+}
+
+.bi-workspace-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-height: 4px;
+    margin-top: 14px;
+}
+
+.bi-filter-chip {
+    padding: 5px 8px;
+    border: 1px solid #bdd8ee;
+    border-radius: 15px;
+    background: #eef7ff;
+    color: #1b5f93;
+    font-size: 11px;
+}
+
+.bi-filter-chip:hover {
+    background: #e1f1ff;
+}
+
+.bi-workspace-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid #d9e3ed;
+}
+
+.bi-workspace-tabs button {
+    margin-bottom: -1px;
+    padding: 11px 15px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: #647488;
+    font-size: 12px;
+}
+
+.bi-workspace-tabs button.is-active {
+    border-bottom-color: #1d79c8;
+    color: #1d79c8;
+    font-weight: 600;
+}
+
+.bi-workspace-alert {
+    margin-bottom: 18px;
+}
+
+.bi-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e8f3fc;
+    color: #1d79c8;
+    font-size: 26px;
+}
+
+.bi-workspace-status-panel > div:last-child {
+    flex: 1;
+}
+
+.bi-workspace-status-panel p,
+.bi-workspace-empty-view p {
+    color: #657487;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.bi-workspace-status-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    color: #3c7a57;
+    font-size: 11px;
+}
+
+.bi-workspace-status-list span:last-child {
+    color: #9a6a00;
+}
+
+.bi-workspace-info-card {
+    min-height: 108px;
+    margin-bottom: 18px;
+    padding: 15px;
+    border: 1px solid #e0e7ef;
+    border-radius: 5px;
+    background: #fff;
+}
+
+.bi-workspace-info-card span,
+.bi-workspace-info-card strong,
+.bi-workspace-info-card small {
+    display: block;
+}
+
+.bi-workspace-info-card span {
+    color: #728094;
+    font-size: 11px;
+}
+
+.bi-workspace-info-card strong {
+    margin: 5px 0;
+    color: #20364e;
+    font-size: 20px;
+}
+
+.bi-workspace-info-card small {
+    color: #7c8997;
+    font-size: 11px;
+}
+
+.bi-workspace-empty-view {
+    min-height: 230px;
+    text-align: center;
+}
+
+.bi-workspace-empty-view > i {
+    color: #9bb4ca;
+    font-size: 36px;
+}
+
+.bi-workspace-empty-view p {
+    max-width: 720px;
+    margin: 12px auto 18px;
+}
+
+.bi-workspace-definition dl {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 18px 0 0;
+}
+
+.bi-workspace-definition dl > div {
+    padding: 12px;
+    border-radius: 4px;
+    background: #f5f8fb;
+}
+
+.bi-workspace-definition dt {
+    color: #7a8795;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.bi-workspace-definition dd {
+    margin: 5px 0 0;
+    color: #33495f;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+@media (max-width: 991px) {
+    .bi-workspace-title-row {
+        display: block;
+    }
+
+    .bi-workspace-actions {
+        margin-top: 16px;
+    }
+}
+
+@media (max-width: 767px) {
+    .bi-workspace-header {
+        padding: 18px 15px;
+    }
+
+    .bi-workspace-header h1 {
+        font-size: 22px;
+    }
+
+    .bi-workspace-actions {
+        white-space: normal;
+    }
+
+    .bi-workspace-actions .btn {
+        margin: 5px 5px 0 0;
+    }
+
+    .bi-workspace-meta,
+    .bi-workspace-status-panel,
+    .bi-advanced-copy {
+        display: block;
+    }
+
+    .bi-workspace-meta span {
+        display: block;
+        margin-top: 7px;
+        padding-left: 0 !important;
+        border-left: 0 !important;
+    }
+
+    .bi-status-icon {
+        margin-bottom: 14px;
+    }
+
+    .bi-workspace-definition dl {
+        display: block;
+    }
+
+    .bi-workspace-definition dl > div {
+        margin-top: 8px;
+    }
+
+    .bi-workspace-tabs {
+        overflow-x: auto;
+    }
+
+    .bi-workspace-tabs button {
+        white-space: nowrap;
+    }
+}

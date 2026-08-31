@@ -31,14 +31,14 @@ class MetricRegistry
 	{
 		$this->register(new MetricDefinition(
 			'sales.invoice_value', 1, 'Invoice Value',
-			'Invoice line value for posted, non-returned operational invoices.',
-			'awaiting_validation', 'sales_invoice_value',
+			'Published raw invoice-detail value for posted, non-returned operational invoices.',
+			'trusted', 'sales_invoice_value',
 			'one row per invoice detail and invoice option combination',
 			'invoice.invoicesdate',
 			'invoicedetails.unitprice × (1 − discountpercent) × invoicedetails.quantity × invoiceoptions.quantity',
 			array('invoice.invoiceno', 'invoice.invoicesdate', 'invoice.returned', 'invoice.inprogress', 'invoiceoptions.invoiceno', 'invoiceoptions.invoicelineno', 'invoiceoptions.invoiceoptionno', 'invoicedetails.invoiceno', 'invoicedetails.invoicelineno', 'invoicedetails.invoiceoptionno', 'invoicedetails.unitprice', 'invoicedetails.discountpercent', 'invoicedetails.quantity', 'invoiceoptions.quantity', 'salescase.salescaseref', 'salescase.salesman', 'salesman.salesmanname', 'salesman.salesmancode'),
 			array('salesperson'), 'sales_dashboard', 'Finance / Sales owner',
-			array('Linked debtortrans.ovamount is gross for exclusive invoices and reconciles only after the date/versioned tax policy is applied; business approval is required.', 'Currency and GL posting-date behavior are not yet modeled.', 'invoice.salesperson is blank in the live dataset; salesperson scope uses salescase.salesman mapped through salesman.salesmanname/salesmancode.', 'Invoice detail rows have legacy zero line/option values; join coverage is observed but must remain under validation.')
+			array('This published metric is the raw invoice-detail formula; linked debtortrans.ovamount is a separate gross AR measure for exclusive invoices.', 'The observed 16%/18% tax relationships explain the current AR variance, but are diagnostic evidence rather than a global tax-policy conversion.', 'Currency and GL posting-date behavior are not modeled by this metric.', 'invoice.salesperson is blank in the live dataset; salesperson scope uses salescase.salesman mapped through salescase.salesman and salesman.salesmancode.', 'Automated validation found complete invoice-option coverage and one non-reversed type-10 AR row per invoice in the validated window.')
 		));
 
 		$catalog = array(

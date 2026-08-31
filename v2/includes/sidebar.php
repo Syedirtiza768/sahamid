@@ -15,10 +15,60 @@
           <i class="fa fa-line-chart"></i> <span>Sales Dashboard</span>
         </a>
       </li>
-      <li class="treeview <?php ecif($active == "bi", "active") ?>">
-        <a href="<?php echo $NewRootPath; ?>v2/bi/index.php">
-          <i class="fa fa-bar-chart"></i> <span>Governed BI</span>
+      <li class="treeview dropdownmenu <?php ecif($active == "bi" || $active == "bi_expenses" || $active == "bi_reports" || $active == "bi_suppliers", "active") ?>">
+        <a href="#">
+          <i class="fa fa-bar-chart"></i> <span>Business Intelligence</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
         </a>
+        <ul class="treeview-menu" style="">
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/index.php">
+              <i class="fa fa-dashboard"></i> Overview &amp; metric catalog
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/reports.php">
+              <i class="fa fa-files-o"></i> Enhanced report library
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/suppliers.php#overview">
+              <i class="fa fa-users"></i> Supplier Relationship Intelligence
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/expenses.php#overview">
+              <i class="fa fa-money"></i> Expense Intelligence
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/expenses.php#trend">
+              <i class="fa fa-line-chart"></i> Spend trend &amp; run-rate
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/expenses.php#breakdown">
+              <i class="fa fa-pie-chart"></i> Categories, tags &amp; GL
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/expenses.php#owners">
+              <i class="fa fa-users"></i> Owners &amp; petty-cash tabs
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/expenses.php#detail">
+              <i class="fa fa-table"></i> Transaction detail
+            </a>
+          </li>
+          <li class="treeview">
+            <a href="<?php echo $NewRootPath; ?>v2/bi/expenses.php#quality">
+              <i class="fa fa-shield"></i> Data quality &amp; controls
+            </a>
+          </li>
+        </ul>
       </li>
       <?php } ?>
       <li class="treeview <?php ecif($active == "documentmanager", "active") ?>">

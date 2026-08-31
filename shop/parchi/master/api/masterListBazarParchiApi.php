@@ -1,139 +1,208 @@
 <?php
 
-	$PathPrefix = "../../../../";
-    $AllowAnyone=true;
-	include("../../../../includes/session.inc");
-	include('../../../../includes/SQL_CommonFunctions.inc');
+/**
+ * Return the supplier-level Market Master report.
+ *
+ * The previous implementation executed a separate query for every metric and
+ * every vendor, then queried vendor permissions once per row. Apart from being
+ * slow, that made an empty response look like a successful report when the
+ * permission check failed. Keep the legacy array response expected by
+ * DataTables, but build it from one aggregate query and one scope check.
+ */
 
-	/*if(!userHasPermission($db,"master_market_list")){
-		echo json_encode([]);
-		return;
-	}*/
-/*<th>SR#</th>
-                            <th>SVID</th>
-                            <th>Business</th>
-                            <th>MPO Count</th>
-	      					<th>MPI Count</th>
-                            <th>MPO I/P</th>
-                            <th>MPI I/P</th>
-                            <th>MPO Saved</th>
-                            <th>MPI Saved</th>
-                            <th>MPO Settled</th>
-                            <th>MPI Settled</th>
-                            <th>A/R</th>
-                            <th>A/P</th>*/
-	/*$SQL = "SELECT bazar_parchi.*,count(bazar_parchi.*),supptrans.settled as settled2,
-	        supptrans.id as traid, www_users.realname,
-			suppliers.suppname as name
-			FROM bazar_parchi
-			INNER JOIN www_users ON bazar_parchi.user_id = www_users.userid
-			LEFT OUTER JOIN supptrans ON (bazar_parchi.transno = supptrans.transno
-										AND supptrans.type=601)
-			LEFT OUTER JOIN suppliers ON bazar_parchi.svid = suppliers.supplierid
-			WHERE discarded=0
-			AND (supptrans.type = 601 OR supptrans.type IS NULL)
-			AND bazar_parchi.type = 601
-			GROUP BY svid";
-	$res = mysqli_query($db, $SQL);*/
-$SQL = "SELECT bazar_parchi.svid,	        
-			suppliers.suppname as name
-			FROM bazar_parchi
-			INNER JOIN suppliers ON bazar_parchi.svid = suppliers.supplierid
-			WHERE discarded=0
-			GROUP BY svid";
-$res = mysqli_query($db, $SQL);
+$PathPrefix = dirname(__DIR__, 4) . DIRECTORY_SEPARATOR;
+$AllowAnyone = true;
 
-	$data = [];
-	
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
 
-	while(($row = mysqli_fetch_assoc($res))){
+include_once($PathPrefix . 'includes/session.inc');
+include_once($PathPrefix . 'includes/SQL_CommonFunctions.inc');
 
-		if($row['name'] == "")
-			$row['name'] = $row['temp_vendor'];
-		$SQL="SELECT COUNT(*) as mpocount FROM bazar_parchi WHERE  svid='".$row['svid']."' AND TYPE=602";
-		$mpocount = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mpocount'];
-        $SQL="SELECT COUNT(*) as mpicount FROM bazar_parchi WHERE  svid='".$row['svid']."' AND TYPE=601";
-        $mpicount = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mpicount'];
-        $SQL="SELECT COUNT(*) as mposettled FROM bazar_parchi INNER JOIN supptrans ON bazar_parchi.transno = supptrans.transno
-        WHERE  svid='".$row['svid']."' AND supptrans.type=602 AND supptrans.settled=1";
-        $mposettled = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mposettled'];
-        $SQL="SELECT COUNT(*) as mpisettled FROM bazar_parchi INNER JOIN supptrans
-        ON bazar_parchi.transno = supptrans.transno
-        WHERE  svid='".$row['svid']."' AND supptrans.type=601 AND supptrans.settled=1";
-        $mpisettled = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mpisettled'];
-
-        $SQL="SELECT COUNT(*) as mpoip FROM bazar_parchi WHERE  svid='".$row['svid']."' 
-        AND TYPE=602 AND settled=0 AND inprogress=1";
-        $mpoip = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mpoip'];
-        $SQL="SELECT COUNT(*) as mpiip FROM bazar_parchi WHERE  svid='".$row['svid']."' 
-        AND TYPE=601 AND settled=0 AND inprogress=1";
-        $mpiip = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mpiip'];
-        $SQL="SELECT COUNT(*) as mposaved FROM bazar_parchi WHERE  svid='".$row['svid']."' 
-        AND TYPE=602 AND settled=0 AND inprogress=0";
-        $mposaved = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mposaved'];
-        $SQL="SELECT COUNT(*) as mpisaved FROM bazar_parchi WHERE  svid='".$row['svid']."' 
-        AND TYPE=601 AND settled=0 AND inprogress=0";
-        $mpisaved = mysqli_fetch_assoc(mysqli_query($db, $SQL))['mpisaved'];
-        $SQL="SELECT SUM(ovamount) as payable FROM supptrans WHERE  supplierno='".$row['svid']."'";
-        $payable = mysqli_fetch_assoc(mysqli_query($db, $SQL))['payable'];
-        $SQL="SELECT SUM(ovamount) as receivable FROM debtortrans WHERE  debtorno='".$row['svid']."'";
-        $receivable = mysqli_fetch_assoc(mysqli_query($db, $SQL))['receivable'];
-
-
-
-
-
-        $r = [];
-
-		$r[] = $row['svid'];
-
-		$r[] = $row['name'];
-        $r[] = '<a target="_blank" href="../outward/listOutwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=none">'.$mpocount.'</a>';
-        $r[] = '<a target="_blank" href="../inward/listInwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=none"">'.$mpicount.'</a>';
-        $r[] = '<a target="_blank" href="../outward/listOutwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=inprogress">'.$mpoip.'</a>';
-        $r[] = '<a target="_blank" href="../inward/listInwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=inprogress">'.$mpiip.'</a>';
-        $r[] = '<a target="_blank" href="../outward/listOutwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=saved">'.$mposaved.'</a>';
-        $r[] ='<a target="_blank" href="../inward/listInwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=saved">'. $mpisaved.'</a>';
-        $r[] = '<a target="_blank" href="../outward/listOutwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=settled">'.$mposettled.'</a>';
-        $r[] = '<a target="_blank" href="../inward/listInwardBazarParchiSimple.php?svid='.$row['svid'].'&filter=settled">'.$mpisettled.'</a>';
-        $r[] = locale_number_format($receivable,2);
-        $r[] = locale_number_format($payable,2);
-        $r[] =			'<form target="_blank" action="../../../reports/balance/suppstatement/SupplierStatement.php" method="post"><table><tr><td>
-							<input type="hidden" name="FormID" value="'.$_SESSION['FormID'].'">
-							<input type="hidden" name="cust" value="'.$row['svid'].'">
-							<input type="date" name="fromdate" 
-							style="padding: 4px; margin: 0; border: 1px #424242 solid;
-							 border-radius: 6px; line-height: initial !important;">
-						</td>
-						<td>
-							<input type="date" name="todate" style="padding: 4px; margin: 0; border: 1px #424242 solid; border-radius: 6px; line-height: initial !important;">
-						</td>
-						<td class="btn-info">
-							<input type="submit" value="Supplier Statement" class="btn-info" style="width: 100%; padding: 4px; border:1px #424242 solid;">
-							</form>
-						</td>
-						<td class="btn-info">
-							<form target="_blank" action="/sahamid/reports/balance/custstatement/../../../customerstatement.php" method="post" target="_blank">
-							<input type="hidden" name="FormID" value="'.$_SESSION['FormID'].'">
-							<input type="hidden" name="cust" value="'.$row['svid'].'">
-							<input type="submit" value="Customer Statement" class="btn-info" style="padding: 8px; border:1px #424242 solid;">
-							</form>
-						</td>
-  					</tr></table>';
-
-
-
-
-
-
-
-
-
-
-        if(userHasVendorPermission($db, $row['svid']))
-        $data[] = $r;
-
-
+function sendMarketMasterJson($payload, $statusCode = 200)
+{
+	while (ob_get_level() > 0) {
+		ob_end_clean();
 	}
 
-	echo json_encode($data);
+	http_response_code((int) $statusCode);
+	header('Content-Type: application/json; charset=utf-8');
+	header('Cache-Control: no-store');
+
+	$json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+	if ($json === false) {
+		$json = json_encode(array(
+			'error' => true,
+			'message' => 'The Market Master response could not be encoded.',
+		));
+	}
+
+	echo $json;
+	exit;
+}
+
+function bindMarketMasterParams($statement, $types, &$params)
+{
+	if ($types === '') {
+		return true;
+	}
+
+	$arguments = array($statement, $types);
+	foreach ($params as $key => &$value) {
+		$arguments[] = &$value;
+	}
+
+	return call_user_func_array('mysqli_stmt_bind_param', $arguments);
+}
+
+function marketMasterEscape($value)
+{
+	return htmlspecialchars(html_entity_decode((string) $value, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+}
+
+function marketMasterNumber($value)
+{
+	$value = (float) $value;
+	return function_exists('locale_number_format')
+		? locale_number_format($value, 2)
+		: number_format($value, 2);
+}
+
+try {
+	if (!isset($_SESSION['UserID']) || trim((string) $_SESSION['UserID']) === '') {
+		sendMarketMasterJson(array(
+			'error' => true,
+			'message' => 'An authenticated ERP session is required.',
+		), 401);
+	}
+
+	$userId = trim((string) $_SESSION['UserID']);
+	$canViewAllVendors = function_exists('userHasPermission') && userHasPermission($db, '*');
+
+	/*
+	 * Aggregate one-to-many tables before joining them to bazar_parchi. This
+	 * prevents duplicate vendor rows and reduces the old N+1 query pattern to a
+	 * single indexed read across the source tables.
+	 */
+	$sql = "SELECT
+				bp.svid,
+				COALESCE(
+					NULLIF(MAX(s.suppname), ''),
+					NULLIF(MAX(bp.temp_vendor), ''),
+					CASE WHEN bp.svid = '' THEN 'Unassigned vendor' ELSE CONCAT('Vendor ', bp.svid) END
+				) AS vendor_name,
+				SUM(CASE WHEN bp.type = 602 THEN 1 ELSE 0 END) AS mpocount,
+				SUM(CASE WHEN bp.type = 601 THEN 1 ELSE 0 END) AS mpicount,
+				SUM(CASE WHEN bp.type = 602 AND bp.settled = 0 AND bp.inprogress = 1 THEN 1 ELSE 0 END) AS mpoip,
+				SUM(CASE WHEN bp.type = 601 AND bp.settled = 0 AND bp.inprogress = 1 THEN 1 ELSE 0 END) AS mpiip,
+				SUM(CASE WHEN bp.type = 602 AND bp.settled = 0 AND bp.inprogress = 0 THEN 1 ELSE 0 END) AS mposaved,
+				SUM(CASE WHEN bp.type = 601 AND bp.settled = 0 AND bp.inprogress = 0 THEN 1 ELSE 0 END) AS mpisaved,
+				SUM(CASE WHEN COALESCE(ts.mpo_settled, 0) = 1 THEN 1 ELSE 0 END) AS mposettled,
+				SUM(CASE WHEN COALESCE(ts.mpi_settled, 0) = 1 THEN 1 ELSE 0 END) AS mpisettled,
+				COALESCE(MAX(dbalance.receivable), 0) AS receivable,
+				COALESCE(MAX(sbalance.payable), 0) AS payable
+			FROM bazar_parchi bp
+			LEFT JOIN suppliers s
+				ON s.supplierid = bp.svid
+			LEFT JOIN (
+				SELECT transno,
+					MAX(CASE WHEN type = 602 AND settled = 1 THEN 1 ELSE 0 END) AS mpo_settled,
+					MAX(CASE WHEN type = 601 AND settled = 1 THEN 1 ELSE 0 END) AS mpi_settled
+				FROM supptrans
+				WHERE type IN (601, 602)
+				GROUP BY transno
+			) ts ON ts.transno = bp.transno
+			LEFT JOIN (
+				SELECT supplierno, SUM(ovamount) AS payable
+				FROM supptrans
+				GROUP BY supplierno
+			) sbalance ON sbalance.supplierno = bp.svid
+			LEFT JOIN (
+				SELECT debtorno, SUM(ovamount) AS receivable
+				FROM debtortrans
+				GROUP BY debtorno
+			) dbalance ON dbalance.debtorno = bp.svid
+			WHERE 1 = 1";
+
+	$params = array();
+	$types = '';
+	if (!$canViewAllVendors) {
+		$sql .= "
+				AND EXISTS (
+					SELECT 1
+					FROM vendor_permission vp
+					WHERE vp.userid = ?
+					  AND (vp.permission = '*' OR vp.permission = bp.svid)
+				)";
+		$params[] = $userId;
+		$types .= 's';
+	}
+
+	$sql .= "
+			GROUP BY bp.svid
+			HAVING SUM(CASE WHEN bp.discarded = 0 THEN 1 ELSE 0 END) > 0
+            ORDER BY CASE WHEN bp.svid = '' THEN 1 ELSE 0 END, vendor_name, bp.svid";
+
+	$statement = mysqli_prepare($db, $sql);
+	if (!$statement) {
+		throw new Exception('The Market Master query could not be prepared.');
+	}
+	if (!bindMarketMasterParams($statement, $types, $params)) {
+		mysqli_stmt_close($statement);
+		throw new Exception('The Market Master query parameters could not be bound.');
+	}
+	if (!mysqli_stmt_execute($statement)) {
+		$error = mysqli_stmt_error($statement);
+		mysqli_stmt_close($statement);
+		throw new Exception('The Market Master query failed: ' . $error);
+	}
+
+	$result = mysqli_stmt_get_result($statement);
+	if (!$result) {
+		mysqli_stmt_close($statement);
+		throw new Exception('The Market Master result could not be read.');
+	}
+
+	$data = array();
+	while ($row = mysqli_fetch_assoc($result)) {
+		$svid = (string) $row['svid'];
+		$encodedSvid = rawurlencode($svid);
+		$escapedSvid = marketMasterEscape($svid);
+		$escapedName = marketMasterEscape($row['vendor_name']);
+
+		$statementHtml = '<form target="_blank" action="../../../reports/balance/suppstatement/SupplierStatement.php" method="post" class="market-master-statement-form">'
+			. '<input type="hidden" name="FormID" value="' . marketMasterEscape(isset($_SESSION['FormID']) ? $_SESSION['FormID'] : '') . '">'
+			. '<input type="hidden" name="cust" value="' . $escapedSvid . '">'
+			. '<input type="date" name="fromdate" aria-label="Statement start date">'
+			. '<input type="date" name="todate" aria-label="Statement end date">'
+			. '<button type="submit" class="btn-info">Supplier Statement</button>'
+			. '</form>';
+
+		$r = array();
+		$r[] = $escapedSvid;
+		$r[] = $escapedName;
+		$r[] = '<a target="_blank" rel="noopener" href="../outward/listOutwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=none">' . (int) $row['mpocount'] . '</a>';
+		$r[] = '<a target="_blank" rel="noopener" href="../inward/listInwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=none">' . (int) $row['mpicount'] . '</a>';
+		$r[] = '<a target="_blank" rel="noopener" href="../outward/listOutwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=inprogress">' . (int) $row['mpoip'] . '</a>';
+		$r[] = '<a target="_blank" rel="noopener" href="../inward/listInwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=inprogress">' . (int) $row['mpiip'] . '</a>';
+		$r[] = '<a target="_blank" rel="noopener" href="../outward/listOutwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=saved">' . (int) $row['mposaved'] . '</a>';
+		$r[] = '<a target="_blank" rel="noopener" href="../inward/listInwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=saved">' . (int) $row['mpisaved'] . '</a>';
+		$r[] = '<a target="_blank" rel="noopener" href="../outward/listOutwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=settled">' . (int) $row['mposettled'] . '</a>';
+		$r[] = '<a target="_blank" rel="noopener" href="../inward/listInwardBazarParchiSimple.php?svid=' . $encodedSvid . '&filter=settled">' . (int) $row['mpisettled'] . '</a>';
+		$r[] = marketMasterNumber($row['receivable']);
+		$r[] = marketMasterNumber($row['payable']);
+		$r[] = $statementHtml;
+		$data[] = $r;
+	}
+
+	mysqli_free_result($result);
+	mysqli_stmt_close($statement);
+	sendMarketMasterJson($data);
+} catch (Throwable $exception) {
+	error_log('Market Master report failed: ' . $exception->getMessage());
+	sendMarketMasterJson(array(
+		'error' => true,
+		'message' => 'Unable to load Market Master data. Please refresh the report or contact support.',
+	), 500);
+}

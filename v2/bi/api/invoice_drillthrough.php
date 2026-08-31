@@ -3,8 +3,8 @@
 /**
  * Permission-aware invoice evidence endpoint.
  *
- * This endpoint is read-only and remains unavailable while the invoice metric
- * is awaiting business validation. It must never become a second formula path.
+ * This endpoint is read-only and supports the published invoice metric. It
+ * must never become a second formula path.
  */
 
 $BiRootPath = dirname(__DIR__, 3);

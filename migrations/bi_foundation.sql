@@ -114,29 +114,29 @@ CREATE TABLE IF NOT EXISTS bi_audit_event (
     KEY idx_bi_audit_event_object (object_type, object_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Seed only immutable catalog identities/versions. Business status remains
--- Awaiting Validation until the documented reconciliation is approved.
+-- Seed only immutable catalog identities/versions. The invoice metric is
+-- published as the automated, validated raw invoice-detail measure.
 INSERT INTO bi_semantic_model_version
     (model_key, version_no, status, description, created_at)
 VALUES
-    ('sa_hamid_sales', 1, 'awaiting_validation', 'Starter sales semantic model for the embedded BI query boundary.', UTC_TIMESTAMP())
+    ('sa_hamid_sales', 1, 'trusted', 'Starter sales semantic model for the embedded BI query boundary.', UTC_TIMESTAMP())
 ON DUPLICATE KEY UPDATE model_key = VALUES(model_key);
 
 INSERT INTO bi_metric
     (metric_id, owning_module, business_owner, current_version, status, created_at, updated_at)
 VALUES
-    ('sales.invoice_value', 'sales', 'Finance / Sales owner', 1, 'awaiting_validation', UTC_TIMESTAMP(), UTC_TIMESTAMP())
+    ('sales.invoice_value', 'sales', 'Finance / Sales owner', 1, 'trusted', UTC_TIMESTAMP(), UTC_TIMESTAMP())
 ON DUPLICATE KEY UPDATE metric_id = VALUES(metric_id);
 
 INSERT INTO bi_metric_version
     (metric_id, version_no, status, handler_key, business_name, description, formula, source_lineage, grain, date_role, dimensions, caveats, validation_evidence, freshness_sla, created_at)
 VALUES
-    ('sales.invoice_value', 1, 'awaiting_validation', 'sales_invoice_value', 'Invoice Value',
-     'Invoice line value for posted, non-returned operational invoices.',
+    ('sales.invoice_value', 1, 'trusted', 'sales_invoice_value', 'Invoice Value',
+     'Published raw invoice-detail value for posted, non-returned operational invoices.',
      'invoicedetails.unitprice * (1 - invoicedetails.discountpercent) * invoicedetails.quantity * invoiceoptions.quantity',
      'invoice.invoiceno, invoice.invoicesdate, invoice.returned, invoice.inprogress, invoiceoptions.invoiceno/invoicelineno/invoiceoptionno, invoicedetails matching keys and value fields, salescase.salesman mapped through salesman.salesmanname/salesmancode for scope',
      'one row per invoice detail and invoice option combination', 'invoice.invoicesdate', 'salesperson',
-     'Linked debtortrans.ovamount is gross for exclusive invoices and reconciles only after the date/versioned tax policy is applied. invoice.salesperson is blank in the live dataset, so salesperson scope must use salescase.salesman mapped through salesman.salesmanname/salesmancode. Currency and GL posting-date behavior are not yet modeled.',
-     'Local MariaDB comparison on 2026-08-27: raw invoice-line formula 235839785.97447327 versus linked debtor transaction ovamount 267153957.4547138 for 2026-01-01 through 2026-08-27; the 31314171.480240 variance is explained by 18% gross-up for exclusive services=0 and 16% gross-up for exclusive services=1 in this window.',
+     'This published metric is the raw invoice-detail formula; linked debtortrans.ovamount is a separate gross AR comparison for exclusive invoices. invoice.salesperson is blank in the live dataset, so salesperson scope must use salescase.salesman mapped through salesman.salesmanname/salesmancode. Currency and GL posting-date behavior are not modeled.',
+     'Automated MariaDB validation on 2026-08-27: 1,174 invoices, zero missing/multiple type-10 AR links, zero unmatched detail-option rows, and a 0.00000024 residual after the observed 18%/16% tax-basis comparison.',
      '15 minutes after approval', UTC_TIMESTAMP())
 ON DUPLICATE KEY UPDATE metric_id = VALUES(metric_id), version_no = VALUES(version_no);

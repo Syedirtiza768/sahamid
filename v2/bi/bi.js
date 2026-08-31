@@ -140,7 +140,7 @@
         var rows = data.rows || [];
         var checks = reconciliation.checks || [];
         var status = reconciliation.status || 'unknown';
-        var statusClass = status === 'formula_explained_pending_approval' ? 'pass' : (status === 'no_population' ? 'review' : 'exception');
+        var statusClass = status === 'formula_explained' || status === 'formula_explained_pending_approval' ? 'pass' : (status === 'no_population' ? 'review' : 'exception');
         var html = '<div class="bi-reconciliation-head"><span class="bi-reconciliation-status bi-reconciliation-' + escapeHtml(statusClass) + '">' + escapeHtml(status.replace(/_/g, ' ')) + '</span>'
             + '<span class="bi-result-meta">Metric status: ' + escapeHtml(data.metadata.validation_status || 'unknown') + ' · Source: live ERP database</span></div>'
             + '<div class="row bi-reconciliation-summary">'
@@ -165,7 +165,7 @@
         checks.forEach(function (check) {
             html += '<li><span class="bi-check-' + escapeHtml(check.status || 'review') + '">' + escapeHtml((check.status || 'review').toUpperCase()) + '</span> <strong>' + escapeHtml(check.label) + '</strong> — ' + escapeHtml(check.detail) + '</li>';
         });
-        html += '</ul><div class="bi-result-warning">Approval required: Finance/Sales must select the governed net or gross definition and approve the date/tax policy. This read-only reconciliation does not change metric trust status.</div>';
+        html += '</ul><div class="bi-reconciliation-published">Published definition: raw invoice-detail value. Linked AR is shown as a separate gross comparison; it is not substituted into the KPI.</div>';
         body.innerHTML = html;
         box.style.display = 'block';
         box.scrollIntoView({ behavior: 'smooth', block: 'start' });

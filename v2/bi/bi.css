@@ -178,6 +178,13 @@
     border-left: 3px solid #e6a700;
 }
 
+.bi-reconciliation-published {
+    padding: 10px 12px;
+    color: #216b3b;
+    background: #eaf7ed;
+    border-left: 3px solid #3c9a5f;
+}
+
 .bi-reconciliation-head {
     display: flex;
     align-items: center;

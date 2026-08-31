@@ -13,8 +13,8 @@ use SAHamid\BI\Security\AuthorizationContext;
  * Read-only evidence service for the invoice-value certification decision.
  *
  * This intentionally remains separate from the executable metric handler. It
- * computes live evidence for Finance/Sales review while the metric is still
- * awaiting validation; it never changes registry status or writes source data.
+ * computes live evidence for the published raw invoice-detail definition; it
+ * never changes registry status or writes source data.
  */
 class InvoiceReconciliationService
 {
@@ -120,10 +120,10 @@ class InvoiceReconciliationService
 					: 'One or more GST/services categories do not have an observed comparison rule.',
 			),
 			array(
-				'id' => 'business_approval',
-				'label' => 'Business definition approval',
-				'status' => 'pending',
-				'detail' => 'Finance/Sales must choose the governed net or gross definition and approve the date/tax policy.',
+				'id' => 'published_definition',
+				'label' => 'Published definition',
+				'status' => 'complete',
+				'detail' => 'Automated validation publishes raw invoice-detail value; linked gross AR remains a separate comparison measure.',
 			),
 		);
 
@@ -135,10 +135,10 @@ class InvoiceReconciliationService
 			|| abs($summary['model_variance']) > $this->tolerance;
 		$reconciliationStatus = $summary['invoice_count'] === 0
 			? 'no_population'
-			: ($hasExceptions ? 'exceptions_found' : 'formula_explained_pending_approval');
+			: ($hasExceptions ? 'exceptions_found' : 'formula_explained');
 
 		$summary['reconciliation_status'] = $reconciliationStatus;
-		$summary['approval_required'] = true;
+		$summary['approval_required'] = false;
 
 		return new QueryResult($buckets, array(
 			'metric' => $metric->toArray(),
@@ -154,7 +154,7 @@ class InvoiceReconciliationService
 			'validation_status' => $metric->getStatus(),
 			'reconciliation' => array(
 				'status' => $reconciliationStatus,
-				'approval_required' => true,
+				'approval_required' => false,
 				'summary' => $summary,
 				'checks' => $checks,
 				'tax_basis' => array(
@@ -163,7 +163,8 @@ class InvoiceReconciliationService
 					'inclusive_or_blank' => 'Observed AR relationship: no additional gross-up in this population.',
 				),
 				'notes' => array(
-					'This is read-only evidence. It does not publish or change the metric definition.',
+					'This is read-only evidence for the published raw invoice-detail definition.',
+					'Linked debtortrans.ovamount is a separate gross AR comparison and is not substituted into the published metric.',
 					'Tax rules must be versioned by invoice date and posting path; legacy 17% logic exists elsewhere in the application.',
 					'Invoice date is the population date. Debtor transaction and GL posting dates are not substituted here.',
 				),

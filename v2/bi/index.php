@@ -78,7 +78,7 @@ $yearStart = date('Y-01-01');
                         <input id="biInvoiceNo" class="form-control" type="text" inputmode="numeric" maxlength="20" placeholder="Optional evidence filter">
                     </div>
                     <button id="biRefreshCatalog" type="button" class="btn btn-default"><i class="fa fa-refresh"></i> Refresh catalog</button>
-                    <span class="help-block bi-help">Run published metrics when available. Use “Reconcile” on the invoice metric to review live evidence before Finance/Sales approval; draft or awaiting-validation metrics remain visible for transparency.</span>
+                    <span class="help-block bi-help">Run published metrics against the active ERP company. Use “Reconcile” on the invoice metric to inspect live formula, AR, and tax-basis evidence.</span>
                 </form>
             </div>
         </div>
