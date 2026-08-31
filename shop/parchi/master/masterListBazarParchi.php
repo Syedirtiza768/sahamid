@@ -1,8 +1,7 @@
 <?php
 
-	$PathPrefix = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR;
-	$AllowAnyone = true;
-	include_once($PathPrefix . 'includes/session.inc');
+	$PathPrefix = "../../../";
+	include("../../../includes/session.inc");
 	
 /*	if(!userHasPermission($db,"master_market_list")){
 		header('Location: ' . $_SERVER['HTTP_REFERER']);
@@ -39,32 +38,13 @@
 
 			.dataTables_filter input{
 			    border: 1px #ccc solid;
-			border-radius: 5px;
+    			border-radius: 5px;
 			}
 
 			th{
 				text-align: center;
 			}
 
-			.master-report-status{
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 8px;
-				min-height: 34px;
-				margin: 12px 0;
-				color: #666;
-				font-size: 13px;
-			}
-
-			.master-report-status.is-ready{
-				color: #247a45;
-			}
-
-			.master-report-status.is-empty,
-			.master-report-status.is-error{
-				color: #a94442;
-			}
 		</style>
 
 	</head>
@@ -86,13 +66,10 @@
 			</header>
 
 	      	<div class="col-md-12" style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
-				<div id="masterReportStatus" class="master-report-status is-loading" role="status" aria-live="polite" data-state="loading">
-					<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>
-					<span>Loading accessible vendor summary…</span>
-				</div>
 	      		<table class="table table-bordered table-striped mb-none" id="datatable">
 	      			<thead>
 	      				<tr style="background-color: #424242; color: white">
+
                             <th>SVID</th>
                             <th>Business</th>
                             <th>MPO Count</th>
@@ -106,9 +83,12 @@
                             <th>A/R</th>
                             <th>A/P</th>
                             <th>Statement</th>
+
 	      				</tr>
 	      			</thead>
-				<tbody></tbody>
+	      			<tbody>
+	      				
+	      			</tbody>
 	      		</table>
 	      	</div>
 
@@ -128,101 +108,57 @@
 		<script src="../../../media/js/dataTables.buttons.js"></script>
 		<script src="../../../media/js/buttons.html5.js"></script>
 
-		<script>
-			(function($) {
-				'use strict';
 
-				var datatable = null;
-				var status = $('#masterReportStatus');
-
-				function setStatus(state, message) {
-					status
-						.removeClass('is-loading is-ready is-empty is-error')
-						.addClass('is-' + state)
-						.attr('data-state', state)
-						.find('i')
-						.attr('class', state === 'loading'
-							? 'fa fa-spinner fa-spin'
-							: state === 'ready'
-								? 'fa fa-check-circle'
-								: 'fa fa-exclamation-circle');
-					status.find('span').text(message);
-				}
-
-				function reportError(message) {
-					if (datatable) {
-						datatable.clear().draw(false);
-					}
-					setStatus('error', message);
-				}
-
-				function datatableInit() {
-					datatable = $('#datatable').DataTable({
-						language: {
-							search: "_INPUT_",
-							searchPlaceholder: "Search..."
-						},
-						deferRender: true,
-						processing: true,
-						pageLength: 50,
-						order: [[1, 'asc']],
-						scrollX: true,
-						buttons: [
-							{
-								extend: 'csv'
-							}
-						]
-					});
-
-					$('#datatable_length')
-						.find('label')
-						.html("<h3 style='margin:0; padding:0; font-variant: petite-caps;'>Master List Bazar Parchi <?php if(userHasPermission($db, 'create_inward_parchi')) echo "<a class='btn btn-success' style='font-variant-caps: normal' target='_blank' href='inwardParchi.php'>Make New</a><a class='btn btn-info' style='font-variant-caps: normal' id='download-csv'>Download CSV</a>"; ?></h3>");
-				}
-
-				$(function() {
-					datatableInit();
-
-					$.ajax({
-						type: 'GET',
-						url: 'api/masterListBazarParchiApi.php',
-						dataType: 'json',
-						cache: false,
-						timeout: 30000,
-						success: function(response) {
-							if (!$.isArray(response)) {
-								reportError('The report returned an invalid response. Please refresh and try again.');
-								return;
-							}
-
-							datatable.clear();
-							if (response.length) {
-								datatable.rows.add(response);
-							}
-							datatable.draw(false);
-
-							setStatus(
-								response.length ? 'ready' : 'empty',
-								response.length
-									? response.length + ' vendor summaries loaded.'
-									: 'No vendors are available for your current ERP/vendor permissions.'
-							);
-						},
-						error: function(xhr, textStatus) {
-							var message = textStatus === 'timeout'
-								? 'The report took too long to respond. Please refresh and try again.'
-								: 'Unable to load Market Master data. Please refresh and try again.';
-							reportError(message);
-						}
-					});
-				});
-
-				$(document.body).on('click', '#download-csv', function(e) {
-					e.preventDefault();
-					if (datatable) {
-						datatable.button('.buttons-csv').trigger();
-					}
-				});
-			})(jQuery);
-		</script>
 	</body>
+	<script>
+		
+		(function( $ ) {
+
+			'use strict';
+
+			var datatableInit = function() {
+
+				datatable = $('#datatable').DataTable({
+					language: {
+				        search: "_INPUT_",
+				        searchPlaceholder: "Search..."
+				    },
+				    buttons: [
+				        { 
+				            extend: 'csv',
+				        }
+				    ],
+				});
+
+				$('#datatable_length')
+					.find("label")
+					.html("<h3 style='margin:0; padding:0; font-variant: petite-caps;'>Master List Bazar Parchi <?php if(userHasPermission($db,'create_inward_parchi' )) echo "<a class='btn btn-success' style='font-variant-caps: normal' target='_blank' href='inwardParchi.php'>Make New</a><a class='btn btn-info' style='font-variant-caps: normal' id='download-csv'>Download CSV</a>"; ?></h3>");
+
+			};
+
+			$(function() {
+				datatableInit();
+				$("tbody tr td").html("Loading...");
+				
+				$.ajax({
+					type: 'GET',
+					url: "api/masterListBazarParchiApi.php",
+					dataType: "json",
+					success: function(response) { 
+						datatable.rows.add(response).draw(false);
+					},
+					error: function(){
+						$("tbody tr td").html("Error...");
+					}
+				});
+			});
+
+			$(document.body).on("click", "#download-csv", function(e){
+				e.preventDefault();
+				datatable.button('.buttons-csv').trigger();
+			});
+
+		}).apply( this, [ jQuery ]);
+
+	</script>
 </html>
