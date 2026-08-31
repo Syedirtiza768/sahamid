@@ -9,7 +9,7 @@ if (!userHasPermission($db, "list_inward_parchi")) {
 }
 $_SESSION['svid'] = $_GET['svid'];
 $_SESSION['filter'] = $_GET['filter'];
-$SQL = "SELECT manufacturers_id, manufacturers_name FROM manufacturers ORDER BY manufacturers_name";
+$SQL = "SELECT * FROM manufacturers";
 
 $brands = mysqli_query($db, $SQL);
 ?>
@@ -198,23 +198,8 @@ $brands = mysqli_query($db, $SQL);
                 searchPlaceholder: "Search..."
             },
             buttons: [{
-                extend: 'csvHtml5',
-                title: 'Inward Bazar Parchi',
-                filename: 'inward-bazar-parchi',
-                exportOptions: {
-                    columns: ':visible',
-                    modifier: {
-                        page: 'all'
-                    },
-                    format: {
-                        body: function(data) {
-                            var cell = document.createElement('div');
-                            cell.innerHTML = data == null ? '' : data;
-                            return cell.textContent || cell.innerText || '';
-                        }
-                    }
-                }
-            }]
+                extend: 'csv',
+            }],
         });
 
         $('#datatable_length')
@@ -228,13 +213,7 @@ $brands = mysqli_query($db, $SQL);
         $("tbody tr td").html("Apply Filters And Search");
         partylistSelect = $("#brand").select2();
 
-        // This must be registered during page initialisation. Previously it
-        // was nested inside the Search handler, so CSV did nothing until a
-        // search had already been submitted.
-        $(document.body).on("click", "#download-csv", function(e) {
-            e.preventDefault();
-            datatable.button(0).trigger();
-        });
+
     });
 
     $(".filtercase").on("click", function(e) {
@@ -242,44 +221,86 @@ $brands = mysqli_query($db, $SQL);
         reff.prop("disabled", true);
         e.preventDefault();
 
+
         'use strict';
 
-        let filter = {
-            filters: "yes",
-            from: $.trim($("#from").val() || ""),
-            to: $.trim($("#to").val() || ""),
-            item: $.trim($("#item").val() || ""),
-            state: $.trim($("#state").val() || ""),
-            brand: $.trim($("#brand").val() || "")
-        };
 
-        datatable.clear().draw();
-        $("tbody tr td").html("Searching...");
 
-        $.ajax({
-            url: "api/listInwardBazarParchiApi.php",
-            type: "GET",
-            data: filter,
-            dataType: "json"
-        })
-            .done(function(res) {
-                if (res && res.error) {
-                    console.error("API Error:", res.message);
-                    alert("Error loading data: " + (res.message || "Unknown error"));
+        $(function() {
+
+            let filter = "filters=yes";
+
+            let from = $("#from").val().trim();
+
+            if (from != "") {
+                filter += "&from=" + from;
+            }
+            let to = $("#to").val().trim();
+
+            if (to != "") {
+                filter += "&to=" + to;
+            }
+            let item = $("#item").val().trim();
+
+            if (item != "") {
+                filter += "&item=" + item;
+            }
+            let state = $("#state").val().trim();
+
+            if (state != "") {
+                filter += "&state=" + state;
+            }
+            let brand = $("#brand").val().trim();
+
+            if (brand != "") {
+                filter += "&brand=" + brand;
+            }
+
+
+            datatable.clear().draw();
+
+            $("tbody tr td").html("Searching...");
+            $.get("api/listInwardBazarParchiApi.php?" + filter)
+                .done(function(res) {
+                    try {
+                        if (typeof res === 'string') {
+                            res = JSON.parse(res);
+                        }
+
+                        // Check if response has error
+                        if (res.error) {
+                            console.error("API Error:", res.message);
+                            if (res.trace) {
+                                console.error("Trace:", res.trace);
+                            }
+                            // Show error to user
+                            alert("Error loading data: " + res.message);
+                            datatable.clear().draw();
+                            return;
+                        }
+
+                        // Success - add rows to datatable
+                        datatable.rows.add(res).draw(false);
+                    } catch (e) {
+                        console.error("JSON Parse Error:", e);
+                        console.error("Raw Response:", res);
+                        alert("Failed to parse server response. Check console for details.");
+                        datatable.clear().draw();
+                    }
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error("AJAX Error:", textStatus, errorThrown);
+                    alert("Failed to load data: " + textStatus);
                     datatable.clear().draw();
-                    return;
-                }
+                });
 
-                datatable.rows.add(Array.isArray(res) ? res : []).draw(false);
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.error("AJAX Error:", textStatus, errorThrown);
-                alert("Failed to load data: " + textStatus);
-                datatable.clear().draw();
-            })
-            .always(function() {
-                reff.prop("disabled", false);
-            });
+
+        });
+
+        $(document.body).on("click", "#download-csv", function(e) {
+            e.preventDefault();
+            datatable.button('.buttons-csv').trigger();
+        });
 
     });
 </script>

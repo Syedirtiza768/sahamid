@@ -15,7 +15,6 @@
 
 	$SQL = "SELECT *,bazar_parchi.transno as mpino FROM bazar_parchi
 			WHERE bazar_parchi.type=601
-			AND bazar_parchi.returned=0
 			AND bazar_parchi.inprogress=0
 			AND bazar_parchi.settled=0
 			AND bazar_parchi.transno

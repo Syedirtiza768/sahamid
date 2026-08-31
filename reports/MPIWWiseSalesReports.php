@@ -6,11 +6,6 @@
 	include('../includes/session.inc');
 	include('../includes/SQL_CommonFunctions.inc');
 
-	if (isset($_GET['csv'])) {
-		require __DIR__ . '/MPIWWiseSalesReportsCsv.php';
-		exit;
-	}
-
 	if(isset($_GET['json'])){
 
 		$startDate = $_GET['from_date'];
@@ -270,23 +265,9 @@
 					"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
 					dom: 'Bfrtip',
 					buttons: [
-				            'excelHtml5',
-				            {
-								text: 'CSV',
-							action: function () {
-									let from = $("#from-date").val();
-									let to = $("#to-date").val();
-
-									if (!from || !to || from > to) {
-										alert('Select a date range before downloading CSV.');
-										return;
-									}
-
-									window.location.href = 'MPIWWiseSalesReports.php?csv&from_date='
-										+ encodeURIComponent(from) + '&to_date=' + encodeURIComponent(to);
-								}
-							}
-				        ],
+			            'excelHtml5',
+			            'csvHtml5',
+			        ],
 					language: {
 				        search: "_INPUT_",
 				        searchPlaceholder: "Search..."
@@ -305,29 +286,20 @@
 			
 				let from = $("#from-date").val();
 				let to = $("#to-date").val();
-
-				if (!from || !to || from > to) {
-					alert('Select a valid date range.');
-					return;
-				}
 				
 				let ref = $(this);
 				ref.prop("disabled",true);
 				
-				$.getJSON("MPIWWiseSalesReports.php", {json: true, from_date: from, to_date: to})
-					.done(function(res){
-						datatable.clear().rows.add(res).draw();
-					})
-					.fail(function(xhr){
-						let message = 'Unable to load the MPIW report.';
-						if (xhr.responseJSON && xhr.responseJSON.error) {
-							message = xhr.responseJSON.error;
-						}
-						alert(message);
-					})
-					.always(function(){
-						ref.prop("disabled",false);
-					});
+				$.get("MPIWWiseSalesReports.php?json&from_date="+from+"&to_date="+to, function(res, status){
+					
+					res = JSON.parse(res);
+					
+					datatable.clear().draw();
+					datatable.rows.add(res).draw();
+					
+					ref.prop("disabled",false);
+					
+				});
 				
 			});
 
