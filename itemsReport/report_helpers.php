@@ -5,8 +5,9 @@
  *
  * The old report read stock_status.latest_trandate, which is only updated by
  * a subset of screens and can therefore remain stale after an invoice, OGP,
- * DC, market slip, or shop sale. stockmoves is the audit trail used by all
- * of those flows, so it is the authoritative activity source for this report.
+ * DC, market slip, shop sale, location transfer, or work-order issue.
+ * stockmoves is the audit trail used by all of those flows, so it is the
+ * authoritative activity source for this report.
  */
 function getReportLatestOutwardDates($db, $stockIdsSql = null)
 {
@@ -20,8 +21,8 @@ function getReportLatestOutwardDates($db, $stockIdsSql = null)
               $stockFilter
               AND hidemovt = 0
               AND (
-                    type IN (511, 512, 513, 602, 750)
-                    OR (type = 10 AND qty < 0)
+                    (type IN (511, 512, 513, 602, 750) AND qty > 0)
+                    OR (type IN (10, 16, 28) AND qty < 0)
                   )
             GROUP BY stockid";
 
