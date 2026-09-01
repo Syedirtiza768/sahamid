@@ -91,6 +91,11 @@ try {
     // Get total count first
     $countResult = mysqli_query($db, "SELECT COUNT(*) as total FROM stockmaster");
     $totalCount = mysqli_fetch_assoc($countResult)['total'];
+
+    // Load activity and fallback prices once so large exports do not repeat
+    // full-table scans for every 1,000-row batch.
+    $latestOutwardDates = getReportLatestOutwardDates($db);
+    $fallbackPrices = getReportFallbackPrices($db);
     
     // Process in batches
     for ($offset = 0; $offset < $totalCount; $offset += $batchSize) {
@@ -171,9 +176,6 @@ try {
             mysqli_free_result($res_parchinos);
         }
 
-        $latestOutwardDates = getReportLatestOutwardDates($db, $stockIdsStr);
-        $fallbackPrices = getReportFallbackPrices($db, $stockIdsStr);
-        
         // Process each item in this batch
         $locations = ['HO', 'MT', 'SR', 'OS', 'VSR', 'WS'];
         

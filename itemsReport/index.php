@@ -35,6 +35,11 @@ try {
         WHERE stockmaster.mbflag IN ('B','M')");
     $totalCount = mysqli_fetch_assoc($countResult)['total'];
 
+    // Load these audit/price lookups once. Repeating full stockmoves and
+    // bpitems scans inside every 1,000-row batch can time out the API.
+    $latestOutwardDates = getReportLatestOutwardDates($db);
+    $fallbackPrices = getReportFallbackPrices($db);
+
     // ✅ Process in batches
     for ($offset = 0; $offset < $totalCount; $offset += $batchSize) {
         error_log("Processing batch: $offset to " . ($offset + $batchSize));
@@ -123,11 +128,6 @@ try {
             mysqli_free_result($res_parchinos);
         }
 
-        // Derive activity from stockmoves so invoices, OGPs, DCs, market
-        // slips, and shop sales cannot be hidden by stale stock_status rows.
-        $latestOutwardDates = getReportLatestOutwardDates($db, $stockIdsStr);
-        $fallbackPrices = getReportFallbackPrices($db, $stockIdsStr);
-
         // ✅ Process each item in this batch
         $locations = ['HO', 'MT', 'SR', 'OS', 'VSR', 'WS'];
 
@@ -193,7 +193,7 @@ try {
 
         // Free batch memory
         mysqli_free_result($res);
-        unset($batchStockIds, $batchRows, $quantities, $totalQuantities, $parchinoData, $latestOutwardDates, $fallbackPrices);
+        unset($batchStockIds, $batchRows, $quantities, $totalQuantities, $parchinoData);
 
         // Force garbage collection
         if ($offset % 5000 == 0) {
