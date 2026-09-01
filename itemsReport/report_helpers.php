@@ -8,12 +8,16 @@
  * DC, market slip, or shop sale. stockmoves is the audit trail used by all
  * of those flows, so it is the authoritative activity source for this report.
  */
-function getReportLatestOutwardDates($db, $stockIdsSql)
+function getReportLatestOutwardDates($db, $stockIdsSql = null)
 {
     $latestDates = [];
+    $stockFilter = ($stockIdsSql !== null && trim($stockIdsSql) !== '')
+        ? " AND stockid IN ($stockIdsSql)"
+        : '';
     $sql = "SELECT stockid, MAX(trandate) AS latest_outward_date
             FROM stockmoves
-            WHERE stockid IN ($stockIdsSql)
+            WHERE 1 = 1
+              $stockFilter
               AND hidemovt = 0
               AND (
                     type IN (511, 512, 513, 602, 750)
@@ -41,12 +45,16 @@ function getReportLatestOutwardDates($db, $stockIdsSql)
  * price the on-hand quantity. It prevents a zero-cost IGP row from masking
  * a real MPIW/BP item price while keeping the source visible to the UI.
  */
-function getReportFallbackPrices($db, $stockIdsSql)
+function getReportFallbackPrices($db, $stockIdsSql = null)
 {
     $fallbackPrices = [];
+    $stockFilter = ($stockIdsSql !== null && trim($stockIdsSql) !== '')
+        ? " AND stockid IN ($stockIdsSql)"
+        : '';
     $sql = "SELECT stockid, price, parchino, created_at, id
             FROM bpitems
-            WHERE stockid IN ($stockIdsSql)
+            WHERE 1 = 1
+              $stockFilter
               AND deleted_at IS NULL
               AND price > 0
             ORDER BY stockid, created_at DESC, id DESC";
