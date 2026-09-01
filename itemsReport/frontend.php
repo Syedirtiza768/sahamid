@@ -1546,6 +1546,24 @@ $(document).ready(function() {
             (parseFloat(row.qtyWS) || 0);
     }
 
+    function getActivityDate(row) {
+        return row.latest_outward_date || row.latest_trandate || null;
+    }
+
+    function getPriceCoverageLabel(row) {
+        var status = row.price_status || '';
+        if (status === 'MISSING_COST') return 'Missing cost for on-hand quantity';
+        if (status === 'PARTIAL_COST_COVERAGE') {
+            return 'Partial cost coverage: ' + numberFormat(row.unpriced_quantity || 0) + ' units unpriced';
+        }
+        if (row.price_source === 'BPITEM_FALLBACK') return 'BP item fallback price';
+        return '';
+    }
+
+    function hasDisplayOverride(stockId) {
+        return customUnitPrices[stockId] !== undefined || landingFactors[stockId] !== undefined;
+    }
+
     // Valuation from API row only (matches igp_parchi / index.php; comparable to crosssection2 DB pricing)
     function getServerEffectiveUnitPrice(row) {
         var up = parseFloat(row.weighted_unit_price) || 0;
@@ -1556,20 +1574,40 @@ $(document).ready(function() {
         return parseFloat(row.landing_factor) || 1;
     }
     function getServerItemValue(row) {
-        return calculateTotalQty(row) * getServerEffectiveUnitPrice(row) * getServerLandingFactor(row);
+        var totalQty = calculateTotalQty(row);
+        if (totalQty > 0 && row.total_bpitems_price !== undefined) {
+            return parseFloat(row.total_bpitems_price) || 0;
+        }
+        return totalQty * getServerEffectiveUnitPrice(row) * getServerLandingFactor(row);
     }
     // Pending input overrides (table columns only, not card totals)
     function getDisplayEffectiveUnitPrice(row, sid) {
+        if (customUnitPrices[sid] !== undefined) {
+            return parseFloat(customUnitPrices[sid]) || 0;
+        }
         var up = parseFloat(row.weighted_unit_price) || 0;
-        var ap = customUnitPrices[sid] !== undefined
-            ? customUnitPrices[sid]
-            : (parseFloat(row.adjust_unit_price) || 0);
+        var ap = parseFloat(row.adjust_unit_price) || 0;
         return up > 0 ? up : (parseFloat(ap) || 0);
     }
     function getDisplayLandingFactor(row, sid) {
         return landingFactors[sid] !== undefined
             ? landingFactors[sid]
             : (parseFloat(row.landing_factor) || 1);
+    }
+    function getDisplayAdjustedUnitPrice(row, sid) {
+        if (!hasDisplayOverride(sid)) {
+            var totalQty = calculateTotalQty(row);
+            return totalQty > 0
+                ? (parseFloat(row.total_bpitems_price) || 0) / totalQty
+                : 0;
+        }
+        return getDisplayEffectiveUnitPrice(row, sid) * getDisplayLandingFactor(row, sid);
+    }
+    function getDisplayItemValue(row, sid) {
+        if (!hasDisplayOverride(sid)) {
+            return parseFloat(row.total_bpitems_price) || 0;
+        }
+        return calculateTotalQty(row) * getDisplayAdjustedUnitPrice(row, sid);
     }
 
     function syncItemFieldFromServer(stockId, field, value) {
@@ -1588,7 +1626,10 @@ $(document).ready(function() {
         if (!dateString) return { status: 'EXTREMELY DEAD', cssClass: 'status-badge--extreme', icon: 'fa-ban', days: null };
         var today = new Date();
         var transactionDate = new Date(dateString);
-        var diffDays = Math.ceil(Math.abs(today - transactionDate) / (1000 * 60 * 60 * 24));
+        if (isNaN(transactionDate.getTime())) {
+            return { status: 'EXTREMELY DEAD', cssClass: 'status-badge--extreme', icon: 'fa-ban', days: null };
+        }
+        var diffDays = Math.max(0, Math.floor((today - transactionDate) / (1000 * 60 * 60 * 24)));
 
         if (diffDays <= 180) return { status: 'FAST MOVING', cssClass: 'status-badge--fast', icon: 'fa-arrow-trend-up', days: diffDays };
         if (diffDays <= 360) return { status: 'SLOW MOVING', cssClass: 'status-badge--slow', icon: 'fa-clock-rotate-left', days: diffDays };
@@ -1632,11 +1673,8 @@ $(document).ready(function() {
         var rowNode = row.node();
         if (!rowNode) return;
         var rowData = row.data();
-        var totalQty = calculateTotalQty(rowData);
-        var effectivePrice = getDisplayEffectiveUnitPrice(rowData, stockId);
-        var factor = getDisplayLandingFactor(rowData, stockId);
-        var adjustedPrice = effectivePrice * factor;
-        var qtyTimesAdjustedPrice = totalQty * adjustedPrice;
+        var adjustedPrice = getDisplayAdjustedUnitPrice(rowData, stockId);
+        var qtyTimesAdjustedPrice = getDisplayItemValue(rowData, stockId);
 
         $(rowNode).find('td:eq(10)').html('<span class="text-tabular">' + numberFormat(adjustedPrice) + '</span>');
         $(rowNode).find('td:eq(11)').html('<span class="text-tabular" style="font-weight:600;color:var(--color-gray-900)">' + numberFormat(qtyTimesAdjustedPrice) + '</span>');
@@ -1722,13 +1760,15 @@ $(document).ready(function() {
 
             // Shared price computation — DB row only (same source as index.php / crosssection2 igp_parchi)
             var effectivePrice = getServerEffectiveUnitPrice(item);
-            var factor = getServerLandingFactor(item);
-            var itemValue = totalQty * effectivePrice * factor;
+            var itemValue = getServerItemValue(item);
 
             // Stock movement cards (in-stock only)
             if (totalQty > 0) {
-                var d = item.latest_trandate;
-                var diffDays = d ? Math.ceil(Math.abs(today - new Date(d).getTime()) / 86400000) : 99999;
+                var d = getActivityDate(item);
+                var movementTimestamp = d ? new Date(d).getTime() : NaN;
+                var diffDays = isNaN(movementTimestamp)
+                    ? 99999
+                    : Math.max(0, Math.floor((today - movementTimestamp) / 86400000));
                 if (diffDays <= 180) { running++; runningSum += itemValue; }
                 else if (diffDays <= 360) { slow++; slowSum += itemValue; }
                 else if (diffDays <= 1000) { dead++; deadSum += itemValue; }
@@ -1780,7 +1820,7 @@ $(document).ready(function() {
     function exportToCSV(dt, filteredOnly) {
         try {
             var data = filteredOnly ? dt.rows({ search: 'applied' }).data() : dt.rows().data();
-            var headers = ['Stock ID','Brand','Category','Model #','Part #','Qty','Total Price','Unit Price','Adjust Unit Price','Landing Factor','Adjusted Price After Multiplication','Qty × Adjusted Price','List Price','Stock Status'];
+            var headers = ['Stock ID','Brand','Category','Model #','Part #','Qty','Total Price','Unit Price','Adjust Unit Price','Landing Factor','Adjusted Price After Multiplication','Qty × Adjusted Price','List Price','Stock Status','Cost Coverage','Price Status','Price Source','Latest Outward Date'];
             var csvContent = headers.join(',') + '\n';
 
             for (var i = 0; i < data.length; i++) {
@@ -1799,12 +1839,16 @@ $(document).ready(function() {
                 rd.push(apDb > 0 ? apDb.toFixed(2) : '');
                 var fct = getServerLandingFactor(row);
                 rd.push(parseFloat(fct).toFixed(2));
-                var adj = getServerEffectiveUnitPrice(row) * fct;
+                var adj = getDisplayAdjustedUnitPrice(row, row.stockid);
                 rd.push(adj.toFixed(2));
-                rd.push((totalQty * adj).toFixed(2));
+                rd.push(getDisplayItemValue(row, row.stockid).toFixed(2));
                 rd.push(parseFloat(row.materialcost || 0).toFixed(2));
-                var st = getStockStatus(row.latest_trandate);
+                var st = getStockStatus(getActivityDate(row));
                 rd.push('"' + st.status + '"');
+                rd.push((parseFloat(row.price_coverage_percent || 0)).toFixed(2) + '%');
+                rd.push('"' + (row.price_status || 'MISSING_COST') + '"');
+                rd.push('"' + (row.price_source || 'NONE') + '"');
+                rd.push('"' + (getActivityDate(row) || '') + '"');
                 csvContent += rd.join(',') + '\n';
             }
 
@@ -1880,7 +1924,13 @@ $(document).ready(function() {
             },
             {
                 data: "total_bpitems_price", className: "col-numeric text-tabular",
-                render: function(d, type) { return type === 'display' ? numberFormat(d || 0) : (d || 0); }
+                render: function(d, type, row) {
+                    var value = type === 'display' ? numberFormat(d || 0) : (d || 0);
+                    var label = type === 'display' ? getPriceCoverageLabel(row) : '';
+                    return label
+                        ? value + ' <span class="price-warning" title="' + label + '" aria-label="' + label + '">&#9888;</span>'
+                        : value;
+                }
             },
             {
                 data: "weighted_unit_price", className: "col-numeric text-tabular",
@@ -1921,7 +1971,7 @@ $(document).ready(function() {
                 data: null, className: "col-numeric text-tabular",
                 render: function(data, type, row) {
                     var sid = row.stockid;
-                    var val = getDisplayEffectiveUnitPrice(row, sid) * getDisplayLandingFactor(row, sid);
+                    var val = getDisplayAdjustedUnitPrice(row, sid);
                     return type === 'display' ? numberFormat(val) : (val || 0);
                 }
             },
@@ -1929,8 +1979,7 @@ $(document).ready(function() {
                 data: null, className: "col-numeric text-tabular",
                 render: function(data, type, row) {
                     var sid = row.stockid;
-                    var tq = calculateTotalQty(row);
-                    var val = tq * getDisplayEffectiveUnitPrice(row, sid) * getDisplayLandingFactor(row, sid);
+                    var val = getDisplayItemValue(row, sid);
                     return type === 'display' ? '<strong>' + numberFormat(val) + '</strong>' : (val || 0);
                 }
             },
@@ -1939,11 +1988,15 @@ $(document).ready(function() {
                 render: function(d, type) { return type === 'display' ? numberFormat(d || 0) : (d || 0); }
             },
             {
-                data: "latest_trandate", className: "col-center",
-                render: function(d, type) {
+                data: null, className: "col-center",
+                render: function(data, type, row) {
+                    var d = getActivityDate(row);
                     var s = getStockStatus(d);
                     if (type === 'sort') return d ? ((new Date()) - (new Date(d))) : 999999;
-                    if (type === 'display') return '<span class="status-badge ' + s.cssClass + '"><i class="fas ' + s.icon + '"></i> ' + s.status + '</span>';
+                    if (type === 'display') {
+                        var title = d ? 'Latest outward: ' + d : 'No outward movement recorded';
+                        return '<span class="status-badge ' + s.cssClass + '" title="' + title + '"><i class="fas ' + s.icon + '"></i> ' + s.status + '</span>';
+                    }
                     return s.status;
                 }
             }
