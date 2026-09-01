@@ -5,6 +5,7 @@ set_time_limit(300);
 
 require_once('includes/session.inc');
 require_once('includes/config.php');
+require_once(__DIR__ . '/report_helpers.php');
 
 if (!isset($_SESSION['UsersRealName'])) {
     header('HTTP/1.1 401 Unauthorized');
@@ -70,7 +71,11 @@ fputcsv($output, [
     'Adjusted Price After Multiplication',
     'Qty × Adjusted Price',
     'List Price',
-    'Stock Status'  // Only Stock Status, no Last Transaction Date
+    'Stock Status',
+    'Cost Coverage',
+    'Price Status',
+    'Price Source',
+    'Latest Outward Date'
 ]);
 
 try {
@@ -121,6 +126,7 @@ try {
         
         // Get quantities for this batch
         $quantities = [];
+        $totalQuantities = [];
         $stockIdsStr = "'" . implode("','", array_map(function($id) use ($db) {
             return mysqli_real_escape_string($db, $id);
         }, $batchStockIds)) . "'";
@@ -134,16 +140,20 @@ try {
         if ($res_qty) {
             while ($row_qty = mysqli_fetch_assoc($res_qty)) {
                 $quantities[$row_qty['stockid']][$row_qty['loccode']] = $row_qty['quantity'];
+                if (!isset($totalQuantities[$row_qty['stockid']])) {
+                    $totalQuantities[$row_qty['stockid']] = 0;
+                }
+                $totalQuantities[$row_qty['stockid']] += (float)$row_qty['quantity'];
             }
             mysqli_free_result($res_qty);
         }
         
-        // Get parchino data from igp_parchi table - NOW INCLUDING adjust_unit_price, landing_factor AND latest_trandate
+        // Get cost-lot data from igp_parchi. Activity dates come from stockmoves.
         $parchinoData = [];
-        $SQL_parchinos = "SELECT stockid, quantity, price, adjust_unit_price, landing_factor, latest_trandate 
+        $SQL_parchinos = "SELECT id, stockid, quantity, price, adjust_unit_price, landing_factor, pdate
                          FROM igp_parchi 
                          WHERE stockid IN ($stockIdsStr)
-                         ORDER BY stockid, pdate DESC";
+                         ORDER BY stockid, pdate DESC, id DESC";
         
         $res_parchinos = mysqli_query($db, $SQL_parchinos);
         if ($res_parchinos) {
@@ -155,12 +165,14 @@ try {
                     'quantity' => floatval($row['quantity']),
                     'price' => floatval($row['price']),
                     'adjust_unit_price' => floatval($row['adjust_unit_price'] ?? 0),
-                    'landing_factor' => floatval($row['landing_factor'] ?? 1),
-                    'latest_trandate' => $row['latest_trandate'] ?? null
+                    'landing_factor' => floatval($row['landing_factor'] ?? 1)
                 ];
             }
             mysqli_free_result($res_parchinos);
         }
+
+        $latestOutwardDates = getReportLatestOutwardDates($db, $stockIdsStr);
+        $fallbackPrices = getReportFallbackPrices($db, $stockIdsStr);
         
         // Process each item in this batch
         $locations = ['HO', 'MT', 'SR', 'OS', 'VSR', 'WS'];
@@ -171,31 +183,41 @@ try {
             $item = $batchRows[$stockid];
             
             // Add quantities
-            $totalQty = 0;
+            $totalQty = isset($totalQuantities[$stockid]) ? $totalQuantities[$stockid] : 0;
             foreach ($locations as $location) {
-                $qty = isset($quantities[$stockid][$location]) ? intval($quantities[$stockid][$location]) : 0;
+                $qty = isset($quantities[$stockid][$location]) ? (float)$quantities[$stockid][$location] : 0;
                 $item['qty' . $location] = $qty;
-                $totalQty += $qty;
             }
             $item['total_qty'] = $totalQty;
             
-            // Calculate price using parchino data
-            $priceData = calculatePriceForStock($parchinoData[$stockid] ?? [], $totalQty);
+            $fallbackPrice = isset($fallbackPrices[$stockid])
+                ? $fallbackPrices[$stockid]['price']
+                : 0;
+            $priceData = calculatePriceForStock(
+                $parchinoData[$stockid] ?? [],
+                $totalQty,
+                $fallbackPrice
+            );
             $item['total_bpitems_price'] = $priceData['total_bpitems_price'];
             $item['weighted_unit_price'] = $priceData['weighted_unit_price'];
             $item['total_quantity'] = $priceData['total_quantity'];
+            $item['unpriced_quantity'] = $priceData['unpriced_quantity'];
+            $item['price_status'] = $priceData['price_status'];
+            $item['price_source'] = $priceData['price_source'];
+            $item['price_coverage_percent'] = $priceData['price_coverage_percent'];
             
-            // Get the latest adjust_unit_price, landing_factor and latest_trandate from the most recent parchino record
+            // Get the latest adjust_unit_price and landing_factor from the
+            // most recent cost lot for the editable columns.
             if (!empty($parchinoData[$stockid])) {
                 $latestParchino = $parchinoData[$stockid][0];
                 $item['db_adjust_unit_price'] = $latestParchino['adjust_unit_price'] ?? 0;
                 $item['db_landing_factor'] = $latestParchino['landing_factor'] ?? 1;
-                $item['latest_trandate'] = $latestParchino['latest_trandate'] ?? null;
             } else {
                 $item['db_adjust_unit_price'] = 0;
                 $item['db_landing_factor'] = 1;
-                $item['latest_trandate'] = null;
             }
+            $item['latest_outward_date'] = $latestOutwardDates[$stockid] ?? null;
+            $item['latest_trandate'] = $item['latest_outward_date'];
             
             $allData[] = [
                 'data' => $item,
@@ -240,15 +262,15 @@ try {
             return 'EXTREMELY DEAD';
         }
         
-        $today = new DateTime();
-        $transactionDate = new DateTime($dateString);
-        $diff = $today->diff($transactionDate);
-        $diffDays = $diff->days;
+        $transactionTimestamp = strtotime($dateString);
+        $diffDays = $transactionTimestamp === false
+            ? 99999
+            : max(0, (int)floor((time() - $transactionTimestamp) / 86400));
         
         if ($diffDays <= 180) {
-            return 'RUNNING';
-        } else if ($diffDays > 180 && $diffDays <= 360) {
-            return 'SLOW RUNNING';
+            return 'FAST MOVING';
+        } else if ($diffDays <= 360) {
+            return 'SLOW MOVING';
         } else if ($diffDays > 360 && $diffDays <= 1000) {
             return 'DEAD STOCK';
         } else {
@@ -266,29 +288,37 @@ try {
         $unitPrice = $totalQty > 0 ? floatval($row['weighted_unit_price']) : 0;
         
         // Use custom price if available, otherwise use database adjust_unit_price
-        $adjustUnitPrice = isset($customPrices[$stockId]) ? floatval($customPrices[$stockId]) : 
+        $hasCustomPrice = isset($customPrices[$stockId]);
+        $adjustUnitPrice = $hasCustomPrice ? floatval($customPrices[$stockId]) :
                           (isset($row['db_adjust_unit_price']) ? floatval($row['db_adjust_unit_price']) : 0);
         
         // Use custom factor if available, otherwise use database landing_factor
-        $landingFactor = isset($landingFactors[$stockId]) ? floatval($landingFactors[$stockId]) : 
+        $hasCustomFactor = isset($landingFactors[$stockId]);
+        $landingFactor = $hasCustomFactor ? floatval($landingFactors[$stockId]) :
                         (isset($row['db_landing_factor']) ? floatval($row['db_landing_factor']) : 1);
         
         // Calculate effective price (unit price if >0, otherwise adjust price)
         $effectivePrice = $unitPrice > 0 ? $unitPrice : $adjustUnitPrice;
         
-        // Calculate adjusted price after multiplication
-        $adjustedPrice = $effectivePrice * $landingFactor;
+        // Total Price from priced cost lots (or the explicit BP item fallback).
+        $totalPrice = $totalQty > 0 ? floatval($row['total_bpitems_price']) : 0;
+
+        // Calculate adjusted price after multiplication. The server weighted
+        // price already includes each lot's landing factor, so use the
+        // authoritative total unless a user supplied an override.
+        $adjustedPrice = ($hasCustomPrice || $hasCustomFactor)
+            ? $effectivePrice * $landingFactor
+            : $unitPrice;
         
         // Calculate Qty × Adjusted Price
-        $qtyTimesAdjustedPrice = $totalQty * $adjustedPrice;
-        
-        // Total Price from parchino
-        $totalPrice = $totalQty > 0 ? floatval($row['total_bpitems_price']) : 0;
+        $qtyTimesAdjustedPrice = ($hasCustomPrice || $hasCustomFactor)
+            ? $totalQty * $adjustedPrice
+            : $totalPrice;
         
         // List Price
         $listPrice = floatval($row['materialcost'] ?? 0);
         
-        // Get stock status only (no date)
+        // Activity status is based on the latest outward movement.
         $stockStatus = getStockStatusForExport($row['latest_trandate'] ?? null);
 
         fputcsv($output, [
@@ -305,7 +335,11 @@ try {
             rawNumber($adjustedPrice),
             rawNumber($qtyTimesAdjustedPrice),
             rawNumber($listPrice),
-            $stockStatus  // Only Stock Status, no date column
+            $stockStatus,
+            rawNumber($row['price_coverage_percent'] ?? 0) . '%',
+            $row['price_status'] ?? 'MISSING_COST',
+            $row['price_source'] ?? 'NONE',
+            $row['latest_outward_date'] ?? ''
         ]);
     }
 
@@ -315,56 +349,6 @@ try {
 }
 
 fclose($output);
-
-// ✅ EXACT SAME FUNCTION AS index.php
-function calculatePriceForStock($parchinos, $requested_qty) {
-    
-    if ($requested_qty <= 0 || empty($parchinos)) {
-        return [
-            'total_bpitems_price' => 0,
-            'weighted_unit_price' => 0,
-            'total_quantity' => 0
-        ];
-    }
-    
-    $remaining_qty = $requested_qty;
-    $total_allocated_qty = 0;
-    $total_weighted_price = 0;
-    
-    foreach ($parchinos as $parchino) {
-        if ($remaining_qty <= 0) break;
-        
-        $available_qty = (float)$parchino['quantity'];
-        
-        // Use adjust_unit_price if available and > 0, otherwise use original price
-        $unit_price = (float)($parchino['adjust_unit_price'] ?? 0);
-        if ($unit_price <= 0) {
-            $unit_price = (float)$parchino['price'];
-        }
-        
-        // Apply landing factor
-        $landing_factor = (float)($parchino['landing_factor'] ?? 1);
-        $effective_price = $unit_price * $landing_factor;
-        
-        $allocated_qty = min($available_qty, $remaining_qty);
-        if ($allocated_qty > 0) {
-            $allocated_price = $allocated_qty * $effective_price;
-            $total_weighted_price += $allocated_price;
-            $total_allocated_qty += $allocated_qty;
-            $remaining_qty -= $allocated_qty;
-        }
-    }
-    
-    $weighted_unit_price = $total_allocated_qty > 0 
-        ? $total_weighted_price / $total_allocated_qty 
-        : 0;
-    
-    return [
-        'total_bpitems_price' => round($total_weighted_price, 2),
-        'weighted_unit_price' => round($weighted_unit_price, 2),
-        'total_quantity' => round($total_allocated_qty, 2)
-    ];
-}
 
 exit();
 ?>
