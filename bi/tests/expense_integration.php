@@ -31,8 +31,11 @@ $request = ExpenseReportRequest::fromArray(array(
 
 try {
 	$report = (new ExpenseReportService($db, $context))->getReport($request);
-	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['transactions']['rows'])) {
+	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['tabs'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['transactions']['rows'])) {
 		throw new RuntimeException('report contract is incomplete');
+	}
+	if (!isset($report['metadata']['currency_policy']) || $report['metadata']['default_currency'] !== 'PKR' || $report['metadata']['currency_policy'] !== 'PKR-only; source tab currency metadata is never used to convert claim amounts.') {
+		throw new RuntimeException('report did not enforce the PKR-only currency policy');
 	}
 	if (!isset($report['validation']['status']) || $report['validation']['status'] !== 'passed') {
 		throw new RuntimeException('report consistency validation failed');
@@ -66,6 +69,9 @@ try {
 		throw new RuntimeException('extended filter consistency validation failed');
 	}
 	foreach ($validatedFilterReport['transactions']['rows'] as $row) {
+		if ($row['currency'] !== 'PKR' || (float) $row['current_rate'] !== 1.0 || abs(abs((float) $row['original_amount']) - abs((float) $row['functional_amount'])) > 0.000001) {
+			throw new RuntimeException('PKR transaction output was not identity-reconciled');
+		}
 		if ($row['entry_kind'] !== 'expense' || !$row['has_receipt'] || abs((float) $row['functional_amount']) < 1 || abs((float) $row['functional_amount']) > 1000000000) {
 			throw new RuntimeException('extended filters returned an invalid transaction row');
 		}

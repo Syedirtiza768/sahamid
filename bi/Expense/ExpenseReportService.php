@@ -14,6 +14,8 @@ use SAHamid\BI\Security\AuthorizationContext;
  */
 class ExpenseReportService
 {
+	const REPORT_CURRENCY = 'PKR';
+
 	private $db;
 	private $context;
 	private $classifier;
@@ -61,6 +63,7 @@ class ExpenseReportService
 		$costCenters = $this->fetchCostCenters($currentWhere, $summary['net_total']);
 		$owners = $this->fetchOwners($currentWhere, $summary['net_total']);
 		$users = $this->fetchUsers($currentWhere, $comparisonWhere, $summary['net_total']);
+		$tabs = $this->fetchTabs($currentWhere, $summary['net_total']);
 		$userExpenses = $this->fetchUserExpenses($currentWhere, $comparisonWhere, $summary['net_total'], $definitions);
 		$users = $this->reconcileUserClassTotals($users, $userExpenses);
 		$currencies = $this->fetchCurrencies($currentWhere, $summary['net_total']);
@@ -74,6 +77,7 @@ class ExpenseReportService
 			'cost_centers' => $costCenters,
 			'owners' => $owners,
 			'users' => $users,
+			'tabs' => $tabs,
 			'user_expenses' => $userExpenses,
 			'currencies' => $currencies,
 			'expense_codes' => $codes,
@@ -103,8 +107,9 @@ class ExpenseReportService
 				'amount_definition' => 'Net spend = negative of non-ASSIGNCASH claim amounts; positive non-assignment rows are credits.',
 				'local_purchase_definition' => 'Local purchases are rows whose expense code or expense description contains “Local Purchase”.',
 				'include_local_purchases' => $request->getIncludeLocalPurchases(),
-				'currency_method' => 'Tab-currency amounts are divided by the current currencies.rate, matching petty-cash GL posting logic. Historical rates are not stored on claims.',
-				'source_lineage' => array('pcashdetails', 'pcexpenses', 'pctabs', 'pctypetabs', 'currencies', 'chartmaster', 'accountgroups', 'accountsection', 'tags', 'www_users', 'expense_listing_access'),
+				'currency_method' => 'All expense tabs are treated as PKR. No exchange-rate conversion is applied; tab currency metadata is retained only for mismatch validation.',
+				'currency_policy' => 'PKR-only; source tab currency metadata is never used to convert claim amounts.',
+				'source_lineage' => array('pcashdetails', 'pcexpenses', 'pctabs', 'pctypetabs', 'chartmaster', 'accountgroups', 'accountsection', 'tags', 'www_users', 'expense_listing_access'),
 				'comparison_range' => $comparisonRange,
 				'filters' => $request->toArray(),
 			),
@@ -123,6 +128,7 @@ class ExpenseReportService
 			'expense_codes' => $this->sumBreakdown($breakdowns['expense_codes']),
 			'statuses' => $this->sumBreakdown($breakdowns['statuses']),
 			'cost_centers' => $this->sumBreakdown($breakdowns['cost_centers']),
+			'tabs' => $this->sumBreakdown($breakdowns['tabs']),
 			'users' => $this->sumBreakdown($breakdowns['users']),
 			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses']),
 			'currencies' => $this->sumBreakdown($breakdowns['currencies']),
@@ -139,6 +145,7 @@ class ExpenseReportService
 			'expense_codes' => $this->sumBreakdown($breakdowns['expense_codes'], 'transaction_count'),
 			'statuses' => $this->sumBreakdown($breakdowns['statuses'], 'transaction_count'),
 			'cost_centers' => $this->sumBreakdown($breakdowns['cost_centers'], 'transaction_count'),
+			'tabs' => $this->sumBreakdown($breakdowns['tabs'], 'transaction_count'),
 			'users' => $this->sumBreakdown($breakdowns['users'], 'transaction_count'),
 			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses'], 'transaction_count'),
 			'currencies' => $this->sumBreakdown($breakdowns['currencies'], 'transaction_count'),
@@ -181,6 +188,11 @@ class ExpenseReportService
 			'User unclassified totals reconcile to the executive unclassified total.'
 		);
 		$addCheck(
+			'currency_policy',
+			(int) $summary['foreign_currency_count'] === 0 && (int) $summary['missing_rate_count'] === 0,
+			'All report amounts are PKR and no exchange-rate conversion is applied.'
+		);
+		$addCheck(
 			'receipt_bounds',
 			(int) $summary['missing_receipt_count'] >= 0
 				&& (int) $summary['missing_receipt_count'] <= (int) $summary['transaction_count']
@@ -201,6 +213,9 @@ class ExpenseReportService
 		$warnings = array();
 		if ((int) $summary['missing_rate_count'] > 0) {
 			$warnings[] = (int) $summary['missing_rate_count'] . ' transaction(s) used the neutral fallback rate because no current currency rate was available.';
+		}
+		if ((int) $summary['currency_mismatch_count'] > 0) {
+			$warnings[] = (int) $summary['currency_mismatch_count'] . ' transaction(s) have non-PKR tab metadata; the report kept their source amounts in PKR and applied no conversion.';
 		}
 		if ((int) $summary['unclassified_count'] > 0) {
 			$warnings[] = (int) $summary['unclassified_count'] . ' transaction(s) remain unclassified and should be reviewed in Accounting.';
@@ -282,8 +297,7 @@ class ExpenseReportService
 
 	private function loadDefaultCurrency()
 	{
-		$rows = $this->queryRows('SELECT currencydefault FROM companies ORDER BY coycode LIMIT 1', '', array());
-		return $rows && trim((string) $rows[0]['currencydefault']) !== '' ? trim($rows[0]['currencydefault']) : 'PKR';
+		return self::REPORT_CURRENCY;
 	}
 
 	private function loadExpenseDefinitions()
@@ -417,9 +431,9 @@ class ExpenseReportService
 			$conditions[] = "d.posted <> 1 AND d.authorized IS NOT NULL AND d.authorized <> '0000-00-00'";
 		}
 		if ($request->getCurrency() !== null) {
-			$conditions[] = 'pt.currency = ?';
-			$types .= 's';
-			$params[] = $request->getCurrency();
+			if ($request->getCurrency() !== $this->defaultCurrency) {
+				$conditions[] = '1 = 0';
+			}
 		}
 		if ($request->getReceipt() === 'with_receipt') {
 			$conditions[] = $this->receiptSql();
@@ -485,7 +499,6 @@ class ExpenseReportService
 			LEFT JOIN tags tg ON tg.tagref = e.tag
 			LEFT JOIN pctabs pt ON pt.tabcode = d.tabcode
 			LEFT JOIN pctypetabs ptt ON ptt.typetabcode = pt.typetabcode
-			LEFT JOIN currencies cur ON cur.currabrev = pt.currency
 			LEFT JOIN www_users wu ON wu.userid = pt.usercode';
 	}
 
@@ -501,17 +514,17 @@ class ExpenseReportService
 
 	private function netAmountSql()
 	{
-		return '(-1 * d.amount) / COALESCE(NULLIF(cur.rate, 0), 1)';
+		return '(-1 * d.amount)';
 	}
 
 	private function grossAmountSql()
 	{
-		return 'CASE WHEN d.amount < 0 THEN (-1 * d.amount) / COALESCE(NULLIF(cur.rate, 0), 1) ELSE 0 END';
+		return 'CASE WHEN d.amount < 0 THEN (-1 * d.amount) ELSE 0 END';
 	}
 
 	private function creditAmountSql()
 	{
-		return 'CASE WHEN d.amount > 0 THEN d.amount / COALESCE(NULLIF(cur.rate, 0), 1) ELSE 0 END';
+		return 'CASE WHEN d.amount > 0 THEN d.amount ELSE 0 END';
 	}
 
 	private function statusSql()
@@ -544,19 +557,20 @@ class ExpenseReportService
 			COALESCE(SUM(CASE WHEN ag.pandl = 0 THEN ' . $net . ' ELSE 0 END), 0) AS balance_sheet_total,
 			SUM(CASE WHEN NOT ' . $receipt . ' THEN 1 ELSE 0 END) AS missing_receipt_count,
 			SUM(CASE WHEN e.codeexpense IS NULL OR cm.accountcode IS NULL THEN 1 ELSE 0 END) AS unclassified_count,
-			SUM(CASE WHEN pt.currency <> ? THEN 1 ELSE 0 END) AS foreign_currency_count,
-			SUM(CASE WHEN cur.rate IS NULL OR cur.rate = 0 THEN 1 ELSE 0 END) AS missing_rate_count,
+			0 AS foreign_currency_count,
+			0 AS missing_rate_count,
+			SUM(CASE WHEN COALESCE(NULLIF(UPPER(TRIM(pt.currency)), \'\'), ?) <> ? THEN 1 ELSE 0 END) AS currency_mismatch_count,
 			SUM(CASE WHEN d.amount > 0 THEN 1 ELSE 0 END) AS credit_count'
 			. $this->fromSql() . $where['sql'];
-		$types = 's' . $where['types'];
-		$params = array_merge(array($this->defaultCurrency), $where['params']);
+		$types = 'ss' . $where['types'];
+		$params = array_merge(array($this->defaultCurrency, $this->defaultCurrency), $where['params']);
 		$rows = $this->queryRows($sql, $types, $params);
 		$row = $rows ? $rows[0] : array();
 		$numeric = array('net_total', 'gross_outflow', 'credits', 'posted_total', 'pending_authorization_total', 'authorized_unposted_total', 'pnl_total', 'balance_sheet_total');
 		foreach ($numeric as $field) {
 			$row[$field] = isset($row[$field]) ? (float) $row[$field] : 0.0;
 		}
-		$integers = array('transaction_count', 'expense_code_count', 'active_tab_count', 'missing_receipt_count', 'unclassified_count', 'foreign_currency_count', 'missing_rate_count', 'credit_count');
+		$integers = array('transaction_count', 'expense_code_count', 'active_tab_count', 'missing_receipt_count', 'unclassified_count', 'foreign_currency_count', 'missing_rate_count', 'currency_mismatch_count', 'credit_count');
 		foreach ($integers as $field) {
 			$row[$field] = isset($row[$field]) ? (int) $row[$field] : 0;
 		}
@@ -692,6 +706,35 @@ class ExpenseReportService
 		return $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
 	}
 
+	private function fetchTabs(array $where, $grandTotal)
+	{
+		$net = $this->netAmountSql();
+		$sql = 'SELECT d.tabcode, COALESCE(pt.usercode, \'\') AS usercode,
+			' . $this->ownerSql() . ' AS owner,
+			COALESCE(ptt.typetabdescription, \'Unassigned\') AS cost_center,
+			COALESCE(SUM(' . $net . '), 0) AS total,
+			COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow,
+			COALESCE(SUM(' . $this->creditAmountSql() . '), 0) AS credits,
+			COUNT(*) AS transaction_count,
+			COUNT(DISTINCT d.codeexpense) AS expense_code_count,
+			COALESCE(SUM(CASE WHEN d.posted = 1 THEN ' . $net . ' ELSE 0 END), 0) AS posted_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND (d.authorized IS NULL OR d.authorized = \'0000-00-00\') THEN ' . $net . ' ELSE 0 END), 0) AS pending_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND d.authorized IS NOT NULL AND d.authorized <> \'0000-00-00\' THEN ' . $net . ' ELSE 0 END), 0) AS authorized_unposted_total,
+			SUM(CASE WHEN NOT ' . $this->receiptSql() . ' THEN 1 ELSE 0 END) AS missing_receipt_count'
+			. $this->fromSql() . $where['sql'] . ' GROUP BY d.tabcode, pt.usercode, wu.realname, ptt.typetabdescription ORDER BY total DESC, d.tabcode';
+		$rows = $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
+		foreach ($rows as &$row) {
+			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) {
+				$row[$field] = (float) $row[$field];
+			}
+			foreach (array('transaction_count', 'expense_code_count', 'missing_receipt_count') as $field) {
+				$row[$field] = (int) $row[$field];
+			}
+			$row['receipt_coverage_percent'] = $row['transaction_count'] > 0 ? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
+		}
+		unset($row);
+		return $rows;
+	}
 	private function fetchUsers(array $where, array $previousWhere, $grandTotal)
 	{
 		$current = $this->queryUserTotals($where);
@@ -803,11 +846,11 @@ class ExpenseReportService
 
 	private function fetchCurrencies(array $where, $grandTotal)
 	{
-		$sql = "SELECT COALESCE(pt.currency, '" . $this->escapeSqlLiteral($this->defaultCurrency) . "') AS currency,
-			COALESCE(NULLIF(cur.rate, 0), 1) AS current_rate,
+		$sql = "SELECT 'PKR' AS currency,
+			1 AS current_rate,
 			COALESCE(SUM(-1 * d.amount), 0) AS original_total,
 			COALESCE(SUM(" . $this->netAmountSql() . '), 0) AS total, COUNT(*) AS transaction_count'
-			. $this->fromSql() . $where['sql'] . ' GROUP BY pt.currency, cur.rate ORDER BY total DESC';
+			. $this->fromSql() . $where['sql'] . ' GROUP BY 1 ORDER BY total DESC';
 		$rows = $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
 		foreach ($rows as &$row) {
 			$row['current_rate'] = (float) $row['current_rate'];
@@ -847,7 +890,7 @@ class ExpenseReportService
 			COALESCE(ptt.typetabdescription, \'Unassigned\') AS cost_center,
 			COALESCE(pt.usercode, \'\') AS usercode,
 			COALESCE(NULLIF(TRIM(wu.realname), \'\'), NULLIF(TRIM(pt.usercode), \'\'), \'Unassigned\') AS owner,
-			COALESCE(pt.currency, ?) AS currency, COALESCE(NULLIF(cur.rate, 0), 1) AS current_rate,
+			\'PKR\' AS currency, 1 AS current_rate,
 			(-1 * d.amount) AS original_amount, ' . $this->netAmountSql() . ' AS functional_amount,
 			CASE WHEN d.amount > 0 THEN \'credit\' ELSE \'expense\' END AS entry_kind,
 			' . $this->statusSql() . ' AS workflow_status,
@@ -855,8 +898,8 @@ class ExpenseReportService
 			d.notes, d.receipt AS receipt_reference, d.receiptimage AS receipt_image,
 			CASE WHEN ' . $this->receiptSql() . ' THEN 1 ELSE 0 END AS has_receipt'
 			. $this->fromSql() . $where['sql'] . ' ORDER BY ' . $order;
-		$params = array_merge(array($this->defaultCurrency), $where['params']);
-		$types = 's' . $where['types'];
+		$params = $where['params'];
+		$types = $where['types'];
 		if (!$includeAll) {
 			$offset = ($request->getPage() - 1) * $request->getPageSize();
 			$sql .= ' LIMIT ' . (int) $request->getPageSize() . ' OFFSET ' . (int) $offset;
@@ -895,7 +938,7 @@ class ExpenseReportService
 			COALESCE(NULLIF(TRIM(wu.realname), ''), NULLIF(TRIM(pt.usercode), ''), 'Unassigned') AS owner,
 			COALESCE(pt.typetabcode, '') AS cost_center_code,
 			COALESCE(ptt.typetabdescription, 'Unassigned') AS cost_center,
-			COALESCE(pt.currency, '" . $this->escapeSqlLiteral($this->defaultCurrency) . "') AS currency"
+			'PKR' AS currency"
 			. $this->fromSql() . ' WHERE ' . implode(' AND ', $where)
 			. ' ORDER BY cost_center, d.tabcode';
 		$rows = $this->queryRows($sql, $types, $params);

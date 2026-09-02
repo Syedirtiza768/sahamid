@@ -26,6 +26,7 @@ class ExpenseWorkbookExporter
 		$this->buildUsers($workbook->createSheet(), $report);
 		$this->buildUserExpenses($workbook->createSheet(), $report);
 		$this->buildOwners($workbook->createSheet(), $report);
+		$this->buildTabs($workbook->createSheet(), $report);
 		$this->buildCurrencies($workbook->createSheet(), $report);
 		$this->buildValidation($workbook->createSheet(), $report);
 		$this->buildTransactions($workbook->createSheet(), $report);
@@ -78,6 +79,7 @@ class ExpenseWorkbookExporter
 			array('Missing receipt', $summary['missing_receipt_count']),
 			array('Unclassified / unmapped', $summary['unclassified_count']),
 			array('Foreign-currency rows', $summary['foreign_currency_count']),
+			array('Non-PKR tab metadata', $summary['currency_mismatch_count']),
 			array('Missing exchange rate', $summary['missing_rate_count']),
 			array('Credits / corrections', $summary['credit_count']),
 		);
@@ -165,6 +167,20 @@ class ExpenseWorkbookExporter
 		$this->setWidths($sheet, array('A' => 26, 'B' => 20, 'C' => 28, 'D' => 30, 'E' => 18, 'F' => 11, 'G' => 14));
 	}
 
+	private function buildTabs($sheet, array $report)
+	{
+		$sheet->setTitle('Expense Tabs');
+		$headers = array('Expense tab', 'Owner', 'User code', 'Cost centre', 'Net spend', 'Share', 'Transactions', 'Expense codes', 'Gross outflow', 'Credits', 'Posted', 'Pending authorization', 'Authorized not posted', 'Missing receipts', 'Receipt coverage');
+		$this->writeTable($sheet, $headers, $report['breakdowns']['tabs'], function ($row) {
+			return array($row['tabcode'], $row['owner'], $row['usercode'], $row['cost_center'], $row['total'], $row['share_percent'] / 100, $row['transaction_count'], $row['expense_code_count'], $row['gross_outflow'], $row['credits'], $row['posted_total'], $row['pending_total'], $row['authorized_unposted_total'], $row['missing_receipt_count'], $row['receipt_coverage_percent'] / 100);
+		});
+		$last = count($report['breakdowns']['tabs']) + 1;
+		$sheet->getStyle('E2:E' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('F2:F' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$sheet->getStyle('I2:M' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('O2:O' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$this->setWidths($sheet, array('A' => 28, 'B' => 28, 'C' => 20, 'D' => 30, 'E' => 18, 'F' => 11, 'G' => 14, 'H' => 14, 'I' => 18, 'J' => 16, 'K' => 18, 'L' => 20, 'M' => 22, 'N' => 17, 'O' => 16));
+	}
 	private function buildUsers($sheet, array $report)
 	{
 		$sheet->setTitle('Users Summary');
@@ -201,7 +217,7 @@ class ExpenseWorkbookExporter
 	private function buildCurrencies($sheet, array $report)
 	{
 		$sheet->setTitle('Currency Reconciliation');
-		$headers = array('Currency', 'Current rate', 'Original amount', 'Functional net spend', 'Transactions');
+		$headers = array('Currency', 'Rate applied', 'Source amount', 'Reported PKR spend', 'Transactions');
 		$this->writeTable($sheet, $headers, $report['breakdowns']['currencies'], function ($row) {
 			return array($row['currency'], $row['current_rate'], $row['original_total'], $row['total'], $row['transaction_count']);
 		});

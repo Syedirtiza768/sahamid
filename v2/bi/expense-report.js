@@ -334,9 +334,16 @@
         document.getElementById('expenseCurrencyTable').innerHTML = rows.length ? rows.map(function (row) {
             return '<tr><td>' + escapeHtml(row.currency) + '</td><td class="text-right">' + escapeHtml(Number(row.current_rate || 0).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })) + '</td><td class="text-right">' + escapeHtml(formatNumber(row.original_total, 2)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td></tr>';
         }).join('') : modernEmptyRow(5, 'No currency totals are available.');
-        document.getElementById('expenseCurrencyCaption').textContent = rows.length + (rows.length === 1 ? ' currency' : ' currencies') + ' · rates at report time';
+        document.getElementById('expenseCurrencyCaption').textContent = rows.length + (rows.length === 1 ? ' currency' : ' currencies') + ' · PKR-only · no exchange-rate conversion';
     }
 
+    function renderTabTables() {
+        var rows = report.breakdowns.tabs || [];
+        document.getElementById('expenseTabTable').innerHTML = rows.length ? rows.map(function (row) {
+            return '<tr><td><strong>' + escapeHtml(row.tabcode || 'Unmapped') + '</strong><span class="expense-subtext">' + escapeHtml(row.usercode || 'No user code') + '</span></td><td>' + escapeHtml(row.owner || 'Unassigned') + '</td><td>' + escapeHtml(row.cost_center || 'Unassigned') + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.expense_code_count) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.posted_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.pending_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.authorized_unposted_total)) + '</td><td class="text-right">' + formatNumber(row.missing_receipt_count) + '</td></tr>';
+        }).join('') : modernEmptyRow(11, 'No expense tabs match the current filters.');
+        document.getElementById('expenseTabCaption').textContent = rows.length + (rows.length === 1 ? ' complete tab' : ' complete tabs') + ' · fully filtered · ' + report.metadata.default_currency;
+    }
     function renderUserTables() {
         var users = report.breakdowns.users || [];
         var userTable = document.getElementById('expenseUserTable');
@@ -569,6 +576,7 @@
         modernRenderDoughnut('expenseCategoryChart', 'expenseCategoryLegend', report.breakdowns.categories, 'category', 8);
         modernRenderDoughnut('expenseStatusChart', 'expenseStatusLegend', report.breakdowns.statuses, 'workflow_status', 6);
         modernRenderDoughnut('expenseOwnerChart', 'expenseOwnerLegend', report.breakdowns.users, 'owner', 8);
+        modernRenderBar('expenseTabChart', 'expenseTabLegend', report.breakdowns.tabs, 'tabcode', 12, 'expenseTabChartCaption');
     }
 
     function renderChartsForTab(tabName) {
@@ -605,6 +613,7 @@
         renderUserTables();
         renderExpenseCodes();
         renderCurrencyTable();
+        renderTabTables();
         renderTransactions();
         document.getElementById('expenseUpdatedAt').textContent = 'Updated ' + report.metadata.generated_at_utc + ' UTC · ' + report.metadata.elapsed_ms + ' ms';
         setActiveExpenseTab(activeTab);

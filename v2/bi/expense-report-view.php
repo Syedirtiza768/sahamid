@@ -125,7 +125,7 @@
     <div id="expenseLoading" class="expense-loading">
         <i class="fa fa-circle-o-notch fa-spin"></i>
         <strong>Building the expense report</strong>
-        <span>Applying permissions, filters, currency conversion, and accounting classification…</span>
+        <span>Applying permissions, filters, PKR validation, and accounting classification…</span>
     </div>
 
     <div id="expenseReportContent" style="display:none;">
@@ -182,6 +182,17 @@
                 </article>
             </div>
 
+            <div class="expense-two-column expense-tab-analysis">
+                <article class="expense-panel expense-chart-panel">
+                    <header><div><span class="expense-panel-kicker">Accountability</span><h3>Spend by expense tab</h3></div><span id="expenseTabChartCaption" class="expense-panel-meta"></span></header>
+                    <div class="expense-chart-wrap"><canvas id="expenseTabChart"></canvas></div>
+                    <div id="expenseTabLegend" class="expense-chart-legend"></div>
+                </article>
+                <article class="expense-panel expense-detail-panel">
+                    <header><div><span class="expense-panel-kicker">Complete tab-wise view</span><h3>Expense tabs</h3></div><span id="expenseTabCaption" class="expense-panel-meta"></span></header>
+                    <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Expense tab</th><th>Owner</th><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Codes</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Unposted</th><th class="text-right">Missing receipts</th></tr></thead><tbody id="expenseTabTable"></tbody></table></div>
+                </article>
+            </div>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete breakdown</span><h3>Category totals</h3></div><span id="expenseCategoryCaption" class="expense-panel-meta"></span></header>
                 <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Category</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Change</th></tr></thead><tbody id="expenseCategoryTable"></tbody></table></div>
@@ -249,8 +260,8 @@
                 <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>GL group</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th></tr></thead><tbody id="expenseGlTable"></tbody></table></div>
             </article>
             <article class="expense-panel expense-detail-panel">
-                <header><div><span class="expense-panel-kicker">Currency reconciliation</span><h3>Original and functional currency</h3></div><span id="expenseCurrencyCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Currency</th><th class="text-right">Current rate</th><th class="text-right">Original amount</th><th class="text-right">Functional net spend</th><th class="text-right">Transactions</th></tr></thead><tbody id="expenseCurrencyTable"></tbody></table></div>
+                <header><div><span class="expense-panel-kicker">PKR amount validation</span><h3>PKR source amounts</h3></div><span id="expenseCurrencyCaption" class="expense-panel-meta"></span></header>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Currency</th><th class="text-right">Rate applied</th><th class="text-right">Source amount</th><th class="text-right">Reported PKR spend</th><th class="text-right">Transactions</th></tr></thead><tbody id="expenseCurrencyTable"></tbody></table></div>
             </article>
         </section>
 
