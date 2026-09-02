@@ -98,29 +98,29 @@ foreach ($supplierRows as $row) {
 	$supplierExport[] = array(
 		$row['supplierid'], $row['suppname'], $row['status'], $row['supplier_category'], $row['contact_email'], $row['contact_phone'], $row['payment_terms'],
 		$row['currency'], (float)$row['total_invoiced'], (float)$row['total_paid'], (float)$row['outstanding'], (float)$row['overdue'], $row['next_due'], $row['last_payment'],
-		(int)$row['open_invoices'], (int)$row['overdue_invoices'], (float)$row['average_days'], (float)$row['on_time_rate'], $row['project_refs'], $row['cost_centers'], (int)$row['purchase_order_count'],
+		(int)$row['open_invoices'], (int)$row['overdue_invoices'], (float)$row['average_days'], (float)$row['on_time_rate'], $row['project_refs'], (int)$row['purchase_order_count'],
 	);
 }
 $supplierSheet = $spreadsheet->createSheet();
-SP_ExcelWriteSheet($supplierSheet, 'Supplier Summary', array('Supplier ID', 'Supplier Name', 'Status', 'Category', 'Contact Email', 'Contact Phone', 'Payment Terms', 'Currency', 'Total Invoiced (Base)', 'Paid (Base)', 'Outstanding (Base)', 'Overdue (Base)', 'Next Payment Due', 'Last Payment Date', 'Open Invoices', 'Overdue Invoices', 'Average Days to Pay', 'On-time %', 'Project / Job References', 'Cost Centers / GL Tags', 'Purchase Orders'), $supplierExport, array(12, 13), array(8, 9, 10, 11, 16), array(14, 15, 20));
+SP_ExcelWriteSheet($supplierSheet, 'Supplier Summary', array('Supplier ID', 'Supplier Name', 'Status', 'Category', 'Contact Email', 'Contact Phone', 'Payment Terms', 'Currency', 'Total Invoiced (Base)', 'Paid (Base)', 'Outstanding (Base)', 'Overdue (Base)', 'Next Payment Due', 'Last Payment Date', 'Open Invoices', 'Overdue Invoices', 'Average Days to Pay', 'On-time %', 'Project / Job References', 'Purchase Orders'), $supplierExport, array(12, 13), array(8, 9, 10, 11, 16), array(14, 15, 19));
 
 $payableExport = array();
 foreach ($payableRows as $row) {
 	$payableExport[] = array(
 		$row['transno'], $row['type_name'], $row['suppreference'], $row['supplierno'], $row['suppname'], '', $row['trandate'], $row['effective_duedate'],
 		(float)$row['original_amount'], (float)$row['original_amount'] - (float)$row['outstanding_amount'], (float)$row['outstanding_amount'], $row['currency'], $row['payment_status'],
-		SP_ReportAgeBucket($row['effective_duedate'], $filters['as_of']), max(0, (int)(new DateTime($row['effective_duedate']))->diff(new DateTime($filters['as_of']))->format('%r%a')), $row['payment_terms'], $row['hold'] ? 'On hold' : '', $row['project_refs'], $row['cost_centers'],
+		SP_ReportAgeBucket($row['effective_duedate'], $filters['as_of']), max(0, (int)(new DateTime($row['effective_duedate']))->diff(new DateTime($filters['as_of']))->format('%r%a')), $row['payment_terms'], $row['hold'] ? 'On hold' : '', $row['project_refs'],
 	);
 }
 $payableSheet = $spreadsheet->createSheet();
-SP_ExcelWriteSheet($payableSheet, 'Payables Detail', array('Transaction No', 'Type', 'Invoice Reference', 'Supplier ID', 'Supplier Name', 'Purchase Order', 'Invoice Date', 'Due Date', 'Original Amount', 'Paid / Allocated', 'Outstanding Amount', 'Currency', 'Payment Status', 'Aging Bucket', 'Days Overdue', 'Payment Terms', 'Hold Status', 'Project / Job References', 'Cost Centers / GL Tags'), $payableExport, array(6, 7), array(8, 9, 10), array(0, 14));
+SP_ExcelWriteSheet($payableSheet, 'Payables Detail', array('Transaction No', 'Type', 'Invoice Reference', 'Supplier ID', 'Supplier Name', 'Purchase Order', 'Invoice Date', 'Due Date', 'Original Amount', 'Paid / Allocated', 'Outstanding Amount', 'Currency', 'Payment Status', 'Aging Bucket', 'Days Overdue', 'Payment Terms', 'Hold Status', 'Project / Job References'), $payableExport, array(6, 7), array(8, 9, 10), array(0, 14));
 
 $paymentExport = array();
 foreach ($paymentRows as $row) {
-	$paymentExport[] = array($row['transno'], $row['supplierno'], $row['suppname'], $row['payment_date'], (float)$row['payment_amount'], (float)$row['payment_amount_base'], $row['currency'], $row['payment_method'], $row['payment_reference'], $row['bank_account'], $row['payment_status'], $row['project_refs'], $row['cost_centers']);
+	$paymentExport[] = array($row['transno'], $row['supplierno'], $row['suppname'], $row['payment_date'], (float)$row['payment_amount'], (float)$row['payment_amount_base'], $row['currency'], $row['payment_method'], $row['payment_reference'], $row['bank_account'], $row['payment_status'], $row['project_refs']);
 }
 $paymentSheet = $spreadsheet->createSheet();
-SP_ExcelWriteSheet($paymentSheet, 'Payment Detail', array('Payment No', 'Supplier ID', 'Supplier Name', 'Payment Date', 'Amount (Supplier Currency)', 'Amount (Base)', 'Currency', 'Payment Method', 'Payment Reference', 'Bank Account', 'Payment Status', 'Project / Job References', 'Cost Centers / GL Tags'), $paymentExport, array(3), array(4, 5), array(0));
+SP_ExcelWriteSheet($paymentSheet, 'Payment Detail', array('Payment No', 'Supplier ID', 'Supplier Name', 'Payment Date', 'Amount (Supplier Currency)', 'Amount (Base)', 'Currency', 'Payment Method', 'Payment Reference', 'Bank Account', 'Payment Status', 'Project / Job References'), $paymentExport, array(3), array(4, 5), array(0));
 
 $agingExport = array();
 foreach ($agingRows as $row) $agingExport[] = array(SP_ReportAgeBucketLabel($row['aging_bucket']), $row['aging_bucket'], (float)$row['amount'], (int)$row['invoice_count'], $filters['as_of']);
@@ -141,9 +141,8 @@ $metadataRows = array(
 	array('Currency', $filters['currency']),
 	array('Payment method', $filters['payment_method']),
 	array('Project / job reference', $filters['project'] !== '' ? $filters['project'] : 'All'),
-	array('Cost center / GL tag', $filters['cost_center']),
 	array('Export timestamp', date('Y-m-d H:i:s')),
-	array('Source', 'Existing supplier ledger (supptrans), allocations (suppallocs), bank transactions (banktrans), supplier master, payment methods, and GL tags'),
+	array('Source', 'Existing supplier ledger (supptrans), allocations (suppallocs), bank transactions (banktrans), supplier master, payment methods, and project/job references'),
 	array('Reconciliation rule', 'Outstanding = stored supplier transaction amount including tax less recorded allocations; current balances use supptrans.alloc and historical balances use allocations dated on or before as-of date.'),
 	array('Data limitations', 'The current application does not persist supplier active flags, dispute reasons, legal entities, departments, approvers, or direct invoice-to-PO references.'),
 );

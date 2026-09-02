@@ -3,7 +3,7 @@
  * Shared query and calculation helpers for SupplierPayablesReport.php.
  *
  * The report deliberately uses the existing AP ledger as its source of truth:
- * supptrans, suppallocs, suppliers, banktrans, paymentmethods and GL tags.
+ * supptrans, suppallocs, suppliers, banktrans, paymentmethods and payment terms.
  * No production metrics are cached or fabricated here.
  */
 
@@ -46,7 +46,6 @@ function SP_ReportDefaultFilters() {
 		'currency' => 'all',
 		'payment_method' => 'all',
 		'project' => '',
-		'cost_center' => 'all',
 		'sort' => 'outstanding',
 		'direction' => 'desc',
 		'page' => 1,
@@ -76,7 +75,6 @@ function SP_ReportReadFilters($source) {
 	$filters['aging_bucket'] = isset($source['aging_bucket']) && in_array($source['aging_bucket'], array('all', 'current', '1_30', '31_60', '61_90', '90_plus'), true) ? $source['aging_bucket'] : 'all';
 	$filters['currency'] = isset($source['currency']) && preg_match('/^[A-Za-z]{3}$/', (string)$source['currency']) ? strtoupper((string)$source['currency']) : 'all';
 	$filters['payment_method'] = isset($source['payment_method']) && preg_match('/^\d+$/', (string)$source['payment_method']) ? (string)(int)$source['payment_method'] : 'all';
-	$filters['cost_center'] = isset($source['cost_center']) && preg_match('/^\d+$/', (string)$source['cost_center']) ? (string)(int)$source['cost_center'] : 'all';
 	$filters['sort'] = isset($source['sort']) && in_array($source['sort'], array('supplier', 'outstanding', 'overdue', 'next_due', 'total_invoiced', 'total_paid', 'open_invoices'), true) ? $source['sort'] : 'outstanding';
 	$filters['direction'] = isset($source['direction']) && $source['direction'] === 'asc' ? 'asc' : 'desc';
 	$filters['page'] = isset($source['page']) && preg_match('/^\d+$/', (string)$source['page']) ? max(1, (int)$source['page']) : 1;
@@ -186,15 +184,10 @@ function SP_ReportPaymentJoin() {
 		LEFT JOIN paymentmethods AS pm ON pm.paymentname=bt.banktranstype ";
 }
 
-function SP_ReportDimensionJoin() {
-	return " LEFT JOIN (
-			SELECT gt.type, gt.typeno,
-				GROUP_CONCAT(DISTINCT NULLIF(gt.jobref,'')) AS project_refs,
-				GROUP_CONCAT(DISTINCT CASE WHEN gt.tag > 0 THEN CONCAT(gt.tag, ':', COALESCE(t.tagdescription,'')) END) AS cost_centers
-			FROM gltrans AS gt
-			LEFT JOIN tags AS t ON t.tagref=gt.tag
-			GROUP BY gt.type, gt.typeno
-		) AS gl_dim ON gl_dim.type=st.type AND gl_dim.typeno=st.transno ";
+function SP_ReportDimensionColumns($alias = 'st') {
+	return "COALESCE((SELECT GROUP_CONCAT(DISTINCT NULLIF(gt_dim.jobref,''))
+		FROM gltrans AS gt_dim
+		WHERE gt_dim.type=" . $alias . ".type AND gt_dim.typeno=" . $alias . ".transno),'') AS project_refs";
 }
 
 function SP_ReportSupplierWhere($filters, $supplierAlias = 's') {
@@ -217,9 +210,6 @@ function SP_ReportDimensionWhere($filters, $alias = 'st') {
 	if ($filters['project'] !== '') {
 		$project = DB_escape_string($filters['project']);
 		$where .= " AND EXISTS (SELECT 1 FROM gltrans AS gl_filter_project WHERE gl_filter_project.type=" . $alias . ".type AND gl_filter_project.typeno=" . $alias . ".transno AND gl_filter_project.jobref LIKE '%" . $project . "%')";
-	}
-	if ($filters['cost_center'] !== 'all') {
-		$where .= " AND EXISTS (SELECT 1 FROM gltrans AS gl_filter_tag WHERE gl_filter_tag.type=" . $alias . ".type AND gl_filter_tag.typeno=" . $alias . ".transno AND gl_filter_tag.tag=" . (int)$filters['cost_center'] . ")";
 	}
 	return $where;
 }
@@ -310,7 +300,7 @@ function SP_ReportRunOne($db, $sql, $errorMessage = '') {
 	return isset($rows[0]) ? $rows[0] : array();
 }
 
-function SP_ReportBaseDocumentSql($db, $filters, $select, $extraWhere = '', $orderBy = '', $limit = null, $offset = 0) {
+function SP_ReportBaseDocumentSql($db, $filters, $select, $extraWhere = '', $orderBy = '', $limit = null, $offset = 0, $includeDimensions = false) {
 	$balanceExpr = SP_ReportBalanceExpression($filters, 'st');
 	$reversal = SP_ReportReversalPredicate($db, 'st');
 	$allocationJoin = SP_ReportAllocationJoin($filters);
@@ -320,7 +310,7 @@ function SP_ReportBaseDocumentSql($db, $filters, $select, $extraWhere = '', $ord
 		LEFT JOIN systypes AS ty ON ty.typeid=st.type
 		LEFT JOIN currencies AS c ON c.currabrev=s.currcode
 		LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
-		" . SP_ReportDimensionJoin() . $allocationJoin . 
+		" . $allocationJoin .
 		" WHERE st.type IN (20,21,23,601)" . $reversal .
 		SP_ReportSupplierWhere($filters, 's') .
 		SP_ReportDimensionWhere($filters, 'st') .
@@ -344,13 +334,13 @@ function SP_ReportGetPayables($db, $filters, $limit = 50, $offset = 0) {
 		" . $balanceExpr . " AS outstanding_amount, st.rate, s.currcode AS currency,
 		COALESCE(c.decimalplaces,2) AS decimalplaces, COALESCE(pt.terms,'') AS payment_terms,
 		st.hold, " . (SP_ReportHasColumn($db, 'supptrans', 'reversed') ? 'COALESCE(st.reversed,0)' : '0') . " AS reversed,
-		COALESCE(gl_dim.project_refs,'') AS project_refs, COALESCE(gl_dim.cost_centers,'') AS cost_centers,
+		" . SP_ReportDimensionColumns('st') . ",
 		COALESCE(st.transtext,'') AS notes,
 		CASE WHEN " . $balanceExpr . " <= 0.009 THEN 'Paid'
 			WHEN st.hold=1 THEN 'On hold'
 			WHEN " . SP_ReportDueDateExpression('st', 'pt') . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN 'Overdue'
 			ELSE 'Open' END AS payment_status";
-	return SP_ReportBaseDocumentSql($db, $filters, $select, '', 'effective_duedate ASC, st.supplierno ASC, st.transno ASC', $limit, $offset);
+	return SP_ReportBaseDocumentSql($db, $filters, $select, '', 'effective_duedate ASC, st.supplierno ASC, st.transno ASC', $limit, $offset, false);
 }
 
 function SP_ReportCountPayables($db, $filters) {
@@ -371,14 +361,14 @@ function SP_ReportGetPayments($db, $filters, $limit = 50, $offset = 0) {
 		COALESCE(bt.bankref,st.suppreference,'') AS payment_reference,
 		COALESCE(bt.bankact,'') AS bank_account,
 		CASE WHEN bt.banktransid IS NULL THEN 'Pending / not recorded' ELSE 'Completed' END AS payment_status,
-		COALESCE(gl_dim.project_refs,'') AS project_refs, COALESCE(gl_dim.cost_centers,'') AS cost_centers";
+		" . SP_ReportDimensionColumns('st') . "";
 	$reversal = SP_ReportReversalPredicate($db, 'st');
 	$sql = "SELECT " . $select . "
 		FROM supptrans AS st
 		INNER JOIN suppliers AS s ON s.supplierid=st.supplierno
 		LEFT JOIN systypes AS ty ON ty.typeid=st.type
 		LEFT JOIN currencies AS c ON c.currabrev=s.currcode
-		" . SP_ReportPaymentJoin() . SP_ReportDimensionJoin() .
+		" . SP_ReportPaymentJoin() .
 		" WHERE st.type=22" . $reversal .
 		SP_ReportSupplierWhere($filters, 's') .
 		SP_ReportDimensionWhere($filters, 'st') .
@@ -466,7 +456,7 @@ function SP_ReportGetSummary($db, $filters) {
 		INNER JOIN suppliers AS s ON s.supplierid=st.supplierno
 		LEFT JOIN currencies AS c ON c.currabrev=s.currcode
 		LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
-		" . SP_ReportDimensionJoin() . SP_ReportAllocationJoin($filters) .
+		" . SP_ReportAllocationJoin($filters) .
 		" WHERE st.type IN (20,21,23,601)" . $reversal .
 		SP_ReportSupplierWhere($filters, 's') .
 		SP_ReportDimensionWhere($filters, 'st') .
@@ -486,7 +476,7 @@ function SP_ReportGetSummary($db, $filters) {
 	$paymentReversal = SP_ReportReversalPredicate($db, 'st');
 	$paymentSql = "FROM supptrans AS st
 		INNER JOIN suppliers AS s ON s.supplierid=st.supplierno
-		" . SP_ReportPaymentJoin() . SP_ReportDimensionJoin() .
+		" . SP_ReportPaymentJoin() .
 		" WHERE st.type=22" . $paymentReversal .
 		SP_ReportSupplierWhere($filters, 's') .
 		SP_ReportDimensionWhere($filters, 'st') .
@@ -538,12 +528,16 @@ function SP_ReportGetSummary($db, $filters) {
 	);
 }
 
-function SP_ReportGetSupplierSummary($db, $filters, $limit = 100, $offset = 0) {
+function SP_ReportGetSupplierSummary($db, $filters, $limit = 100, $offset = 0, $includeDimensions = true, $includeTiming = true) {
 	$balanceExpr = SP_ReportBalanceExpression($filters, 'st');
 	$dueDateExpr = SP_ReportDueDateExpression('st', 'pt');
 	$reversal = SP_ReportReversalPredicate($db, 'st');
 	$paymentFrom = SP_ReportSqlQuote($filters['payment_from']);
 	$paymentTo = SP_ReportSqlQuote($filters['payment_to']);
+	$dimensionSelect = "'' AS project_refs";
+	$purchaseOrderSelect = $includeDimensions ? 'COALESCE(po.po_count,0) AS purchase_order_count' : '0 AS purchase_order_count';
+	$purchaseOrderJoin = $includeDimensions ? " LEFT JOIN (SELECT supplierno, COUNT(*) AS po_count FROM purchorders GROUP BY supplierno) AS po ON po.supplierno=s.supplierid" : '';
+	$purchaseOrderGroup = $includeDimensions ? ', po.po_count' : '';
 	$sql = "SELECT s.supplierid, s.suppname, s.supptype, COALESCE(suppliertype.typename,'Uncategorised') AS supplier_category,
 		COALESCE(pt.terms,'') AS payment_terms, s.currcode AS currency, COALESCE(c.decimalplaces,2) AS decimalplaces,
 		COALESCE(s.email,'') AS contact_email, COALESCE(s.phn,'') AS contact_phone,
@@ -556,23 +550,34 @@ function SP_ReportGetSupplierSummary($db, $filters, $limit = 100, $offset = 0) {
 		SUM(CASE WHEN st.type IN (20,21,601) AND " . $balanceExpr . " > 0.009 THEN 1 ELSE 0 END) AS open_invoices,
 		SUM(CASE WHEN st.type IN (20,21,601) AND " . $balanceExpr . " > 0.009 AND " . $dueDateExpr . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN 1 ELSE 0 END) AS overdue_invoices,
 		SUM(CASE WHEN st.type IN (20,21,23,601) AND st.hold=1 AND " . $balanceExpr . " > 0.009 THEN 1 ELSE 0 END) AS open_holds,
-		GROUP_CONCAT(DISTINCT NULLIF(gl_dim.project_refs,'')) AS project_refs,
-		GROUP_CONCAT(DISTINCT NULLIF(gl_dim.cost_centers,'')) AS cost_centers,
-		COALESCE(po.po_count,0) AS purchase_order_count
+		" . $dimensionSelect . ",
+		" . $purchaseOrderSelect . "
 		FROM suppliers AS s
 		LEFT JOIN suppliertype ON suppliertype.typeid=s.supptype
 		LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
 		LEFT JOIN currencies AS c ON c.currabrev=s.currcode
 		LEFT JOIN supptrans AS st ON st.supplierno=s.supplierid AND st.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal .
-		SP_ReportDimensionJoin() . SP_ReportAllocationJoin($filters) .
-		" LEFT JOIN (SELECT supplierno, COUNT(*) AS po_count FROM purchorders GROUP BY supplierno) AS po ON po.supplierno=s.supplierid
+		SP_ReportAllocationJoin($filters) .
+		$purchaseOrderJoin . "
 		WHERE s.suppliersince <= " . SP_ReportSqlQuote($filters['as_of']) .
 		SP_ReportSupplierWhere($filters, 's') .
-		" GROUP BY s.supplierid, s.suppname, s.supptype, suppliertype.typename, pt.terms, s.currcode, c.decimalplaces, s.email, s.phn, po.po_count
+		SP_ReportDimensionWhere($filters, 'st') .
+		" GROUP BY s.supplierid, s.suppname, s.supptype, suppliertype.typename, pt.terms, s.currcode, c.decimalplaces, s.email, s.phn" . $purchaseOrderGroup . "
 		ORDER BY " . SP_ReportSupplierSort($filters) .
 		" LIMIT " . (int)$offset . ',' . (int)$limit;
 	$rows = SP_ReportRunRows($db, $sql, _('Could not retrieve supplier summary'));
-	$timing = SP_ReportGetPaymentTiming($db, $filters);
+	if ($includeDimensions && count($rows) > 0) {
+		$supplierIds = array();
+		foreach ($rows as $row) $supplierIds[] = $row['supplierid'];
+		$dimensionRows = SP_ReportGetSupplierDimensions($db, $filters, $supplierIds);
+		foreach ($rows as &$row) {
+			if (isset($dimensionRows[$row['supplierid']])) {
+				$row['project_refs'] = $dimensionRows[$row['supplierid']]['project_refs'];
+			}
+		}
+		unset($row);
+	}
+	$timing = $includeTiming ? SP_ReportGetPaymentTiming($db, $filters) : array();
 	$timingBySupplier = array();
 	foreach ($timing as $row) {
 		$timingBySupplier[$row['supplierno']] = $row;
@@ -586,6 +591,24 @@ function SP_ReportGetSupplierSummary($db, $filters, $limit = 100, $offset = 0) {
 	}
 	unset($row);
 	return $rows;
+}
+
+function SP_ReportGetSupplierDimensions($db, $filters, $supplierIds) {
+	if (count($supplierIds) === 0) return array();
+	$quotedIds = array();
+	foreach ($supplierIds as $supplierId) $quotedIds[] = SP_ReportSqlQuote($supplierId);
+	$reversal = SP_ReportReversalPredicate($db, 'st_dim');
+	$sql = "SELECT st_dim.supplierno,
+		GROUP_CONCAT(DISTINCT NULLIF(gt_dim.jobref,'')) AS project_refs
+		FROM supptrans AS st_dim
+		INNER JOIN gltrans AS gt_dim ON gt_dim.type=st_dim.type AND gt_dim.typeno=st_dim.transno
+		WHERE st_dim.supplierno IN (" . implode(',', $quotedIds) . ")
+		AND st_dim.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal .
+		" GROUP BY st_dim.supplierno";
+	$rows = SP_ReportRunRows($db, $sql, _('Could not retrieve supplier project references'));
+	$output = array();
+	foreach ($rows as $row) $output[$row['supplierno']] = $row;
+	return $output;
 }
 
 function SP_ReportSupplierSort($filters) {
@@ -604,21 +627,45 @@ function SP_ReportSupplierSort($filters) {
 function SP_ReportGetTopSuppliers($db, $filters, $limit = 5) {
 	$filters['sort'] = 'outstanding';
 	$filters['direction'] = 'desc';
-	return SP_ReportGetSupplierSummary($db, $filters, $limit, 0);
+	return SP_ReportGetSupplierSummary($db, $filters, $limit, 0, false, false);
 }
 
 function SP_ReportGetPaymentAnalytics($db, $filters) {
 	$reversal = SP_ReportReversalPredicate($db, 'st');
 	$base = "FROM supptrans AS st
 		INNER JOIN suppliers AS s ON s.supplierid=st.supplierno
-		" . SP_ReportPaymentJoin() . SP_ReportDimensionJoin() .
+		" . SP_ReportPaymentJoin() .
 		" WHERE st.type=22" . $reversal . SP_ReportSupplierWhere($filters, 's') . SP_ReportDimensionWhere($filters, 'st') . SP_ReportPaymentWhere($filters, 'st');
-	$byMethod = SP_ReportRunRows($db, "SELECT COALESCE(pm.paymentname,bt.banktranstype,'Not recorded') AS label,
-			COALESCE(SUM(ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0)),0) AS amount, COUNT(*) AS count " . $base . ' GROUP BY label ORDER BY amount DESC', _('Could not retrieve payment methods'));
-	$byCurrency = SP_ReportRunRows($db, "SELECT COALESCE(s.currcode,bt.bankcurrency,'') AS label,
-			COALESCE(SUM(ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0)),0) AS amount, COUNT(*) AS count " . $base . ' GROUP BY label ORDER BY amount DESC', _('Could not retrieve payment currencies'));
-	$trend = SP_ReportRunRows($db, "SELECT DATE_FORMAT(COALESCE(bt.bankdate,st.trandate),'%Y-%m') AS label,
-			COALESCE(SUM(ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0)),0) AS amount, COUNT(*) AS count " . $base . ' GROUP BY label ORDER BY label ASC', _('Could not retrieve payment trend'));
+	$rows = SP_ReportRunRows($db, "SELECT COALESCE(pm.paymentname,bt.banktranstype,'Not recorded') AS method_label,
+			COALESCE(s.currcode,bt.bankcurrency,'') AS currency_label,
+			DATE_FORMAT(COALESCE(bt.bankdate,st.trandate),'%Y-%m') AS trend_label,
+			COALESCE(SUM(ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0)),0) AS amount, COUNT(*) AS count " . $base .
+			' GROUP BY method_label,currency_label,trend_label', _('Could not retrieve payment analytics'));
+	$byMethod = array();
+	$byCurrency = array();
+	$trend = array();
+	foreach ($rows as $row) {
+		$method = (string)$row['method_label'];
+		$currency = (string)$row['currency_label'];
+		$month = (string)$row['trend_label'];
+		$amount = (float)$row['amount'];
+		$count = (int)$row['count'];
+		if (!isset($byMethod[$method])) $byMethod[$method] = array('label' => $method, 'amount' => 0, 'count' => 0);
+		$byMethod[$method]['amount'] += $amount;
+		$byMethod[$method]['count'] += $count;
+		if (!isset($byCurrency[$currency])) $byCurrency[$currency] = array('label' => $currency, 'amount' => 0, 'count' => 0);
+		$byCurrency[$currency]['amount'] += $amount;
+		$byCurrency[$currency]['count'] += $count;
+		if (!isset($trend[$month])) $trend[$month] = array('label' => $month, 'amount' => 0, 'count' => 0);
+		$trend[$month]['amount'] += $amount;
+		$trend[$month]['count'] += $count;
+	}
+	$byMethod = array_values($byMethod);
+	$byCurrency = array_values($byCurrency);
+	$trend = array_values($trend);
+	usort($byMethod, function ($a, $b) { return $b['amount'] <=> $a['amount']; });
+	usort($byCurrency, function ($a, $b) { return $b['amount'] <=> $a['amount']; });
+	usort($trend, function ($a, $b) { return strcmp($a['label'], $b['label']); });
 	return array('by_method' => $byMethod, 'by_currency' => $byCurrency, 'trend' => $trend);
 }
 
@@ -640,14 +687,14 @@ function SP_ReportGetSupplierDetail($db, $filters, $supplierId) {
 		LEFT JOIN suppliertype ON suppliertype.typeid=s.supptype
 		LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
 		LEFT JOIN currencies AS c ON c.currabrev=s.currcode
-		LEFT JOIN supptrans AS st ON st.supplierno=s.supplierid AND st.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal . SP_ReportDimensionJoin() . SP_ReportAllocationJoin($detailFilters) .
+		LEFT JOIN supptrans AS st ON st.supplierno=s.supplierid AND st.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal . SP_ReportAllocationJoin($detailFilters) .
 		" WHERE s.supplierid='" . $supplierId . "' GROUP BY s.supplierid,s.suppname,s.supptype,suppliertype.typename,pt.terms,s.currcode,c.decimalplaces,s.email,s.phn,s.address1,s.address2,s.address3", _('Could not retrieve supplier profile'));
 	$transactions = SP_ReportRunRows($db, "SELECT st.id, st.transno, st.type, COALESCE(ty.typename,'AP transaction') AS type_name,
 			st.suppreference, st.trandate, st.duedate, " . $detailDueDateExpr . " AS effective_duedate, (st.ovamount+st.ovgst) AS original_amount,
 			" . $balanceExpr . " AS outstanding_amount, s.currcode AS currency, st.hold,
 			CASE WHEN st.type=22 THEN 'Payment' WHEN st.hold=1 THEN 'On hold' WHEN " . $balanceExpr . " <= 0.009 THEN 'Paid' WHEN " . $detailDueDateExpr . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN 'Overdue' ELSE 'Open' END AS status
 			FROM supptrans AS st INNER JOIN suppliers AS s ON s.supplierid=st.supplierno LEFT JOIN systypes AS ty ON ty.typeid=st.type LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
-			" . SP_ReportDimensionJoin() . SP_ReportAllocationJoin($detailFilters) .
+			" . SP_ReportAllocationJoin($detailFilters) .
 			" WHERE st.supplierno='" . $supplierId . "' AND st.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal . ' ORDER BY st.trandate DESC, st.id DESC LIMIT 20', _('Could not retrieve supplier activity'));
 	$purchaseOrders = SP_ReportRunRows($db, "SELECT orderno, orddate, status, initiator, deliverydate FROM purchorders WHERE supplierno='" . $supplierId . "' ORDER BY orddate DESC LIMIT 10", _('Could not retrieve supplier purchase orders'));
 	$timing = SP_ReportGetPaymentTiming($db, $detailFilters);
