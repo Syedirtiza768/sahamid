@@ -154,7 +154,8 @@ $MenuItems['AP']['Transactions']['Caption'] = array(_('Select Supplier'),
 $MenuItems['AP']['Transactions']['URL'] = array('/SelectSupplier.php',
 												'/SupplierAllocations.php');
 
-$MenuItems['AP']['Reports']['Caption'] = array(	_('Aged Supplier Report'),
+$MenuItems['AP']['Reports']['Caption'] = array(	_('Supplier & Payables Report'),
+																				_('Aged Supplier Report'),
 												_('Payment Run Report'),
 												_('Remittance Advices'),
 												_('Outstanding GRNs Report'),
@@ -162,7 +163,8 @@ $MenuItems['AP']['Reports']['Caption'] = array(	_('Aged Supplier Report'),
 												_('List Daily Transactions'),
 												_('Supplier Transaction Inquiries'));
 
-$MenuItems['AP']['Reports']['URL'] = array(	'/AgedSuppliers.php',
+$MenuItems['AP']['Reports']['URL'] = array(	'/SupplierPayablesReport.php',
+																				'/AgedSuppliers.php',
 											'/SuppPaymentRun.php',
 											'/PDFRemittanceAdvice.php',
 											'/OutstandingGRNs.php',
