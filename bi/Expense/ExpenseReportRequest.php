@@ -10,9 +10,20 @@ class ExpenseReportRequest
 	private $category;
 	private $costCenter;
 	private $tabCode;
+	private $userCode;
+	private $expenseCode;
+	private $glAccount;
+	private $accountGroup;
+	private $section;
+	private $spendClass;
 	private $status;
+	private $receipt;
+	private $entryKind;
 	private $currency;
 	private $search;
+	private $includeLocalPurchases;
+	private $minAmount;
+	private $maxAmount;
 	private $page;
 	private $pageSize;
 	private $sort;
@@ -24,9 +35,20 @@ class ExpenseReportRequest
 		$this->category = $values['category'];
 		$this->costCenter = $values['cost_center'];
 		$this->tabCode = $values['tab_code'];
+		$this->userCode = $values['user_code'];
+		$this->expenseCode = $values['expense_code'];
+		$this->glAccount = $values['gl_account'];
+		$this->accountGroup = $values['account_group'];
+		$this->section = $values['section'];
+		$this->spendClass = $values['spend_class'];
 		$this->status = $values['status'];
+		$this->receipt = $values['receipt'];
+		$this->entryKind = $values['entry_kind'];
 		$this->currency = $values['currency'];
 		$this->search = $values['search'];
+		$this->includeLocalPurchases = $values['include_local_purchases'];
+		$this->minAmount = $values['min_amount'];
+		$this->maxAmount = $values['max_amount'];
 		$this->page = $values['page'];
 		$this->pageSize = $values['page_size'];
 		$this->sort = $values['sort'];
@@ -57,11 +79,29 @@ class ExpenseReportRequest
 		if ($status !== null && !in_array($status, array('pending_authorization', 'authorized_unposted', 'posted'), true)) {
 			throw new BIException('invalid_filter', 'The requested expense workflow status is not supported.', 400);
 		}
+		$receipt = self::optionalString($input, 'receipt', 20);
+		if ($receipt !== null && !in_array($receipt, array('with_receipt', 'without_receipt'), true)) {
+			throw new BIException('invalid_filter', 'The requested receipt filter is not supported.', 400);
+		}
+		$entryKind = self::optionalString($input, 'entryKind', 20);
+		if ($entryKind !== null && !in_array($entryKind, array('expense', 'credit'), true)) {
+			throw new BIException('invalid_filter', 'The requested entry type is not supported.', 400);
+		}
+		$spendClass = self::optionalString($input, 'spendClass', 40);
+		if ($spendClass !== null && !in_array($spendClass, array('P&L spend', 'Balance sheet / non-P&L', 'Unclassified'), true)) {
+			throw new BIException('invalid_filter', 'The requested spend class is not supported.', 400);
+		}
 		$currency = self::optionalString($input, 'currency', 3);
 		if ($currency !== null && preg_match('/^[A-Za-z]{3}$/', $currency) !== 1) {
 			throw new BIException('invalid_filter', 'Currency must be a three-letter code.', 400);
 		}
 		$currency = $currency === null ? null : strtoupper($currency);
+		$includeLocalPurchases = self::optionalBoolean($input, 'includeLocalPurchases', true);
+		$minAmount = self::optionalAmount($input, 'minAmount');
+		$maxAmount = self::optionalAmount($input, 'maxAmount');
+		if ($minAmount !== null && $maxAmount !== null && $minAmount > $maxAmount) {
+			throw new BIException('invalid_filter', 'The minimum amount must not be greater than the maximum amount.', 400);
+		}
 
 		$page = isset($input['page']) ? (int) $input['page'] : 1;
 		$pageSize = isset($input['pageSize']) ? (int) $input['pageSize'] : 50;
@@ -86,9 +126,20 @@ class ExpenseReportRequest
 			'category' => $category,
 			'cost_center' => self::optionalString($input, 'costCenter', 20),
 			'tab_code' => self::optionalString($input, 'tabCode', 20),
+			'user_code' => self::optionalString($input, 'userCode', 50),
+			'expense_code' => self::optionalString($input, 'expenseCode', 80),
+			'gl_account' => self::optionalString($input, 'glAccount', 80),
+			'account_group' => self::optionalString($input, 'accountGroup', 120),
+			'section' => self::optionalString($input, 'section', 120),
+			'spend_class' => $spendClass,
 			'status' => $status,
+			'receipt' => $receipt,
+			'entry_kind' => $entryKind,
 			'currency' => $currency,
 			'search' => self::optionalString($input, 'search', 100),
+			'include_local_purchases' => $includeLocalPurchases,
+			'min_amount' => $minAmount,
+			'max_amount' => $maxAmount,
 			'page' => $page,
 			'page_size' => $pageSize,
 			'sort' => $sort,
@@ -100,9 +151,20 @@ class ExpenseReportRequest
 	public function getCategory() { return $this->category; }
 	public function getCostCenter() { return $this->costCenter; }
 	public function getTabCode() { return $this->tabCode; }
+	public function getUserCode() { return $this->userCode; }
+	public function getExpenseCode() { return $this->expenseCode; }
+	public function getGlAccount() { return $this->glAccount; }
+	public function getAccountGroup() { return $this->accountGroup; }
+	public function getSection() { return $this->section; }
+	public function getSpendClass() { return $this->spendClass; }
 	public function getStatus() { return $this->status; }
+	public function getReceipt() { return $this->receipt; }
+	public function getEntryKind() { return $this->entryKind; }
 	public function getCurrency() { return $this->currency; }
 	public function getSearch() { return $this->search; }
+	public function getIncludeLocalPurchases() { return $this->includeLocalPurchases; }
+	public function getMinAmount() { return $this->minAmount; }
+	public function getMaxAmount() { return $this->maxAmount; }
 	public function getPage() { return $this->page; }
 	public function getPageSize() { return $this->pageSize; }
 	public function getSort() { return $this->sort; }
@@ -125,9 +187,20 @@ class ExpenseReportRequest
 			'category' => $this->category,
 			'cost_center' => $this->costCenter,
 			'tab_code' => $this->tabCode,
+			'user_code' => $this->userCode,
+			'expense_code' => $this->expenseCode,
+			'gl_account' => $this->glAccount,
+			'account_group' => $this->accountGroup,
+			'section' => $this->section,
+			'spend_class' => $this->spendClass,
 			'status' => $this->status,
+			'receipt' => $this->receipt,
+			'entry_kind' => $this->entryKind,
 			'currency' => $this->currency,
 			'search' => $this->search,
+			'include_local_purchases' => $this->includeLocalPurchases,
+			'min_amount' => $this->minAmount,
+			'max_amount' => $this->maxAmount,
 			'page' => $this->page,
 			'page_size' => $this->pageSize,
 			'sort' => $this->sort,
@@ -145,6 +218,37 @@ class ExpenseReportRequest
 			throw new BIException('invalid_filter', 'A report filter is longer than allowed.', 400, array('filter' => $key));
 		}
 		return $value;
+	}
+
+	private static function optionalAmount(array $input, $key)
+	{
+		if (!isset($input[$key]) || trim((string) $input[$key]) === '') {
+			return null;
+		}
+		$value = trim((string) $input[$key]);
+		if (!is_numeric($value) || !is_finite((float) $value) || (float) $value < 0 || (float) $value > 1000000000000000) {
+			throw new BIException('invalid_filter', 'An amount filter must be a non-negative number within the supported range.', 400, array('filter' => $key));
+		}
+		return (float) $value;
+	}
+
+	private static function optionalBoolean(array $input, $key, $default)
+	{
+		if (!array_key_exists($key, $input) || $input[$key] === null || $input[$key] === '') {
+			return (bool) $default;
+		}
+		$value = $input[$key];
+		if (is_bool($value)) {
+			return $value;
+		}
+		if (is_int($value) || is_float($value)) {
+			if ((int) $value === 1) { return true; }
+			if ((int) $value === 0) { return false; }
+		}
+		$normalized = strtolower(trim((string) $value));
+		if (in_array($normalized, array('1', 'true', 'yes', 'on'), true)) { return true; }
+		if (in_array($normalized, array('0', 'false', 'no', 'off'), true)) { return false; }
+		throw new BIException('invalid_filter', 'The local-purchase toggle must be true or false.', 400);
 	}
 
 	private static function validateDate($date, $name)

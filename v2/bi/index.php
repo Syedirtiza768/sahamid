@@ -115,6 +115,7 @@ $yearStart = date('Y-01-01');
         expenseExportUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/expense_export.php'); ?>
     };
 </script>
+<script src="<?php echo $NewRootPath; ?>v2/assets/bower_components/chart.js/Chart.js"></script>
 <script src="<?php echo $NewRootPath; ?>v2/bi/expense-report.js"></script>
 <script src="<?php echo $NewRootPath; ?>v2/bi/bi.js"></script>
 

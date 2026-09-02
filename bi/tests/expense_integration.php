@@ -31,11 +31,21 @@ $request = ExpenseReportRequest::fromArray(array(
 
 try {
 	$report = (new ExpenseReportService($db, $context))->getReport($request);
-	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['transactions']['rows'])) {
+	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['transactions']['rows'])) {
 		throw new RuntimeException('report contract is incomplete');
 	}
 	if ($report['transactions']['total_rows'] > 0 && !$report['breakdowns']['categories']) {
 		throw new RuntimeException('expense rows were not categorized');
+	}
+	$withoutLocalPurchases = ExpenseReportRequest::fromArray(array(
+		'startDate' => getenv('BI_TEST_START') ?: '2026-01-01',
+		'endDate' => getenv('BI_TEST_END') ?: date('Y-m-d'),
+		'includeLocalPurchases' => false,
+		'pageSize' => 10,
+	));
+	$filteredReport = (new ExpenseReportService($db, $context))->getReport($withoutLocalPurchases);
+	if ($filteredReport['transactions']['total_rows'] > $report['transactions']['total_rows'] || $filteredReport['metadata']['include_local_purchases'] !== false) {
+		throw new RuntimeException('local-purchase exclusion did not apply');
 	}
 	echo 'PASS: live report returned ' . $report['transactions']['total_rows'] . " scoped transactions\n";
 

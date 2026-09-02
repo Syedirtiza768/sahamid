@@ -36,9 +36,9 @@ class ExpenseReportService
 		$startedAt = microtime(true);
 		$definitions = $this->loadExpenseDefinitions();
 		$categoryFilter = $this->resolveCategoryFilter($request, $definitions);
-		$currentWhere = $this->buildWhere($request, $request->getDateRange(), $categoryFilter);
+		$currentWhere = $this->buildWhere($request, $request->getDateRange(), $categoryFilter, $definitions);
 		$comparisonRange = $request->getComparisonRange();
-		$comparisonWhere = $this->buildWhere($request, $comparisonRange, $categoryFilter);
+		$comparisonWhere = $this->buildWhere($request, $comparisonRange, $categoryFilter, $definitions);
 
 		$summary = $this->fetchSummary($currentWhere);
 		$previousSummary = $this->fetchSummary($comparisonWhere);
@@ -54,6 +54,8 @@ class ExpenseReportService
 		$statuses = $this->fetchStatuses($currentWhere, $summary['net_total']);
 		$costCenters = $this->fetchCostCenters($currentWhere, $summary['net_total']);
 		$owners = $this->fetchOwners($currentWhere, $summary['net_total']);
+		$users = $this->fetchUsers($currentWhere, $comparisonWhere, $summary['net_total']);
+		$userExpenses = $this->fetchUserExpenses($currentWhere, $comparisonWhere, $summary['net_total'], $definitions);
 		$currencies = $this->fetchCurrencies($currentWhere, $summary['net_total']);
 		$transactions = $this->fetchTransactions($currentWhere, $request, $includeAllTransactions);
 		$options = $this->fetchFilterOptions($definitions);
@@ -68,6 +70,8 @@ class ExpenseReportService
 				'statuses' => $statuses,
 				'cost_centers' => $costCenters,
 				'owners' => $owners,
+				'users' => $users,
+				'user_expenses' => $userExpenses,
 				'currencies' => $currencies,
 				'expense_codes' => $codes,
 			),
@@ -88,6 +92,8 @@ class ExpenseReportService
 				'access_scope' => $this->context->isAdministrator() ? 'All expense tabs' : 'Expense tabs assigned to ' . $this->context->getUserId(),
 				'date_role' => 'pcashdetails.date (claim/expense date)',
 				'amount_definition' => 'Net spend = negative of non-ASSIGNCASH claim amounts; positive non-assignment rows are credits.',
+				'local_purchase_definition' => 'Local purchases are rows whose expense code or expense description contains “Local Purchase”.',
+				'include_local_purchases' => $request->getIncludeLocalPurchases(),
 				'currency_method' => 'Tab-currency amounts are divided by the current currencies.rate, matching petty-cash GL posting logic. Historical rates are not stored on claims.',
 				'source_lineage' => array('pcashdetails', 'pcexpenses', 'pctabs', 'pctypetabs', 'currencies', 'chartmaster', 'accountgroups', 'accountsection', 'tags', 'www_users', 'expense_listing_access'),
 				'comparison_range' => $comparisonRange,
@@ -140,11 +146,14 @@ class ExpenseReportService
 		);
 	}
 
-	private function buildWhere(ExpenseReportRequest $request, array $range, $categoryFilter)
+	private function buildWhere(ExpenseReportRequest $request, array $range, $categoryFilter, array $definitions)
 	{
 		$conditions = array("UPPER(TRIM(d.codeexpense)) <> 'ASSIGNCASH'", 'd.date BETWEEN ? AND ?');
 		$types = 'ss';
 		$params = array($range['start'], $range['end']);
+		if (!$request->getIncludeLocalPurchases()) {
+			$conditions[] = 'NOT ' . $this->localPurchaseSql();
+		}
 
 		if (!$this->context->isAdministrator()) {
 			$conditions[] = 'EXISTS (SELECT 1 FROM expense_listing_access ela WHERE ela.user = ? AND ela.can_access = d.tabcode)';
@@ -161,6 +170,67 @@ class ExpenseReportService
 			$types .= 's';
 			$params[] = $request->getTabCode();
 		}
+		if ($request->getUserCode() !== null) {
+			if ($request->getUserCode() === '__unassigned__') {
+				$conditions[] = "COALESCE(TRIM(pt.usercode), '') = ''";
+			} else {
+				$conditions[] = 'pt.usercode = ?';
+				$types .= 's';
+				$params[] = $request->getUserCode();
+			}
+		}
+		if ($request->getExpenseCode() !== null) {
+			$conditions[] = 'd.codeexpense = ?';
+			$types .= 's';
+			$params[] = $request->getExpenseCode();
+		}
+		if ($request->getGlAccount() !== null) {
+			if ($request->getGlAccount() === '__unmapped__') {
+				$conditions[] = "COALESCE(TRIM(e.glaccount), '') = ''";
+			} else {
+				$conditions[] = 'e.glaccount = ?';
+				$types .= 's';
+				$params[] = $request->getGlAccount();
+			}
+		}
+		if ($request->getAccountGroup() !== null) {
+			if ($request->getAccountGroup() === '__unmapped__') {
+				$conditions[] = "COALESCE(TRIM(cm.group_), '') = ''";
+			} else {
+				$conditions[] = 'cm.group_ = ?';
+				$types .= 's';
+				$params[] = $request->getAccountGroup();
+			}
+		}
+		if ($request->getSection() !== null) {
+			if ($request->getSection() === '__unmapped__') {
+				$conditions[] = "COALESCE(TRIM(sec.sectionname), '') = ''";
+			} else {
+				$conditions[] = 'sec.sectionname = ?';
+				$types .= 's';
+				$params[] = $request->getSection();
+			}
+		}
+		if ($request->getSpendClass() !== null) {
+			$spendCodes = array();
+			foreach ($definitions as $code => $definition) {
+				if ($definition['spend_class'] === $request->getSpendClass()) {
+					$spendCodes[] = $code;
+				}
+			}
+			$spendParts = array();
+			if ($spendCodes) {
+				$spendParts[] = 'd.codeexpense IN (' . implode(',', array_fill(0, count($spendCodes), '?')) . ')';
+				$types .= str_repeat('s', count($spendCodes));
+				foreach ($spendCodes as $code) {
+					$params[] = $code;
+				}
+			}
+			if ($request->getSpendClass() === 'Unclassified') {
+				$spendParts[] = 'e.codeexpense IS NULL';
+			}
+			$conditions[] = $spendParts ? '(' . implode(' OR ', $spendParts) . ')' : '1 = 0';
+		}
 		if ($request->getStatus() === 'posted') {
 			$conditions[] = 'd.posted = 1';
 		} elseif ($request->getStatus() === 'pending_authorization') {
@@ -173,10 +243,35 @@ class ExpenseReportService
 			$types .= 's';
 			$params[] = $request->getCurrency();
 		}
+		if ($request->getReceipt() === 'with_receipt') {
+			$conditions[] = $this->receiptSql();
+		} elseif ($request->getReceipt() === 'without_receipt') {
+			$conditions[] = 'NOT ' . $this->receiptSql();
+		}
+		if ($request->getEntryKind() === 'credit') {
+			$conditions[] = 'd.amount > 0';
+		} elseif ($request->getEntryKind() === 'expense') {
+			$conditions[] = 'd.amount <= 0';
+		}
+		$netAmount = $this->netAmountSql();
+		if ($request->getMinAmount() !== null) {
+			$conditions[] = 'ABS(' . $netAmount . ') >= ?';
+			$types .= 'd';
+			$params[] = $request->getMinAmount();
+		}
+		if ($request->getMaxAmount() !== null) {
+			$conditions[] = 'ABS(' . $netAmount . ') <= ?';
+			$types .= 'd';
+			$params[] = $request->getMaxAmount();
+		}
 		if ($request->getSearch() !== null) {
 			$search = '%' . $request->getSearch() . '%';
-			$conditions[] = '(d.notes LIKE ? OR d.tabcode LIKE ? OR d.codeexpense LIKE ? OR e.description LIKE ? OR cm.accountname LIKE ? OR wu.realname LIKE ?)';
-			$types .= 'ssssss';
+			$conditions[] = '(d.notes LIKE ? OR d.tabcode LIKE ? OR d.codeexpense LIKE ? OR e.description LIKE ? OR e.glaccount LIKE ? OR cm.accountname LIKE ? OR cm.group_ LIKE ? OR sec.sectionname LIKE ? OR pt.usercode LIKE ? OR wu.realname LIKE ?)';
+			$types .= 'ssssssssss';
+			$params[] = $search;
+			$params[] = $search;
+			$params[] = $search;
+			$params[] = $search;
 			$params[] = $search;
 			$params[] = $search;
 			$params[] = $search;
@@ -214,6 +309,16 @@ class ExpenseReportService
 			LEFT JOIN pctypetabs ptt ON ptt.typetabcode = pt.typetabcode
 			LEFT JOIN currencies cur ON cur.currabrev = pt.currency
 			LEFT JOIN www_users wu ON wu.userid = pt.usercode';
+	}
+
+	private function localPurchaseSql()
+	{
+		return "(UPPER(TRIM(COALESCE(d.codeexpense, ''))) LIKE '%LOCAL PURCHASE%' OR UPPER(TRIM(COALESCE(e.description, ''))) LIKE '%LOCAL PURCHASE%')";
+	}
+
+	private function ownerSql()
+	{
+		return "COALESCE(NULLIF(TRIM(wu.realname), ''), NULLIF(TRIM(pt.usercode), ''), 'Unassigned')";
 	}
 
 	private function netAmountSql()
@@ -409,6 +514,115 @@ class ExpenseReportService
 		return $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
 	}
 
+	private function fetchUsers(array $where, array $previousWhere, $grandTotal)
+	{
+		$current = $this->queryUserTotals($where);
+		$previous = $this->queryUserTotals($previousWhere);
+		$previousByUser = array();
+		foreach ($previous as $row) {
+			$previousByUser[$this->userKey($row)] = (float) $row['total'];
+		}
+		$rows = array();
+		$numeric = array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total', 'pnl_total', 'balance_sheet_total');
+		$integers = array('transaction_count', 'tab_count', 'expense_code_count', 'missing_receipt_count');
+		foreach ($current as $row) {
+			foreach ($numeric as $field) { $row[$field] = (float) $row[$field]; }
+			foreach ($integers as $field) { $row[$field] = (int) $row[$field]; }
+			$row['user_key'] = $this->userKey($row);
+			$row['previous_total'] = isset($previousByUser[$row['user_key']]) ? $previousByUser[$row['user_key']] : 0.0;
+			$row['change_amount'] = $row['total'] - $row['previous_total'];
+			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
+			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
+			$row['receipt_coverage_percent'] = $row['transaction_count'] > 0 ? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
+			$rows[] = $row;
+		}
+		usort($rows, function ($left, $right) {
+			return $left['total'] == $right['total'] ? strcmp($left['owner'], $right['owner']) : ($left['total'] < $right['total'] ? 1 : -1);
+		});
+		return $rows;
+	}
+
+	private function queryUserTotals(array $where)
+	{
+		$owner = $this->ownerSql();
+		$net = $this->netAmountSql();
+		$sql = 'SELECT ' . $owner . ' AS owner, COALESCE(pt.usercode, \'\') AS usercode,
+			COALESCE(SUM(' . $net . '), 0) AS total,
+			COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow,
+			COALESCE(SUM(' . $this->creditAmountSql() . '), 0) AS credits,
+			COUNT(*) AS transaction_count, COUNT(DISTINCT d.tabcode) AS tab_count,
+			COUNT(DISTINCT d.codeexpense) AS expense_code_count,
+			COALESCE(SUM(CASE WHEN d.posted = 1 THEN ' . $net . ' ELSE 0 END), 0) AS posted_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND (d.authorized IS NULL OR d.authorized = \'0000-00-00\') THEN ' . $net . ' ELSE 0 END), 0) AS pending_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND d.authorized IS NOT NULL AND d.authorized <> \'0000-00-00\' THEN ' . $net . ' ELSE 0 END), 0) AS authorized_unposted_total,
+			COALESCE(SUM(CASE WHEN ag.pandl = 1 THEN ' . $net . ' ELSE 0 END), 0) AS pnl_total,
+			COALESCE(SUM(CASE WHEN ag.pandl = 0 THEN ' . $net . ' ELSE 0 END), 0) AS balance_sheet_total,
+			SUM(CASE WHEN NOT ' . $this->receiptSql() . ' THEN 1 ELSE 0 END) AS missing_receipt_count'
+			. $this->fromSql() . $where['sql'] . ' GROUP BY pt.usercode, wu.realname ORDER BY total DESC';
+		return $this->queryRows($sql, $where['types'], $where['params']);
+	}
+
+	private function fetchUserExpenses(array $where, array $previousWhere, $grandTotal, array $definitions)
+	{
+		$current = $this->queryUserExpenseDetails($where);
+		$previous = $this->queryUserExpenseDetails($previousWhere);
+		$previousByKey = array();
+		foreach ($previous as $row) {
+			$previousByKey[$this->userExpenseKey($row)] = (float) $row['total'];
+		}
+		$rows = array();
+		foreach ($current as $row) {
+			$code = (string) $row['codeexpense'];
+			$definition = isset($definitions[$code]) ? $definitions[$code] : null;
+			$row['category'] = $definition ? $definition['category'] : ExpenseCategoryClassifier::UNCLASSIFIED;
+			$row['spend_class'] = $definition ? $definition['spend_class'] : 'Unclassified';
+			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) { $row[$field] = (float) $row[$field]; }
+			foreach (array('transaction_count', 'tab_count') as $field) { $row[$field] = (int) $row[$field]; }
+			$row['user_key'] = $this->userKey($row);
+			$row['previous_total'] = isset($previousByKey[$this->userExpenseKey($row)]) ? $previousByKey[$this->userExpenseKey($row)] : 0.0;
+			$row['change_amount'] = $row['total'] - $row['previous_total'];
+			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
+			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
+			$rows[] = $row;
+		}
+		usort($rows, function ($left, $right) {
+			if ($left['total'] == $right['total']) {
+				return strcmp($left['owner'] . '|' . $left['description'], $right['owner'] . '|' . $right['description']);
+			}
+			return $left['total'] < $right['total'] ? 1 : -1;
+		});
+		return $rows;
+	}
+
+	private function queryUserExpenseDetails(array $where)
+	{
+		$owner = $this->ownerSql();
+		$net = $this->netAmountSql();
+		$sql = 'SELECT ' . $owner . ' AS owner, COALESCE(pt.usercode, \'\') AS usercode,
+			d.codeexpense, COALESCE(e.description, \'Unmapped expense code\') AS description,
+			e.glaccount, cm.accountname, cm.group_ AS account_group, ag.pandl,
+			ag.parentgroupname, sec.sectionname, e.tag, tg.tagdescription,
+			COALESCE(SUM(' . $net . '), 0) AS total,
+			COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow,
+			COALESCE(SUM(' . $this->creditAmountSql() . '), 0) AS credits,
+			COUNT(*) AS transaction_count, COUNT(DISTINCT d.tabcode) AS tab_count,
+			COALESCE(SUM(CASE WHEN d.posted = 1 THEN ' . $net . ' ELSE 0 END), 0) AS posted_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND (d.authorized IS NULL OR d.authorized = \'0000-00-00\') THEN ' . $net . ' ELSE 0 END), 0) AS pending_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND d.authorized IS NOT NULL AND d.authorized <> \'0000-00-00\' THEN ' . $net . ' ELSE 0 END), 0) AS authorized_unposted_total'
+			. $this->fromSql() . $where['sql'] . ' GROUP BY pt.usercode, wu.realname, d.codeexpense, e.description, e.glaccount, cm.accountname, cm.group_, ag.pandl, ag.parentgroupname, sec.sectionname, e.tag, tg.tagdescription ORDER BY total DESC';
+		return $this->queryRows($sql, $where['types'], $where['params']);
+	}
+
+	private function userKey(array $row)
+	{
+		return trim((string) $row['usercode']) !== '' ? 'user:' . trim((string) $row['usercode']) : 'owner:' . strtolower(trim((string) $row['owner']));
+	}
+
+	private function userExpenseKey(array $row)
+	{
+		return $this->userKey($row) . '|expense:' . (string) $row['codeexpense'];
+	}
+
 	private function fetchCurrencies(array $where, $grandTotal)
 	{
 		$sql = "SELECT COALESCE(pt.currency, '" . $this->escapeSqlLiteral($this->defaultCurrency) . "') AS currency,
@@ -494,7 +708,14 @@ class ExpenseReportService
 			$types = 's';
 			$params[] = $this->context->getUserId();
 		}
-		$sql = "SELECT DISTINCT d.tabcode, COALESCE(pt.typetabcode, '') AS cost_center_code,
+		$sql = "SELECT DISTINCT d.tabcode, d.codeexpense,
+			COALESCE(e.description, 'Unmapped expense code') AS expense_description,
+			COALESCE(e.glaccount, '') AS gl_account,
+			COALESCE(cm.group_, '') AS account_group,
+			COALESCE(sec.sectionname, '') AS section,
+			COALESCE(pt.usercode, '') AS usercode,
+			COALESCE(NULLIF(TRIM(wu.realname), ''), NULLIF(TRIM(pt.usercode), ''), 'Unassigned') AS owner,
+			COALESCE(pt.typetabcode, '') AS cost_center_code,
 			COALESCE(ptt.typetabdescription, 'Unassigned') AS cost_center,
 			COALESCE(pt.currency, '" . $this->escapeSqlLiteral($this->defaultCurrency) . "') AS currency"
 			. $this->fromSql() . ' WHERE ' . implode(' AND ', $where)
@@ -503,11 +724,29 @@ class ExpenseReportService
 		$centers = array();
 		$tabs = array();
 		$currencies = array();
+		$users = array();
+		$expenseCodes = array();
+		$glAccounts = array();
+		$accountGroups = array();
+		$sections = array();
 		foreach ($rows as $row) {
 			$centerKey = (string) $row['cost_center_code'];
 			$centers[$centerKey] = array('value' => $centerKey, 'label' => trim($row['cost_center']));
 			$tabs[(string) $row['tabcode']] = array('value' => (string) $row['tabcode'], 'label' => trim($row['tabcode']));
 			$currencies[(string) $row['currency']] = array('value' => (string) $row['currency'], 'label' => (string) $row['currency']);
+			$userCode = trim((string) $row['usercode']);
+			$userValue = $userCode !== '' ? $userCode : '__unassigned__';
+			$users[$userValue] = array('value' => $userValue, 'label' => trim((string) $row['owner']) . ($userCode !== '' ? ' (' . $userCode . ')' : ''));
+			$expenseCode = trim((string) $row['codeexpense']);
+			if ($expenseCode !== '') {
+				$expenseCodes[$expenseCode] = array('value' => $expenseCode, 'label' => $expenseCode . ' · ' . trim((string) $row['expense_description']));
+			}
+			$glAccount = trim((string) $row['gl_account']);
+			$glAccounts[$glAccount !== '' ? $glAccount : '__unmapped__'] = array('value' => $glAccount !== '' ? $glAccount : '__unmapped__', 'label' => $glAccount !== '' ? $glAccount : 'Unmapped GL account');
+			$accountGroup = trim((string) $row['account_group']);
+			$accountGroups[$accountGroup !== '' ? $accountGroup : '__unmapped__'] = array('value' => $accountGroup !== '' ? $accountGroup : '__unmapped__', 'label' => $accountGroup !== '' ? $accountGroup : 'Unmapped account group');
+			$section = trim((string) $row['section']);
+			$sections[$section !== '' ? $section : '__unmapped__'] = array('value' => $section !== '' ? $section : '__unmapped__', 'label' => $section !== '' ? $section : 'Unmapped section');
 		}
 		$presentCategories = array();
 		foreach ($definitions as $definition) {
@@ -523,11 +762,29 @@ class ExpenseReportService
 			'categories' => $categoryOptions,
 			'cost_centers' => array_values($centers),
 			'tabs' => array_values($tabs),
+			'users' => array_values($users),
+			'expense_codes' => array_values($expenseCodes),
+			'gl_accounts' => array_values($glAccounts),
+			'account_groups' => array_values($accountGroups),
+			'sections' => array_values($sections),
+			'spend_classes' => array(
+				array('value' => 'P&L spend', 'label' => 'P&L spend'),
+				array('value' => 'Balance sheet / non-P&L', 'label' => 'Balance sheet / non-P&L'),
+				array('value' => 'Unclassified', 'label' => 'Unclassified'),
+			),
 			'currencies' => array_values($currencies),
 			'statuses' => array(
 				array('value' => 'pending_authorization', 'label' => 'Pending authorization'),
 				array('value' => 'authorized_unposted', 'label' => 'Authorized, not posted'),
 				array('value' => 'posted', 'label' => 'Posted to GL'),
+			),
+			'receipts' => array(
+				array('value' => 'with_receipt', 'label' => 'With receipt'),
+				array('value' => 'without_receipt', 'label' => 'Missing receipt'),
+			),
+			'entry_kinds' => array(
+				array('value' => 'expense', 'label' => 'Expenses only'),
+				array('value' => 'credit', 'label' => 'Credits only'),
 			),
 		);
 	}

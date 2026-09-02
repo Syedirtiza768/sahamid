@@ -5,6 +5,8 @@
     var currentPage = 1;
     var optionsLoaded = false;
     var trendChart = null;
+    var charts = {};
+    var activeTab = 'summary';
     var initialStartDate = document.getElementById('expenseStartDate').value;
     var initialEndDate = document.getElementById('expenseEndDate').value;
 
@@ -53,10 +55,10 @@
 
     function setLoading(loading) {
         document.getElementById('expenseLoading').style.display = loading ? 'flex' : 'none';
+        document.getElementById('expenseExport').disabled = loading;
         if (loading && !report) {
             document.getElementById('expenseReportContent').style.display = 'none';
         }
-        document.getElementById('expenseExport').disabled = loading;
     }
 
     function selectedValue(id) {
@@ -67,17 +69,29 @@
     function requestPayload() {
         var payload = {
             dateRange: { start: selectedValue('expenseStartDate'), end: selectedValue('expenseEndDate') },
+            includeLocalPurchases: document.getElementById('expenseIncludeLocalPurchases').checked,
             page: currentPage,
-            pageSize: 50,
-            sort: 'date',
-            direction: 'desc'
+            pageSize: parseInt(selectedValue('expensePageSize') || '50', 10),
+            sort: selectedValue('expenseSort') || 'date',
+            direction: document.getElementById('expenseSortDirection').getAttribute('data-direction') || 'desc'
         };
         var fields = {
             category: 'expenseCategory',
             costCenter: 'expenseCostCenter',
+            tabCode: 'expenseTabCode',
+            userCode: 'expenseUser',
+            expenseCode: 'expenseExpenseCode',
+            glAccount: 'expenseGlAccount',
+            accountGroup: 'expenseAccountGroup',
+            section: 'expenseSection',
+            spendClass: 'expenseSpendClass',
             status: 'expenseStatus',
+            receipt: 'expenseReceipt',
+            entryKind: 'expenseEntryKind',
             currency: 'expenseCurrency',
-            search: 'expenseSearch'
+            search: 'expenseSearch',
+            minAmount: 'expenseMinAmount',
+            maxAmount: 'expenseMaxAmount'
         };
         Object.keys(fields).forEach(function (key) {
             var value = selectedValue(fields[key]);
@@ -89,6 +103,10 @@
     function validateDates(payload) {
         if (!payload.dateRange.start || !payload.dateRange.end || payload.dateRange.start > payload.dateRange.end) {
             setAlert('Choose a valid date range before updating the report.', 'warning');
+            return false;
+        }
+        if (payload.minAmount && payload.maxAmount && Number(payload.minAmount) > Number(payload.maxAmount)) {
+            setAlert('The minimum amount must not be greater than the maximum amount.', 'warning');
             return false;
         }
         return true;
@@ -141,7 +159,16 @@
         if (optionsLoaded || !report.options) { return; }
         populateSelect('expenseCategory', report.options.categories, 'All categories');
         populateSelect('expenseCostCenter', report.options.cost_centers, 'All cost centres');
+        populateSelect('expenseTabCode', report.options.tabs, 'All tabs');
+        populateSelect('expenseUser', report.options.users, 'All users');
+        populateSelect('expenseExpenseCode', report.options.expense_codes, 'All expense codes');
+        populateSelect('expenseGlAccount', report.options.gl_accounts, 'All GL accounts');
+        populateSelect('expenseAccountGroup', report.options.account_groups, 'All GL groups');
+        populateSelect('expenseSection', report.options.sections, 'All sections');
+        populateSelect('expenseSpendClass', report.options.spend_classes, 'All spend classes');
         populateSelect('expenseStatus', report.options.statuses, 'All statuses');
+        populateSelect('expenseReceipt', report.options.receipts, 'All evidence states');
+        populateSelect('expenseEntryKind', report.options.entry_kinds, 'Expenses and credits');
         populateSelect('expenseCurrency', report.options.currencies, 'All currencies');
         optionsLoaded = true;
     }
@@ -166,6 +193,9 @@
         document.getElementById('expenseAverage').textContent = formatAmount(summary.average_transaction) + ' average';
         document.getElementById('expenseReceiptCoverage').textContent = formatPercent(summary.receipt_coverage_percent);
         document.getElementById('expenseReceiptDetail').textContent = formatNumber(summary.missing_receipt_count) + ' without evidence';
+        document.getElementById('expenseResultSummary').textContent = formatNumber(summary.transaction_count) + ' matching transaction' + (summary.transaction_count === 1 ? '' : 's');
+        document.getElementById('expenseResultScope').textContent = report.metadata.access_scope;
+        document.getElementById('expenseTransactionTabCount').textContent = formatNumber(summary.transaction_count);
     }
 
     function renderInsights() {
@@ -209,7 +239,12 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: { boxWidth: 10, fontColor: '#536b7d', fontSize: 10, padding: 12 }
+                },
                 tooltips: { callbacks: { label: function (item) { return formatAmount(item.yLabel); } } },
                 scales: {
                     xAxes: [{ gridLines: { display: false }, ticks: { fontColor: '#7c8c98', maxTicksLimit: 12 } }],
@@ -246,8 +281,9 @@
     function renderCategoryTable() {
         var rows = report.breakdowns.categories || [];
         document.getElementById('expenseCategoryTable').innerHTML = rows.length ? rows.map(function (row) {
-            return '<tr><td><span class="expense-category-name">' + escapeHtml(row.category) + '</span><span class="expense-subtext">' + formatNumber(row.expense_code_count) + ' codes</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
-        }).join('') : '<tr><td colspan="5" class="expense-empty">No category totals are available.</td></tr>';
+            return '<tr><td><span class="expense-category-name">' + escapeHtml(row.category) + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.expense_code_count) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
+        }).join('') : modernEmptyRow(6, 'No category totals are available.');
+        document.getElementById('expenseCategoryCaption').textContent = rows.length + (rows.length === 1 ? ' complete category' : ' complete categories');
     }
 
     function statusLabel(status) {
@@ -256,27 +292,52 @@
 
     function renderControls() {
         var statuses = report.breakdowns.statuses || [];
-        document.getElementById('expenseStatusList').innerHTML = statuses.length ? statuses.map(function (row) {
-            return '<div class="expense-status-row"><span class="expense-status-dot expense-status-' + escapeHtml(row.workflow_status) + '"></span><div class="expense-status-copy"><strong>' + escapeHtml(statusLabel(row.workflow_status)) + '</strong><small>' + formatNumber(row.transaction_count) + ' transactions · ' + escapeHtml(formatPercent(row.share_percent)) + '</small></div><span class="expense-status-amount">' + escapeHtml(formatAmount(row.total)) + '</span></div>';
-        }).join('') : '<div class="expense-empty">No workflow activity.</div>';
-        var summary = report.summary;
-        var quality = [
-            { value: summary.missing_receipt_count, label: 'Missing receipts' },
-            { value: summary.unclassified_count, label: 'Unmapped rows' },
-            { value: summary.foreign_currency_count, label: 'FX rows' }
-        ];
-        document.getElementById('expenseQuality').innerHTML = quality.map(function (item) {
-            return '<div class="expense-quality-item"><strong>' + formatNumber(item.value) + '</strong><span>' + escapeHtml(item.label) + '</span></div>';
-        }).join('');
+        document.getElementById('expenseStatusTable').innerHTML = statuses.length ? statuses.map(function (row) {
+            return '<tr><td><span class="expense-status-dot expense-status-' + escapeHtml(row.workflow_status) + '"></span>' + escapeHtml(statusLabel(row.workflow_status)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td></tr>';
+        }).join('') : modernEmptyRow(4, 'No workflow activity.');
+        document.getElementById('expenseStatusCaption').textContent = statuses.length + (statuses.length === 1 ? ' status' : ' statuses');
+
+        var centers = report.breakdowns.cost_centers || [];
+        document.getElementById('expenseCenterTable').innerHTML = centers.length ? centers.map(function (row) {
+            return '<tr><td>' + escapeHtml(row.cost_center || 'Unassigned') + '<span class="expense-subtext">' + escapeHtml(row.cost_center_code || 'No code') + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td></tr>';
+        }).join('') : modernEmptyRow(4, 'No cost-centre totals are available.');
+        document.getElementById('expenseCenterCaption').textContent = centers.length + (centers.length === 1 ? ' cost centre' : ' cost centres');
     }
 
     function renderExpenseCodes() {
         var rows = report.breakdowns.expense_codes || [];
-        var visible = rows.slice(0, 150);
-        document.getElementById('expenseCodeTable').innerHTML = visible.length ? visible.map(function (row) {
-            return '<tr><td><span class="expense-category-name">' + escapeHtml(row.category) + '</span></td><td>' + escapeHtml(row.codeexpense) + '</td><td>' + escapeHtml(row.description) + '</td><td>' + escapeHtml(row.glaccount || '—') + '<span class="expense-subtext">' + escapeHtml(row.accountname || 'Unmapped') + '</span></td><td>' + escapeHtml(row.account_group || 'Unmapped') + '</td><td>' + escapeHtml(row.spend_class) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td></tr>';
-        }).join('') : '<tr><td colspan="9" class="expense-empty">No expense codes match this view.</td></tr>';
-        document.getElementById('expenseCodeCaption').textContent = visible.length === rows.length ? formatNumber(rows.length) + ' active codes' : 'Top ' + formatNumber(visible.length) + ' of ' + formatNumber(rows.length) + ' active codes · export for all';
+        document.getElementById('expenseCodeTable').innerHTML = rows.length ? rows.map(function (row) {
+            return '<tr><td>' + escapeHtml(row.category) + '</td><td>' + escapeHtml(row.codeexpense) + '</td><td>' + escapeHtml(row.description) + '</td><td>' + escapeHtml(row.glaccount || '—') + '<span class="expense-subtext">' + escapeHtml(row.accountname || 'Unmapped') + '</span></td><td>' + escapeHtml(row.account_group || 'Unmapped') + '</td><td>' + escapeHtml(row.sectionname || 'Unmapped') + '</td><td>' + escapeHtml(row.spend_class) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
+        }).join('') : modernEmptyRow(11, 'No expense codes match this view.');
+        document.getElementById('expenseCodeCaption').textContent = rows.length + (rows.length === 1 ? ' complete expense code' : ' complete expense codes');
+
+        var groups = modernGroupRows(rows, 'account_group');
+        document.getElementById('expenseGlTable').innerHTML = groups.length ? groups.map(function (row) {
+            return '<tr><td>' + escapeHtml(row.label) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.expense_code_count) + '</td></tr>';
+        }).join('') : modernEmptyRow(5, 'No GL group totals are available.');
+        document.getElementById('expenseGlCaption').textContent = groups.length + (groups.length === 1 ? ' complete GL group' : ' complete GL groups');
+        modernRenderBar('expenseCodeChart', 'expenseCodeLegend', rows, 'codeexpense', 12);
+        modernRenderBar('expenseGlChart', 'expenseGlLegend', groups, 'label', 10);
+        modernRenderDoughnut('expenseAccountingCenterChart', 'expenseAccountingCenterLegend', report.breakdowns.cost_centers, 'cost_center', 8);
+    }
+
+    function renderUserTables() {
+        var users = report.breakdowns.users || [];
+        var userTable = document.getElementById('expenseUserTable');
+        userTable.innerHTML = users.length ? users.map(function (row) {
+            return '<tr><td><span class="expense-category-name">' + escapeHtml(row.owner) + '</span><span class="expense-subtext">' + escapeHtml(row.usercode || 'No user code') + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.tab_count) + '</td><td class="text-right">' + formatNumber(row.expense_code_count) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.pnl_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.balance_sheet_total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.receipt_coverage_percent)) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
+        }).join('') : modernEmptyRow(10, 'No user totals match this view.');
+        document.getElementById('expenseUserCaption').textContent = users.length + (users.length === 1 ? ' complete user' : ' complete users') + ' · consolidated across visible expense tabs';
+
+        var details = report.breakdowns.user_expenses || [];
+        document.getElementById('expenseUserExpenseTable').innerHTML = details.length ? details.map(function (row) {
+            return '<tr><td><span class="expense-category-name">' + escapeHtml(row.owner) + '</span><span class="expense-subtext">' + escapeHtml(row.usercode || 'No user code') + '</span></td><td><span class="expense-category-name">' + escapeHtml(row.category) + '</span><span class="expense-subtext">' + escapeHtml(row.spend_class) + '</span></td><td>' + escapeHtml(row.codeexpense) + '</td><td>' + escapeHtml(row.description) + '</td><td>' + escapeHtml(row.glaccount || '—') + '<span class="expense-subtext">' + escapeHtml(row.account_group || 'Unmapped') + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.tab_count) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
+        }).join('') : modernEmptyRow(10, 'No user expense detail matches this view.');
+        document.getElementById('expenseUserExpenseCaption').textContent = formatNumber(details.length) + (details.length === 1 ? ' complete user/code combination' : ' complete user/code combinations');
+        modernRenderBar('expenseUserChart', 'expenseUserLegend', users, 'owner', 12);
+        modernRenderBar('expenseUserExpenseChart', 'expenseUserExpenseLegend', details.map(function (row) {
+            return { label: row.owner + ' · ' + row.codeexpense, total: row.total, transaction_count: row.transaction_count };
+        }), 'label', 12, 'expenseUserExpenseChartCaption');
     }
 
     function renderTransactions() {
@@ -284,35 +345,257 @@
         var rows = data.rows || [];
         document.getElementById('expenseTransactionTable').innerHTML = rows.length ? rows.map(function (row) {
             var original = row.currency !== report.metadata.default_currency ? '<span class="expense-subtext">' + escapeHtml(row.currency + ' ' + formatNumber(row.original_amount, 2)) + '</span>' : '';
-            return '<tr><td>' + escapeHtml(row.date) + '<span class="expense-subtext">#' + formatNumber(row.counterindex) + '</span></td><td><span class="expense-category-name">' + escapeHtml(row.category) + '</span><span class="expense-subtext">' + escapeHtml(row.codeexpense + ' · ' + row.description) + '</span></td><td>' + escapeHtml(row.owner) + '<span class="expense-subtext">' + escapeHtml(row.cost_center + ' · ' + row.tabcode) + '</span></td><td><span class="expense-workflow expense-workflow-' + escapeHtml(row.workflow_status) + '">' + escapeHtml(statusLabel(row.workflow_status)) + '</span></td><td class="expense-note-cell" title="' + escapeHtml(row.notes) + '">' + escapeHtml(row.notes || '—') + '</td><td>' + (row.has_receipt ? '<span class="expense-evidence-ok"><i class="fa fa-check-circle"></i> Available</span>' : '<span class="expense-evidence-missing"><i class="fa fa-exclamation-circle"></i> Missing</span>') + '</td><td class="text-right ' + (row.entry_kind === 'credit' ? 'expense-credit' : '') + '"><strong>' + escapeHtml(formatAmount(row.functional_amount)) + '</strong>' + original + '</td></tr>';
-        }).join('') : '<tr><td colspan="7" class="expense-empty">No transactions match this view.</td></tr>';
+            return '<tr><td>' + escapeHtml(row.date) + '<span class="expense-subtext">#' + formatNumber(row.counterindex) + '</span></td><td><span class="expense-category-name">' + escapeHtml(row.category) + '</span><span class="expense-subtext">' + escapeHtml(row.codeexpense + ' · ' + row.description) + '</span></td><td>' + escapeHtml(row.owner) + '<span class="expense-subtext">' + escapeHtml(row.usercode || 'No user code') + ' · ' + escapeHtml(row.cost_center) + ' · ' + escapeHtml(row.tabcode) + '</span></td><td>' + escapeHtml(row.glaccount || '—') + '<span class="expense-subtext">' + escapeHtml(row.account_group || 'Unmapped') + ' · ' + escapeHtml(row.sectionname || 'Unmapped') + '</span></td><td><span class="expense-workflow expense-workflow-' + escapeHtml(row.workflow_status) + '">' + escapeHtml(statusLabel(row.workflow_status)) + '</span></td><td class="expense-note-cell" title="' + escapeHtml(row.notes) + '">' + escapeHtml(row.notes || '—') + '</td><td>' + (row.has_receipt ? '<span class="expense-evidence-ok"><i class="fa fa-check-circle"></i> Available</span>' : '<span class="expense-evidence-missing"><i class="fa fa-exclamation-circle"></i> Missing</span>') + '</td><td class="text-right ' + (row.entry_kind === 'credit' ? 'expense-credit' : '') + '"><strong>' + escapeHtml(formatAmount(row.functional_amount)) + '</strong>' + original + '</td></tr>';
+        }).join('') : '<tr><td colspan="8" class="expense-empty">No transactions match this view.</td></tr>';
         var first = data.total_rows ? ((data.page - 1) * data.page_size) + 1 : 0;
         var last = Math.min(data.total_rows, data.page * data.page_size);
         document.getElementById('expenseTransactionCaption').textContent = formatNumber(first) + '–' + formatNumber(last) + ' of ' + formatNumber(data.total_rows);
         document.getElementById('expensePageLabel').textContent = 'Page ' + formatNumber(data.page) + ' of ' + formatNumber(data.total_pages);
         document.getElementById('expensePreviousPage').disabled = data.page <= 1;
         document.getElementById('expenseNextPage').disabled = data.page >= data.total_pages;
+        document.getElementById('expenseTransactionTabCount').textContent = formatNumber(data.total_rows);
     }
 
     function renderMethodology() {
         var metadata = report.metadata;
-        document.getElementById('expenseMethodology').textContent = metadata.amount_definition + ' ' + metadata.currency_method + ' Access: ' + metadata.access_scope + '.';
+        var localScope = metadata.include_local_purchases ? 'Local purchases are included.' : 'Local purchases are excluded.';
+        document.getElementById('expenseMethodology').textContent = metadata.amount_definition + ' ' + metadata.currency_method + ' ' + localScope + ' Access: ' + metadata.access_scope + '.';
         document.getElementById('expenseUpdatedAt').textContent = 'Updated ' + metadata.generated_at_utc + ' UTC · ' + metadata.elapsed_ms + ' ms';
+    }
+
+    function modernSelectedOptionLabel(id) {
+        var select = document.getElementById(id);
+        if (!select || !select.value || !select.options[select.selectedIndex]) { return ''; }
+        return select.options[select.selectedIndex].text;
+    }
+
+    function renderModernFilterState() {
+        var fields = {
+            category: { id: 'expenseCategory', label: 'Category' },
+            costCenter: { id: 'expenseCostCenter', label: 'Cost centre' },
+            tabCode: { id: 'expenseTabCode', label: 'Tab' },
+            userCode: { id: 'expenseUser', label: 'User' },
+            expenseCode: { id: 'expenseExpenseCode', label: 'Expense code' },
+            glAccount: { id: 'expenseGlAccount', label: 'GL account' },
+            accountGroup: { id: 'expenseAccountGroup', label: 'GL group' },
+            section: { id: 'expenseSection', label: 'Section' },
+            spendClass: { id: 'expenseSpendClass', label: 'Spend class' },
+            status: { id: 'expenseStatus', label: 'Workflow' },
+            receipt: { id: 'expenseReceipt', label: 'Evidence' },
+            entryKind: { id: 'expenseEntryKind', label: 'Entry type' },
+            search: { id: 'expenseSearch', label: 'Search' },
+            minAmount: { id: 'expenseMinAmount', label: 'Minimum' },
+            maxAmount: { id: 'expenseMaxAmount', label: 'Maximum' }
+        };
+        var active = [];
+        Object.keys(fields).forEach(function (key) {
+            var value = selectedValue(fields[key].id);
+            if (!value) { return; }
+            var label = fields[key].id === 'expenseMinAmount' || fields[key].id === 'expenseMaxAmount' ? value : modernSelectedOptionLabel(fields[key].id) || value;
+            active.push({ key: key, label: fields[key].label + ': ' + label });
+        });
+        if (!document.getElementById('expenseIncludeLocalPurchases').checked) {
+            active.push({ key: 'includeLocalPurchases', label: 'Local purchases: excluded' });
+        }
+        document.getElementById('expenseFilterCount').textContent = active.length ? active.length + (active.length === 1 ? ' active filter' : ' active filters') : 'All filters available';
+        document.getElementById('expenseFilterSummary').textContent = active.length ? active.length + (active.length === 1 ? ' filter is applied' : ' filters are applied') + ' to every view and export' : 'All expense data in the selected period';
+        document.getElementById('expenseActiveFilters').innerHTML = active.length ? active.map(function (item) {
+            return '<button type="button" class="expense-filter-chip" data-clear-filter="' + escapeHtml(item.key) + '">' + escapeHtml(item.label) + ' <i class="fa fa-times"></i></button>';
+        }).join('') : '<span class="expense-no-filter-chip">No additional filters</span>';
+    }
+
+    function modernDestroyChart(canvasId) {
+        if (charts[canvasId] && typeof charts[canvasId].destroy === 'function') { charts[canvasId].destroy(); }
+        delete charts[canvasId];
+    }
+
+    function modernPrepareCanvas(canvasId) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) { return null; }
+        canvas.style.display = 'block';
+        var message = canvas.parentNode.querySelector('.expense-chart-message');
+        if (message) { message.parentNode.removeChild(message); }
+        return canvas;
+    }
+
+    function modernChartUnavailable(canvasId, message) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) { return; }
+        canvas.style.display = 'none';
+        var node = document.createElement('div');
+        node.className = 'expense-chart-message';
+        node.textContent = message;
+        canvas.parentNode.appendChild(node);
+    }
+
+    function modernChartColors(count) {
+        var palette = ['#168a65', '#2f7ea5', '#d98d2b', '#74608a', '#c65e49', '#3d9b9a', '#607d8b', '#8aa447', '#a0527c', '#bd7e28', '#6c7a89', '#a35757', '#4b7896', '#697d3b'];
+        var colors = [];
+        for (var i = 0; i < count; i++) { colors.push(palette[i % palette.length]); }
+        return colors;
+    }
+
+    function modernLegend(legendId, items, note) {
+        var legend = document.getElementById(legendId);
+        if (!legend) { return; }
+        legend.innerHTML = (items || []).map(function (item) {
+            return '<span class="expense-legend-item"><i style="background:' + escapeHtml(item.color) + '"></i><span>' + escapeHtml(item.label) + '</span>' + (item.value == null ? '' : '<b>' + escapeHtml(item.value) + '</b>') + '</span>';
+        }).join('') + (note ? '<span class="expense-legend-note">' + escapeHtml(note) + '</span>' : '');
+    }
+
+    function modernChartRows(rows, labelKey, limit) {
+        var sorted = (rows || []).slice().sort(function (left, right) { return Number(right.total || 0) - Number(left.total || 0); });
+        var visible = sorted.slice(0, limit);
+        var remainder = sorted.slice(limit);
+        if (remainder.length) {
+            visible.push({
+                chart_label: 'Other (' + remainder.length + ')',
+                total: remainder.reduce(function (sum, row) { return sum + Number(row.total || 0); }, 0),
+                transaction_count: remainder.reduce(function (sum, row) { return sum + Number(row.transaction_count || 0); }, 0)
+            });
+        }
+        return { rows: visible, totalRows: sorted.length, shownRows: Math.min(sorted.length, limit), labelKey: labelKey };
+    }
+
+    function modernChartLabel(row, labelKey) {
+        return row.chart_label || row[labelKey] || 'Unmapped';
+    }
+
+    function modernRenderDoughnut(canvasId, legendId, rows, labelKey, limit) {
+        modernDestroyChart(canvasId);
+        var canvas = modernPrepareCanvas(canvasId);
+        if (!canvas) { return; }
+        var prepared = modernChartRows(rows, labelKey, limit || 8);
+        if (!prepared.rows.length) {
+            modernChartUnavailable(canvasId, 'No values match the current filters.');
+            modernLegend(legendId, [], 'No data in this filtered view.');
+            return;
+        }
+        if (typeof window.Chart === 'undefined') {
+            modernChartUnavailable(canvasId, 'Chart library unavailable. Use the complete table.');
+            return;
+        }
+        var colors = modernChartColors(prepared.rows.length);
+        var data = prepared.rows.map(function (row, index) {
+            return { value: Math.abs(Number(row.total || 0)), color: colors[index], highlight: colors[index], label: modernChartLabel(row, labelKey) };
+        });
+        charts[canvasId] = new window.Chart(canvas.getContext('2d')).Doughnut(data, { responsive: true, percentageInnerCutout: 48 });
+        modernLegend(legendId, prepared.rows.map(function (row, index) {
+            return {
+                label: modernChartLabel(row, labelKey),
+                color: colors[index],
+                value: formatAmount(row.total) + ' · ' + formatPercent(report.summary.net_total ? (Number(row.total || 0) / report.summary.net_total) * 100 : 0)
+            };
+        }), prepared.totalRows > prepared.shownRows ? 'Top values plus Other; the complete table is below.' : 'Net spend share of this filtered view.');
+    }
+
+    function modernRenderBar(canvasId, legendId, rows, labelKey, limit, captionId) {
+        modernDestroyChart(canvasId);
+        var canvas = modernPrepareCanvas(canvasId);
+        if (!canvas) { return; }
+        var prepared = modernChartRows(rows, labelKey, limit || 12);
+        if (captionId) {
+            document.getElementById(captionId).textContent = prepared.totalRows > prepared.shownRows ? 'Top ' + prepared.shownRows + ' of ' + prepared.totalRows : prepared.totalRows + ' values';
+        }
+        if (!prepared.rows.length) {
+            modernChartUnavailable(canvasId, 'No values match the current filters.');
+            modernLegend(legendId, [], 'No data in this filtered view.');
+            return;
+        }
+        if (typeof window.Chart === 'undefined') {
+            modernChartUnavailable(canvasId, 'Chart library unavailable. Use the complete table.');
+            return;
+        }
+        charts[canvasId] = new window.Chart(canvas.getContext('2d')).Bar({
+            labels: prepared.rows.map(function (row) { return modernChartLabel(row, labelKey); }),
+            datasets: [{ label: 'Net spend', fillColor: '#168a65', strokeColor: '#168a65', highlightFill: '#31ad86', highlightStroke: '#31ad86', data: prepared.rows.map(function (row) { return Number(row.total || 0); }) }]
+        }, { responsive: true, scaleLabel: '<%=value%>', scaleFontColor: '#718393', scaleFontSize: 10, barValueSpacing: 8 });
+        modernLegend(legendId, [{ label: 'Net spend', color: '#168a65' }], prepared.totalRows > prepared.shownRows ? 'Top values plus Other; the complete table is below.' : 'All values in this filtered view.');
+    }
+
+    function modernRenderTrend() {
+        var rows = report.breakdowns.monthly || [];
+        var canvasId = 'expenseTrendChart';
+        modernDestroyChart(canvasId);
+        var canvas = modernPrepareCanvas(canvasId);
+        if (!canvas) { return; }
+        document.getElementById('expenseTrendCaption').textContent = rows.length + (rows.length === 1 ? ' month' : ' months');
+        if (!rows.length) {
+            modernChartUnavailable(canvasId, 'No monthly values match the current filters.');
+            modernLegend('expenseTrendLegend', [], 'No data in this filtered period.');
+            return;
+        }
+        if (typeof window.Chart === 'undefined') {
+            modernChartUnavailable(canvasId, 'Chart library unavailable. Use the complete tables.');
+            return;
+        }
+        charts[canvasId] = new window.Chart(canvas.getContext('2d')).Line({
+            labels: rows.map(function (row) { return row.period; }),
+            datasets: [
+                { label: 'Net spend', fillColor: 'rgba(22,138,101,0.10)', strokeColor: '#168a65', pointColor: '#168a65', pointStrokeColor: '#fff', data: rows.map(function (row) { return Number(row.total || 0); }) },
+                { label: 'Gross outflow', fillColor: 'rgba(47,126,165,0.02)', strokeColor: '#2f7ea5', pointColor: '#2f7ea5', pointStrokeColor: '#fff', data: rows.map(function (row) { return Number(row.gross_outflow || 0); }) },
+                { label: 'Credits', fillColor: 'rgba(217,141,43,0.02)', strokeColor: '#d98d2b', pointColor: '#d98d2b', pointStrokeColor: '#fff', data: rows.map(function (row) { return Number(row.credits || 0); }) }
+            ]
+        }, { responsive: true, scaleLabel: '<%=value%>', scaleFontColor: '#718393', scaleFontSize: 10 });
+        modernLegend('expenseTrendLegend', [{ label: 'Net spend', color: '#168a65' }, { label: 'Gross outflow', color: '#2f7ea5' }, { label: 'Credits', color: '#d98d2b' }], 'Amounts in ' + report.metadata.default_currency + ' · monthly claim date');
+    }
+
+    function modernGroupRows(rows, key) {
+        var groups = {};
+        (rows || []).forEach(function (row) {
+            var label = String(row[key] || '').trim() || 'Unmapped';
+            if (!groups[label]) { groups[label] = { label: label, total: 0, transaction_count: 0, expense_code_count: 0 }; }
+            groups[label].total += Number(row.total || 0);
+            groups[label].transaction_count += Number(row.transaction_count || 0);
+            groups[label].expense_code_count += 1;
+        });
+        var output = Object.keys(groups).map(function (keyName) { return groups[keyName]; });
+        output.sort(function (left, right) { return right.total - left.total; });
+        output.forEach(function (row) { row.share_percent = report.summary.net_total ? (row.total / report.summary.net_total) * 100 : 0; });
+        return output;
+    }
+
+    function modernEmptyRow(colspan, message) {
+        return '<tr><td colspan="' + colspan + '" class="expense-empty">' + escapeHtml(message) + '</td></tr>';
+    }
+
+    function renderModernCharts() {
+        modernRenderTrend();
+        modernRenderDoughnut('expenseCategoryChart', 'expenseCategoryLegend', report.breakdowns.categories, 'category', 8);
+        modernRenderDoughnut('expenseStatusChart', 'expenseStatusLegend', report.breakdowns.statuses, 'workflow_status', 6);
+        modernRenderDoughnut('expenseOwnerChart', 'expenseOwnerLegend', report.breakdowns.users, 'owner', 8);
     }
 
     function renderReport() {
         populateOptions();
+        renderModernFilterState();
         renderSummary();
         renderInsights();
-        renderTrend();
-        renderBars('expenseCategoryBars', report.breakdowns.categories, 'category', 8, 'category');
+        renderModernCharts();
         renderCategoryTable();
         renderControls();
-        renderBars('expenseOwnerBars', report.breakdowns.owners, 'owner', 8);
-        renderBars('expenseCenterBars', report.breakdowns.cost_centers, 'cost_center', 8);
+        renderUserTables();
         renderExpenseCodes();
         renderTransactions();
         renderMethodology();
+        setActiveExpenseTab(activeTab);
+    }
+
+    function setActiveExpenseTab(tabName) {
+        activeTab = tabName;
+        var tabs = document.querySelectorAll('[data-expense-tab]');
+        for (var i = 0; i < tabs.length; i++) {
+            var selected = tabs[i].getAttribute('data-expense-tab') === tabName;
+            tabs[i].className = selected ? 'expense-tab is-active' : 'expense-tab';
+            tabs[i].setAttribute('aria-selected', selected ? 'true' : 'false');
+        }
+        var panes = document.querySelectorAll('.expense-tab-pane');
+        for (var j = 0; j < panes.length; j++) {
+            var paneName = panes[j].id.replace('expenseTab', '').toLowerCase();
+            var visible = paneName === tabName;
+            panes[j].className = visible ? 'expense-tab-pane is-active' : 'expense-tab-pane';
+            panes[j].hidden = !visible;
+        }
     }
 
     function exportUrl() {
@@ -320,26 +603,65 @@
         var params = [];
         params.push('startDate=' + encodeURIComponent(payload.dateRange.start));
         params.push('endDate=' + encodeURIComponent(payload.dateRange.end));
-        ['category', 'costCenter', 'status', 'currency', 'search'].forEach(function (key) {
+        ['category', 'costCenter', 'tabCode', 'userCode', 'expenseCode', 'glAccount', 'accountGroup', 'section', 'spendClass', 'status', 'receipt', 'entryKind', 'currency', 'search', 'minAmount', 'maxAmount'].forEach(function (key) {
             if (payload[key]) { params.push(encodeURIComponent(key) + '=' + encodeURIComponent(payload[key])); }
         });
-        params.push('page=1&pageSize=50&sort=date&direction=desc');
+        params.push('includeLocalPurchases=' + (payload.includeLocalPurchases ? '1' : '0'));
+        params.push('page=1&pageSize=50&sort=' + encodeURIComponent(payload.sort) + '&direction=' + encodeURIComponent(payload.direction));
         return window.SAHAMID_BI.expenseExportUrl + '?' + params.join('&');
+    }
+
+    function clearExpenseFilter(key) {
+        if (key === 'includeLocalPurchases') {
+            document.getElementById('expenseIncludeLocalPurchases').checked = true;
+        } else {
+            var ids = {
+                category: 'expenseCategory', costCenter: 'expenseCostCenter', tabCode: 'expenseTabCode',
+                userCode: 'expenseUser', expenseCode: 'expenseExpenseCode', glAccount: 'expenseGlAccount',
+                accountGroup: 'expenseAccountGroup', section: 'expenseSection', spendClass: 'expenseSpendClass',
+                status: 'expenseStatus', receipt: 'expenseReceipt', entryKind: 'expenseEntryKind',
+                currency: 'expenseCurrency', search: 'expenseSearch', minAmount: 'expenseMinAmount', maxAmount: 'expenseMaxAmount'
+            };
+            if (ids[key]) { document.getElementById(ids[key]).value = ''; }
+        }
+        currentPage = 1;
+        loadReport(false);
     }
 
     document.getElementById('expenseFilters').addEventListener('submit', function (event) {
         event.preventDefault();
         currentPage = 1;
-        loadReport(false);
+        loadReport(true);
     });
 
     document.getElementById('expenseReset').addEventListener('click', function () {
         document.getElementById('expenseStartDate').value = initialStartDate;
         document.getElementById('expenseEndDate').value = initialEndDate;
-        ['expenseCategory', 'expenseCostCenter', 'expenseStatus', 'expenseCurrency', 'expenseSearch'].forEach(function (id) { document.getElementById(id).value = ''; });
+        document.getElementById('expenseIncludeLocalPurchases').checked = true;
+        ['expenseCategory', 'expenseCostCenter', 'expenseTabCode', 'expenseUser', 'expenseExpenseCode', 'expenseGlAccount', 'expenseAccountGroup', 'expenseSection', 'expenseSpendClass', 'expenseStatus', 'expenseReceipt', 'expenseEntryKind', 'expenseCurrency', 'expenseSearch', 'expenseMinAmount', 'expenseMaxAmount'].forEach(function (id) { document.getElementById(id).value = ''; });
         currentPage = 1;
-        loadReport(false);
+        loadReport(true);
     });
+
+    document.getElementById('expenseAdvancedToggle').addEventListener('click', function () {
+        var drawer = document.getElementById('expenseAdvancedFilters');
+        var open = drawer.getAttribute('aria-hidden') !== 'false';
+        drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+        drawer.className = open ? 'expense-filter-advanced is-open' : 'expense-filter-advanced';
+        this.innerHTML = open ? '<i class="fa fa-chevron-up"></i> Hide filters' : '<i class="fa fa-sliders"></i> All filters';
+    });
+
+    document.getElementById('expenseActiveFilters').addEventListener('click', function (event) {
+        var button = event.target.closest ? event.target.closest('[data-clear-filter]') : null;
+        if (button) { clearExpenseFilter(button.getAttribute('data-clear-filter')); }
+    });
+
+    var expenseTabs = document.querySelectorAll('[data-expense-tab]');
+    for (var tabIndex = 0; tabIndex < expenseTabs.length; tabIndex++) {
+        expenseTabs[tabIndex].addEventListener('click', function () {
+            setActiveExpenseTab(this.getAttribute('data-expense-tab'));
+        });
+    }
 
     document.getElementById('expenseExport').addEventListener('click', function () {
         var payload = requestPayload();
@@ -354,10 +676,21 @@
         if (report && currentPage < report.transactions.total_pages) { currentPage++; loadReport(false); }
     });
 
-    document.getElementById('expenseCategoryBars').addEventListener('click', function (event) {
-        var row = event.target.closest ? event.target.closest('[data-filter-name="category"]') : null;
-        if (!row) { return; }
-        document.getElementById('expenseCategory').value = row.getAttribute('data-filter-value');
+    document.getElementById('expenseSort').addEventListener('change', function () {
+        currentPage = 1;
+        loadReport(false);
+    });
+
+    document.getElementById('expensePageSize').addEventListener('change', function () {
+        currentPage = 1;
+        loadReport(false);
+    });
+
+    document.getElementById('expenseSortDirection').addEventListener('click', function () {
+        var direction = this.getAttribute('data-direction') === 'asc' ? 'desc' : 'asc';
+        this.setAttribute('data-direction', direction);
+        this.innerHTML = direction === 'asc' ? '<i class="fa fa-sort-amount-asc"></i>' : '<i class="fa fa-sort-amount-desc"></i>';
+        this.setAttribute('title', direction === 'asc' ? 'Sort ascending' : 'Sort descending');
         currentPage = 1;
         loadReport(false);
     });
