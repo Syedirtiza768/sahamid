@@ -125,6 +125,10 @@ function SP_ReportSqlQuote($value) {
 	return "'" . DB_escape_string((string)$value) . "'";
 }
 
+function SP_ReportSqlDateExclusive($value) {
+	return 'DATE_ADD(' . SP_ReportSqlQuote($value) . ', INTERVAL 1 DAY)';
+}
+
 function SP_ReportHasColumn($db, $table, $column) {
 	static $cache = array();
 	$key = $table . '.' . $column;
@@ -171,7 +175,7 @@ function SP_ReportDueDateExpression($alias = 'st', $termsAlias = 'pt') {
 		ELSE " . $alias . ".duedate END)";
 }
 
-function SP_ReportPaymentJoin() {
+function SP_ReportPaymentJoin($transactionAlias = 'st') {
 	return " LEFT JOIN (
 			SELECT type, transno, MAX(banktransid) AS banktransid,
 				MAX(bankact) AS bankact, MAX(ref) AS bankref,
@@ -180,8 +184,12 @@ function SP_ReportPaymentJoin() {
 			FROM banktrans
 			WHERE type=22
 			GROUP BY type, transno
-		) AS bt ON bt.type=st.type AND bt.transno=st.transno
+		) AS bt ON bt.type=" . $transactionAlias . ".type AND bt.transno=" . $transactionAlias . ".transno
 		LEFT JOIN paymentmethods AS pm ON pm.paymentname=bt.banktranstype ";
+}
+
+function SP_ReportPaymentDateExpression($alias = 'st') {
+	return "COALESCE(NULLIF(bt.bankdate,'0000-00-00')," . $alias . ".trandate)";
 }
 
 function SP_ReportDimensionColumns($alias = 'st') {
@@ -216,12 +224,12 @@ function SP_ReportDimensionWhere($filters, $alias = 'st') {
 
 function SP_ReportInvoiceWhere($filters, $balanceExpr, $alias = 'st') {
 	$dueDateExpr = SP_ReportDueDateExpression($alias, 'pt');
-	$where = " AND " . $alias . ".trandate <= " . SP_ReportSqlQuote($filters['as_of']);
+	$where = " AND " . $alias . ".trandate < " . SP_ReportSqlDateExclusive($filters['as_of']);
 	if ($filters['invoice_from'] !== '') {
 		$where .= " AND " . $alias . ".trandate >= " . SP_ReportSqlQuote($filters['invoice_from']);
 	}
 	if ($filters['invoice_to'] !== '') {
-		$where .= " AND " . $alias . ".trandate <= " . SP_ReportSqlQuote($filters['invoice_to']);
+		$where .= " AND " . $alias . ".trandate < " . SP_ReportSqlDateExclusive($filters['invoice_to']);
 	}
 	if ($filters['due_from'] !== '') {
 		$where .= " AND " . $dueDateExpr . " >= " . SP_ReportSqlQuote($filters['due_from']);
@@ -268,10 +276,30 @@ function SP_ReportInvoiceWhere($filters, $balanceExpr, $alias = 'st') {
 	return $where;
 }
 
+function SP_ReportWhereBody($where) {
+	$where = trim((string)$where);
+	return (substr($where, 0, 3) === 'AND') ? trim(substr($where, 3)) : $where;
+}
+
+function SP_ReportInvoicePredicate($filters, $balanceExpr, $alias = 'st') {
+	return SP_ReportWhereBody(SP_ReportInvoiceWhere($filters, $balanceExpr, $alias));
+}
+
+function SP_ReportPaymentPredicate($filters, $alias = 'st') {
+	return SP_ReportWhereBody(SP_ReportPaymentWhere($filters, $alias));
+}
+
+function SP_ReportHasInvoiceScope($filters) {
+	return $filters['invoice_from'] !== '' || $filters['invoice_to'] !== '' ||
+		$filters['due_from'] !== '' || $filters['due_to'] !== '' ||
+		$filters['invoice_status'] !== 'all' || $filters['aging_bucket'] !== 'all';
+}
+
 function SP_ReportPaymentWhere($filters, $alias = 'st') {
-	$where = " AND " . $alias . ".trandate <= " . SP_ReportSqlQuote($filters['as_of']);
-	$where .= " AND " . $alias . ".trandate >= " . SP_ReportSqlQuote($filters['payment_from']);
-	$where .= " AND " . $alias . ".trandate <= " . SP_ReportSqlQuote($filters['payment_to']);
+	$paymentDateExpr = SP_ReportPaymentDateExpression($alias);
+	$where = " AND " . $paymentDateExpr . " < " . SP_ReportSqlDateExclusive($filters['as_of']);
+	$where .= " AND " . $paymentDateExpr . " >= " . SP_ReportSqlQuote($filters['payment_from']);
+	$where .= " AND " . $paymentDateExpr . " < " . SP_ReportSqlDateExclusive($filters['payment_to']);
 	if ($filters['payment_status'] === 'completed') {
 		$where .= ' AND bt.banktransid IS NOT NULL';
 	} elseif ($filters['payment_status'] === 'pending') {
@@ -354,7 +382,7 @@ function SP_ReportGetPayments($db, $filters, $limit = 50, $offset = 0) {
 	$select = "st.id, st.transno, st.type, COALESCE(ty.typename,'Creditors Payment') AS type_name,
 		st.supplierno, s.suppname, st.suppreference, st.trandate,
 		ABS(st.ovamount+st.ovgst) AS payment_amount, ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0) AS payment_amount_base, st.rate,
-		COALESCE(bt.bankdate,st.trandate) AS payment_date,
+		" . SP_ReportPaymentDateExpression('st') . " AS payment_date,
 		COALESCE(s.currcode,bt.bankcurrency,'') AS currency,
 		COALESCE(c.decimalplaces,2) AS decimalplaces,
 		COALESCE(pm.paymentname,bt.banktranstype,'Not recorded') AS payment_method,
@@ -373,7 +401,7 @@ function SP_ReportGetPayments($db, $filters, $limit = 50, $offset = 0) {
 		SP_ReportSupplierWhere($filters, 's') .
 		SP_ReportDimensionWhere($filters, 'st') .
 		SP_ReportPaymentWhere($filters, 'st') .
-		' ORDER BY COALESCE(bt.bankdate,st.trandate) DESC, st.transno DESC' .
+		' ORDER BY ' . SP_ReportPaymentDateExpression('st') . ' DESC, st.transno DESC' .
 		' LIMIT ' . (int)$offset . ',' . (int)$limit;
 	return $sql;
 }
@@ -425,25 +453,25 @@ function SP_ReportGetAging($db, $filters) {
 function SP_ReportGetPaymentTiming($db, $filters) {
 	$reversal = SP_ReportReversalPredicate($db, 'p');
 	$invoiceReversal = SP_ReportReversalPredicate($db, 'i');
+	$paymentDateExpr = SP_ReportPaymentDateExpression('p');
 	$sql = "SELECT i.supplierno,
 			SUM(a.amt/NULLIF(i.rate,0)) AS allocated_amount,
-			SUM((a.amt/NULLIF(i.rate,0)) * DATEDIFF(p.trandate,i.trandate)) / NULLIF(SUM(a.amt/NULLIF(i.rate,0)),0) AS average_days,
-			SUM(CASE WHEN p.trandate <= (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) / NULLIF(SUM(a.amt/NULLIF(i.rate,0)),0) * 100 AS on_time_rate,
-			SUM(CASE WHEN p.trandate < (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS early_amount,
-			SUM(CASE WHEN p.trandate = (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS on_time_amount,
-		SUM(CASE WHEN p.trandate > (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS late_amount,
+			SUM((a.amt/NULLIF(i.rate,0)) * DATEDIFF(" . $paymentDateExpr . ",i.trandate)) / NULLIF(SUM(a.amt/NULLIF(i.rate,0)),0) AS average_days,
+			SUM(CASE WHEN " . $paymentDateExpr . " <= (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) / NULLIF(SUM(a.amt/NULLIF(i.rate,0)),0) * 100 AS on_time_rate,
+			SUM(CASE WHEN " . $paymentDateExpr . " < (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS early_amount,
+			SUM(CASE WHEN " . $paymentDateExpr . " = (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS on_time_amount,
+		SUM(CASE WHEN " . $paymentDateExpr . " > (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS late_amount,
 		COUNT(DISTINCT p.id) AS linked_payment_count
 		FROM suppallocs AS a
 		INNER JOIN supptrans AS p ON p.id=a.transid_allocfrom AND p.type=22
 		INNER JOIN supptrans AS i ON i.id=a.transid_allocto AND i.type IN (20,21,23,601)
 		INNER JOIN suppliers AS s ON s.supplierid=i.supplierno
 		LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
+		" . SP_ReportPaymentJoin('p') . "
 		WHERE a.datealloc <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal . $invoiceReversal .
-		" AND p.trandate >= " . SP_ReportSqlQuote($filters['payment_from']) .
-		" AND p.trandate <= " . SP_ReportSqlQuote($filters['payment_to']) .
 		SP_ReportSupplierWhere($filters, 's') .
-		SP_ReportDimensionWhere($filters, 'i') .
-		($filters['payment_method'] !== 'all' ? ' AND EXISTS (SELECT 1 FROM banktrans AS bt_filter JOIN paymentmethods AS pm_filter ON pm_filter.paymentname=bt_filter.banktranstype WHERE bt_filter.type=22 AND bt_filter.transno=p.transno AND pm_filter.paymentid=' . (int)$filters['payment_method'] . ')' : '') .
+		SP_ReportDimensionWhere($filters, 'p') .
+		SP_ReportPaymentWhere($filters, 'p') .
 		' GROUP BY i.supplierno';
 	return SP_ReportRunRows($db, $sql, _('Could not retrieve supplier payment timing'));
 }
@@ -524,47 +552,57 @@ function SP_ReportGetSummary($db, $filters) {
 		'late_paid' => $lateAmount,
 		'timing_allocated' => $timingTotal,
 		'linked_payment_count' => $linkedPaymentCount,
-		'upcoming_cash' => isset($summaryRow['due_30']) ? (float)$summaryRow['due_30'] - (float)$summaryRow['total_overdue'] : 0,
+		'upcoming_cash' => isset($summaryRow['due_30']) ? (float)$summaryRow['due_30'] : 0,
 	);
 }
 
-function SP_ReportGetSupplierSummary($db, $filters, $limit = 100, $offset = 0, $includeDimensions = true, $includeTiming = true) {
+function SP_ReportSupplierSummarySql($db, $filters, $limit = null, $offset = 0, $includeDimensions = true, $includeOrder = true) {
 	$balanceExpr = SP_ReportBalanceExpression($filters, 'st');
 	$dueDateExpr = SP_ReportDueDateExpression('st', 'pt');
 	$reversal = SP_ReportReversalPredicate($db, 'st');
-	$paymentFrom = SP_ReportSqlQuote($filters['payment_from']);
-	$paymentTo = SP_ReportSqlQuote($filters['payment_to']);
+	$invoicePredicate = SP_ReportInvoicePredicate($filters, $balanceExpr, 'st');
+	$paymentPredicate = SP_ReportPaymentPredicate($filters, 'st');
+	$invoiceMatch = "st.type IN (20,21,23,601) AND " . $invoicePredicate;
+	$paymentMatch = "st.type=22 AND " . $paymentPredicate;
 	$dimensionSelect = "'' AS project_refs";
 	$purchaseOrderSelect = $includeDimensions ? 'COALESCE(po.po_count,0) AS purchase_order_count' : '0 AS purchase_order_count';
 	$purchaseOrderJoin = $includeDimensions ? " LEFT JOIN (SELECT supplierno, COUNT(*) AS po_count FROM purchorders GROUP BY supplierno) AS po ON po.supplierno=s.supplierid" : '';
 	$purchaseOrderGroup = $includeDimensions ? ', po.po_count' : '';
+	$having = (SP_ReportHasInvoiceScope($filters) || $filters['project'] !== '') ?
+		" HAVING SUM(CASE WHEN " . $invoiceMatch . " THEN 1 ELSE 0 END) > 0" : '';
 	$sql = "SELECT s.supplierid, s.suppname, s.supptype, COALESCE(suppliertype.typename,'Uncategorised') AS supplier_category,
 		COALESCE(pt.terms,'') AS payment_terms, s.currcode AS currency, COALESCE(c.decimalplaces,2) AS decimalplaces,
 		COALESCE(s.email,'') AS contact_email, COALESCE(s.phn,'') AS contact_phone,
-		COALESCE(SUM(CASE WHEN st.type IN (20,601) THEN (st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_invoiced,
-		COALESCE(SUM(CASE WHEN st.type=22 AND st.trandate >= " . $paymentFrom . " AND st.trandate <= " . $paymentTo . " THEN ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_paid,
-		COALESCE(SUM(CASE WHEN st.type IN (20,21,23,601) THEN " . $balanceExpr . "/NULLIF(st.rate,0) ELSE 0 END),0) AS outstanding,
-		COALESCE(SUM(CASE WHEN st.type IN (20,21,23,601) AND " . $dueDateExpr . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN " . $balanceExpr . "/NULLIF(st.rate,0) ELSE 0 END),0) AS overdue,
-		MIN(CASE WHEN st.type IN (20,21,23,601) AND " . $balanceExpr . " > 0.009 AND " . $dueDateExpr . " >= " . SP_ReportSqlQuote($filters['as_of']) . " THEN " . $dueDateExpr . " ELSE NULL END) AS next_due,
-		MAX(CASE WHEN st.type=22 THEN st.trandate ELSE NULL END) AS last_payment,
-		SUM(CASE WHEN st.type IN (20,21,601) AND " . $balanceExpr . " > 0.009 THEN 1 ELSE 0 END) AS open_invoices,
-		SUM(CASE WHEN st.type IN (20,21,601) AND " . $balanceExpr . " > 0.009 AND " . $dueDateExpr . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN 1 ELSE 0 END) AS overdue_invoices,
-		SUM(CASE WHEN st.type IN (20,21,23,601) AND st.hold=1 AND " . $balanceExpr . " > 0.009 THEN 1 ELSE 0 END) AS open_holds,
+		COALESCE(SUM(CASE WHEN st.type IN (20,601) AND " . $invoicePredicate . " THEN (st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_invoiced,
+		COALESCE(SUM(CASE WHEN " . $paymentMatch . " THEN ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_paid,
+		COALESCE(SUM(CASE WHEN " . $invoiceMatch . " THEN " . $balanceExpr . "/NULLIF(st.rate,0) ELSE 0 END),0) AS outstanding,
+		COALESCE(SUM(CASE WHEN " . $invoiceMatch . " AND " . $dueDateExpr . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN " . $balanceExpr . "/NULLIF(st.rate,0) ELSE 0 END),0) AS overdue,
+		MIN(CASE WHEN " . $invoiceMatch . " AND " . $balanceExpr . " > 0.009 AND " . $dueDateExpr . " >= " . SP_ReportSqlQuote($filters['as_of']) . " THEN " . $dueDateExpr . " ELSE NULL END) AS next_due,
+		MAX(CASE WHEN " . $paymentMatch . " THEN " . SP_ReportPaymentDateExpression('st') . " ELSE NULL END) AS last_payment,
+		SUM(CASE WHEN st.type IN (20,21,601) AND " . $invoicePredicate . " AND " . $balanceExpr . " > 0.009 THEN 1 ELSE 0 END) AS open_invoices,
+		SUM(CASE WHEN st.type IN (20,21,601) AND " . $invoicePredicate . " AND " . $balanceExpr . " > 0.009 AND " . $dueDateExpr . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN 1 ELSE 0 END) AS overdue_invoices,
+		SUM(CASE WHEN " . $invoiceMatch . " AND st.hold=1 AND " . $balanceExpr . " > 0.009 THEN 1 ELSE 0 END) AS open_holds,
 		" . $dimensionSelect . ",
 		" . $purchaseOrderSelect . "
 		FROM suppliers AS s
 		LEFT JOIN suppliertype ON suppliertype.typeid=s.supptype
 		LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
 		LEFT JOIN currencies AS c ON c.currabrev=s.currcode
-		LEFT JOIN supptrans AS st ON st.supplierno=s.supplierid AND st.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal .
+		LEFT JOIN supptrans AS st ON st.supplierno=s.supplierid AND st.trandate < " . SP_ReportSqlDateExclusive($filters['as_of']) . $reversal .
 		SP_ReportAllocationJoin($filters) .
+		SP_ReportPaymentJoin() .
 		$purchaseOrderJoin . "
 		WHERE s.suppliersince <= " . SP_ReportSqlQuote($filters['as_of']) .
 		SP_ReportSupplierWhere($filters, 's') .
 		SP_ReportDimensionWhere($filters, 'st') .
-		" GROUP BY s.supplierid, s.suppname, s.supptype, suppliertype.typename, pt.terms, s.currcode, c.decimalplaces, s.email, s.phn" . $purchaseOrderGroup . "
-		ORDER BY " . SP_ReportSupplierSort($filters) .
-		" LIMIT " . (int)$offset . ',' . (int)$limit;
+		" GROUP BY s.supplierid, s.suppname, s.supptype, suppliertype.typename, pt.terms, s.currcode, c.decimalplaces, s.email, s.phn" . $purchaseOrderGroup . $having;
+	if ($includeOrder) $sql .= " ORDER BY " . SP_ReportSupplierSort($filters);
+	if ($limit !== null) $sql .= " LIMIT " . (int)$offset . ',' . (int)$limit;
+	return $sql;
+}
+
+function SP_ReportGetSupplierSummary($db, $filters, $limit = 100, $offset = 0, $includeDimensions = true, $includeTiming = true) {
+	$sql = SP_ReportSupplierSummarySql($db, $filters, $limit, $offset, $includeDimensions, true);
 	$rows = SP_ReportRunRows($db, $sql, _('Could not retrieve supplier summary'));
 	if ($includeDimensions && count($rows) > 0) {
 		$supplierIds = array();
@@ -593,17 +631,42 @@ function SP_ReportGetSupplierSummary($db, $filters, $limit = 100, $offset = 0, $
 	return $rows;
 }
 
+function SP_ReportCountSupplierSummary($db, $filters) {
+	if (!SP_ReportHasInvoiceScope($filters) && $filters['project'] === '') {
+		$sql = "SELECT COUNT(*) AS row_count FROM suppliers AS s WHERE s.suppliersince <= " . SP_ReportSqlQuote($filters['as_of']) . SP_ReportSupplierWhere($filters, 's');
+	} else {
+		$balanceExpr = SP_ReportBalanceExpression($filters, 'st');
+		$reversal = SP_ReportReversalPredicate($db, 'st');
+		$sql = "SELECT COUNT(DISTINCT st.supplierno) AS row_count
+			FROM supptrans AS st
+			INNER JOIN suppliers AS s ON s.supplierid=st.supplierno
+			LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
+			" . SP_ReportAllocationJoin($filters) .
+			" WHERE st.type IN (20,21,23,601)" . $reversal .
+			SP_ReportSupplierWhere($filters, 's') .
+			SP_ReportDimensionWhere($filters, 'st') .
+			SP_ReportInvoiceWhere($filters, $balanceExpr, 'st');
+	}
+	$row = SP_ReportRunOne($db, $sql, _('Could not count supplier summary'));
+	return isset($row['row_count']) ? (int)$row['row_count'] : 0;
+}
+
 function SP_ReportGetSupplierDimensions($db, $filters, $supplierIds) {
 	if (count($supplierIds) === 0) return array();
 	$quotedIds = array();
 	foreach ($supplierIds as $supplierId) $quotedIds[] = SP_ReportSqlQuote($supplierId);
 	$reversal = SP_ReportReversalPredicate($db, 'st_dim');
+	$balanceExpr = SP_ReportBalanceExpression($filters, 'st_dim');
+	$invoicePredicate = SP_ReportInvoicePredicate($filters, $balanceExpr, 'st_dim');
 	$sql = "SELECT st_dim.supplierno,
 		GROUP_CONCAT(DISTINCT NULLIF(gt_dim.jobref,'')) AS project_refs
 		FROM supptrans AS st_dim
 		INNER JOIN gltrans AS gt_dim ON gt_dim.type=st_dim.type AND gt_dim.typeno=st_dim.transno
 		WHERE st_dim.supplierno IN (" . implode(',', $quotedIds) . ")
-		AND st_dim.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal .
+		AND st_dim.type IN (20,21,23,601)
+		AND st_dim.trandate < " . SP_ReportSqlDateExclusive($filters['as_of']) . $reversal .
+		SP_ReportDimensionWhere($filters, 'st_dim') .
+		" AND " . $invoicePredicate .
 		" GROUP BY st_dim.supplierno";
 	$rows = SP_ReportRunRows($db, $sql, _('Could not retrieve supplier project references'));
 	$output = array();
@@ -638,7 +701,7 @@ function SP_ReportGetPaymentAnalytics($db, $filters) {
 		" WHERE st.type=22" . $reversal . SP_ReportSupplierWhere($filters, 's') . SP_ReportDimensionWhere($filters, 'st') . SP_ReportPaymentWhere($filters, 'st');
 	$rows = SP_ReportRunRows($db, "SELECT COALESCE(pm.paymentname,bt.banktranstype,'Not recorded') AS method_label,
 			COALESCE(s.currcode,bt.bankcurrency,'') AS currency_label,
-			DATE_FORMAT(COALESCE(bt.bankdate,st.trandate),'%Y-%m') AS trend_label,
+			DATE_FORMAT(" . SP_ReportPaymentDateExpression('st') . ",'%Y-%m') AS trend_label,
 			COALESCE(SUM(ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0)),0) AS amount, COUNT(*) AS count " . $base .
 			' GROUP BY method_label,currency_label,trend_label', _('Could not retrieve payment analytics'));
 	$byMethod = array();
@@ -676,26 +739,32 @@ function SP_ReportGetSupplierDetail($db, $filters, $supplierId) {
 	$balanceExpr = SP_ReportBalanceExpression($detailFilters, 'st');
 	$detailDueDateExpr = SP_ReportDueDateExpression('st', 'pt');
 	$reversal = SP_ReportReversalPredicate($db, 'st');
+	$invoicePredicate = SP_ReportInvoicePredicate($detailFilters, $balanceExpr, 'st');
+	$paymentPredicate = SP_ReportPaymentPredicate($detailFilters, 'st');
+	$invoiceMatch = "st.type IN (20,21,23,601) AND " . $invoicePredicate;
+	$paymentMatch = "st.type=22 AND " . $paymentPredicate;
 	$summary = SP_ReportRunOne($db, "SELECT s.supplierid, s.suppname, s.supptype, COALESCE(suppliertype.typename,'Uncategorised') AS supplier_category,
 			COALESCE(pt.terms,'') AS payment_terms, s.currcode AS currency, COALESCE(c.decimalplaces,2) AS decimalplaces,
 			COALESCE(s.email,'') AS contact_email, COALESCE(s.phn,'') AS contact_phone,
 			COALESCE(s.address1,'') AS address1, COALESCE(s.address2,'') AS address2, COALESCE(s.address3,'') AS address3,
-			COALESCE(SUM(CASE WHEN st.type IN (20,21,23,601) THEN " . $balanceExpr . "/NULLIF(st.rate,0) ELSE 0 END),0) AS outstanding,
-			COALESCE(SUM(CASE WHEN st.type IN (20,601) THEN (st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_invoiced,
-			COALESCE(SUM(CASE WHEN st.type=22 THEN ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_paid
+			COALESCE(SUM(CASE WHEN " . $invoiceMatch . " THEN " . $balanceExpr . "/NULLIF(st.rate,0) ELSE 0 END),0) AS outstanding,
+			COALESCE(SUM(CASE WHEN st.type IN (20,601) AND " . $invoicePredicate . " THEN (st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_invoiced,
+			COALESCE(SUM(CASE WHEN " . $paymentMatch . " THEN ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0) ELSE 0 END),0) AS total_paid
 		FROM suppliers AS s
 		LEFT JOIN suppliertype ON suppliertype.typeid=s.supptype
 		LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
 		LEFT JOIN currencies AS c ON c.currabrev=s.currcode
-		LEFT JOIN supptrans AS st ON st.supplierno=s.supplierid AND st.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal . SP_ReportAllocationJoin($detailFilters) .
-		" WHERE s.supplierid='" . $supplierId . "' GROUP BY s.supplierid,s.suppname,s.supptype,suppliertype.typename,pt.terms,s.currcode,c.decimalplaces,s.email,s.phn,s.address1,s.address2,s.address3", _('Could not retrieve supplier profile'));
+		LEFT JOIN supptrans AS st ON st.supplierno=s.supplierid AND st.trandate < " . SP_ReportSqlDateExclusive($filters['as_of']) . $reversal . SP_ReportAllocationJoin($detailFilters) .
+		SP_ReportPaymentJoin() .
+		" WHERE s.supplierid='" . $supplierId . "'" . SP_ReportDimensionWhere($detailFilters, 'st') . " GROUP BY s.supplierid,s.suppname,s.supptype,suppliertype.typename,pt.terms,s.currcode,c.decimalplaces,s.email,s.phn,s.address1,s.address2,s.address3", _('Could not retrieve supplier profile'));
+	$activityPredicate = "((st.type IN (20,21,23,601) AND " . $invoicePredicate . ") OR (st.type=22 AND " . $paymentPredicate . "))";
 	$transactions = SP_ReportRunRows($db, "SELECT st.id, st.transno, st.type, COALESCE(ty.typename,'AP transaction') AS type_name,
 			st.suppreference, st.trandate, st.duedate, " . $detailDueDateExpr . " AS effective_duedate, (st.ovamount+st.ovgst) AS original_amount,
 			" . $balanceExpr . " AS outstanding_amount, s.currcode AS currency, st.hold,
 			CASE WHEN st.type=22 THEN 'Payment' WHEN st.hold=1 THEN 'On hold' WHEN " . $balanceExpr . " <= 0.009 THEN 'Paid' WHEN " . $detailDueDateExpr . " < " . SP_ReportSqlQuote($filters['as_of']) . " THEN 'Overdue' ELSE 'Open' END AS status
 			FROM supptrans AS st INNER JOIN suppliers AS s ON s.supplierid=st.supplierno LEFT JOIN systypes AS ty ON ty.typeid=st.type LEFT JOIN paymentterms AS pt ON pt.termsindicator=s.paymentterms
-			" . SP_ReportAllocationJoin($detailFilters) .
-			" WHERE st.supplierno='" . $supplierId . "' AND st.trandate <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal . ' ORDER BY st.trandate DESC, st.id DESC LIMIT 20', _('Could not retrieve supplier activity'));
+			" . SP_ReportAllocationJoin($detailFilters) . SP_ReportPaymentJoin() .
+			" WHERE st.supplierno='" . $supplierId . "' AND st.trandate < " . SP_ReportSqlDateExclusive($filters['as_of']) . $reversal . " AND " . $activityPredicate . SP_ReportDimensionWhere($detailFilters, 'st') . ' ORDER BY st.trandate DESC, st.id DESC LIMIT 20', _('Could not retrieve supplier activity'));
 	$purchaseOrders = SP_ReportRunRows($db, "SELECT orderno, orddate, status, initiator, deliverydate FROM purchorders WHERE supplierno='" . $supplierId . "' ORDER BY orddate DESC LIMIT 10", _('Could not retrieve supplier purchase orders'));
 	$timing = SP_ReportGetPaymentTiming($db, $detailFilters);
 	$timingRow = array();
