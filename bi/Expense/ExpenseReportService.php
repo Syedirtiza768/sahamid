@@ -49,6 +49,12 @@ class ExpenseReportService
 		$currentCodes = $this->fetchExpenseCodes($currentWhere);
 		$previousCodes = $this->fetchExpenseCodes($comparisonWhere);
 		$codes = $this->decorateExpenseCodes($currentCodes, $previousCodes, $definitions, $summary['net_total']);
+		$classTotals = $this->summarizeSpendClasses($codes);
+		$summary['pnl_total'] = $classTotals['P&L spend']['total'];
+		$summary['balance_sheet_total'] = $classTotals['Balance sheet / non-P&L']['total'];
+		$summary['unclassified_total'] = $classTotals['Unclassified']['total'];
+		$summary['unclassified_count'] = $classTotals['Unclassified']['transaction_count'];
+		$summary['unclassified_code_count'] = $classTotals['Unclassified']['expense_code_count'];
 		$categories = $this->rollUpCategories($codes, $summary['net_total']);
 		$monthly = $this->fetchMonthly($currentWhere, $request->getDateRange());
 		$statuses = $this->fetchStatuses($currentWhere, $summary['net_total']);
@@ -56,25 +62,27 @@ class ExpenseReportService
 		$owners = $this->fetchOwners($currentWhere, $summary['net_total']);
 		$users = $this->fetchUsers($currentWhere, $comparisonWhere, $summary['net_total']);
 		$userExpenses = $this->fetchUserExpenses($currentWhere, $comparisonWhere, $summary['net_total'], $definitions);
+		$users = $this->reconcileUserClassTotals($users, $userExpenses);
 		$currencies = $this->fetchCurrencies($currentWhere, $summary['net_total']);
 		$transactions = $this->fetchTransactions($currentWhere, $request, $includeAllTransactions);
 		$options = $this->fetchFilterOptions($definitions);
 		$insights = $this->buildInsights($summary, $categories, $owners);
+		$breakdowns = array(
+			'categories' => $categories,
+			'monthly' => $monthly,
+			'statuses' => $statuses,
+			'cost_centers' => $costCenters,
+			'owners' => $owners,
+			'users' => $users,
+			'user_expenses' => $userExpenses,
+			'currencies' => $currencies,
+			'expense_codes' => $codes,
+		);
 
 		return array(
 			'summary' => $summary,
 			'insights' => $insights,
-			'breakdowns' => array(
-				'categories' => $categories,
-				'monthly' => $monthly,
-				'statuses' => $statuses,
-				'cost_centers' => $costCenters,
-				'owners' => $owners,
-				'users' => $users,
-				'user_expenses' => $userExpenses,
-				'currencies' => $currencies,
-				'expense_codes' => $codes,
-			),
+			'breakdowns' => $breakdowns,
 			'transactions' => array(
 				'rows' => $transactions,
 				'page' => $includeAllTransactions ? 1 : $request->getPage(),
@@ -82,6 +90,7 @@ class ExpenseReportService
 				'total_rows' => $summary['transaction_count'],
 				'total_pages' => $includeAllTransactions ? 1 : max(1, (int) ceil($summary['transaction_count'] / $request->getPageSize())),
 			),
+			'validation' => $this->buildValidation($summary, $breakdowns, $transactions, $request, $includeAllTransactions),
 			'options' => $options,
 			'metadata' => array(
 				'generated_at_utc' => gmdate('Y-m-d H:i:s'),
@@ -100,6 +109,175 @@ class ExpenseReportService
 				'filters' => $request->toArray(),
 			),
 		);
+	}
+
+	private function buildValidation(array $summary, array $breakdowns, array $transactions, ExpenseReportRequest $request, $includeAllTransactions)
+	{
+		$checks = array();
+		$addCheck = function ($key, $ok, $detail) use (&$checks) {
+			$checks[] = array('key' => $key, 'ok' => (bool) $ok, 'detail' => $detail);
+		};
+		$netTotal = (float) $summary['net_total'];
+		$breakdownTotals = array(
+			'categories' => $this->sumBreakdown($breakdowns['categories']),
+			'expense_codes' => $this->sumBreakdown($breakdowns['expense_codes']),
+			'statuses' => $this->sumBreakdown($breakdowns['statuses']),
+			'cost_centers' => $this->sumBreakdown($breakdowns['cost_centers']),
+			'users' => $this->sumBreakdown($breakdowns['users']),
+			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses']),
+			'currencies' => $this->sumBreakdown($breakdowns['currencies']),
+		);
+		foreach ($breakdownTotals as $name => $total) {
+			$addCheck(
+				$name . '_net_total',
+				$this->amountsMatch($netTotal, $total),
+				ucwords(str_replace('_', ' ', $name)) . ' tie to summary net spend.'
+			);
+		}
+		$breakdownCounts = array(
+			'categories' => $this->sumBreakdown($breakdowns['categories'], 'transaction_count'),
+			'expense_codes' => $this->sumBreakdown($breakdowns['expense_codes'], 'transaction_count'),
+			'statuses' => $this->sumBreakdown($breakdowns['statuses'], 'transaction_count'),
+			'cost_centers' => $this->sumBreakdown($breakdowns['cost_centers'], 'transaction_count'),
+			'users' => $this->sumBreakdown($breakdowns['users'], 'transaction_count'),
+			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses'], 'transaction_count'),
+			'currencies' => $this->sumBreakdown($breakdowns['currencies'], 'transaction_count'),
+		);
+		foreach ($breakdownCounts as $name => $count) {
+			$addCheck(
+				$name . '_transaction_count',
+				(int) $count === (int) $summary['transaction_count'],
+				ucwords(str_replace('_', ' ', $name)) . ' transaction counts tie to summary.'
+			);
+		}
+		$addCheck(
+			'amount_components',
+			$this->amountsMatch($netTotal, (float) $summary['gross_outflow'] - (float) $summary['credits']),
+			'Net spend equals gross outflow less credits.'
+		);
+		$addCheck(
+			'action_required',
+			$this->amountsMatch((float) $summary['action_required_total'], (float) $summary['pending_authorization_total'] + (float) $summary['authorized_unposted_total']),
+			'Needs-action spend equals pending plus authorized-unposted spend.'
+		);
+		$addCheck(
+			'classification_total',
+			$this->amountsMatch($netTotal, (float) $summary['pnl_total'] + (float) $summary['balance_sheet_total'] + (float) $summary['unclassified_total']),
+			'P&L, balance-sheet, and unclassified spend reconcile to net spend.'
+		);
+		$addCheck(
+			'users_pnl_total',
+			$this->amountsMatch((float) $summary['pnl_total'], $this->sumBreakdown($breakdowns['users'], 'pnl_total')),
+			'User P&L totals reconcile to the executive P&L total.'
+		);
+		$addCheck(
+			'users_balance_sheet_total',
+			$this->amountsMatch((float) $summary['balance_sheet_total'], $this->sumBreakdown($breakdowns['users'], 'balance_sheet_total')),
+			'User balance-sheet totals reconcile to the executive balance-sheet total.'
+		);
+		$addCheck(
+			'users_unclassified_total',
+			$this->amountsMatch((float) $summary['unclassified_total'], $this->sumBreakdown($breakdowns['users'], 'unclassified_total')),
+			'User unclassified totals reconcile to the executive unclassified total.'
+		);
+		$addCheck(
+			'receipt_bounds',
+			(int) $summary['missing_receipt_count'] >= 0
+				&& (int) $summary['missing_receipt_count'] <= (int) $summary['transaction_count']
+				&& (float) $summary['receipt_coverage_percent'] >= 0
+				&& (float) $summary['receipt_coverage_percent'] <= 100,
+			'Receipt counts and coverage remain within valid bounds.'
+		);
+		$pageSize = $includeAllTransactions ? count($transactions) : $request->getPageSize();
+		$addCheck(
+			'transaction_page',
+			count($transactions) <= $pageSize && (int) $summary['transaction_count'] >= 0,
+			'Transaction rows respect the requested page size.'
+		);
+		$failed = array();
+		foreach ($checks as $check) {
+			if (!$check['ok']) { $failed[] = $check['key']; }
+		}
+		$warnings = array();
+		if ((int) $summary['missing_rate_count'] > 0) {
+			$warnings[] = (int) $summary['missing_rate_count'] . ' transaction(s) used the neutral fallback rate because no current currency rate was available.';
+		}
+		if ((int) $summary['unclassified_count'] > 0) {
+			$warnings[] = (int) $summary['unclassified_count'] . ' transaction(s) remain unclassified and should be reviewed in Accounting.';
+		}
+		return array(
+			'status' => $failed ? 'attention' : 'passed',
+			'passed' => count($checks) - count($failed),
+			'failed' => count($failed),
+			'checks' => $checks,
+			'warnings' => $warnings,
+		);
+	}
+
+	private function summarizeSpendClasses(array $codes)
+	{
+		$totals = array(
+			'P&L spend' => array('total' => 0.0, 'transaction_count' => 0, 'expense_code_count' => 0),
+			'Balance sheet / non-P&L' => array('total' => 0.0, 'transaction_count' => 0, 'expense_code_count' => 0),
+			'Unclassified' => array('total' => 0.0, 'transaction_count' => 0, 'expense_code_count' => 0),
+		);
+		foreach ($codes as $code) {
+			$class = isset($totals[$code['spend_class']]) ? $code['spend_class'] : 'Unclassified';
+			$totals[$class]['total'] += (float) $code['total'];
+			$totals[$class]['transaction_count'] += (int) $code['transaction_count'];
+			$totals[$class]['expense_code_count']++;
+		}
+		return $totals;
+	}
+
+	private function reconcileUserClassTotals(array $users, array $userExpenses)
+	{
+		$classes = array('P&L spend', 'Balance sheet / non-P&L', 'Unclassified');
+		$totals = array();
+		foreach ($userExpenses as $expense) {
+			$key = $this->userKey($expense);
+			if (!isset($totals[$key])) {
+				$totals[$key] = array();
+				foreach ($classes as $class) {
+					$totals[$key][$class] = array('total' => 0.0, 'transaction_count' => 0, 'expense_code_count' => 0);
+				}
+			}
+			$class = in_array($expense['spend_class'], $classes, true) ? $expense['spend_class'] : 'Unclassified';
+			$totals[$key][$class]['total'] += (float) $expense['total'];
+			$totals[$key][$class]['transaction_count'] += (int) $expense['transaction_count'];
+			$totals[$key][$class]['expense_code_count']++;
+		}
+		foreach ($users as &$user) {
+			$key = $this->userKey($user);
+			$userTotals = isset($totals[$key]) ? $totals[$key] : array();
+			foreach ($classes as $class) {
+				if (!isset($userTotals[$class])) {
+					$userTotals[$class] = array('total' => 0.0, 'transaction_count' => 0, 'expense_code_count' => 0);
+				}
+			}
+			$user['pnl_total'] = $userTotals['P&L spend']['total'];
+			$user['balance_sheet_total'] = $userTotals['Balance sheet / non-P&L']['total'];
+			$user['unclassified_total'] = $userTotals['Unclassified']['total'];
+			$user['unclassified_count'] = $userTotals['Unclassified']['transaction_count'];
+			$user['unclassified_code_count'] = $userTotals['Unclassified']['expense_code_count'];
+		}
+		unset($user);
+		return $users;
+	}
+
+	private function sumBreakdown(array $rows, $field = 'total')
+	{
+		$total = 0.0;
+		foreach ($rows as $row) {
+			$total += isset($row[$field]) ? (float) $row[$field] : 0.0;
+		}
+		return $total;
+	}
+
+	private function amountsMatch($left, $right)
+	{
+		$scale = max(1.0, abs((float) $left), abs((float) $right));
+		return abs((float) $left - (float) $right) <= max(0.01, $scale * 0.000001);
 	}
 
 	private function loadDefaultCurrency()

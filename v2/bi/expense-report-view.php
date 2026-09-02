@@ -134,7 +134,10 @@
                 <strong id="expenseResultSummary">Current filtered view</strong>
                 <div id="expenseActiveFilters" class="expense-active-filters"></div>
             </div>
-            <span id="expenseResultScope" class="expense-panel-meta"></span>
+            <div class="expense-result-meta">
+                <span id="expenseValidationStatus" class="expense-validation-status">Validating totals…</span>
+                <span id="expenseResultScope" class="expense-panel-meta"></span>
+            </div>
         </div>
 
         <div class="expense-tabs" role="tablist" aria-label="Expense report sections">
@@ -153,6 +156,7 @@
                 <article class="expense-kpi"><span class="expense-kpi-label">Transactions</span><strong id="expenseTransactions">—</strong><small id="expenseAverage">— average</small></article>
                 <article class="expense-kpi"><span class="expense-kpi-label">Receipt coverage</span><strong id="expenseReceiptCoverage">—</strong><small id="expenseReceiptDetail">—</small></article>
             </div>
+            <div id="expenseClassificationSummary" class="expense-classification-summary" aria-live="polite"></div>
             <div id="expenseInsights" class="expense-insight-grid"></div>
 
             <div class="expense-chart-grid expense-chart-grid-four">
@@ -210,7 +214,7 @@
             </div>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete user-wise consolidated view</span><h3>Spend by user</h3></div><span id="expenseUserCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>User</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Codes</th><th class="text-right">P&amp;L spend</th><th class="text-right">Capital / advances</th><th class="text-right">Receipts</th><th class="text-right">Change</th></tr></thead><tbody id="expenseUserTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>User</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Codes</th><th class="text-right">P&amp;L spend</th><th class="text-right">Capital / advances</th><th class="text-right">Unclassified</th><th class="text-right">Receipts</th><th class="text-right">Change</th></tr></thead><tbody id="expenseUserTable"></tbody></table></div>
             </article>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete user-wise granular view</span><h3>User, expense code, and GL detail</h3></div><span id="expenseUserExpenseCaption" class="expense-panel-meta"></span></header>
@@ -244,6 +248,10 @@
                 <header><div><span class="expense-panel-kicker">Complete ledger grouping</span><h3>GL group totals</h3></div><span id="expenseGlCaption" class="expense-panel-meta"></span></header>
                 <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>GL group</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th></tr></thead><tbody id="expenseGlTable"></tbody></table></div>
             </article>
+            <article class="expense-panel expense-detail-panel">
+                <header><div><span class="expense-panel-kicker">Currency reconciliation</span><h3>Original and functional currency</h3></div><span id="expenseCurrencyCaption" class="expense-panel-meta"></span></header>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Currency</th><th class="text-right">Current rate</th><th class="text-right">Original amount</th><th class="text-right">Functional net spend</th><th class="text-right">Transactions</th></tr></thead><tbody id="expenseCurrencyTable"></tbody></table></div>
+            </article>
         </section>
 
         <section id="expenseTabTransactions" class="expense-tab-pane" role="tabpanel" hidden>
@@ -262,6 +270,5 @@
             </article>
         </section>
 
-        <div class="expense-methodology"><i class="fa fa-info-circle"></i><div><strong>Report definitions</strong><p id="expenseMethodology"></p></div></div>
     </div>
 </div>

@@ -26,6 +26,8 @@ class ExpenseWorkbookExporter
 		$this->buildUsers($workbook->createSheet(), $report);
 		$this->buildUserExpenses($workbook->createSheet(), $report);
 		$this->buildOwners($workbook->createSheet(), $report);
+		$this->buildCurrencies($workbook->createSheet(), $report);
+		$this->buildValidation($workbook->createSheet(), $report);
 		$this->buildTransactions($workbook->createSheet(), $report);
 		$workbook->setActiveSheetIndex(0);
 		return $workbook;
@@ -37,7 +39,7 @@ class ExpenseWorkbookExporter
 		$metadata = $report['metadata'];
 		$filters = $metadata['filters'];
 		$sheet->setTitle('Executive Summary');
-		$sheet->mergeCells('A1:F1');
+		$sheet->mergeCells('A1:G1');
 		$sheet->setCellValue('A1', 'Comprehensive Expense Report');
 		$sheet->setCellValue('A3', 'Company');
 		$this->setSafeValue($sheet, 'B3', $metadata['company_name']);
@@ -50,15 +52,15 @@ class ExpenseWorkbookExporter
 		$sheet->setCellValue('D5', 'Local purchases');
 		$this->setSafeValue($sheet, 'E5', $metadata['include_local_purchases'] ? 'Included' : 'Excluded');
 
-		$headers = array('Net spend', 'P&L spend', 'Capital / advances', 'Action required', 'Transactions', 'Receipt coverage');
-		$values = array($summary['net_total'], $summary['pnl_total'], $summary['balance_sheet_total'], $summary['action_required_total'], $summary['transaction_count'], $summary['receipt_coverage_percent'] / 100);
+		$headers = array('Net spend', 'P&L spend', 'Capital / advances', 'Unclassified', 'Action required', 'Transactions', 'Receipt coverage');
+		$values = array($summary['net_total'], $summary['pnl_total'], $summary['balance_sheet_total'], $summary['unclassified_total'], $summary['action_required_total'], $summary['transaction_count'], $summary['receipt_coverage_percent'] / 100);
 		foreach ($headers as $index => $header) {
 			$column = chr(65 + $index);
 			$sheet->setCellValue($column . '6', $header);
 			$sheet->setCellValue($column . '7', $values[$index]);
 		}
-		$sheet->getStyle('A7:D7')->getNumberFormat()->setFormatCode($this->amountFormat());
-		$sheet->getStyle('F7')->getNumberFormat()->setFormatCode('0.0%');
+		$sheet->getStyle('A7:E7')->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('G7')->getNumberFormat()->setFormatCode('0.0%');
 
 		$sheet->setCellValue('A9', 'Decision-ready insights');
 		$row = 10;
@@ -87,17 +89,22 @@ class ExpenseWorkbookExporter
 		$sheet->mergeCells('D' . ($row + 1) . ':F' . ($row + 3));
 		$this->setSafeValue($sheet, 'D' . ($row + 1), $metadata['amount_definition'] . "\n" . $metadata['currency_method']);
 		$sheet->getStyle('D' . ($row + 1))->getAlignment()->setWrapText(true)->setVertical('top');
+		$validation = isset($report['validation']) ? $report['validation'] : array();
+		$validationRow = $qualityRow + count($quality) + 1;
+		$sheet->setCellValue('A' . $validationRow, 'Report validation');
+		$this->setSafeValue($sheet, 'B' . $validationRow, (isset($validation['status']) ? strtoupper($validation['status']) : 'NOT AVAILABLE') . ' · ' . (isset($validation['passed']) ? $validation['passed'] : 0) . ' checks passed');
 
-		$this->styleTitle($sheet, 'A1:F1');
-		$this->styleHeader($sheet, 'A6:F6');
-		$this->styleSection($sheet, 'A9:F9');
-		$this->styleSection($sheet, 'A' . $row . ':F' . $row);
+		$this->styleTitle($sheet, 'A1:G1');
+		$this->styleHeader($sheet, 'A6:G6');
+		$this->styleSection($sheet, 'A9:G9');
+		$this->styleSection($sheet, 'A' . $row . ':G' . $row);
 		$sheet->getColumnDimension('A')->setWidth(26);
 		$sheet->getColumnDimension('B')->setWidth(28);
 		$sheet->getColumnDimension('C')->setWidth(22);
 		$sheet->getColumnDimension('D')->setWidth(28);
 		$sheet->getColumnDimension('E')->setWidth(28);
 		$sheet->getColumnDimension('F')->setWidth(22);
+		$sheet->getColumnDimension('G')->setWidth(22);
 		$sheet->freezePane('A6');
 	}
 
@@ -161,18 +168,18 @@ class ExpenseWorkbookExporter
 	private function buildUsers($sheet, array $report)
 	{
 		$sheet->setTitle('Users Summary');
-		$headers = array('User', 'User code', 'Net spend', 'Share', 'Transactions', 'Tabs', 'Expense codes', 'Gross outflow', 'Credits', 'Previous period', 'Change', 'Change %', 'P&L spend', 'Capital / advances', 'Posted', 'Pending authorization', 'Authorized not posted', 'Missing receipts', 'Receipt coverage');
+		$headers = array('User', 'User code', 'Net spend', 'Share', 'Transactions', 'Tabs', 'Expense codes', 'Gross outflow', 'Credits', 'Previous period', 'Change', 'Change %', 'P&L spend', 'Capital / advances', 'Unclassified', 'Posted', 'Pending authorization', 'Authorized not posted', 'Missing receipts', 'Receipt coverage');
 		$this->writeTable($sheet, $headers, $report['breakdowns']['users'], function ($row) {
-			return array($row['owner'], $row['usercode'], $row['total'], $row['share_percent'] / 100, $row['transaction_count'], $row['tab_count'], $row['expense_code_count'], $row['gross_outflow'], $row['credits'], $row['previous_total'], $row['change_amount'], $row['change_percent'] === null ? null : $row['change_percent'] / 100, $row['pnl_total'], $row['balance_sheet_total'], $row['posted_total'], $row['pending_total'], $row['authorized_unposted_total'], $row['missing_receipt_count'], $row['receipt_coverage_percent'] / 100);
+			return array($row['owner'], $row['usercode'], $row['total'], $row['share_percent'] / 100, $row['transaction_count'], $row['tab_count'], $row['expense_code_count'], $row['gross_outflow'], $row['credits'], $row['previous_total'], $row['change_amount'], $row['change_percent'] === null ? null : $row['change_percent'] / 100, $row['pnl_total'], $row['balance_sheet_total'], $row['unclassified_total'], $row['posted_total'], $row['pending_total'], $row['authorized_unposted_total'], $row['missing_receipt_count'], $row['receipt_coverage_percent'] / 100);
 		});
 		$last = count($report['breakdowns']['users']) + 1;
 		$sheet->getStyle('C2:C' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
 		$sheet->getStyle('D2:D' . $last)->getNumberFormat()->setFormatCode('0.0%');
 		$sheet->getStyle('H2:K' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
 		$sheet->getStyle('L2:L' . $last)->getNumberFormat()->setFormatCode('0.0%');
-		$sheet->getStyle('M2:Q' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
-		$sheet->getStyle('S2:S' . $last)->getNumberFormat()->setFormatCode('0.0%');
-		$this->setWidths($sheet, array('A' => 28, 'B' => 20, 'C' => 18, 'D' => 11, 'E' => 14, 'F' => 10, 'G' => 14, 'H' => 18, 'I' => 16, 'J' => 18, 'K' => 18, 'L' => 11, 'M' => 18, 'N' => 22, 'O' => 16, 'P' => 20, 'Q' => 22, 'R' => 17, 'S' => 16));
+		$sheet->getStyle('M2:R' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('T2:T' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$this->setWidths($sheet, array('A' => 28, 'B' => 20, 'C' => 18, 'D' => 11, 'E' => 14, 'F' => 10, 'G' => 14, 'H' => 18, 'I' => 16, 'J' => 18, 'K' => 18, 'L' => 11, 'M' => 18, 'N' => 22, 'O' => 18, 'P' => 16, 'Q' => 20, 'R' => 22, 'S' => 17, 'T' => 16));
 	}
 
 	private function buildUserExpenses($sheet, array $report)
@@ -189,6 +196,37 @@ class ExpenseWorkbookExporter
 		$sheet->getStyle('P2:P' . $last)->getNumberFormat()->setFormatCode('0.0%');
 		$sheet->getStyle('Q2:S' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
 		$this->setWidths($sheet, array('A' => 28, 'B' => 20, 'C' => 30, 'D' => 23, 'E' => 14, 'F' => 34, 'G' => 14, 'H' => 30, 'I' => 24, 'J' => 10, 'K' => 18, 'L' => 11, 'M' => 14, 'N' => 18, 'O' => 18, 'P' => 11, 'Q' => 18, 'R' => 20, 'S' => 22));
+	}
+
+	private function buildCurrencies($sheet, array $report)
+	{
+		$sheet->setTitle('Currency Reconciliation');
+		$headers = array('Currency', 'Current rate', 'Original amount', 'Functional net spend', 'Transactions');
+		$this->writeTable($sheet, $headers, $report['breakdowns']['currencies'], function ($row) {
+			return array($row['currency'], $row['current_rate'], $row['original_total'], $row['total'], $row['transaction_count']);
+		});
+		$last = count($report['breakdowns']['currencies']) + 1;
+		$sheet->getStyle('B2:B' . $last)->getNumberFormat()->setFormatCode('0.000000');
+		$sheet->getStyle('C2:D' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$this->setWidths($sheet, array('A' => 14, 'B' => 16, 'C' => 20, 'D' => 24, 'E' => 16));
+	}
+
+	private function buildValidation($sheet, array $report)
+	{
+		$sheet->setTitle('Validation Checks');
+		$validation = isset($report['validation']) ? $report['validation'] : array();
+		$checks = isset($validation['checks']) ? $validation['checks'] : array();
+		$headers = array('Check', 'Status', 'Detail');
+		$this->writeTable($sheet, $headers, $checks, function ($row) {
+			return array($row['key'], $row['ok'] ? 'PASS' : 'FAIL', $row['detail']);
+		});
+		$warningRow = count($checks) + 4;
+		$sheet->setCellValue('A' . $warningRow, 'Data notes');
+		$warnings = isset($validation['warnings']) ? $validation['warnings'] : array();
+		$this->setSafeValue($sheet, 'B' . $warningRow, $warnings ? implode(' | ', $warnings) : 'No data notes');
+		$sheet->mergeCells('B' . $warningRow . ':C' . $warningRow);
+		$this->styleSection($sheet, 'A' . $warningRow . ':C' . $warningRow);
+		$this->setWidths($sheet, array('A' => 34, 'B' => 16, 'C' => 72));
 	}
 
 	private function buildTransactions($sheet, array $report)

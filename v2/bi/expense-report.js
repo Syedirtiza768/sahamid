@@ -132,9 +132,9 @@
             });
         }).then(function (data) {
             report = data;
+            document.getElementById('expenseReportContent').style.display = 'block';
             renderReport();
             setLoading(false);
-            document.getElementById('expenseReportContent').style.display = 'block';
             if (scrollToTop) {
                 document.getElementById('expenseReport').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
@@ -187,6 +187,9 @@
         document.getElementById('expensePnlSpend').textContent = formatAmount(summary.pnl_total);
         document.getElementById('expensePnlShare').textContent = summary.net_total ? formatPercent((summary.pnl_total / summary.net_total) * 100) + ' of net spend' : 'Operating and direct costs';
         document.getElementById('expenseBalanceSpend').textContent = formatAmount(summary.balance_sheet_total);
+        document.getElementById('expenseClassificationSummary').innerHTML =
+            '<span><b>Net bridge</b> ' + escapeHtml(formatAmount(summary.gross_outflow)) + ' gross outflow − ' + escapeHtml(formatAmount(summary.credits)) + ' credits = ' + escapeHtml(formatAmount(summary.net_total)) + ' net spend</span>' +
+            '<span><b>Classification</b> ' + escapeHtml(formatAmount(summary.pnl_total)) + ' P&amp;L · ' + escapeHtml(formatAmount(summary.balance_sheet_total)) + ' capital / advances · ' + escapeHtml(formatAmount(summary.unclassified_total)) + ' unclassified</span>';
         document.getElementById('expenseActionSpend').textContent = formatAmount(summary.action_required_total);
         document.getElementById('expenseActionDetail').textContent = formatAmount(summary.pending_authorization_total) + ' awaiting approval · ' + formatAmount(summary.authorized_unposted_total) + ' unposted';
         document.getElementById('expenseTransactions').textContent = formatNumber(summary.transaction_count);
@@ -196,6 +199,14 @@
         document.getElementById('expenseResultSummary').textContent = formatNumber(summary.transaction_count) + ' matching transaction' + (summary.transaction_count === 1 ? '' : 's');
         document.getElementById('expenseResultScope').textContent = report.metadata.access_scope;
         document.getElementById('expenseTransactionTabCount').textContent = formatNumber(summary.transaction_count);
+        var validation = report.validation || {};
+        var validationStatus = document.getElementById('expenseValidationStatus');
+        validationStatus.className = validation.status === 'passed' ? 'expense-validation-status is-passed' : 'expense-validation-status is-attention';
+        var warningCount = (validation.warnings || []).length;
+        validationStatus.textContent = validation.status === 'passed'
+            ? 'Validated · ' + Number(validation.passed || 0) + ' checks' + (warningCount ? ' · ' + warningCount + ' data note' + (warningCount === 1 ? '' : 's') : '')
+            : 'Review data checks · ' + Number(validation.failed || 0) + ' failed';
+        validationStatus.title = (validation.warnings || []).join(' ');
     }
 
     function renderInsights() {
@@ -316,17 +327,22 @@
             return '<tr><td>' + escapeHtml(row.label) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.expense_code_count) + '</td></tr>';
         }).join('') : modernEmptyRow(5, 'No GL group totals are available.');
         document.getElementById('expenseGlCaption').textContent = groups.length + (groups.length === 1 ? ' complete GL group' : ' complete GL groups');
-        modernRenderBar('expenseCodeChart', 'expenseCodeLegend', rows, 'codeexpense', 12);
-        modernRenderBar('expenseGlChart', 'expenseGlLegend', groups, 'label', 10);
-        modernRenderDoughnut('expenseAccountingCenterChart', 'expenseAccountingCenterLegend', report.breakdowns.cost_centers, 'cost_center', 8);
+    }
+
+    function renderCurrencyTable() {
+        var rows = report.breakdowns.currencies || [];
+        document.getElementById('expenseCurrencyTable').innerHTML = rows.length ? rows.map(function (row) {
+            return '<tr><td>' + escapeHtml(row.currency) + '</td><td class="text-right">' + escapeHtml(Number(row.current_rate || 0).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })) + '</td><td class="text-right">' + escapeHtml(formatNumber(row.original_total, 2)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td></tr>';
+        }).join('') : modernEmptyRow(5, 'No currency totals are available.');
+        document.getElementById('expenseCurrencyCaption').textContent = rows.length + (rows.length === 1 ? ' currency' : ' currencies') + ' · rates at report time';
     }
 
     function renderUserTables() {
         var users = report.breakdowns.users || [];
         var userTable = document.getElementById('expenseUserTable');
         userTable.innerHTML = users.length ? users.map(function (row) {
-            return '<tr><td><span class="expense-category-name">' + escapeHtml(row.owner) + '</span><span class="expense-subtext">' + escapeHtml(row.usercode || 'No user code') + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.tab_count) + '</td><td class="text-right">' + formatNumber(row.expense_code_count) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.pnl_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.balance_sheet_total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.receipt_coverage_percent)) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
-        }).join('') : modernEmptyRow(10, 'No user totals match this view.');
+            return '<tr><td><span class="expense-category-name">' + escapeHtml(row.owner) + '</span><span class="expense-subtext">' + escapeHtml(row.usercode || 'No user code') + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.tab_count) + '</td><td class="text-right">' + formatNumber(row.expense_code_count) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.pnl_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.balance_sheet_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.unclassified_total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.receipt_coverage_percent)) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
+        }).join('') : modernEmptyRow(11, 'No user totals match this view.');
         document.getElementById('expenseUserCaption').textContent = users.length + (users.length === 1 ? ' complete user' : ' complete users') + ' · consolidated across visible expense tabs';
 
         var details = report.breakdowns.user_expenses || [];
@@ -334,10 +350,6 @@
             return '<tr><td><span class="expense-category-name">' + escapeHtml(row.owner) + '</span><span class="expense-subtext">' + escapeHtml(row.usercode || 'No user code') + '</span></td><td><span class="expense-category-name">' + escapeHtml(row.category) + '</span><span class="expense-subtext">' + escapeHtml(row.spend_class) + '</span></td><td>' + escapeHtml(row.codeexpense) + '</td><td>' + escapeHtml(row.description) + '</td><td>' + escapeHtml(row.glaccount || '—') + '<span class="expense-subtext">' + escapeHtml(row.account_group || 'Unmapped') + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.tab_count) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '</td></tr>';
         }).join('') : modernEmptyRow(10, 'No user expense detail matches this view.');
         document.getElementById('expenseUserExpenseCaption').textContent = formatNumber(details.length) + (details.length === 1 ? ' complete user/code combination' : ' complete user/code combinations');
-        modernRenderBar('expenseUserChart', 'expenseUserLegend', users, 'owner', 12);
-        modernRenderBar('expenseUserExpenseChart', 'expenseUserExpenseLegend', details.map(function (row) {
-            return { label: row.owner + ' · ' + row.codeexpense, total: row.total, transaction_count: row.transaction_count };
-        }), 'label', 12, 'expenseUserExpenseChartCaption');
     }
 
     function renderTransactions() {
@@ -354,13 +366,6 @@
         document.getElementById('expensePreviousPage').disabled = data.page <= 1;
         document.getElementById('expenseNextPage').disabled = data.page >= data.total_pages;
         document.getElementById('expenseTransactionTabCount').textContent = formatNumber(data.total_rows);
-    }
-
-    function renderMethodology() {
-        var metadata = report.metadata;
-        var localScope = metadata.include_local_purchases ? 'Local purchases are included.' : 'Local purchases are excluded.';
-        document.getElementById('expenseMethodology').textContent = metadata.amount_definition + ' ' + metadata.currency_method + ' ' + localScope + ' Access: ' + metadata.access_scope + '.';
-        document.getElementById('expenseUpdatedAt').textContent = 'Updated ' + metadata.generated_at_utc + ' UTC · ' + metadata.elapsed_ms + ' ms';
     }
 
     function modernSelectedOptionLabel(id) {
@@ -566,18 +571,42 @@
         modernRenderDoughnut('expenseOwnerChart', 'expenseOwnerLegend', report.breakdowns.users, 'owner', 8);
     }
 
+    function renderChartsForTab(tabName) {
+        if (!report) { return; }
+        if (tabName === 'summary') {
+            renderModernCharts();
+            return;
+        }
+        if (tabName === 'users') {
+            var users = report.breakdowns.users || [];
+            var details = report.breakdowns.user_expenses || [];
+            modernRenderBar('expenseUserChart', 'expenseUserLegend', users, 'owner', 12);
+            modernRenderBar('expenseUserExpenseChart', 'expenseUserExpenseLegend', details.map(function (row) {
+                return { label: row.owner + ' · ' + row.codeexpense, total: row.total, transaction_count: row.transaction_count };
+            }), 'label', 12, 'expenseUserExpenseChartCaption');
+            return;
+        }
+        if (tabName === 'accounting') {
+            var expenseCodes = report.breakdowns.expense_codes || [];
+            var groups = modernGroupRows(expenseCodes, 'account_group');
+            modernRenderBar('expenseCodeChart', 'expenseCodeLegend', expenseCodes, 'codeexpense', 12);
+            modernRenderBar('expenseGlChart', 'expenseGlLegend', groups, 'label', 10);
+            modernRenderDoughnut('expenseAccountingCenterChart', 'expenseAccountingCenterLegend', report.breakdowns.cost_centers, 'cost_center', 8);
+        }
+    }
+
     function renderReport() {
         populateOptions();
         renderModernFilterState();
         renderSummary();
         renderInsights();
-        renderModernCharts();
         renderCategoryTable();
         renderControls();
         renderUserTables();
         renderExpenseCodes();
+        renderCurrencyTable();
         renderTransactions();
-        renderMethodology();
+        document.getElementById('expenseUpdatedAt').textContent = 'Updated ' + report.metadata.generated_at_utc + ' UTC · ' + report.metadata.elapsed_ms + ' ms';
         setActiveExpenseTab(activeTab);
     }
 
@@ -596,6 +625,7 @@
             panes[j].className = visible ? 'expense-tab-pane is-active' : 'expense-tab-pane';
             panes[j].hidden = !visible;
         }
+        renderChartsForTab(tabName);
     }
 
     function exportUrl() {

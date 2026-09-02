@@ -34,6 +34,9 @@ try {
 	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['transactions']['rows'])) {
 		throw new RuntimeException('report contract is incomplete');
 	}
+	if (!isset($report['validation']['status']) || $report['validation']['status'] !== 'passed') {
+		throw new RuntimeException('report consistency validation failed');
+	}
 	if ($report['transactions']['total_rows'] > 0 && !$report['breakdowns']['categories']) {
 		throw new RuntimeException('expense rows were not categorized');
 	}
@@ -44,10 +47,30 @@ try {
 		'pageSize' => 10,
 	));
 	$filteredReport = (new ExpenseReportService($db, $context))->getReport($withoutLocalPurchases);
-	if ($filteredReport['transactions']['total_rows'] > $report['transactions']['total_rows'] || $filteredReport['metadata']['include_local_purchases'] !== false) {
+	if ($filteredReport['transactions']['total_rows'] > $report['transactions']['total_rows'] || $filteredReport['metadata']['include_local_purchases'] !== false || $filteredReport['validation']['status'] !== 'passed') {
 		throw new RuntimeException('local-purchase exclusion did not apply');
 	}
 	echo 'PASS: live report returned ' . $report['transactions']['total_rows'] . " scoped transactions\n";
+
+	$validatedFilterRequest = ExpenseReportRequest::fromArray(array(
+		'startDate' => getenv('BI_TEST_START') ?: '2026-01-01',
+		'endDate' => getenv('BI_TEST_END') ?: date('Y-m-d'),
+		'entryKind' => 'expense',
+		'receipt' => 'with_receipt',
+		'minAmount' => 1,
+		'maxAmount' => 1000000000,
+		'pageSize' => 10,
+	));
+	$validatedFilterReport = (new ExpenseReportService($db, $context))->getReport($validatedFilterRequest);
+	if ($validatedFilterReport['validation']['status'] !== 'passed') {
+		throw new RuntimeException('extended filter consistency validation failed');
+	}
+	foreach ($validatedFilterReport['transactions']['rows'] as $row) {
+		if ($row['entry_kind'] !== 'expense' || !$row['has_receipt'] || abs((float) $row['functional_amount']) < 1 || abs((float) $row['functional_amount']) > 1000000000) {
+			throw new RuntimeException('extended filters returned an invalid transaction row');
+		}
+	}
+	echo 'PASS: extended entry, receipt, and amount filters returned validated rows' . "\n";
 
 	$exportReport = (new ExpenseReportService($db, $context))->getReport($request, true);
 	$workbook = (new ExpenseWorkbookExporter())->build($exportReport);
