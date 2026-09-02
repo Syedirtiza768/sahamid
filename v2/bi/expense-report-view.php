@@ -142,6 +142,7 @@
 
         <div class="expense-tabs" role="tablist" aria-label="Expense report sections">
             <button type="button" class="expense-tab is-active" role="tab" aria-selected="true" aria-controls="expenseTabSummary" data-expense-tab="summary"><i class="fa fa-dashboard"></i> Summary</button>
+            <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabTabs" data-expense-tab="tabs"><i class="fa fa-folder-open"></i> Tab analysis</button>
             <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabUsers" data-expense-tab="users"><i class="fa fa-users"></i> User analysis</button>
             <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabAccounting" data-expense-tab="accounting"><i class="fa fa-sitemap"></i> Accounting</button>
             <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabTransactions" data-expense-tab="transactions"><i class="fa fa-list-alt"></i> Transactions <span id="expenseTransactionTabCount" class="expense-tab-count"></span></button>
@@ -182,17 +183,6 @@
                 </article>
             </div>
 
-            <div class="expense-two-column expense-tab-analysis">
-                <article class="expense-panel expense-chart-panel">
-                    <header><div><span class="expense-panel-kicker">Accountability</span><h3>Spend by expense tab</h3></div><span id="expenseTabChartCaption" class="expense-panel-meta"></span></header>
-                    <div class="expense-chart-wrap"><canvas id="expenseTabChart"></canvas></div>
-                    <div id="expenseTabLegend" class="expense-chart-legend"></div>
-                </article>
-                <article class="expense-panel expense-detail-panel">
-                    <header><div><span class="expense-panel-kicker">Complete tab-wise view</span><h3>Expense tabs</h3></div><span id="expenseTabCaption" class="expense-panel-meta"></span></header>
-                    <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Expense tab</th><th>Owner</th><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Codes</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Unposted</th><th class="text-right">Missing receipts</th></tr></thead><tbody id="expenseTabTable"></tbody></table></div>
-                </article>
-            </div>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete breakdown</span><h3>Category totals</h3></div><span id="expenseCategoryCaption" class="expense-panel-meta"></span></header>
                 <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Category</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Change</th></tr></thead><tbody id="expenseCategoryTable"></tbody></table></div>
@@ -210,6 +200,48 @@
             </div>
         </section>
 
+        <section id="expenseTabTabs" class="expense-tab-pane" role="tabpanel" hidden>
+            <div class="expense-kpi-grid">
+                <article class="expense-kpi expense-kpi-primary"><span class="expense-kpi-label">Tab net spend</span><strong id="expenseTabAnalysisSpend">—</strong><small>PKR source amounts</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">Expense tabs</span><strong id="expenseTabAnalysisTabs">—</strong><small>Complete filtered tabs</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">Tab-user combinations</span><strong id="expenseTabAnalysisUsers">—</strong><small>Users across tabs</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">Transactions</span><strong id="expenseTabAnalysisTransactions">—</strong><small>Complete filtered rows</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">Receipt coverage</span><strong id="expenseTabAnalysisReceipts">—</strong><small id="expenseTabAnalysisReceiptDetail">—</small></article>
+            </div>
+            <div class="expense-two-column">
+                <article class="expense-panel expense-chart-panel">
+                    <header><div><span class="expense-panel-kicker">Tab accountability</span><h3>PKR spend by expense tab</h3></div><span id="expenseTabChartCaption" class="expense-panel-meta"></span></header>
+                    <div class="expense-chart-wrap"><canvas id="expenseTabChart"></canvas></div>
+                    <div id="expenseTabLegend" class="expense-chart-legend"></div>
+                </article>
+                <article class="expense-panel expense-detail-panel">
+                    <header><div><span class="expense-panel-kicker">How to read</span><h3>Tab totals reconcile to transactions</h3></div><span class="expense-panel-meta">No currency conversion</span></header>
+                    <div class="expense-quality-note"><strong>Tab-level view</strong><p>Each row is one expense tab. Users shows the distinct source user assignments for that tab; use the detailed table below to see each tab-user combination. The ledger currently stores user assignment on pctabs, not on each pcashdetails transaction.</p><p>Every amount is PKR and every table uses the complete filtered report scope.</p></div>
+                </article>
+            </div>
+            <article class="expense-panel expense-detail-panel">
+                <header>
+                    <div><span class="expense-panel-kicker">Complete tab-wise consolidated view</span><h3>All expense tabs</h3></div>
+                    <div class="expense-table-tools">
+                        <label>Sort <select id="expenseTabSort" class="form-control input-sm"><option value="tabcode">Expense tab</option><option value="user_count">Users</option><option value="total" selected>Net spend</option><option value="transaction_count">Transactions</option><option value="expense_code_count">Expense codes</option><option value="gross_outflow">Gross outflow</option><option value="credits">Credits</option><option value="posted_total">Posted</option><option value="pending_total">Pending</option><option value="authorized_unposted_total">Authorized not posted</option><option value="missing_receipt_count">Missing receipts</option><option value="receipt_coverage_percent">Receipt coverage</option></select></label>
+                        <button id="expenseTabSortDirection" type="button" class="btn btn-default btn-sm" data-direction="desc" title="Sort descending"><i class="fa fa-sort-amount-desc"></i></button>
+                    </div>
+                </header>
+                <div class="expense-table-caption"><span id="expenseTabCaption"></span><span>All tabs returned; use the global filters above to narrow the report.</span></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-tab-table"><thead><tr><th>Expense tab</th><th>Cost centre</th><th class="text-right">Users</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th></tr></thead><tbody id="expenseTabTable"></tbody></table></div>
+            </article>
+            <article class="expense-panel expense-detail-panel">
+                <header>
+                    <div><span class="expense-panel-kicker">Complete tab-wise granular view</span><h3>Users within each expense tab</h3></div>
+                    <div class="expense-table-tools">
+                        <label>Sort <select id="expenseTabUserSort" class="form-control input-sm"><option value="tabcode">Expense tab</option><option value="owner">User</option><option value="usercode">User code</option><option value="total" selected>Net spend</option><option value="transaction_count">Transactions</option><option value="expense_code_count">Expense codes</option><option value="gross_outflow">Gross outflow</option><option value="credits">Credits</option><option value="posted_total">Posted</option><option value="pending_total">Pending</option><option value="authorized_unposted_total">Authorized not posted</option><option value="missing_receipt_count">Missing receipts</option><option value="receipt_coverage_percent">Receipt coverage</option></select></label>
+                        <button id="expenseTabUserSortDirection" type="button" class="btn btn-default btn-sm" data-direction="desc" title="Sort descending"><i class="fa fa-sort-amount-desc"></i></button>
+                    </div>
+                </header>
+                <div class="expense-table-caption"><span id="expenseTabUserCaption"></span><span>One row per tab-user combination; no users are collapsed into a single owner.</span></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-tab-user-table"><thead><tr><th>Expense tab</th><th>User</th><th>User code</th><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th></tr></thead><tbody id="expenseTabUserTable"></tbody></table></div>
+            </article>
+        </section>
         <section id="expenseTabUsers" class="expense-tab-pane" role="tabpanel" hidden>
             <div class="expense-chart-grid expense-chart-grid-two">
                 <article class="expense-panel expense-chart-panel">

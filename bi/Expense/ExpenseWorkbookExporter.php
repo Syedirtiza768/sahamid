@@ -27,6 +27,7 @@ class ExpenseWorkbookExporter
 		$this->buildUserExpenses($workbook->createSheet(), $report);
 		$this->buildOwners($workbook->createSheet(), $report);
 		$this->buildTabs($workbook->createSheet(), $report);
+		$this->buildTabUsers($workbook->createSheet(), $report);
 		$this->buildCurrencies($workbook->createSheet(), $report);
 		$this->buildValidation($workbook->createSheet(), $report);
 		$this->buildTransactions($workbook->createSheet(), $report);
@@ -170,17 +171,33 @@ class ExpenseWorkbookExporter
 	private function buildTabs($sheet, array $report)
 	{
 		$sheet->setTitle('Expense Tabs');
-		$headers = array('Expense tab', 'Owner', 'User code', 'Cost centre', 'Net spend', 'Share', 'Transactions', 'Expense codes', 'Gross outflow', 'Credits', 'Posted', 'Pending authorization', 'Authorized not posted', 'Missing receipts', 'Receipt coverage');
+		$headers = array('Expense tab', 'Cost centre', 'Users', 'Net spend', 'Share', 'Transactions', 'Expense codes', 'Gross outflow', 'Credits', 'Posted', 'Pending authorization', 'Authorized not posted', 'Missing receipts', 'Receipt coverage');
 		$this->writeTable($sheet, $headers, $report['breakdowns']['tabs'], function ($row) {
-			return array($row['tabcode'], $row['owner'], $row['usercode'], $row['cost_center'], $row['total'], $row['share_percent'] / 100, $row['transaction_count'], $row['expense_code_count'], $row['gross_outflow'], $row['credits'], $row['posted_total'], $row['pending_total'], $row['authorized_unposted_total'], $row['missing_receipt_count'], $row['receipt_coverage_percent'] / 100);
+			return array($row['tabcode'], $row['cost_center'], $row['user_count'], $row['total'], $row['share_percent'] / 100, $row['transaction_count'], $row['expense_code_count'], $row['gross_outflow'], $row['credits'], $row['posted_total'], $row['pending_total'], $row['authorized_unposted_total'], $row['missing_receipt_count'], $row['receipt_coverage_percent'] / 100);
 		});
 		$last = count($report['breakdowns']['tabs']) + 1;
+		$sheet->getStyle('D2:D' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('E2:E' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$sheet->getStyle('H2:L' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('N2:N' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$this->setWidths($sheet, array('A' => 28, 'B' => 30, 'C' => 12, 'D' => 18, 'E' => 11, 'F' => 14, 'G' => 14, 'H' => 18, 'I' => 16, 'J' => 18, 'K' => 20, 'L' => 22, 'M' => 17, 'N' => 16));
+	}
+
+	private function buildTabUsers($sheet, array $report)
+	{
+		$sheet->setTitle('Tab Users');
+		$headers = array('Expense tab', 'User', 'User code', 'Cost centre', 'Net spend', 'Share', 'Transactions', 'Expense codes', 'Gross outflow', 'Credits', 'Posted', 'Pending authorization', 'Authorized not posted', 'Missing receipts', 'Receipt coverage');
+		$this->writeTable($sheet, $headers, $report['breakdowns']['tab_users'], function ($row) {
+			return array($row['tabcode'], $row['owner'], $row['usercode'], $row['cost_center'], $row['total'], $row['share_percent'] / 100, $row['transaction_count'], $row['expense_code_count'], $row['gross_outflow'], $row['credits'], $row['posted_total'], $row['pending_total'], $row['authorized_unposted_total'], $row['missing_receipt_count'], $row['receipt_coverage_percent'] / 100);
+		});
+		$last = count($report['breakdowns']['tab_users']) + 1;
 		$sheet->getStyle('E2:E' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
 		$sheet->getStyle('F2:F' . $last)->getNumberFormat()->setFormatCode('0.0%');
 		$sheet->getStyle('I2:M' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
 		$sheet->getStyle('O2:O' . $last)->getNumberFormat()->setFormatCode('0.0%');
 		$this->setWidths($sheet, array('A' => 28, 'B' => 28, 'C' => 20, 'D' => 30, 'E' => 18, 'F' => 11, 'G' => 14, 'H' => 14, 'I' => 18, 'J' => 16, 'K' => 18, 'L' => 20, 'M' => 22, 'N' => 17, 'O' => 16));
 	}
+
 	private function buildUsers($sheet, array $report)
 	{
 		$sheet->setTitle('Users Summary');

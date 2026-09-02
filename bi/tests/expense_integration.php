@@ -31,7 +31,7 @@ $request = ExpenseReportRequest::fromArray(array(
 
 try {
 	$report = (new ExpenseReportService($db, $context))->getReport($request);
-	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['tabs'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['transactions']['rows'])) {
+	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['tabs'], $report['breakdowns']['tab_users'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['transactions']['rows'])) {
 		throw new RuntimeException('report contract is incomplete');
 	}
 	if (!isset($report['metadata']['currency_policy']) || $report['metadata']['default_currency'] !== 'PKR' || $report['metadata']['currency_policy'] !== 'PKR-only; source tab currency metadata is never used to convert claim amounts.') {
@@ -42,6 +42,17 @@ try {
 	}
 	if ($report['transactions']['total_rows'] > 0 && !$report['breakdowns']['categories']) {
 		throw new RuntimeException('expense rows were not categorized');
+	}
+	$tabTotal = 0.0;
+	foreach ($report['breakdowns']['tabs'] as $tabRow) {
+		$tabTotal += (float) $tabRow['total'];
+	}
+	$tabUserTotal = 0.0;
+	foreach ($report['breakdowns']['tab_users'] as $tabUserRow) {
+		$tabUserTotal += (float) $tabUserRow['total'];
+	}
+	if (abs($tabTotal - (float) $report['summary']['net_total']) > 0.000001 || abs($tabUserTotal - (float) $report['summary']['net_total']) > 0.000001) {
+		throw new RuntimeException('tab and tab-user totals did not reconcile to summary spend');
 	}
 	$withoutLocalPurchases = ExpenseReportRequest::fromArray(array(
 		'startDate' => getenv('BI_TEST_START') ?: '2026-01-01',

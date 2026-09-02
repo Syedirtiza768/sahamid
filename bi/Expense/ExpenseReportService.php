@@ -64,6 +64,7 @@ class ExpenseReportService
 		$owners = $this->fetchOwners($currentWhere, $summary['net_total']);
 		$users = $this->fetchUsers($currentWhere, $comparisonWhere, $summary['net_total']);
 		$tabs = $this->fetchTabs($currentWhere, $summary['net_total']);
+		$tabUsers = $this->fetchTabUsers($currentWhere, $summary['net_total']);
 		$userExpenses = $this->fetchUserExpenses($currentWhere, $comparisonWhere, $summary['net_total'], $definitions);
 		$users = $this->reconcileUserClassTotals($users, $userExpenses);
 		$currencies = $this->fetchCurrencies($currentWhere, $summary['net_total']);
@@ -78,6 +79,7 @@ class ExpenseReportService
 			'owners' => $owners,
 			'users' => $users,
 			'tabs' => $tabs,
+			'tab_users' => $tabUsers,
 			'user_expenses' => $userExpenses,
 			'currencies' => $currencies,
 			'expense_codes' => $codes,
@@ -109,6 +111,7 @@ class ExpenseReportService
 				'include_local_purchases' => $request->getIncludeLocalPurchases(),
 				'currency_method' => 'All expense tabs are treated as PKR. No exchange-rate conversion is applied; tab currency metadata is retained only for mismatch validation.',
 				'currency_policy' => 'PKR-only; source tab currency metadata is never used to convert claim amounts.',
+				'tab_user_definition' => 'Tab users are sourced from pctabs.usercode; pcashdetails has no transaction-level user field, so tab-user rows represent source tab assignments rather than individual spender attribution.',
 				'source_lineage' => array('pcashdetails', 'pcexpenses', 'pctabs', 'pctypetabs', 'chartmaster', 'accountgroups', 'accountsection', 'tags', 'www_users', 'expense_listing_access'),
 				'comparison_range' => $comparisonRange,
 				'filters' => $request->toArray(),
@@ -129,6 +132,7 @@ class ExpenseReportService
 			'statuses' => $this->sumBreakdown($breakdowns['statuses']),
 			'cost_centers' => $this->sumBreakdown($breakdowns['cost_centers']),
 			'tabs' => $this->sumBreakdown($breakdowns['tabs']),
+			'tab_users' => $this->sumBreakdown($breakdowns['tab_users']),
 			'users' => $this->sumBreakdown($breakdowns['users']),
 			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses']),
 			'currencies' => $this->sumBreakdown($breakdowns['currencies']),
@@ -146,6 +150,7 @@ class ExpenseReportService
 			'statuses' => $this->sumBreakdown($breakdowns['statuses'], 'transaction_count'),
 			'cost_centers' => $this->sumBreakdown($breakdowns['cost_centers'], 'transaction_count'),
 			'tabs' => $this->sumBreakdown($breakdowns['tabs'], 'transaction_count'),
+			'tab_users' => $this->sumBreakdown($breakdowns['tab_users'], 'transaction_count'),
 			'users' => $this->sumBreakdown($breakdowns['users'], 'transaction_count'),
 			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses'], 'transaction_count'),
 			'currencies' => $this->sumBreakdown($breakdowns['currencies'], 'transaction_count'),
@@ -157,7 +162,36 @@ class ExpenseReportService
 				ucwords(str_replace('_', ' ', $name)) . ' transaction counts tie to summary.'
 			);
 		}
+		$tabTotals = array();
+		foreach ($breakdowns['tabs'] as $tabRow) {
+			$key = (string) $tabRow['tabcode'];
+			if (!isset($tabTotals[$key])) { $tabTotals[$key] = array('total' => 0.0, 'transaction_count' => 0); }
+			$tabTotals[$key]['total'] += (float) $tabRow['total'];
+			$tabTotals[$key]['transaction_count'] += (int) $tabRow['transaction_count'];
+		}
+		$tabUserTotals = array();
+		foreach ($breakdowns['tab_users'] as $tabUserRow) {
+			$key = (string) $tabUserRow['tabcode'];
+			if (!isset($tabUserTotals[$key])) { $tabUserTotals[$key] = array('total' => 0.0, 'transaction_count' => 0); }
+			$tabUserTotals[$key]['total'] += (float) $tabUserRow['total'];
+			$tabUserTotals[$key]['transaction_count'] += (int) $tabUserRow['transaction_count'];
+		}
+		$tabUserRollupOk = count($tabTotals) === count($tabUserTotals);
+		foreach ($tabTotals as $tabCode => $tabTotal) {
+			if (!isset($tabUserTotals[$tabCode])
+				|| !$this->amountsMatch($tabTotal['total'], $tabUserTotals[$tabCode]['total'])
+				|| (int) $tabTotal['transaction_count'] !== (int) $tabUserTotals[$tabCode]['transaction_count']) {
+				$tabUserRollupOk = false;
+				break;
+			}
+		}
 		$addCheck(
+			'tab_user_rollup',
+			$tabUserRollupOk,
+			'Each expense tab total and transaction count reconcile to its tab-user detail.'
+		);
+		$addCheck(
+
 			'amount_components',
 			$this->amountsMatch($netTotal, (float) $summary['gross_outflow'] - (float) $summary['credits']),
 			'Net spend equals gross outflow less credits.'
@@ -709,8 +743,39 @@ class ExpenseReportService
 	private function fetchTabs(array $where, $grandTotal)
 	{
 		$net = $this->netAmountSql();
+		$sql = 'SELECT d.tabcode,
+			COALESCE(ptt.typetabdescription, \'Unassigned\') AS cost_center,
+			COUNT(DISTINCT COALESCE(NULLIF(TRIM(pt.usercode), \'\'), \'__UNASSIGNED__\')) AS user_count,
+			COALESCE(SUM(' . $net . '), 0) AS total,
+			COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow,
+			COALESCE(SUM(' . $this->creditAmountSql() . '), 0) AS credits,
+			COUNT(*) AS transaction_count,
+			COUNT(DISTINCT d.codeexpense) AS expense_code_count,
+			COALESCE(SUM(CASE WHEN d.posted = 1 THEN ' . $net . ' ELSE 0 END), 0) AS posted_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND (d.authorized IS NULL OR d.authorized = \'0000-00-00\') THEN ' . $net . ' ELSE 0 END), 0) AS pending_total,
+			COALESCE(SUM(CASE WHEN d.posted <> 1 AND d.authorized IS NOT NULL AND d.authorized <> \'0000-00-00\' THEN ' . $net . ' ELSE 0 END), 0) AS authorized_unposted_total,
+			SUM(CASE WHEN NOT ' . $this->receiptSql() . ' THEN 1 ELSE 0 END) AS missing_receipt_count'
+			. $this->fromSql() . $where['sql'] . ' GROUP BY d.tabcode, ptt.typetabdescription ORDER BY total DESC, d.tabcode';
+		$rows = $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
+		foreach ($rows as &$row) {
+			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) {
+				$row[$field] = (float) $row[$field];
+			}
+			foreach (array('user_count', 'transaction_count', 'expense_code_count', 'missing_receipt_count') as $field) {
+				$row[$field] = (int) $row[$field];
+			}
+			$row['receipt_coverage_percent'] = $row['transaction_count'] > 0 ? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
+		}
+		unset($row);
+		return $rows;
+	}
+
+	private function fetchTabUsers(array $where, $grandTotal)
+	{
+		$owner = $this->ownerSql();
+		$net = $this->netAmountSql();
 		$sql = 'SELECT d.tabcode, COALESCE(pt.usercode, \'\') AS usercode,
-			' . $this->ownerSql() . ' AS owner,
+			' . $owner . ' AS owner,
 			COALESCE(ptt.typetabdescription, \'Unassigned\') AS cost_center,
 			COALESCE(SUM(' . $net . '), 0) AS total,
 			COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow,
@@ -721,7 +786,7 @@ class ExpenseReportService
 			COALESCE(SUM(CASE WHEN d.posted <> 1 AND (d.authorized IS NULL OR d.authorized = \'0000-00-00\') THEN ' . $net . ' ELSE 0 END), 0) AS pending_total,
 			COALESCE(SUM(CASE WHEN d.posted <> 1 AND d.authorized IS NOT NULL AND d.authorized <> \'0000-00-00\' THEN ' . $net . ' ELSE 0 END), 0) AS authorized_unposted_total,
 			SUM(CASE WHEN NOT ' . $this->receiptSql() . ' THEN 1 ELSE 0 END) AS missing_receipt_count'
-			. $this->fromSql() . $where['sql'] . ' GROUP BY d.tabcode, pt.usercode, wu.realname, ptt.typetabdescription ORDER BY total DESC, d.tabcode';
+			. $this->fromSql() . $where['sql'] . ' GROUP BY d.tabcode, pt.usercode, wu.realname, ptt.typetabdescription ORDER BY total DESC, d.tabcode, owner';
 		$rows = $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
 		foreach ($rows as &$row) {
 			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) {
@@ -735,6 +800,7 @@ class ExpenseReportService
 		unset($row);
 		return $rows;
 	}
+
 	private function fetchUsers(array $where, array $previousWhere, $grandTotal)
 	{
 		$current = $this->queryUserTotals($where);

@@ -932,6 +932,23 @@
     justify-content: space-between;
     padding: 8px 16px;
 }
+.expense-tab-drilldown { cursor: pointer; }
+.expense-tab-drilldown:hover td { background: #f0f8f5; }
+.expense-tab-table,
+.expense-tab-user-table { min-width: 1480px; }
+.expense-quality-note {
+    background: #f4f8f7;
+    border: 1px solid #dcebe5;
+    border-radius: 6px;
+    color: #5f707b;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 16px;
+    padding: 14px 16px;
+}
+.expense-quality-note strong { color: #173f5f; display: block; font-size: 13px; margin-bottom: 6px; }
+.expense-quality-note p { margin: 0 0 8px; }
+.expense-quality-note p:last-child { margin-bottom: 0; }
 .expense-table-tools {
     align-items: center;
     display: flex;
