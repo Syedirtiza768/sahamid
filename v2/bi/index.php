@@ -25,14 +25,17 @@ $yearStart = date('Y-01-01');
 ?>
 
 <link rel="stylesheet" href="<?php echo $NewRootPath; ?>v2/bi/bi.css">
+<link rel="stylesheet" href="<?php echo $NewRootPath; ?>v2/bi/expense-report.css">
 
 <div class="content-wrapper bi-page">
     <section class="content-header">
-        <h1>Governed Business Intelligence <small>Definitions, trust, and live ERP data</small></h1>
+        <h1>Business Intelligence <small>Decision-ready reporting from live ERP data</small></h1>
     </section>
 
     <section class="content">
         <div id="biAlert" class="alert bi-alert" role="alert" style="display:none;"></div>
+
+        <?php include(__DIR__ . '/expense-report-view.php'); ?>
 
         <div class="row">
             <div class="col-md-8">
@@ -107,9 +110,12 @@ $yearStart = date('Y-01-01');
         catalogUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/catalog.php'); ?>,
         queryUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/query.php'); ?>,
         evidenceUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/invoice_drillthrough.php'); ?>,
-        reconciliationUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/invoice_reconciliation.php'); ?>
+        reconciliationUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/invoice_reconciliation.php'); ?>,
+        expenseReportUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/expense_report.php'); ?>,
+        expenseExportUrl: <?php echo json_encode($NewRootPath . 'v2/bi/api/expense_export.php'); ?>
     };
 </script>
+<script src="<?php echo $NewRootPath; ?>v2/bi/expense-report.js"></script>
 <script src="<?php echo $NewRootPath; ?>v2/bi/bi.js"></script>
 
 <?php
