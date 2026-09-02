@@ -73,7 +73,8 @@ function SP_ReportReadFilters($source) {
 	$filters['invoice_status'] = isset($source['invoice_status']) && in_array($source['invoice_status'], array('all', 'open', 'paid', 'overdue', 'on_hold', 'current'), true) ? $source['invoice_status'] : 'all';
 	$filters['payment_status'] = isset($source['payment_status']) && in_array($source['payment_status'], array('all', 'completed', 'pending'), true) ? $source['payment_status'] : 'all';
 	$filters['aging_bucket'] = isset($source['aging_bucket']) && in_array($source['aging_bucket'], array('all', 'current', '1_30', '31_60', '61_90', '90_plus'), true) ? $source['aging_bucket'] : 'all';
-	$filters['currency'] = isset($source['currency']) && preg_match('/^[A-Za-z]{3}$/', (string)$source['currency']) ? strtoupper((string)$source['currency']) : 'all';
+	$currency = isset($source['currency']) ? trim((string)$source['currency']) : 'all';
+	$filters['currency'] = ($currency !== 'all' && preg_match('/^[A-Za-z]{3}$/', $currency)) ? strtoupper($currency) : 'all';
 	$filters['payment_method'] = isset($source['payment_method']) && preg_match('/^\d+$/', (string)$source['payment_method']) ? (string)(int)$source['payment_method'] : 'all';
 	$filters['sort'] = isset($source['sort']) && in_array($source['sort'], array('supplier', 'outstanding', 'overdue', 'next_due', 'total_invoiced', 'total_paid', 'open_invoices'), true) ? $source['sort'] : 'outstanding';
 	$filters['direction'] = isset($source['direction']) && $source['direction'] === 'asc' ? 'asc' : 'desc';
@@ -235,7 +236,7 @@ function SP_ReportInvoiceWhere($filters, $balanceExpr, $alias = 'st') {
 		$where .= " AND " . $dueDateExpr . " >= " . SP_ReportSqlQuote($filters['due_from']);
 	}
 	if ($filters['due_to'] !== '') {
-		$where .= " AND " . $dueDateExpr . " <= " . SP_ReportSqlQuote($filters['due_to']);
+		$where .= " AND " . $dueDateExpr . " < " . SP_ReportSqlDateExclusive($filters['due_to']);
 	}
 
 	switch ($filters['invoice_status']) {

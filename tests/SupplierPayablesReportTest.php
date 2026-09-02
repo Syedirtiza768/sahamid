@@ -35,9 +35,16 @@ SP_ReportTestAssert($filters['invoice_from'] === '2026-09-01' && $filters['invoi
 SP_ReportTestAssert($filters['payment_from'] === '2026-09-02' && $filters['payment_to'] === '2026-09-28', 'Payment dates are normalized into ascending order');
 SP_ReportTestAssert($filters['invoice_status'] === 'overdue' && $filters['aging_bucket'] === '90_plus', 'Allowed status and aging filters are retained');
 SP_ReportTestAssert($filters['currency'] === 'USD' && $filters['page'] === 3, 'Currency and page filters are normalized');
+$allCurrencyFilters = SP_ReportReadFilters(array('as_of' => '2026-09-02', 'currency' => 'all'));
+SP_ReportTestAssert($allCurrencyFilters['currency'] === 'all', 'The all-currency option remains unscoped');
 SP_ReportTestAssert(SP_ReportSqlDateExclusive('2026-09-02') === "DATE_ADD('2026-09-02', INTERVAL 1 DAY)", 'Report date boundaries include the complete selected day');
 $paymentPredicate = SP_ReportPaymentPredicate($filters, 'p');
 SP_ReportTestAssert(strpos($paymentPredicate, "COALESCE(NULLIF(bt.bankdate,'0000-00-00'),p.trandate)") !== false, 'Payment filters use the recorded bank date when available');
 SP_ReportTestAssert(SP_ReportHasInvoiceScope($filters), 'Invoice filters are recognized as an active invoice scope');
+
+$dueFilter = $filters;
+$dueFilter['due_to'] = '2026-09-02';
+$duePredicate = SP_ReportInvoiceWhere($dueFilter, 'st.ovamount + st.ovgst - COALESCE(st.alloc, 0)', 'st');
+SP_ReportTestAssert(strpos($duePredicate, "< DATE_ADD('2026-09-02', INTERVAL 1 DAY)") !== false, 'Due date filters include the complete selected end day');
 
 echo "SupplierPayablesReportTest: OK" . PHP_EOL;
