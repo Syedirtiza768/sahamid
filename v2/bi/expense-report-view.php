@@ -142,6 +142,7 @@
 
         <div class="expense-tabs" role="tablist" aria-label="Expense report sections">
             <button type="button" class="expense-tab is-active" role="tab" aria-selected="true" aria-controls="expenseTabSummary" data-expense-tab="summary"><i class="fa fa-dashboard"></i> Summary</button>
+            <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabTypes" data-expense-tab="types"><i class="fa fa-tags"></i> Expense type analysis</button>
             <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabTabs" data-expense-tab="tabs"><i class="fa fa-folder-open"></i> Tab analysis</button>
             <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabUsers" data-expense-tab="users"><i class="fa fa-users"></i> User analysis</button>
             <button type="button" class="expense-tab" role="tab" aria-selected="false" aria-controls="expenseTabAccounting" data-expense-tab="accounting"><i class="fa fa-sitemap"></i> Accounting</button>
@@ -198,6 +199,40 @@
                     <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th></tr></thead><tbody id="expenseCenterTable"></tbody></table></div>
                 </article>
             </div>
+        </section>
+
+        <section id="expenseTabTypes" class="expense-tab-pane" role="tabpanel" hidden>
+            <div class="expense-kpi-grid">
+                <article class="expense-kpi expense-kpi-primary"><span class="expense-kpi-label">Configured expense types</span><strong id="expenseTypeCatalogCount">—</strong><small>From PcExpenses / pcexpenses</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">Active expense types</span><strong id="expenseTypeActiveCount">—</strong><small>At least one matching transaction</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">No current activity</span><strong id="expenseTypeInactiveCount">—</strong><small>Configured but unused in this period</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">Net spend</span><strong id="expenseTypeSpend">—</strong><small>All matching transactions in PKR</small></article>
+                <article class="expense-kpi"><span class="expense-kpi-label">Transactions</span><strong id="expenseTypeTransactions">—</strong><small>Detail rows reconciled to summary</small></article>
+                <article class="expense-kpi expense-kpi-warning"><span class="expense-kpi-label">Unmapped codes</span><strong id="expenseTypeUnmappedCount">—</strong><small>Transactions needing master mapping</small></article>
+            </div>
+            <div class="expense-two-column">
+                <article class="expense-panel expense-chart-panel">
+                    <header><div><span class="expense-panel-kicker">Expense catalogue</span><h3>PKR spend by expense type</h3></div><span id="expenseTypeChartCaption" class="expense-panel-meta"></span></header>
+                    <div class="expense-chart-wrap"><canvas id="expenseTypeChart"></canvas></div>
+                    <div id="expenseTypeLegend" class="expense-chart-legend"></div>
+                </article>
+                <article class="expense-panel expense-chart-panel">
+                    <header><div><span class="expense-panel-kicker">Master coverage</span><h3>Expense type activity</h3></div><span class="expense-panel-meta">Configured types</span></header>
+                    <div class="expense-chart-wrap expense-chart-wrap-donut"><canvas id="expenseTypeActivityChart"></canvas></div>
+                    <div id="expenseTypeActivityLegend" class="expense-chart-legend"></div>
+                </article>
+            </div>
+            <article class="expense-panel expense-detail-panel">
+                <header>
+                    <div><span class="expense-panel-kicker">Complete master-based analysis</span><h3>All expense types from PcExpenses</h3></div>
+                    <div class="expense-table-tools">
+                        <label>Sort <select id="expenseTypeSort" class="form-control input-sm"><option value="codeexpense">Expense code</option><option value="description">Description</option><option value="catalog_status">Catalog status</option><option value="activity_status">Activity status</option><option value="category">Category</option><option value="glaccount">GL account</option><option value="tagdescription">Tag</option><option value="total" selected>Net spend</option><option value="transaction_count">Transactions</option><option value="tab_count">Tabs</option><option value="user_count">Users</option><option value="gross_outflow">Gross outflow</option><option value="credits">Credits</option><option value="local_purchase_total">Local purchase spend</option><option value="posted_total">Posted</option><option value="pending_total">Pending</option><option value="authorized_unposted_total">Authorized not posted</option><option value="missing_receipt_count">Missing receipts</option><option value="receipt_coverage_percent">Receipt coverage</option><option value="previous_total">Previous period</option><option value="change_amount">Change</option></select></label>
+                        <button id="expenseTypeSortDirection" type="button" class="btn btn-default btn-sm" data-direction="desc" title="Sort descending"><i class="fa fa-sort-amount-desc"></i></button>
+                    </div>
+                </header>
+                <div class="expense-table-caption"><span id="expenseTypeCaption"></span><span>Zero-activity configured types remain visible. Click a row to open its transaction detail.</span></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-type-table"><thead><tr><th>Catalog status</th><th>Activity status</th><th>Expense code</th><th>Description</th><th>Category</th><th>Spend class</th><th>GL account</th><th>GL account name</th><th>GL group</th><th>Account section</th><th>Tag</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Users</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Local purchases</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Previous period</th><th class="text-right">Change</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th></tr></thead><tbody id="expenseTypeTable"></tbody></table></div>
+            </article>
         </section>
 
         <section id="expenseTabTabs" class="expense-tab-pane" role="tabpanel" hidden>

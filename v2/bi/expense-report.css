@@ -936,6 +936,9 @@
 .expense-tab-drilldown:hover td { background: #f0f8f5; }
 .expense-tab-table,
 .expense-tab-user-table { min-width: 1480px; }
+.expense-type-table { min-width: 2520px; }
+.expense-type-drilldown { cursor: pointer; }
+.expense-type-drilldown:hover td { background: #f0f8f5; }
 .expense-quality-note {
     background: #f4f8f7;
     border: 1px solid #dcebe5;

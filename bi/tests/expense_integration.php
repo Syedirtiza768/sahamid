@@ -31,8 +31,32 @@ $request = ExpenseReportRequest::fromArray(array(
 
 try {
 	$report = (new ExpenseReportService($db, $context))->getReport($request);
-	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['tabs'], $report['breakdowns']['tab_users'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['transactions']['rows'])) {
+	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['tabs'], $report['breakdowns']['tab_users'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['breakdowns']['expense_types'], $report['transactions']['rows'])) {
 		throw new RuntimeException('report contract is incomplete');
+	}
+	if (count($report['breakdowns']['expense_types']) < count($report['breakdowns']['expense_codes'])) {
+		throw new RuntimeException('expense type catalogue is smaller than active expense codes');
+	}
+	$expenseTypeTotal = 0.0;
+	$expenseTypeTransactions = 0;
+	$inactiveConfiguredTypes = 0;
+	foreach ($report['breakdowns']['expense_types'] as $expenseType) {
+		foreach (array('catalog_status', 'activity_status', 'codeexpense', 'total', 'transaction_count', 'tab_count', 'user_count', 'receipt_coverage_percent') as $field) {
+			if (!array_key_exists($field, $expenseType)) {
+				throw new RuntimeException('expense type row is missing ' . $field);
+			}
+		}
+		$expenseTypeTotal += (float) $expenseType['total'];
+		$expenseTypeTransactions += (int) $expenseType['transaction_count'];
+		if ($expenseType['catalog_status'] === 'Configured' && (int) $expenseType['transaction_count'] === 0) {
+			$inactiveConfiguredTypes++;
+		}
+	}
+	if (abs($expenseTypeTotal - (float) $report['summary']['net_total']) > 0.000001 || $expenseTypeTransactions !== (int) $report['summary']['transaction_count']) {
+		throw new RuntimeException('expense type totals did not reconcile to summary spend');
+	}
+	if ($report['summary']['transaction_count'] > 0 && $inactiveConfiguredTypes === 0) {
+		throw new RuntimeException('expense type analysis did not retain zero-activity configured codes');
 	}
 	if (!isset($report['metadata']['currency_policy']) || $report['metadata']['default_currency'] !== 'PKR' || $report['metadata']['currency_policy'] !== 'PKR-only; source tab currency metadata is never used to convert claim amounts.') {
 		throw new RuntimeException('report did not enforce the PKR-only currency policy');
@@ -91,6 +115,9 @@ try {
 
 	$exportReport = (new ExpenseReportService($db, $context))->getReport($request, true);
 	$workbook = (new ExpenseWorkbookExporter())->build($exportReport);
+	if ($workbook->getSheetByName('Expense Type Analysis') === null) {
+		throw new RuntimeException('expense type analysis worksheet was not exported');
+	}
 	$temporaryFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'bi-expense-integration.xlsx';
 	$writer = new PhpOffice\PhpSpreadsheet\Writer\Xlsx($workbook);
 	$writer->save($temporaryFile);

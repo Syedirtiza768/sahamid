@@ -23,6 +23,7 @@ class ExpenseWorkbookExporter
 		$this->buildCategories($workbook->createSheet(), $report);
 		$this->buildMonthly($workbook->createSheet(), $report);
 		$this->buildExpenseCodes($workbook->createSheet(), $report);
+		$this->buildExpenseTypes($workbook->createSheet(), $report);
 		$this->buildUsers($workbook->createSheet(), $report);
 		$this->buildUserExpenses($workbook->createSheet(), $report);
 		$this->buildOwners($workbook->createSheet(), $report);
@@ -153,6 +154,24 @@ class ExpenseWorkbookExporter
 		$sheet->getStyle('N2:N' . $last)->getNumberFormat()->setFormatCode('0.0%');
 		$sheet->getStyle('O2:Q' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
 		$this->setWidths($sheet, array('A' => 30, 'B' => 23, 'C' => 14, 'D' => 34, 'E' => 14, 'F' => 30, 'G' => 24, 'H' => 28, 'I' => 18, 'J' => 11, 'K' => 14, 'L' => 18, 'M' => 18, 'N' => 11, 'O' => 18, 'P' => 20, 'Q' => 22));
+	}
+
+	private function buildExpenseTypes($sheet, array $report)
+	{
+		$sheet->setTitle('Expense Type Analysis');
+		$headers = array('Catalog status', 'Activity status', 'Expense code', 'Expense description', 'Executive category', 'Spend class', 'GL account', 'GL account name', 'GL group', 'Account section', 'Tag', 'Tag description', 'Net spend', 'Share', 'Transactions', 'Tabs', 'Users', 'Gross outflow', 'Credits', 'Local purchase spend', 'Local purchase transactions', 'Posted', 'Pending authorization', 'Authorized not posted', 'Previous period', 'Change', 'Change %', 'Missing receipts', 'Receipt coverage');
+		$rows = isset($report['breakdowns']['expense_types']) ? $report['breakdowns']['expense_types'] : array();
+		$this->writeTable($sheet, $headers, $rows, function ($row) {
+			return array($row['catalog_status'], $row['activity_status'], $row['codeexpense'], $row['description'], $row['category'], $row['spend_class'], $row['glaccount'], $row['accountname'], $row['account_group'], $row['sectionname'], $row['tag'], $row['tagdescription'], $row['total'], $row['share_percent'] / 100, $row['transaction_count'], $row['tab_count'], $row['user_count'], $row['gross_outflow'], $row['credits'], $row['local_purchase_total'], $row['local_purchase_count'], $row['posted_total'], $row['pending_total'], $row['authorized_unposted_total'], $row['previous_total'], $row['change_amount'], $row['change_percent'] === null ? null : $row['change_percent'] / 100, $row['missing_receipt_count'], $row['receipt_coverage_percent'] / 100);
+		});
+		$last = max(2, count($rows) + 1);
+		$sheet->getStyle('M2:M' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('N2:N' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$sheet->getStyle('R2:T' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('V2:Z' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('AA2:AA' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$sheet->getStyle('AC2:AC' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$this->setWidths($sheet, array('A' => 24, 'B' => 22, 'C' => 14, 'D' => 34, 'E' => 28, 'F' => 23, 'G' => 14, 'H' => 30, 'I' => 24, 'J' => 22, 'K' => 12, 'L' => 26, 'M' => 18, 'N' => 11, 'O' => 14, 'P' => 10, 'Q' => 10, 'R' => 18, 'S' => 16, 'T' => 20, 'U' => 20, 'V' => 18, 'W' => 20, 'X' => 22, 'Y' => 18, 'Z' => 18, 'AA' => 11, 'AB' => 17, 'AC' => 16));
 	}
 
 	private function buildOwners($sheet, array $report)

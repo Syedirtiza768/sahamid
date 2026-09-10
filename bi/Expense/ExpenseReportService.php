@@ -51,6 +51,7 @@ class ExpenseReportService
 		$currentCodes = $this->fetchExpenseCodes($currentWhere);
 		$previousCodes = $this->fetchExpenseCodes($comparisonWhere);
 		$codes = $this->decorateExpenseCodes($currentCodes, $previousCodes, $definitions, $summary['net_total']);
+		$expenseTypes = $this->buildExpenseTypeAnalysis($currentCodes, $previousCodes, $definitions, $summary['net_total']);
 		$classTotals = $this->summarizeSpendClasses($codes);
 		$summary['pnl_total'] = $classTotals['P&L spend']['total'];
 		$summary['balance_sheet_total'] = $classTotals['Balance sheet / non-P&L']['total'];
@@ -83,6 +84,7 @@ class ExpenseReportService
 			'user_expenses' => $userExpenses,
 			'currencies' => $currencies,
 			'expense_codes' => $codes,
+			'expense_types' => $expenseTypes,
 		);
 
 		return array(
@@ -136,6 +138,7 @@ class ExpenseReportService
 			'users' => $this->sumBreakdown($breakdowns['users']),
 			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses']),
 			'currencies' => $this->sumBreakdown($breakdowns['currencies']),
+			'expense_types' => $this->sumBreakdown($breakdowns['expense_types']),
 		);
 		foreach ($breakdownTotals as $name => $total) {
 			$addCheck(
@@ -154,6 +157,7 @@ class ExpenseReportService
 			'users' => $this->sumBreakdown($breakdowns['users'], 'transaction_count'),
 			'user_expenses' => $this->sumBreakdown($breakdowns['user_expenses'], 'transaction_count'),
 			'currencies' => $this->sumBreakdown($breakdowns['currencies'], 'transaction_count'),
+			'expense_types' => $this->sumBreakdown($breakdowns['expense_types'], 'transaction_count'),
 		);
 		foreach ($breakdownCounts as $name => $count) {
 			$addCheck(
@@ -624,12 +628,88 @@ class ExpenseReportService
 			COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow,
 			COALESCE(SUM(' . $this->creditAmountSql() . '), 0) AS credits,
 			COUNT(*) AS transaction_count,
+			COUNT(DISTINCT d.tabcode) AS tab_count,
+			COUNT(DISTINCT COALESCE(NULLIF(TRIM(pt.usercode), \'\'), \'__UNASSIGNED__\')) AS user_count,
+			SUM(CASE WHEN NOT ' . $this->receiptSql() . ' THEN 1 ELSE 0 END) AS missing_receipt_count,
+			COALESCE(SUM(CASE WHEN ' . $this->localPurchaseSql() . ' THEN ' . $net . ' ELSE 0 END), 0) AS local_purchase_total,
+			SUM(CASE WHEN ' . $this->localPurchaseSql() . ' THEN 1 ELSE 0 END) AS local_purchase_count,
 			COALESCE(SUM(CASE WHEN d.posted = 1 THEN ' . $net . ' ELSE 0 END), 0) AS posted_total,
 			COALESCE(SUM(CASE WHEN d.posted <> 1 AND (d.authorized IS NULL OR d.authorized = \'0000-00-00\') THEN ' . $net . ' ELSE 0 END), 0) AS pending_total,
 			COALESCE(SUM(CASE WHEN d.posted <> 1 AND d.authorized IS NOT NULL AND d.authorized <> \'0000-00-00\' THEN ' . $net . ' ELSE 0 END), 0) AS authorized_unposted_total'
 			. $this->fromSql() . $where['sql']
 			. ' GROUP BY d.codeexpense, e.description, e.glaccount, cm.accountname, cm.group_, ag.pandl, ag.parentgroupname, sec.sectionname, e.tag, tg.tagdescription';
 		return $this->queryRows($sql, $where['types'], $where['params']);
+	}
+
+	private function buildExpenseTypeAnalysis(array $current, array $previous, array $definitions, $grandTotal)
+	{
+		$currentByCode = array();
+		foreach ($current as $row) {
+			$currentByCode[(string) $row['codeexpense']] = $row;
+		}
+		$previousByCode = array();
+		foreach ($previous as $row) {
+			$previousByCode[(string) $row['codeexpense']] = $row;
+		}
+
+		$codes = array();
+		foreach (array_keys($definitions) as $code) { $codes[(string) $code] = true; }
+		foreach (array_keys($currentByCode) as $code) { $codes[(string) $code] = true; }
+		foreach (array_keys($previousByCode) as $code) { $codes[(string) $code] = true; }
+
+		$metricFields = array(
+			'total', 'gross_outflow', 'credits', 'transaction_count', 'tab_count', 'user_count',
+			'missing_receipt_count', 'local_purchase_total', 'local_purchase_count',
+			'posted_total', 'pending_total', 'authorized_unposted_total',
+		);
+		$rows = array();
+		foreach (array_keys($codes) as $code) {
+			if (strtoupper(trim($code)) === 'ASSIGNCASH') { continue; }
+			$definition = isset($definitions[$code]) ? $definitions[$code] : null;
+			$currentRow = isset($currentByCode[$code]) ? $currentByCode[$code] : null;
+			$previousRow = isset($previousByCode[$code]) ? $previousByCode[$code] : null;
+			$source = $currentRow ? $currentRow : ($definition ? $definition : $previousRow);
+			$row = $source ? $source : array();
+			if ($definition) { $row = array_merge($row, $definition); }
+
+			$row['codeexpense'] = $code;
+			$row['description'] = trim((string) (isset($row['description']) ? $row['description'] : '')) !== ''
+				? $row['description'] : 'Unmapped expense code';
+			$row['glaccount'] = isset($row['glaccount']) ? $row['glaccount'] : '';
+			$row['accountname'] = isset($row['accountname']) ? $row['accountname'] : '';
+			$row['account_group'] = isset($row['account_group']) ? $row['account_group'] : '';
+			$row['sectionname'] = isset($row['sectionname']) ? $row['sectionname'] : '';
+			$row['tag'] = isset($row['tag']) ? $row['tag'] : '';
+			$row['tagdescription'] = isset($row['tagdescription']) ? $row['tagdescription'] : '';
+			$row['category'] = $definition ? $definition['category'] : ExpenseCategoryClassifier::UNCLASSIFIED;
+			$row['spend_class'] = $definition ? $definition['spend_class'] : 'Unclassified';
+			foreach ($metricFields as $field) {
+				$row[$field] = $currentRow && isset($currentRow[$field]) ? $currentRow[$field] : 0;
+				if (in_array($field, array('transaction_count', 'tab_count', 'user_count', 'missing_receipt_count', 'local_purchase_count'), true)) {
+					$row[$field] = (int) $row[$field];
+				} else {
+					$row[$field] = (float) $row[$field];
+				}
+			}
+			$row['previous_total'] = $previousRow && isset($previousRow['total']) ? (float) $previousRow['total'] : 0.0;
+			$row['change_amount'] = $row['total'] - $row['previous_total'];
+			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
+			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
+			$row['receipt_coverage_percent'] = $row['transaction_count'] > 0
+				? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
+			$row['catalog_status'] = $definition ? 'Configured' : 'Unmapped transaction code';
+			$row['activity_status'] = $row['transaction_count'] > 0
+				? 'Active' : ($row['previous_total'] != 0.0 ? 'No current activity' : 'No activity');
+			$rows[] = $row;
+		}
+
+		usort($rows, function ($left, $right) {
+			if ($left['total'] == $right['total']) {
+				return strcmp((string) $left['codeexpense'], (string) $right['codeexpense']);
+			}
+			return $left['total'] < $right['total'] ? 1 : -1;
+		});
+		return $rows;
 	}
 
 	private function decorateExpenseCodes(array $current, array $previous, array $definitions, $grandTotal)
@@ -1033,6 +1113,19 @@ class ExpenseReportService
 			$accountGroup = trim((string) $row['account_group']);
 			$accountGroups[$accountGroup !== '' ? $accountGroup : '__unmapped__'] = array('value' => $accountGroup !== '' ? $accountGroup : '__unmapped__', 'label' => $accountGroup !== '' ? $accountGroup : 'Unmapped account group');
 			$section = trim((string) $row['section']);
+			$sections[$section !== '' ? $section : '__unmapped__'] = array('value' => $section !== '' ? $section : '__unmapped__', 'label' => $section !== '' ? $section : 'Unmapped section');
+		}
+		foreach ($definitions as $expenseCode => $definition) {
+			if (strtoupper(trim((string) $expenseCode)) === 'ASSIGNCASH') { continue; }
+			$expenseCode = trim((string) $expenseCode);
+			if ($expenseCode !== '') {
+				$expenseCodes[$expenseCode] = array('value' => $expenseCode, 'label' => $expenseCode . ' · ' . trim((string) $definition['description']));
+			}
+			$glAccount = trim((string) $definition['glaccount']);
+			$glAccounts[$glAccount !== '' ? $glAccount : '__unmapped__'] = array('value' => $glAccount !== '' ? $glAccount : '__unmapped__', 'label' => $glAccount !== '' ? $glAccount : 'Unmapped GL account');
+			$accountGroup = trim((string) $definition['account_group']);
+			$accountGroups[$accountGroup !== '' ? $accountGroup : '__unmapped__'] = array('value' => $accountGroup !== '' ? $accountGroup : '__unmapped__', 'label' => $accountGroup !== '' ? $accountGroup : 'Unmapped account group');
+			$section = trim((string) $definition['sectionname']);
 			$sections[$section !== '' ? $section : '__unmapped__'] = array('value' => $section !== '' ? $section : '__unmapped__', 'label' => $section !== '' ? $section : 'Unmapped section');
 		}
 		$presentCategories = array();

@@ -13,6 +13,7 @@
         tabs: { field: 'total', direction: 'desc' },
         tabUsers: { field: 'total', direction: 'desc' }
     };
+    var expenseTypeSortState = { field: 'total', direction: 'desc' };
 
     function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
@@ -319,6 +320,47 @@
         document.getElementById('expenseCenterCaption').textContent = centers.length + (centers.length === 1 ? ' cost centre' : ' cost centres');
     }
 
+    function renderExpenseTypeAnalysis() {
+        var rows = (report.breakdowns.expense_types || []).slice();
+        var numericFields = ['total', 'transaction_count', 'tab_count', 'user_count', 'gross_outflow', 'credits', 'local_purchase_total', 'posted_total', 'pending_total', 'authorized_unposted_total', 'previous_total', 'change_amount', 'missing_receipt_count', 'receipt_coverage_percent'];
+        var sort = document.getElementById('expenseTypeSort');
+        var sortField = sort ? sort.value : expenseTypeSortState.field;
+        var directionButton = document.getElementById('expenseTypeSortDirection');
+        var direction = directionButton ? directionButton.getAttribute('data-direction') : expenseTypeSortState.direction;
+        expenseTypeSortState = { field: sortField || 'total', direction: direction || 'desc' };
+        rows.sort(function (left, right) {
+            var leftValue = numericFields.indexOf(expenseTypeSortState.field) >= 0 ? Number(left[expenseTypeSortState.field] || 0) : String(left[expenseTypeSortState.field] || '').toLowerCase();
+            var rightValue = numericFields.indexOf(expenseTypeSortState.field) >= 0 ? Number(right[expenseTypeSortState.field] || 0) : String(right[expenseTypeSortState.field] || '').toLowerCase();
+            var result = leftValue < rightValue ? -1 : (leftValue > rightValue ? 1 : String(left.codeexpense || '').localeCompare(String(right.codeexpense || '')));
+            return expenseTypeSortState.direction === 'asc' ? result : -result;
+        });
+
+        var configured = rows.filter(function (row) { return row.catalog_status === 'Configured'; });
+        var active = configured.filter(function (row) { return Number(row.transaction_count || 0) > 0; });
+        var inactive = configured.filter(function (row) { return Number(row.transaction_count || 0) === 0; });
+        var unmapped = rows.filter(function (row) { return row.catalog_status !== 'Configured' && Number(row.transaction_count || 0) > 0; });
+        document.getElementById('expenseTypeCatalogCount').textContent = formatNumber(configured.length);
+        document.getElementById('expenseTypeActiveCount').textContent = formatNumber(active.length);
+        document.getElementById('expenseTypeInactiveCount').textContent = formatNumber(inactive.length);
+        document.getElementById('expenseTypeSpend').textContent = formatAmount(report.summary.net_total);
+        document.getElementById('expenseTypeTransactions').textContent = formatNumber(report.summary.transaction_count);
+        document.getElementById('expenseTypeUnmappedCount').textContent = formatNumber(unmapped.length);
+
+        document.getElementById('expenseTypeTable').innerHTML = rows.length ? rows.map(function (row) {
+            var tag = row.tagdescription || row.tag || 'Unmapped';
+            var localText = formatAmount(row.local_purchase_total) + '<span class="expense-subtext">' + formatNumber(row.local_purchase_count) + ' transactions</span>';
+            return '<tr class="expense-type-drilldown" data-expense-type-code="' + escapeHtml(row.codeexpense) + '" title="Open transactions for this expense type"><td>' + escapeHtml(row.catalog_status) + '</td><td>' + escapeHtml(row.activity_status) + '</td><td><strong>' + escapeHtml(row.codeexpense) + '</strong></td><td>' + escapeHtml(row.description) + '</td><td>' + escapeHtml(row.category) + '</td><td>' + escapeHtml(row.spend_class) + '</td><td>' + escapeHtml(row.glaccount || '—') + '</td><td>' + escapeHtml(row.accountname || 'Unmapped') + '</td><td>' + escapeHtml(row.account_group || 'Unmapped') + '</td><td>' + escapeHtml(row.sectionname || 'Unmapped') + '</td><td>' + escapeHtml(tag) + '<span class="expense-subtext">' + escapeHtml(row.tag || '') + '</span></td><td class="text-right">' + escapeHtml(formatAmount(row.total)) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.share_percent)) + '</td><td class="text-right">' + formatNumber(row.transaction_count) + '</td><td class="text-right">' + formatNumber(row.tab_count) + '</td><td class="text-right">' + formatNumber(row.user_count) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.gross_outflow)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.credits)) + '</td><td class="text-right">' + localText + '</td><td class="text-right">' + escapeHtml(formatAmount(row.posted_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.pending_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.authorized_unposted_total)) + '</td><td class="text-right">' + escapeHtml(formatAmount(row.previous_total)) + '</td><td class="text-right">' + changeBadge(row.change_percent) + '<span class="expense-subtext">' + escapeHtml(formatAmount(row.change_amount)) + '</span></td><td class="text-right">' + formatNumber(row.missing_receipt_count) + '</td><td class="text-right">' + escapeHtml(formatPercent(row.receipt_coverage_percent)) + '</td></tr>';
+        }).join('') : modernEmptyRow(26, 'No configured expense types match this view.');
+        document.getElementById('expenseTypeCaption').textContent = rows.length + (rows.length === 1 ? ' expense type' : ' expense types') + ' · ' + formatNumber(active.length) + ' active · ' + formatNumber(inactive.length) + ' with no current activity · ' + report.metadata.default_currency;
+    }
+
+    function openExpenseTypeTransactions(code) {
+        document.getElementById('expenseExpenseCode').value = code || '';
+        currentPage = 1;
+        setActiveExpenseTab('transactions');
+        loadReport(false);
+    }
+
     function renderExpenseCodes() {
         var rows = report.breakdowns.expense_codes || [];
         document.getElementById('expenseCodeTable').innerHTML = rows.length ? rows.map(function (row) {
@@ -544,6 +586,30 @@
         return row.chart_label || row[labelKey] || 'Unmapped';
     }
 
+    function modernRenderCountDoughnut(canvasId, legendId, rows, labelKey, countKey) {
+        modernDestroyChart(canvasId);
+        var canvas = modernPrepareCanvas(canvasId);
+        if (!canvas) { return; }
+        var visible = (rows || []).filter(function (row) { return Number(row[countKey] || 0) > 0; });
+        if (!visible.length) {
+            modernChartUnavailable(canvasId, 'No configured expense types are available.');
+            modernLegend(legendId, [], 'No catalogue activity in this filtered view.');
+            return;
+        }
+        if (typeof window.Chart === 'undefined') {
+            modernChartUnavailable(canvasId, 'Chart library unavailable. Use the complete table.');
+            return;
+        }
+        var colors = modernChartColors(visible.length);
+        var data = visible.map(function (row, index) {
+            return { value: Number(row[countKey] || 0), color: colors[index], highlight: colors[index], label: row[labelKey] || 'Unmapped' };
+        });
+        charts[canvasId] = new window.Chart(canvas.getContext('2d')).Doughnut(data, { responsive: true, percentageInnerCutout: 48 });
+        modernLegend(legendId, visible.map(function (row, index) {
+            return { label: row[labelKey] || 'Unmapped', color: colors[index], value: formatNumber(row[countKey]) + ' type' + (Number(row[countKey] || 0) === 1 ? '' : 's') };
+        }), 'Count of configured expense types; spend remains in the complete table.');
+    }
+
     function modernRenderDoughnut(canvasId, legendId, rows, labelKey, limit) {
         modernDestroyChart(canvasId);
         var canvas = modernPrepareCanvas(canvasId);
@@ -669,6 +735,18 @@
             modernRenderBar('expenseTabChart', 'expenseTabLegend', report.breakdowns.tabs, 'tabcode', 12, 'expenseTabChartCaption');
             return;
         }
+        if (tabName === 'types') {
+            modernRenderBar('expenseTypeChart', 'expenseTypeLegend', report.breakdowns.expense_types, 'codeexpense', 12, 'expenseTypeChartCaption');
+            var activity = {};
+            (report.breakdowns.expense_types || []).forEach(function (row) {
+                var label = row.catalog_status === 'Configured' ? row.activity_status : row.catalog_status;
+                activity[label] = (activity[label] || 0) + 1;
+            });
+            var activityRows = Object.keys(activity).map(function (label) { return { label: label, count: activity[label] }; });
+            activityRows.sort(function (left, right) { return right.count - left.count; });
+            modernRenderCountDoughnut('expenseTypeActivityChart', 'expenseTypeActivityLegend', activityRows, 'label', 'count');
+            return;
+        }
         if (tabName === 'accounting') {
             var expenseCodes = report.breakdowns.expense_codes || [];
             var groups = modernGroupRows(expenseCodes, 'account_group');
@@ -687,6 +765,7 @@
         renderControls();
         renderUserTables();
         renderExpenseCodes();
+        renderExpenseTypeAnalysis();
         renderCurrencyTable();
         renderTabAnalysis();
         renderTransactions();
@@ -780,6 +859,24 @@
 
     document.getElementById('expenseTabSort').addEventListener('change', function () {
         renderTabAnalysis();
+    });
+
+    document.getElementById('expenseTypeSort').addEventListener('change', function () {
+        renderExpenseTypeAnalysis();
+    });
+
+    document.getElementById('expenseTypeSortDirection').addEventListener('click', function () {
+        var direction = this.getAttribute('data-direction') === 'asc' ? 'desc' : 'asc';
+        this.setAttribute('data-direction', direction);
+        this.innerHTML = direction === 'asc' ? '<i class="fa fa-sort-amount-asc"></i>' : '<i class="fa fa-sort-amount-desc"></i>';
+        this.setAttribute('title', direction === 'asc' ? 'Sort ascending' : 'Sort descending');
+        renderExpenseTypeAnalysis();
+    });
+
+    document.getElementById('expenseTypeTable').addEventListener('click', function (event) {
+        var row = event.target.closest ? event.target.closest('[data-expense-type-code]') : null;
+        if (!row) { return; }
+        openExpenseTypeTransactions(row.getAttribute('data-expense-type-code'));
     });
 
     document.getElementById('expenseTabUserSort').addEventListener('change', function () {
