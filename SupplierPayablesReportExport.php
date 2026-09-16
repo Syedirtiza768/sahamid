@@ -136,6 +136,7 @@ $metadataRows = array(
 	array('Supplier category', $filters['supplier_type']),
 	array('Invoice status', $filters['invoice_status']),
 	array('Payment status', $filters['payment_status']),
+	array('Payment timing', $filters['payment_timing']),
 	array('Due date range', ($filters['due_from'] !== '' ? $filters['due_from'] : 'Any') . ' to ' . ($filters['due_to'] !== '' ? $filters['due_to'] : 'Any')),
 	array('Aging bucket', $filters['aging_bucket']),
 	array('Currency', $filters['currency']),

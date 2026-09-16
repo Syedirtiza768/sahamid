@@ -40,6 +40,7 @@ function SP_ReportDefaultFilters() {
 		'supplier_type' => 'all',
 		'invoice_status' => 'all',
 		'payment_status' => 'all',
+		'payment_timing' => 'all',
 		'due_from' => '',
 		'due_to' => '',
 		'aging_bucket' => 'all',
@@ -61,8 +62,9 @@ function SP_ReportReadFilters($source) {
 	foreach (array('invoice_from', 'invoice_to', 'due_from', 'due_to') as $key) {
 		$filters[$key] = SP_ReportValidDate(isset($source[$key]) ? $source[$key] : '', '');
 	}
-	$filters['payment_from'] = SP_ReportValidDate(isset($source['payment_from']) ? $source['payment_from'] : '', $filters['payment_from']);
-	$filters['payment_to'] = SP_ReportValidDate(isset($source['payment_to']) ? $source['payment_to'] : '', $filters['payment_to']);
+	$defaultPaymentFrom = substr($filters['as_of'], 0, 8) . '01';
+	$filters['payment_from'] = SP_ReportValidDate(isset($source['payment_from']) ? $source['payment_from'] : '', $defaultPaymentFrom);
+	$filters['payment_to'] = SP_ReportValidDate(isset($source['payment_to']) ? $source['payment_to'] : '', $filters['as_of']);
 
 	foreach (array('supplier', 'project') as $key) {
 		$filters[$key] = isset($source[$key]) ? trim((string)$source[$key]) : '';
@@ -72,10 +74,12 @@ function SP_ReportReadFilters($source) {
 	$filters['supplier_type'] = isset($source['supplier_type']) && preg_match('/^\d+$/', (string)$source['supplier_type']) ? (string)(int)$source['supplier_type'] : 'all';
 	$filters['invoice_status'] = isset($source['invoice_status']) && in_array($source['invoice_status'], array('all', 'open', 'paid', 'overdue', 'on_hold', 'current'), true) ? $source['invoice_status'] : 'all';
 	$filters['payment_status'] = isset($source['payment_status']) && in_array($source['payment_status'], array('all', 'completed', 'pending'), true) ? $source['payment_status'] : 'all';
+	$filters['payment_timing'] = isset($source['payment_timing']) && in_array($source['payment_timing'], array('all', 'early', 'on_time', 'late'), true) ? $source['payment_timing'] : 'all';
 	$filters['aging_bucket'] = isset($source['aging_bucket']) && in_array($source['aging_bucket'], array('all', 'current', '1_30', '31_60', '61_90', '90_plus'), true) ? $source['aging_bucket'] : 'all';
 	$currency = isset($source['currency']) ? trim((string)$source['currency']) : 'all';
 	$filters['currency'] = ($currency !== 'all' && preg_match('/^[A-Za-z]{3}$/', $currency)) ? strtoupper($currency) : 'all';
-	$filters['payment_method'] = isset($source['payment_method']) && preg_match('/^\d+$/', (string)$source['payment_method']) ? (string)(int)$source['payment_method'] : 'all';
+	$paymentMethod = isset($source['payment_method']) ? trim((string)$source['payment_method']) : 'all';
+	$filters['payment_method'] = in_array($paymentMethod, array('unrecorded', 'unmapped'), true) ? $paymentMethod : (preg_match('/^\d+$/', $paymentMethod) ? (string)(int)$paymentMethod : 'all');
 	$filters['sort'] = isset($source['sort']) && in_array($source['sort'], array('supplier', 'outstanding', 'overdue', 'next_due', 'total_invoiced', 'total_paid', 'open_invoices'), true) ? $source['sort'] : 'outstanding';
 	$filters['direction'] = isset($source['direction']) && $source['direction'] === 'asc' ? 'asc' : 'desc';
 	$filters['page'] = isset($source['page']) && preg_match('/^\d+$/', (string)$source['page']) ? max(1, (int)$source['page']) : 1;
@@ -128,6 +132,47 @@ function SP_ReportSqlQuote($value) {
 
 function SP_ReportSqlDateExclusive($value) {
 	return 'DATE_ADD(' . SP_ReportSqlQuote($value) . ', INTERVAL 1 DAY)';
+}
+
+function SP_ReportShiftDate($value, $days) {
+	$date = new DateTime($value);
+	$date->modify(((int)$days >= 0 ? '+' : '') . (int)$days . ' days');
+	return $date->format('Y-m-d');
+}
+
+function SP_ReportComparisonWindow($filters) {
+	$currentFrom = $filters['payment_from'];
+	$currentTo = $filters['payment_to'] < $filters['as_of'] ? $filters['payment_to'] : $filters['as_of'];
+	if ($currentFrom > $currentTo) $currentFrom = $currentTo;
+	$fromDate = new DateTime($currentFrom);
+	$toDate = new DateTime($currentTo);
+	$periodDays = (int)$fromDate->diff($toDate)->format('%a') + 1;
+	$priorTo = clone $fromDate;
+	$priorTo->modify('-1 day');
+	$priorFrom = clone $priorTo;
+	$priorFrom->modify('-' . ($periodDays - 1) . ' days');
+	return array(
+		'current_from' => $currentFrom,
+		'current_to' => $currentTo,
+		'prior_from' => $priorFrom->format('Y-m-d'),
+		'prior_to' => $priorTo->format('Y-m-d'),
+		'current_as_of' => $filters['as_of'],
+		'prior_as_of' => SP_ReportShiftDate($filters['as_of'], -$periodDays),
+		'period_days' => $periodDays,
+	);
+}
+
+function SP_ReportComparisonFilters($filters) {
+	$window = SP_ReportComparisonWindow($filters);
+	$prior = $filters;
+	$prior['as_of'] = $window['prior_as_of'];
+	$prior['payment_from'] = $window['prior_from'];
+	$prior['payment_to'] = $window['prior_to'];
+	foreach (array('invoice_from', 'invoice_to', 'due_from', 'due_to') as $key) {
+		if ($prior[$key] !== '') $prior[$key] = SP_ReportShiftDate($prior[$key], -$window['period_days']);
+	}
+	$prior['page'] = 1;
+	return $prior;
 }
 
 function SP_ReportHasColumn($db, $table, $column) {
@@ -191,6 +236,32 @@ function SP_ReportPaymentJoin($transactionAlias = 'st') {
 
 function SP_ReportPaymentDateExpression($alias = 'st') {
 	return "COALESCE(NULLIF(bt.bankdate,'0000-00-00')," . $alias . ".trandate)";
+}
+
+function SP_ReportPaymentTimingCondition($filters, $paymentDateExpr, $dueDateExpr) {
+	$paymentDayExpr = 'DATE(' . $paymentDateExpr . ')';
+	$dueDayExpr = 'DATE(' . $dueDateExpr . ')';
+	switch ($filters['payment_timing']) {
+		case 'early': return " AND " . $paymentDayExpr . " < " . $dueDayExpr;
+		case 'on_time': return " AND " . $paymentDayExpr . " = " . $dueDayExpr;
+		case 'late': return " AND " . $paymentDayExpr . " > " . $dueDayExpr;
+	}
+	return '';
+}
+
+function SP_ReportPaymentTimingExists($filters, $paymentAlias = 'st') {
+	if ($filters['payment_timing'] === 'all') return '';
+	$paymentDateExpr = SP_ReportPaymentDateExpression($paymentAlias);
+	$dueDateExpr = SP_ReportDueDateExpression('timing_invoice', 'timing_pt');
+	return " AND EXISTS (SELECT 1
+		FROM suppallocs AS timing_alloc
+		INNER JOIN supptrans AS timing_invoice ON timing_invoice.id=timing_alloc.transid_allocto AND timing_invoice.type IN (20,21,23,601)
+		INNER JOIN suppliers AS timing_supplier ON timing_supplier.supplierid=timing_invoice.supplierno
+		LEFT JOIN paymentterms AS timing_pt ON timing_pt.termsindicator=timing_supplier.paymentterms
+		WHERE timing_alloc.transid_allocfrom=" . $paymentAlias . ".id
+		AND timing_alloc.datealloc <= " . SP_ReportSqlQuote($filters['as_of']) .
+		SP_ReportSupplierWhere($filters, 'timing_supplier') .
+		SP_ReportPaymentTimingCondition($filters, $paymentDateExpr, $dueDateExpr) . ')';
 }
 
 function SP_ReportDimensionColumns($alias = 'st') {
@@ -296,7 +367,7 @@ function SP_ReportHasInvoiceScope($filters) {
 		$filters['invoice_status'] !== 'all' || $filters['aging_bucket'] !== 'all';
 }
 
-function SP_ReportPaymentWhere($filters, $alias = 'st') {
+function SP_ReportPaymentWhere($filters, $alias = 'st', $applyTiming = true) {
 	$paymentDateExpr = SP_ReportPaymentDateExpression($alias);
 	$where = " AND " . $paymentDateExpr . " < " . SP_ReportSqlDateExclusive($filters['as_of']);
 	$where .= " AND " . $paymentDateExpr . " >= " . SP_ReportSqlQuote($filters['payment_from']);
@@ -306,9 +377,14 @@ function SP_ReportPaymentWhere($filters, $alias = 'st') {
 	} elseif ($filters['payment_status'] === 'pending') {
 		$where .= ' AND bt.banktransid IS NULL';
 	}
-	if ($filters['payment_method'] !== 'all') {
+	if ($filters['payment_method'] === 'unrecorded') {
+		$where .= ' AND bt.banktransid IS NULL';
+	} elseif ($filters['payment_method'] === 'unmapped') {
+		$where .= ' AND bt.banktransid IS NOT NULL AND pm.paymentid IS NULL';
+	} elseif ($filters['payment_method'] !== 'all') {
 		$where .= ' AND pm.paymentid=' . (int)$filters['payment_method'];
 	}
+	if ($applyTiming) $where .= SP_ReportPaymentTimingExists($filters, $alias);
 	return $where;
 }
 
@@ -455,13 +531,16 @@ function SP_ReportGetPaymentTiming($db, $filters) {
 	$reversal = SP_ReportReversalPredicate($db, 'p');
 	$invoiceReversal = SP_ReportReversalPredicate($db, 'i');
 	$paymentDateExpr = SP_ReportPaymentDateExpression('p');
+	$invoiceDueDateExpr = SP_ReportDueDateExpression('i', 'pt');
+	$paymentDayExpr = 'DATE(' . $paymentDateExpr . ')';
+	$invoiceDueDayExpr = 'DATE(' . $invoiceDueDateExpr . ')';
 	$sql = "SELECT i.supplierno,
 			SUM(a.amt/NULLIF(i.rate,0)) AS allocated_amount,
 			SUM((a.amt/NULLIF(i.rate,0)) * DATEDIFF(" . $paymentDateExpr . ",i.trandate)) / NULLIF(SUM(a.amt/NULLIF(i.rate,0)),0) AS average_days,
-			SUM(CASE WHEN " . $paymentDateExpr . " <= (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) / NULLIF(SUM(a.amt/NULLIF(i.rate,0)),0) * 100 AS on_time_rate,
-			SUM(CASE WHEN " . $paymentDateExpr . " < (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS early_amount,
-			SUM(CASE WHEN " . $paymentDateExpr . " = (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS on_time_amount,
-		SUM(CASE WHEN " . $paymentDateExpr . " > (CASE WHEN i.duedate IS NULL OR i.duedate='0000-00-00' THEN CASE WHEN COALESCE(pt.daysbeforedue,0)>0 THEN DATE_ADD(i.trandate, INTERVAL pt.daysbeforedue DAY) ELSE DATE_ADD(DATE_ADD(i.trandate, INTERVAL 1 MONTH), INTERVAL (COALESCE(pt.dayinfollowingmonth,0) - DAYOFMONTH(i.trandate)) DAY) END ELSE i.duedate END) THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS late_amount,
+			SUM(CASE WHEN " . $paymentDayExpr . " <= " . $invoiceDueDayExpr . " THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) / NULLIF(SUM(a.amt/NULLIF(i.rate,0)),0) * 100 AS on_time_rate,
+			SUM(CASE WHEN " . $paymentDayExpr . " < " . $invoiceDueDayExpr . " THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS early_amount,
+			SUM(CASE WHEN " . $paymentDayExpr . " = " . $invoiceDueDayExpr . " THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS on_time_amount,
+		SUM(CASE WHEN " . $paymentDayExpr . " > " . $invoiceDueDayExpr . " THEN a.amt/NULLIF(i.rate,0) ELSE 0 END) AS late_amount,
 		COUNT(DISTINCT p.id) AS linked_payment_count
 		FROM suppallocs AS a
 		INNER JOIN supptrans AS p ON p.id=a.transid_allocfrom AND p.type=22
@@ -472,7 +551,8 @@ function SP_ReportGetPaymentTiming($db, $filters) {
 		WHERE a.datealloc <= " . SP_ReportSqlQuote($filters['as_of']) . $reversal . $invoiceReversal .
 		SP_ReportSupplierWhere($filters, 's') .
 		SP_ReportDimensionWhere($filters, 'p') .
-		SP_ReportPaymentWhere($filters, 'p') .
+		SP_ReportPaymentWhere($filters, 'p', false) .
+		SP_ReportPaymentTimingCondition($filters, $paymentDateExpr, $invoiceDueDateExpr) .
 		' GROUP BY i.supplierno';
 	return SP_ReportRunRows($db, $sql, _('Could not retrieve supplier payment timing'));
 }
@@ -555,6 +635,22 @@ function SP_ReportGetSummary($db, $filters) {
 		'linked_payment_count' => $linkedPaymentCount,
 		'upcoming_cash' => isset($summaryRow['due_30']) ? (float)$summaryRow['due_30'] : 0,
 	);
+}
+
+function SP_ReportGetPeriodComparison($db, $filters, $currentSummary = null) {
+	$window = SP_ReportComparisonWindow($filters);
+	$priorFilters = SP_ReportComparisonFilters($filters);
+	if (!is_array($currentSummary)) $currentSummary = SP_ReportGetSummary($db, $filters);
+	$priorSummary = SP_ReportGetSummary($db, $priorFilters);
+	$metrics = array();
+	foreach (array('total_outstanding', 'total_overdue', 'due_7', 'due_30', 'due_60', 'due_90', 'total_invoiced', 'unpaid_invoices', 'on_hold_invoices', 'paid_period', 'payment_count', 'active_suppliers', 'average_payment_days', 'on_time_rate', 'early_paid', 'on_time_paid', 'late_paid', 'upcoming_cash') as $key) {
+		$currentValue = isset($currentSummary[$key]) && $currentSummary[$key] !== null ? (float)$currentSummary[$key] : null;
+		$priorValue = isset($priorSummary[$key]) && $priorSummary[$key] !== null ? (float)$priorSummary[$key] : null;
+		$delta = ($currentValue !== null && $priorValue !== null) ? $currentValue - $priorValue : null;
+		$percent = ($delta !== null && abs($priorValue) > 0.000001) ? ($delta / abs($priorValue)) * 100 : null;
+		$metrics[$key] = array('current' => $currentValue, 'prior' => $priorValue, 'delta' => $delta, 'percent' => $percent);
+	}
+	return array('window' => $window, 'prior_filters' => $priorFilters, 'current' => $currentSummary, 'prior' => $priorSummary, 'metrics' => $metrics);
 }
 
 function SP_ReportSupplierSummarySql($db, $filters, $limit = null, $offset = 0, $includeDimensions = true, $includeOrder = true) {
@@ -700,27 +796,34 @@ function SP_ReportGetPaymentAnalytics($db, $filters) {
 		INNER JOIN suppliers AS s ON s.supplierid=st.supplierno
 		" . SP_ReportPaymentJoin() .
 		" WHERE st.type=22" . $reversal . SP_ReportSupplierWhere($filters, 's') . SP_ReportDimensionWhere($filters, 'st') . SP_ReportPaymentWhere($filters, 'st');
-	$rows = SP_ReportRunRows($db, "SELECT COALESCE(pm.paymentname,bt.banktranstype,'Not recorded') AS method_label,
+	$rows = SP_ReportRunRows($db, "SELECT COALESCE(CAST(pm.paymentid AS CHAR),'') AS method_id,
+			CASE WHEN bt.banktransid IS NULL THEN 0 ELSE 1 END AS bank_recorded,
+			COALESCE(pm.paymentname,bt.banktranstype,'Not recorded') AS method_label,
 			COALESCE(s.currcode,bt.bankcurrency,'') AS currency_label,
 			DATE_FORMAT(" . SP_ReportPaymentDateExpression('st') . ",'%Y-%m') AS trend_label,
 			COALESCE(SUM(ABS(st.ovamount+st.ovgst)/NULLIF(st.rate,0)),0) AS amount, COUNT(*) AS count " . $base .
-			' GROUP BY method_label,currency_label,trend_label', _('Could not retrieve payment analytics'));
+			' GROUP BY method_id,bank_recorded,method_label,currency_label,trend_label', _('Could not retrieve payment analytics'));
 	$byMethod = array();
 	$byCurrency = array();
 	$trend = array();
 	foreach ($rows as $row) {
+		$methodId = (string)$row['method_id'];
 		$method = (string)$row['method_label'];
 		$currency = (string)$row['currency_label'];
 		$month = (string)$row['trend_label'];
 		$amount = (float)$row['amount'];
 		$count = (int)$row['count'];
-		if (!isset($byMethod[$method])) $byMethod[$method] = array('label' => $method, 'amount' => 0, 'count' => 0);
-		$byMethod[$method]['amount'] += $amount;
-		$byMethod[$method]['count'] += $count;
+		$bankRecorded = (int)$row['bank_recorded'] === 1;
+		$isUnrecorded = !$bankRecorded;
+		$isUnmapped = $bankRecorded && $methodId === '';
+		$methodKey = $methodId !== '' ? 'id:' . $methodId : ($isUnmapped ? 'unmapped' : 'unrecorded');
+		if (!isset($byMethod[$methodKey])) $byMethod[$methodKey] = array('label' => $method, 'method_id' => $methodId, 'unrecorded' => $isUnrecorded, 'unmapped' => $isUnmapped, 'amount' => 0, 'count' => 0);
+		$byMethod[$methodKey]['amount'] += $amount;
+		$byMethod[$methodKey]['count'] += $count;
 		if (!isset($byCurrency[$currency])) $byCurrency[$currency] = array('label' => $currency, 'amount' => 0, 'count' => 0);
 		$byCurrency[$currency]['amount'] += $amount;
 		$byCurrency[$currency]['count'] += $count;
-		if (!isset($trend[$month])) $trend[$month] = array('label' => $month, 'amount' => 0, 'count' => 0);
+		if (!isset($trend[$month])) $trend[$month] = array('label' => $month, 'period_from' => $month . '-01', 'period_to' => date('Y-m-t', strtotime($month . '-01')), 'amount' => 0, 'count' => 0);
 		$trend[$month]['amount'] += $amount;
 		$trend[$month]['count'] += $count;
 	}

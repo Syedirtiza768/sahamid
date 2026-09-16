@@ -35,6 +35,54 @@ function SP_ReportPageMetric($baseUrl, $filters, $label, $value, $overrides, $de
 	return '<a class="sp-metric" href="' . $url . '"><span class="sp-metric-label">' . SP_ReportH($label) . '</span><strong>' . $value . '</strong>' . ($detail !== '' ? '<small>' . SP_ReportH($detail) . '</small>' : '') . '</a>';
 }
 
+function SP_ReportPageComparisonUrl($baseUrl, $filters, $comparison, $metric, $prior = false) {
+	$targetFilters = $prior ? $comparison['prior_filters'] : $filters;
+	$overrides = array('page' => 1);
+	if (in_array($metric, array('total_outstanding', 'unpaid_invoices'), true)) {
+		$overrides['view'] = 'payables';
+		$overrides['invoice_status'] = 'open';
+	} elseif ($metric === 'total_overdue') {
+		$overrides['view'] = 'payables';
+		$overrides['invoice_status'] = 'overdue';
+	} elseif ($metric === 'on_hold_invoices') {
+		$overrides['view'] = 'payables';
+		$overrides['invoice_status'] = 'on_hold';
+	} elseif (in_array($metric, array('due_7', 'due_30', 'due_60', 'due_90', 'upcoming_cash'), true)) {
+		$days = $metric === 'due_7' ? 7 : ($metric === 'due_60' ? 60 : ($metric === 'due_90' ? 90 : 30));
+		$dueTo = new DateTime($targetFilters['as_of']);
+		$dueTo->modify('+' . $days . ' days');
+		$overrides['view'] = 'payables';
+		$overrides['invoice_status'] = 'open';
+		$overrides['due_from'] = $targetFilters['as_of'];
+		$overrides['due_to'] = $dueTo->format('Y-m-d');
+	} elseif ($metric === 'active_suppliers') {
+		$overrides['view'] = 'suppliers';
+	} elseif (in_array($metric, array('paid_period', 'payment_count', 'average_payment_days', 'on_time_rate'), true)) {
+		$overrides['view'] = 'payments';
+	} elseif (in_array($metric, array('early_paid', 'on_time_paid', 'late_paid'), true)) {
+		$overrides['view'] = 'payments';
+		$overrides['payment_timing'] = $metric === 'early_paid' ? 'early' : ($metric === 'on_time_paid' ? 'on_time' : 'late');
+	} else {
+		$overrides['view'] = 'payables';
+	}
+	return SP_ReportPageUrl($baseUrl, $targetFilters, $overrides);
+}
+
+function SP_ReportPageComparisonValue($metric, $value, $decimals, $currency) {
+	if ($value === null) return '—';
+	if (in_array($metric, array('unpaid_invoices', 'on_hold_invoices', 'payment_count', 'active_suppliers'), true)) return number_format((float)$value, 0);
+	if ($metric === 'average_payment_days') return number_format((float)$value, 1) . ' days';
+	if ($metric === 'on_time_rate') return number_format((float)$value, 1) . '%';
+	return SP_ReportPageAmount($value, $decimals, $currency);
+}
+
+function SP_ReportPageComparisonDelta($metric, $delta, $percent, $decimals, $currency) {
+	if ($delta === null) return 'No comparable prior value';
+	$sign = $delta > 0 ? '+' : '';
+	$value = in_array($metric, array('unpaid_invoices', 'on_hold_invoices', 'payment_count', 'active_suppliers'), true) ? number_format((float)$delta, 0) : ($metric === 'average_payment_days' ? number_format((float)$delta, 1) . ' days' : ($metric === 'on_time_rate' ? number_format((float)$delta, 1) . ' pp' : SP_ReportPageAmount($delta, $decimals, $currency)));
+	return $sign . $value . ($percent === null ? '' : ' (' . $sign . number_format((float)$percent, 1) . '%)');
+}
+
 function SP_ReportPageStatus($label) {
 	$class = strtolower(preg_replace('/[^a-z0-9]+/', '-', (string)$label));
 	return '<span class="sp-status sp-status-' . SP_ReportH($class) . '">' . SP_ReportH($label) . '</span>';
@@ -45,7 +93,13 @@ function SP_ReportPageBar($value, $max, $tone = '') {
 	return '<span class="sp-bar"><i class="' . SP_ReportH($tone) . '" style="width:' . number_format($percent, 2, '.', '') . '%"></i></span>';
 }
 
+function SP_ReportPageBarLink($url, $value, $max, $tone = '') {
+	$percent = $max > 0 ? min(100, max(0, ((float)$value / (float)$max) * 100)) : 0;
+	return '<a class="sp-chart-bar-link" href="' . $url . '" aria-label="' . _('Open chart detail') . '"><span class="sp-bar"><i class="' . SP_ReportH($tone) . '" style="width:' . number_format($percent, 2, '.', '') . '%"></i></span></a>';
+}
+
 $summary = SP_ReportGetSummary($db, $filters);
+$comparison = $filters['view'] === 'overview' ? SP_ReportGetPeriodComparison($db, $filters, $summary) : null;
 $agingRows = SP_ReportGetAging($db, $filters);
 $topSuppliers = SP_ReportGetTopSuppliers($db, $filters, 5);
 
@@ -106,6 +160,8 @@ include('includes/header.inc');
 echo '<style>
 .sp-shell{max-width:1480px;margin:0 auto;padding:8px 0 36px;color:#24364b;font-family:Arial,Helvetica,sans-serif}.sp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin:4px 0 18px}.sp-eyebrow{margin:0 0 4px;color:#2e7d78;font-size:11px;font-weight:bold;letter-spacing:1.7px;text-transform:uppercase}.sp-title{margin:0;color:#17324d;font-size:30px;line-height:1.15}.sp-subtitle{margin:7px 0 0;color:#667789;font-size:13px}.sp-export{display:inline-block;background:#2f756f;color:#fff!important;border-radius:5px;padding:11px 16px;text-decoration:none;font-weight:bold;font-size:13px;box-shadow:0 2px 5px rgba(21,50,77,.14)}.sp-export:hover{background:#245e59}.sp-filter{background:#f6f9fb;border:1px solid #d9e3e9;border-radius:7px;padding:14px 16px;margin-bottom:15px}.sp-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:11px 12px}.sp-field label{display:block;color:#5d7184;font-size:11px;font-weight:bold;margin-bottom:4px}.sp-field input,.sp-field select{box-sizing:border-box;width:100%;height:32px;border:1px solid #c9d5de;border-radius:4px;background:white;color:#24364b;padding:5px 7px;font-size:12px}.sp-field-wide{grid-column:span 2}.sp-actions{display:flex;align-items:center;gap:9px;margin-top:12px}.sp-button{border:0;border-radius:4px;padding:8px 14px;background:#173e5b;color:white;font-weight:bold;cursor:pointer}.sp-reset{color:#2f756f;text-decoration:none;font-size:12px}.sp-filter-note{margin:9px 0 0;color:#7b8995;font-size:11px}.sp-active-filters{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}.sp-chip{background:#e8f1f1;color:#2e6864;border-radius:12px;padding:4px 9px;font-size:11px}.sp-note{border-left:3px solid #6c9da0;background:#f1f7f7;padding:9px 12px;margin:0 0 16px;color:#58707a;font-size:12px}.sp-metrics{display:grid;grid-template-columns:repeat(5,minmax(145px,1fr));gap:10px;margin-bottom:17px}.sp-metric{min-height:84px;display:flex;flex-direction:column;justify-content:space-between;background:white;border:1px solid #d9e3e9;border-radius:6px;padding:12px 13px;text-decoration:none;color:#24364b;box-shadow:0 2px 7px rgba(23,50,77,.05)}.sp-metric:hover{border-color:#6c9da0;box-shadow:0 3px 10px rgba(23,50,77,.12)}.sp-metric-label{font-size:11px;color:#6d7d8a;font-weight:bold;text-transform:uppercase;letter-spacing:.35px}.sp-metric strong{color:#173e5b;font-size:21px;line-height:1.2}.sp-metric small{font-size:11px;color:#84929c}.sp-tabs{display:flex;gap:4px;align-items:center;border-bottom:1px solid #d9e3e9;margin-bottom:16px}.sp-tab{padding:9px 13px;color:#617586;text-decoration:none;font-size:12px;font-weight:bold;border-bottom:3px solid transparent}.sp-tab:hover,.sp-tab-active{color:#173e5b;border-bottom-color:#2f756f}.sp-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:16px}.sp-panel{background:white;border:1px solid #d9e3e9;border-radius:6px;padding:15px;box-shadow:0 2px 7px rgba(23,50,77,.04)}.sp-panel h2{font-size:15px;color:#173e5b;margin:0 0 3px}.sp-panel-caption{font-size:11px;color:#7b8995;margin:0 0 13px}.sp-aging-row{display:grid;grid-template-columns:145px 1fr 110px 50px;gap:9px;align-items:center;margin:11px 0;font-size:12px}.sp-aging-row a{color:#2f756f;text-decoration:none}.sp-bar{height:7px;display:block;background:#edf1f3;border-radius:6px;overflow:hidden}.sp-bar i{display:block;height:100%;background:#5d9b9a;border-radius:6px}.sp-bar i.warn{background:#d59b52}.sp-bar i.danger{background:#bc6b6b}.sp-number{text-align:right;font-variant-numeric:tabular-nums}.sp-list{width:100%;border-collapse:collapse;font-size:12px}.sp-list th{background:#f4f7f9;color:#5d7184;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.35px;padding:9px 8px;border-bottom:1px solid #d9e3e9;white-space:nowrap}.sp-list td{padding:9px 8px;border-bottom:1px solid #edf1f3;vertical-align:top}.sp-list tr:hover td{background:#fbfdfd}.sp-list .number{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.sp-list a{color:#286f70;text-decoration:none}.sp-list a:hover{text-decoration:underline}.sp-status{display:inline-block;border-radius:10px;padding:3px 7px;font-size:10px;font-weight:bold;white-space:nowrap}.sp-status-active,.sp-status-open,.sp-status-completed{background:#e5f2ed;color:#27715c}.sp-status-overdue,.sp-status-on-hold{background:#f8e8e5;color:#9b4f48}.sp-status-paid{background:#edf0f4;color:#5d6c79}.sp-status-pending-not-recorded{background:#fff2d7;color:#916a24}.sp-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.sp-toolbar h2{margin:0}.sp-columns{font-size:11px;color:#6e7e8a}.sp-columns label{margin-left:7px;white-space:nowrap}.sp-columns input{vertical-align:middle}.sp-pagination{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:#6e7e8a;font-size:11px}.sp-pagination a{color:#2f756f;text-decoration:none;padding:5px 8px;border:1px solid #c9d5de;border-radius:4px;margin-left:4px}.sp-empty{padding:26px 10px;color:#7b8995;text-align:center}.sp-subtle{color:#84929c;font-size:11px}.sp-drawer-backdrop{position:fixed;inset:0;background:rgba(13,32,48,.38);z-index:20}.sp-drawer{position:fixed;top:0;right:0;width:min(520px,94vw);height:100vh;overflow:auto;background:#fff;z-index:21;box-shadow:-8px 0 25px rgba(13,32,48,.2);padding:24px;box-sizing:border-box}.sp-drawer-close{float:right;color:#617586;text-decoration:none;font-size:21px;line-height:1}.sp-drawer h2{margin:0;color:#173e5b;font-size:22px}.sp-drawer .sp-drawer-sub{color:#7b8995;font-size:12px;margin:5px 0 18px}.sp-drawer-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.sp-drawer-stat{background:#f5f8fa;border-radius:5px;padding:10px}.sp-drawer-stat span{display:block;font-size:10px;text-transform:uppercase;color:#71818e;font-weight:bold}.sp-drawer-stat strong{display:block;margin-top:5px;color:#173e5b;font-size:16px}.sp-divider{border:0;border-top:1px solid #e7edf0;margin:17px 0}.sp-small-table{font-size:11px}.sp-small-table td,.sp-small-table th{padding:6px}.sp-error-inline{background:#fff0ed;color:#9b4f48;padding:10px;font-size:12px;margin-bottom:14px}@media(max-width:1080px){.sp-filter-grid{grid-template-columns:repeat(3,minmax(130px,1fr))}.sp-metrics{grid-template-columns:repeat(3,minmax(145px,1fr))}}@media(max-width:700px){.sp-head{display:block}.sp-export{margin-top:14px}.sp-filter-grid{grid-template-columns:repeat(2,minmax(120px,1fr))}.sp-field-wide{grid-column:span 2}.sp-metrics{grid-template-columns:repeat(2,minmax(130px,1fr))}.sp-grid-2{grid-template-columns:1fr}.sp-tabs{overflow:auto}.sp-list{min-width:900px}.sp-panel{overflow:auto}}
 .sp-loading{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(13,32,48,.2)}.sp-loading[hidden]{display:none}.sp-loading-progress{position:fixed;top:0;left:0;width:100%;height:4px;background:#dce9eb;overflow:hidden}.sp-loading-progress i{display:block;width:35%;height:100%;background:#2f756f;transform:translateX(-120%);animation:sp-loading-slide 1.15s ease-in-out infinite}@keyframes sp-loading-slide{0%{transform:translateX(-120%)}100%{transform:translateX(390%)}}.sp-loading-card{display:flex;align-items:center;gap:11px;padding:12px 16px;border:1px solid #d9e3e9;border-radius:6px;background:#fff;box-shadow:0 5px 18px rgba(13,32,48,.18);color:#173e5b;font-size:12px;font-weight:bold}.sp-loading-spinner{width:16px;height:16px;border:3px solid #dce9eb;border-top-color:#2f756f;border-radius:50%;animation:sp-loading-spin .8s linear infinite}@keyframes sp-loading-spin{to{transform:rotate(360deg)}}
+.sp-comparison{margin:0 0 16px}.sp-comparison-grid{display:grid;grid-template-columns:minmax(145px,1.2fr) 1fr 1fr minmax(145px,.8fr);gap:8px 14px;align-items:center;font-size:12px}.sp-comparison-head{color:#6d7d8a;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.35px}.sp-comparison-label a,.sp-comparison-value a{color:#286f70;text-decoration:none}.sp-comparison-label a:hover,.sp-comparison-value a:hover{text-decoration:underline}.sp-comparison-bar{height:8px;display:block;background:#edf1f3;border-radius:6px;overflow:hidden;margin-bottom:4px}.sp-comparison-bar i{display:block;height:100%;border-radius:6px;background:#2f756f}.sp-comparison-bar i.prior{background:#a9bdc4}.sp-comparison-value small{display:block;color:#7b8995;font-size:10px}.sp-comparison-delta{text-align:right;font-variant-numeric:tabular-nums}.sp-comparison-delta.positive{color:#27715c}.sp-comparison-delta.negative{color:#9b4f48}.sp-drawer-stat.sp-drill-stat{display:block;color:inherit;text-decoration:none}.sp-drawer-stat.sp-drill-stat:hover{outline:1px solid #9dbfc0;background:#edf6f5}@media(max-width:700px){.sp-comparison-grid{grid-template-columns:1fr}.sp-comparison-head{display:none}.sp-comparison-delta{text-align:left}}
+.sp-chart-bar-link{display:block;padding:3px 0}.sp-chart-bar-link:hover .sp-bar{background:#dce9eb}.sp-chart-bar-link:focus{outline:2px solid #2f756f;outline-offset:2px}
 </style>';
 
 echo '<div class="sp-shell">';
@@ -131,14 +187,15 @@ foreach (array('current' => 'Current', '1_30' => '1–30 overdue', '31_60' => '3
 echo '</select></div>';
 echo '<div class="sp-field"><label for="due_from">' . _('Due date from') . '</label><input id="due_from" type="date" name="due_from" value="' . SP_ReportH($filters['due_from']) . '" /></div><div class="sp-field"><label for="due_to">' . _('Due date to') . '</label><input id="due_to" type="date" name="due_to" value="' . SP_ReportH($filters['due_to']) . '" /></div>';
 echo '<div class="sp-field"><label for="payment_status">' . _('Payment status') . '</label><select id="payment_status" name="payment_status"><option value="all">' . _('All payment records') . '</option><option value="completed"' . ($filters['payment_status'] === 'completed' ? ' selected="selected"' : '') . '>' . _('Completed / bank recorded') . '</option><option value="pending"' . ($filters['payment_status'] === 'pending' ? ' selected="selected"' : '') . '>' . _('Pending / not recorded') . '</option></select></div>';
-echo '<div class="sp-field"><label for="payment_method">' . _('Payment method') . '</label><select id="payment_method" name="payment_method"><option value="all">' . _('All methods') . '</option>';
+echo '<div class="sp-field"><label for="payment_timing">' . _('Payment timing') . '</label><select id="payment_timing" name="payment_timing"><option value="all">' . _('All timing outcomes') . '</option><option value="early"' . ($filters['payment_timing'] === 'early' ? ' selected="selected"' : '') . '>' . _('Early') . '</option><option value="on_time"' . ($filters['payment_timing'] === 'on_time' ? ' selected="selected"' : '') . '>' . _('On time') . '</option><option value="late"' . ($filters['payment_timing'] === 'late' ? ' selected="selected"' : '') . '>' . _('Late') . '</option></select></div>';
+echo '<div class="sp-field"><label for="payment_method">' . _('Payment method') . '</label><select id="payment_method" name="payment_method"><option value="all">' . _('All methods') . '</option><option value="unrecorded"' . ($filters['payment_method'] === 'unrecorded' ? ' selected="selected"' : '') . '>' . _('Not recorded') . '</option><option value="unmapped"' . ($filters['payment_method'] === 'unmapped' ? ' selected="selected"' : '') . '>' . _('Recorded, method unmapped') . '</option>';
 foreach ($filterOptions['payment_methods'] as $option) echo '<option value="' . (int)$option['paymentid'] . '"' . ((string)$filters['payment_method'] === (string)$option['paymentid'] ? ' selected="selected"' : '') . '>' . SP_ReportH($option['paymentname']) . '</option>';
 echo '</select></div>';
 echo '<div class="sp-field"><label for="project">' . _('Project / job reference') . '</label><input id="project" type="search" name="project" value="' . SP_ReportH($filters['project']) . '" /></div>';
 echo '</div><div class="sp-actions"><button class="sp-button" type="submit">' . _('Apply filters') . '</button><a class="sp-reset" href="' . $baseUrl . '">' . _('Reset all') . '</a></div><p class="sp-filter-note">' . _('Invoice filters apply to invoice totals, aging, supplier exposure, and payable detail. Payment filters apply to payment totals, timing, supplier payments, and payment detail. Supplier, category, currency, and project filters apply to matching records.') . '</p></form>';
 
 $activeChips = array();
-foreach (array('supplier' => 'Supplier', 'supplier_type' => 'Category', 'currency' => 'Currency', 'invoice_status' => 'Invoice status', 'aging_bucket' => 'Aging', 'payment_status' => 'Payment status', 'payment_method' => 'Payment method', 'project' => 'Project') as $key => $label) {
+foreach (array('supplier' => 'Supplier', 'supplier_type' => 'Category', 'currency' => 'Currency', 'invoice_status' => 'Invoice status', 'aging_bucket' => 'Aging', 'payment_status' => 'Payment status', 'payment_timing' => 'Payment timing', 'payment_method' => 'Payment method', 'project' => 'Project') as $key => $label) {
 	if ($filters[$key] !== '' && $filters[$key] !== 'all') $activeChips[] = '<span class="sp-chip">' . SP_ReportH($label . ': ' . $filters[$key]) . '</span>';
 }
 if (count($activeChips) > 0) echo '<div class="sp-active-filters">' . implode('', $activeChips) . '</div>';
@@ -161,6 +218,38 @@ echo SP_ReportPageMetric($baseUrl, $filters, _('On-time payment rate'), $summary
 echo SP_ReportPageMetric($baseUrl, $filters, _('Upcoming cash requirement'), SP_ReportPageAmount($upcomingCash, $companyDecimals, $companyCurrency), array('view' => 'payables', 'invoice_status' => 'open', 'due_from' => $filters['as_of'], 'due_to' => $due30->format('Y-m-d'), 'page' => 1), _('Next 30 days, excluding overdue'));
 echo '</div>';
 
+
+if ($comparison !== null) {
+$comparisonDefinitions = array(
+	'total_outstanding' => 'Outstanding exposure',
+	'total_overdue' => 'Overdue exposure',
+	'total_invoiced' => 'Total invoiced',
+	'paid_period' => 'Paid in period',
+	'unpaid_invoices' => 'Unpaid invoices',
+	'on_hold_invoices' => 'On-hold invoices',
+	'upcoming_cash' => 'Upcoming cash',
+	'average_payment_days' => 'Average payment days',
+	'on_time_rate' => 'On-time rate',
+);
+$comparisonMaxByMetric = array();
+foreach ($comparisonDefinitions as $metric => $label) {
+		$comparisonMetric = $comparison['metrics'][$metric];
+		$comparisonMaxByMetric[$metric] = max(abs((float)$comparisonMetric['current']), abs((float)$comparisonMetric['prior']));
+}
+echo '<section class="sp-panel sp-comparison"><div class="sp-toolbar"><div><h2>' . _('Period-over-period comparison') . '</h2><p class="sp-panel-caption">' . _('Current') . ': ' . SP_ReportH($comparison['window']['current_from']) . ' → ' . SP_ReportH($comparison['window']['current_to']) . ' · ' . _('Prior equal-length period') . ': ' . SP_ReportH($comparison['window']['prior_from']) . ' → ' . SP_ReportH($comparison['window']['prior_to']) . ' · ' . _('snapshots') . ': ' . SP_ReportH($comparison['window']['current_as_of']) . ' vs ' . SP_ReportH($comparison['window']['prior_as_of']) . ' · ' . _('click either value to drill into that period') . '</p></div></div><div class="sp-comparison-grid"><span class="sp-comparison-head">' . _('Metric') . '</span><span class="sp-comparison-head">' . _('Current') . '</span><span class="sp-comparison-head">' . _('Prior') . '</span><span class="sp-comparison-head">' . _('Change') . '</span>';
+foreach ($comparisonDefinitions as $metric => $label) {
+	$comparisonMetric = $comparison['metrics'][$metric];
+	$metricMax = $comparisonMaxByMetric[$metric];
+	$currentWidth = $metricMax > 0 && $comparisonMetric['current'] !== null ? min(100, abs((float)$comparisonMetric['current']) / $metricMax * 100) : 0;
+	$priorWidth = $metricMax > 0 && $comparisonMetric['prior'] !== null ? min(100, abs((float)$comparisonMetric['prior']) / $metricMax * 100) : 0;
+	$deltaClass = $comparisonMetric['delta'] > 0 ? ' positive' : ($comparisonMetric['delta'] < 0 ? ' negative' : '');
+	$currentUrl = SP_ReportPageComparisonUrl($baseUrl, $filters, $comparison, $metric, false);
+	$priorUrl = SP_ReportPageComparisonUrl($baseUrl, $filters, $comparison, $metric, true);
+	echo '<div class="sp-comparison-label"><a href="' . $currentUrl . '">' . _($label) . '</a></div><div class="sp-comparison-value"><a href="' . $currentUrl . '"><span class="sp-comparison-bar"><i style="width:' . number_format($currentWidth, 2, '.', '') . '%"></i></span><strong>' . SP_ReportH(SP_ReportPageComparisonValue($metric, $comparisonMetric['current'], $companyDecimals, $companyCurrency)) . '</strong></a><small>' . _('Current') . '</small></div><div class="sp-comparison-value"><a href="' . $priorUrl . '"><span class="sp-comparison-bar"><i class="prior" style="width:' . number_format($priorWidth, 2, '.', '') . '%"></i></span><strong>' . SP_ReportH(SP_ReportPageComparisonValue($metric, $comparisonMetric['prior'], $companyDecimals, $companyCurrency)) . '</strong></a><small>' . _('Prior') . '</small></div><div class="sp-comparison-delta' . $deltaClass . '">' . SP_ReportH(SP_ReportPageComparisonDelta($metric, $comparisonMetric['delta'], $comparisonMetric['percent'], $companyDecimals, $companyCurrency)) . '</div>';
+}
+echo '</div></section>';
+}
+
 echo '<nav class="sp-tabs">';
 foreach (array('overview' => 'Executive overview', 'suppliers' => 'Supplier summary', 'payables' => 'Payables detail', 'payments' => 'Payment analysis', 'aging' => 'Aging analysis') as $key => $label) echo '<a class="sp-tab' . ($filters['view'] === $key ? ' sp-tab-active' : '') . '" href="' . SP_ReportPageUrl($baseUrl, $filters, array('view' => $key, 'page' => 1)) . '">' . _($label) . '</a>';
 echo '</nav>';
@@ -170,11 +259,18 @@ if ($filters['view'] === 'overview') {
 	foreach ($agingRows as $row) {
 		$bucketUrl = SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payables', 'aging_bucket' => $row['aging_bucket'], 'page' => 1));
 		$tone = in_array($row['aging_bucket'], array('61_90', '90_plus'), true) ? 'danger' : (in_array($row['aging_bucket'], array('31_60'), true) ? 'warn' : '');
-		echo '<div class="sp-aging-row"><a href="' . $bucketUrl . '">' . SP_ReportH(SP_ReportAgeBucketLabel($row['aging_bucket'])) . '</a>' . SP_ReportPageBar(abs($row['amount']), $maxAging, $tone) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['invoice_count'] . '</span></div>';
+		echo '<div class="sp-aging-row"><a href="' . $bucketUrl . '">' . SP_ReportH(SP_ReportAgeBucketLabel($row['aging_bucket'])) . '</a>' . SP_ReportPageBarLink($bucketUrl, abs($row['amount']), $maxAging, $tone) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['invoice_count'] . '</span></div>';
 	}
 	echo '</section><section class="sp-panel"><h2>' . _('Payment behavior') . '</h2><p class="sp-panel-caption">' . _('Payments recorded between') . ' ' . SP_ReportH($filters['payment_from']) . ' ' . _('and') . ' ' . SP_ReportH($filters['payment_to']) . '</p>';
 	if (count($analytics['by_method']) === 0) echo '<div class="sp-empty">' . _('No payment records match the selected period and filters.') . '</div>';
-	foreach ($analytics['by_method'] as $row) echo '<div class="sp-aging-row"><a href="' . SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payments', 'page' => 1)) . '">' . SP_ReportH($row['label']) . '</a>' . SP_ReportPageBar($row['amount'], $maxMethod) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['count'] . '</span></div>';
+	foreach ($analytics['by_method'] as $row) {
+		$methodOverrides = array('view' => 'payments', 'page' => 1);
+		if (!empty($row['unrecorded'])) $methodOverrides['payment_status'] = 'pending';
+		elseif (!empty($row['unmapped'])) $methodOverrides['payment_method'] = 'unmapped';
+		else $methodOverrides['payment_method'] = (int)$row['method_id'];
+		$methodUrl = SP_ReportPageUrl($baseUrl, $filters, $methodOverrides);
+		echo '<div class="sp-aging-row"><a href="' . $methodUrl . '">' . SP_ReportH($row['label']) . '</a>' . SP_ReportPageBarLink($methodUrl, $row['amount'], $maxMethod) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['count'] . '</span></div>';
+	}
 	if (count($analytics['by_currency']) > 0) {
 		echo '<hr class="sp-divider"><p class="sp-panel-caption">' . _('Payments by currency') . '</p>';
 		foreach ($analytics['by_currency'] as $row) echo '<div class="sp-aging-row"><a href="' . SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payments', 'currency' => $row['label'], 'page' => 1)) . '">' . SP_ReportH($row['label']) . '</a><span></span><span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['count'] . '</span></div>';
@@ -230,10 +326,24 @@ if ($filters['view'] === 'payables') {
 
 if ($filters['view'] === 'payments') {
 	echo '<div class="sp-grid-2"><section class="sp-panel"><h2>' . _('Payments by method') . '</h2><p class="sp-panel-caption">' . _('Bank transaction method labels from the existing payment methods table') . '</p>';
-	foreach ($analytics['by_method'] as $row) echo '<div class="sp-aging-row"><span>' . SP_ReportH($row['label']) . '</span>' . SP_ReportPageBar($row['amount'], $maxMethod) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['count'] . '</span></div>';
+	foreach ($analytics['by_method'] as $row) {
+		$methodOverrides = array('view' => 'payments', 'page' => 1);
+		if (!empty($row['unrecorded'])) $methodOverrides['payment_status'] = 'pending';
+		elseif (!empty($row['unmapped'])) $methodOverrides['payment_method'] = 'unmapped';
+		else $methodOverrides['payment_method'] = (int)$row['method_id'];
+		$methodUrl = SP_ReportPageUrl($baseUrl, $filters, $methodOverrides);
+		echo '<div class="sp-aging-row"><a href="' . $methodUrl . '">' . SP_ReportH($row['label']) . '</a>' . SP_ReportPageBarLink($methodUrl, $row['amount'], $maxMethod) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['count'] . '</span></div>';
+	}
 	if (count($analytics['trend']) > 0) echo '<hr class="sp-divider"><h2>' . _('Payment trend') . '</h2>';
-	foreach ($analytics['trend'] as $row) echo '<div class="sp-aging-row"><span>' . SP_ReportH($row['label']) . '</span>' . SP_ReportPageBar($row['amount'], $maxMethod) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['count'] . '</span></div>';
-	echo '</section><section class="sp-panel"><h2>' . _('Payment timing') . '</h2><p class="sp-panel-caption">' . _('Timing is measured on recorded allocations from invoice date to payment date.') . '</p><div class="sp-drawer-stats"><div class="sp-drawer-stat"><span>' . _('Early') . '</span><strong>' . SP_ReportPageAmount($summary['early_paid'], $companyDecimals, $companyCurrency) . '</strong></div><div class="sp-drawer-stat"><span>' . _('On time') . '</span><strong>' . SP_ReportPageAmount($summary['on_time_paid'], $companyDecimals, $companyCurrency) . '</strong></div><div class="sp-drawer-stat"><span>' . _('Late') . '</span><strong>' . SP_ReportPageAmount($summary['late_paid'], $companyDecimals, $companyCurrency) . '</strong></div><div class="sp-drawer-stat"><span>' . _('Average days') . '</span><strong>' . ($summary['average_payment_days'] === null ? '—' : number_format($summary['average_payment_days'], 1)) . '</strong></div></div><p class="sp-panel-caption">' . _('Payments without a linked allocation are included in payment totals but not in timing rates.') . '</p></section></div>';
+	foreach ($analytics['trend'] as $row) {
+		$trendUrl = SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payments', 'payment_from' => $row['period_from'], 'payment_to' => $row['period_to'], 'page' => 1));
+		echo '<div class="sp-aging-row"><a href="' . $trendUrl . '">' . SP_ReportH($row['label']) . '</a>' . SP_ReportPageBarLink($trendUrl, $row['amount'], $maxMethod) . '<span class="sp-number">' . SP_ReportPageAmount($row['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$row['count'] . '</span></div>';
+	}
+	$earlyUrl = SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payments', 'payment_timing' => 'early', 'page' => 1));
+	$onTimeUrl = SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payments', 'payment_timing' => 'on_time', 'page' => 1));
+	$lateUrl = SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payments', 'payment_timing' => 'late', 'page' => 1));
+	$timingAllUrl = SP_ReportPageUrl($baseUrl, $filters, array('view' => 'payments', 'payment_timing' => 'all', 'page' => 1));
+	echo '</section><section class="sp-panel"><h2>' . _('Payment timing') . '</h2><p class="sp-panel-caption">' . _('Timing is measured on recorded allocations from invoice date to payment date; click a result to inspect matching payments.') . '</p><div class="sp-drawer-stats"><a class="sp-drawer-stat sp-drill-stat" href="' . $earlyUrl . '"><span>' . _('Early') . '</span><strong>' . SP_ReportPageAmount($summary['early_paid'], $companyDecimals, $companyCurrency) . '</strong></a><a class="sp-drawer-stat sp-drill-stat" href="' . $onTimeUrl . '"><span>' . _('On time') . '</span><strong>' . SP_ReportPageAmount($summary['on_time_paid'], $companyDecimals, $companyCurrency) . '</strong></a><a class="sp-drawer-stat sp-drill-stat" href="' . $lateUrl . '"><span>' . _('Late') . '</span><strong>' . SP_ReportPageAmount($summary['late_paid'], $companyDecimals, $companyCurrency) . '</strong></a><a class="sp-drawer-stat sp-drill-stat" href="' . $timingAllUrl . '"><span>' . _('Average days') . '</span><strong>' . ($summary['average_payment_days'] === null ? '—' : number_format($summary['average_payment_days'], 1)) . '</strong></a></div><p class="sp-panel-caption">' . _('Payments without a linked allocation are included in payment totals but not in timing rates.') . '</p></section></div>';
 	echo '<section class="sp-panel"><div class="sp-toolbar"><div><h2>' . _('Payment detail') . '</h2><p class="sp-panel-caption">' . (int)$paymentCount . ' ' . _('records') . '</p></div></div><div style="overflow:auto"><table class="sp-list"><thead><tr><th>' . _('Payment') . '</th><th>' . _('Supplier') . '</th><th>' . _('Payment date') . '</th><th class="number">' . _('Amount') . '</th><th>' . _('Currency') . '</th><th>' . _('Method') . '</th><th>' . _('Payment reference') . '</th><th>' . _('Bank account') . '</th><th>' . _('Status') . '</th><th>' . _('Project / job') . '</th></tr></thead><tbody>';
 	if (count($paymentRows) === 0) echo '<tr><td colspan="10" class="sp-empty">' . _('No payments match these filters.') . '</td></tr>';
 	foreach ($paymentRows as $row) {
@@ -253,7 +363,15 @@ if ($supplierDetail !== null && !empty($supplierDetail['summary'])) {
 	echo '<div class="sp-drawer-backdrop"></div><aside class="sp-drawer"><a class="sp-drawer-close" href="' . SP_ReportPageUrl($baseUrl, $filters, array('supplier_detail' => '')) . '" aria-label="' . _('Close') . '">×</a><p class="sp-eyebrow">' . _('Supplier relationship profile') . '</p><h2>' . SP_ReportH($row['suppname']) . '</h2><p class="sp-drawer-sub">' . SP_ReportH($row['supplierid']) . ' · ' . SP_ReportH($row['supplier_category']) . ' · ' . SP_ReportPageStatus('Active') . '</p><div class="sp-drawer-stats"><div class="sp-drawer-stat"><span>' . _('Outstanding exposure') . '</span><strong>' . SP_ReportPageAmount($row['outstanding'], $companyDecimals, $companyCurrency) . '</strong></div><div class="sp-drawer-stat"><span>' . _('Total invoiced') . '</span><strong>' . SP_ReportPageAmount($row['total_invoiced'], $companyDecimals, $companyCurrency) . '</strong></div><div class="sp-drawer-stat"><span>' . _('Recorded payments') . '</span><strong>' . SP_ReportPageAmount($row['total_paid'], $companyDecimals, $companyCurrency) . '</strong></div><div class="sp-drawer-stat"><span>' . _('Avg. payment time') . '</span><strong>' . ($row['average_days'] === null ? '—' : number_format($row['average_days'], 1) . ' days') . '</strong></div></div><p><strong>' . _('Payment terms') . ':</strong> ' . SP_ReportH($row['payment_terms']) . '<br><strong>' . _('Currency') . ':</strong> ' . SP_ReportH($row['currency']) . '<br><strong>' . _('Contact') . ':</strong> ' . SP_ReportH(trim($row['contact_email'] . ' ' . $row['contact_phone']) !== '' ? trim($row['contact_email'] . ' ' . $row['contact_phone']) : '—') . '</p>';
 	echo '<hr class="sp-divider"><h2>' . _('Payment methods') . '</h2>';
 	$detailMax = 0; foreach ($paymentDetailAnalytics['by_method'] as $method) $detailMax = max($detailMax, (float)$method['amount']);
-	foreach ($paymentDetailAnalytics['by_method'] as $method) echo '<div class="sp-aging-row"><span>' . SP_ReportH($method['label']) . '</span>' . SP_ReportPageBar($method['amount'], $detailMax) . '<span class="sp-number">' . SP_ReportPageAmount($method['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$method['count'] . '</span></div>';
+	$detailMethodFilters = $detailFilters;
+	foreach ($paymentDetailAnalytics['by_method'] as $method) {
+		$methodOverrides = array('view' => 'payments', 'page' => 1);
+		if (!empty($method['unrecorded'])) $methodOverrides['payment_status'] = 'pending';
+		elseif (!empty($method['unmapped'])) $methodOverrides['payment_method'] = 'unmapped';
+		else $methodOverrides['payment_method'] = (int)$method['method_id'];
+		$methodUrl = SP_ReportPageUrl($baseUrl, $detailMethodFilters, $methodOverrides);
+		echo '<div class="sp-aging-row"><a href="' . $methodUrl . '">' . SP_ReportH($method['label']) . '</a>' . SP_ReportPageBarLink($methodUrl, $method['amount'], $detailMax) . '<span class="sp-number">' . SP_ReportPageAmount($method['amount'], $companyDecimals, $companyCurrency) . '</span><span class="sp-number">' . (int)$method['count'] . '</span></div>';
+	}
 	echo '<hr class="sp-divider"><h2>' . _('Recent activity') . '</h2><table class="sp-list sp-small-table"><thead><tr><th>' . _('Date') . '</th><th>' . _('Type') . '</th><th class="number">' . _('Amount') . '</th><th>' . _('Status') . '</th></tr></thead><tbody>';
 	foreach ($supplierDetail['transactions'] as $transaction) echo '<tr><td>' . SP_ReportPageDate($transaction['trandate']) . '</td><td>' . SP_ReportH($transaction['type_name']) . '<br><span class="sp-subtle">' . SP_ReportH($transaction['suppreference'] !== '' ? $transaction['suppreference'] : $transaction['transno']) . '</span></td><td class="number">' . SP_ReportPageAmount($transaction['original_amount'], $companyDecimals, $transaction['currency']) . '</td><td>' . SP_ReportPageStatus($transaction['status']) . '</td></tr>';
 	if (count($supplierDetail['transactions']) === 0) echo '<tr><td colspan="4" class="sp-empty">' . _('No recent activity.') . '</td></tr>';
