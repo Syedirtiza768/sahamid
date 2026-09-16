@@ -797,6 +797,34 @@
 
 .expense-result-bar strong { color: var(--expense-ink); font-size: 13px; }
 .expense-result-meta { align-items: flex-end; display: flex; flex-direction: column; gap: 4px; }
+.expense-comparison-bar {
+    align-items: center;
+    background: #f2f8fb;
+    border: 1px solid #d7e8ef;
+    border-left: 4px solid var(--expense-accent);
+    border-radius: 8px;
+    color: #526f7f;
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 14px;
+    padding: 9px 13px;
+}
+.expense-comparison-bar strong { color: var(--expense-ink); display: block; font-size: 12px; margin-top: 3px; }
+.expense-comparison-bar .expense-panel-meta { text-align: right; }
+.expense-chart-drilldown {
+    background: #fffdf5;
+    border: 1px solid #f1dfad;
+    border-radius: 8px;
+    margin: -2px 0 14px;
+    padding: 11px 14px;
+}
+.expense-chart-drilldown header { align-items: center; display: flex; justify-content: space-between; gap: 12px; }
+.expense-chart-drilldown h3 { color: var(--expense-ink); font-size: 13px; margin: 2px 0 0; }
+.expense-chart-drilldown p { color: #6f7f88; font-size: 11px; margin: 7px 0; }
+.expense-chart-drilldown-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.expense-chart-drilldown-list button { background: #fff; border: 1px solid #e6d39b; border-radius: 14px; color: #795e1c; cursor: pointer; font-size: 10px; padding: 5px 8px; }
+.expense-chart-drilldown-list button:hover { background: #fff5d8; }
+.expense-chart-clickable { cursor: pointer; }
 .expense-validation-status { border-radius: 10px; font-size: 9px; font-weight: 700; padding: 4px 8px; white-space: nowrap; }
 .expense-validation-status.is-passed { background: #e8f6ef; color: #167453; }
 .expense-validation-status.is-attention { background: #fff2df; color: #9a5c12; }
@@ -1006,6 +1034,8 @@
     .expense-filter-section-heading small { display: block; margin-top: 4px; }
     .expense-filter-footer { align-items: flex-start; display: block; }
     .expense-filter-actions { justify-content: flex-end; margin-top: 9px; }
+    .expense-comparison-bar { align-items: flex-start; display: block; }
+    .expense-comparison-bar .expense-panel-meta { display: block; margin-top: 7px; text-align: left; }
     .expense-result-bar { align-items: flex-start; display: block; }
     .expense-result-meta { align-items: flex-start; margin-top: 7px; }
     .expense-result-bar > .expense-panel-meta { margin: 7px 0 0; text-align: left; }

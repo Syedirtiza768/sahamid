@@ -34,6 +34,25 @@ try {
 	if (!isset($report['summary']['net_total'], $report['breakdowns']['categories'], $report['breakdowns']['tabs'], $report['breakdowns']['tab_users'], $report['breakdowns']['users'], $report['breakdowns']['user_expenses'], $report['breakdowns']['expense_types'], $report['transactions']['rows'])) {
 		throw new RuntimeException('report contract is incomplete');
 	}
+	if (!isset($report['summary']['comparison']['previous_range'], $report['summary']['comparison']['metrics']['net_total'])) {
+		throw new RuntimeException('period comparison contract is incomplete');
+	}
+	foreach (array('categories', 'statuses', 'cost_centers', 'users', 'tabs', 'tab_users', 'user_expenses', 'currencies', 'expense_codes') as $breakdownName) {
+		foreach ($report['breakdowns'][$breakdownName] as $breakdownRow) {
+			foreach (array('previous_total', 'change_amount', 'change_percent', 'comparison_status') as $field) {
+				if (!array_key_exists($field, $breakdownRow)) {
+					throw new RuntimeException($breakdownName . ' comparison row is missing ' . $field);
+				}
+			}
+		}
+	}
+	foreach ($report['breakdowns']['monthly'] as $monthRow) {
+		foreach (array('comparison_period', 'previous_total', 'change_amount', 'change_percent') as $field) {
+			if (!array_key_exists($field, $monthRow)) {
+				throw new RuntimeException('monthly comparison row is missing ' . $field);
+			}
+		}
+	}
 	if (count($report['breakdowns']['expense_types']) < count($report['breakdowns']['expense_codes'])) {
 		throw new RuntimeException('expense type catalogue is smaller than active expense codes');
 	}
@@ -41,7 +60,7 @@ try {
 	$expenseTypeTransactions = 0;
 	$inactiveConfiguredTypes = 0;
 	foreach ($report['breakdowns']['expense_types'] as $expenseType) {
-		foreach (array('catalog_status', 'activity_status', 'codeexpense', 'total', 'transaction_count', 'tab_count', 'user_count', 'receipt_coverage_percent') as $field) {
+		foreach (array('catalog_status', 'activity_status', 'codeexpense', 'total', 'transaction_count', 'previous_transaction_count', 'previous_total', 'change_amount', 'change_percent', 'tab_count', 'user_count', 'receipt_coverage_percent') as $field) {
 			if (!array_key_exists($field, $expenseType)) {
 				throw new RuntimeException('expense type row is missing ' . $field);
 			}

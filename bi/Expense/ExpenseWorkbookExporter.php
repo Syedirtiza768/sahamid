@@ -131,13 +131,16 @@ class ExpenseWorkbookExporter
 	private function buildMonthly($sheet, array $report)
 	{
 		$sheet->setTitle('Monthly Trend');
-		$headers = array('Month', 'Net spend', 'Gross outflow', 'Credits', 'Transactions');
+		$headers = array('Month', 'Comparison month', 'Net spend', 'Previous net spend', 'Change', 'Change %', 'Gross outflow', 'Credits', 'Transactions', 'Previous transactions', 'Transaction change', 'Transaction change %');
 		$this->writeTable($sheet, $headers, $report['breakdowns']['monthly'], function ($row) {
-			return array($row['period'], $row['total'], $row['gross_outflow'], $row['credits'], $row['transaction_count']);
+			return array($row['period'], $row['comparison_period'], $row['total'], $row['previous_total'], $row['change_amount'], $row['change_percent'] === null ? null : $row['change_percent'] / 100, $row['gross_outflow'], $row['credits'], $row['transaction_count'], $row['previous_transaction_count'], $row['transaction_change'], $row['transaction_change_percent'] === null ? null : $row['transaction_change_percent'] / 100);
 		});
 		$last = count($report['breakdowns']['monthly']) + 1;
-		$sheet->getStyle('B2:D' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
-		$this->setWidths($sheet, array('A' => 14, 'B' => 20, 'C' => 20, 'D' => 18, 'E' => 16));
+		$sheet->getStyle('C2:E' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('F2:F' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$sheet->getStyle('G2:H' . $last)->getNumberFormat()->setFormatCode($this->amountFormat());
+		$sheet->getStyle('L2:L' . $last)->getNumberFormat()->setFormatCode('0.0%');
+		$this->setWidths($sheet, array('A' => 14, 'B' => 18, 'C' => 20, 'D' => 20, 'E' => 18, 'F' => 11, 'G' => 20, 'H' => 18, 'I' => 16, 'J' => 20, 'K' => 18, 'L' => 16));
 	}
 
 	private function buildExpenseCodes($sheet, array $report)

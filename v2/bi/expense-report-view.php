@@ -139,6 +139,15 @@
                 <span id="expenseResultScope" class="expense-panel-meta"></span>
             </div>
         </div>
+        <div id="expenseComparisonBar" class="expense-comparison-bar" aria-live="polite">
+            <div><span class="expense-panel-kicker">Period over period</span><strong id="expenseComparisonSummary">Comparing the selected period with the immediately preceding period of equal length.</strong></div>
+            <span id="expenseComparisonPeriods" class="expense-panel-meta"></span>
+        </div>
+        <div id="expenseChartDrilldown" class="expense-chart-drilldown" style="display:none;" aria-live="polite">
+            <header><div><span class="expense-panel-kicker">Chart drill-down</span><h3 id="expenseChartDrilldownTitle">Selected chart values</h3></div><button id="expenseChartDrilldownClose" type="button" class="btn btn-link btn-xs">Close</button></header>
+            <p id="expenseChartDrilldownDetail"></p>
+            <div id="expenseChartDrilldownList" class="expense-chart-drilldown-list"></div>
+        </div>
 
         <div class="expense-tabs" role="tablist" aria-label="Expense report sections">
             <button type="button" class="expense-tab is-active" role="tab" aria-selected="true" aria-controls="expenseTabSummary" data-expense-tab="summary"><i class="fa fa-dashboard"></i> Summary</button>
@@ -186,17 +195,17 @@
 
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete breakdown</span><h3>Category totals</h3></div><span id="expenseCategoryCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Category</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Change</th></tr></thead><tbody id="expenseCategoryTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Category</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseCategoryTable"></tbody></table></div>
             </article>
 
             <div class="expense-two-column">
                 <article class="expense-panel expense-detail-panel">
                     <header><div><span class="expense-panel-kicker">Complete control breakdown</span><h3>Workflow status</h3></div><span id="expenseStatusCaption" class="expense-panel-meta"></span></header>
-                    <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Status</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th></tr></thead><tbody id="expenseStatusTable"></tbody></table></div>
+                    <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Status</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseStatusTable"></tbody></table></div>
                 </article>
                 <article class="expense-panel expense-detail-panel">
                     <header><div><span class="expense-panel-kicker">Complete operating breakdown</span><h3>Cost centres</h3></div><span id="expenseCenterCaption" class="expense-panel-meta"></span></header>
-                    <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th></tr></thead><tbody id="expenseCenterTable"></tbody></table></div>
+                    <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseCenterTable"></tbody></table></div>
                 </article>
             </div>
         </section>
@@ -231,7 +240,7 @@
                     </div>
                 </header>
                 <div class="expense-table-caption"><span id="expenseTypeCaption"></span><span>Zero-activity configured types remain visible. Click a row to open its transaction detail.</span></div>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-type-table"><thead><tr><th>Catalog status</th><th>Activity status</th><th>Expense code</th><th>Description</th><th>Category</th><th>Spend class</th><th>GL account</th><th>GL account name</th><th>GL group</th><th>Account section</th><th>Tag</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Users</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Local purchases</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Previous period</th><th class="text-right">Change</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th></tr></thead><tbody id="expenseTypeTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-type-table"><thead><tr><th>Catalog status</th><th>Activity status</th><th>Expense code</th><th>Description</th><th>Category</th><th>Spend class</th><th>GL account</th><th>GL account name</th><th>GL group</th><th>Account section</th><th>Tag</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Users</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Local purchases</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Previous period</th><th class="text-right">Change vs prior</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th></tr></thead><tbody id="expenseTypeTable"></tbody></table></div>
             </article>
         </section>
 
@@ -263,7 +272,7 @@
                     </div>
                 </header>
                 <div class="expense-table-caption"><span id="expenseTabCaption"></span><span>All tabs returned; use the global filters above to narrow the report.</span></div>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-tab-table"><thead><tr><th>Expense tab</th><th>Cost centre</th><th class="text-right">Users</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th></tr></thead><tbody id="expenseTabTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-tab-table"><thead><tr><th>Expense tab</th><th>Cost centre</th><th class="text-right">Users</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseTabTable"></tbody></table></div>
             </article>
             <article class="expense-panel expense-detail-panel">
                 <header>
@@ -274,7 +283,7 @@
                     </div>
                 </header>
                 <div class="expense-table-caption"><span id="expenseTabUserCaption"></span><span>One row per tab-user combination; no users are collapsed into a single owner.</span></div>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-tab-user-table"><thead><tr><th>Expense tab</th><th>User</th><th>User code</th><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th></tr></thead><tbody id="expenseTabUserTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table expense-tab-user-table"><thead><tr><th>Expense tab</th><th>User</th><th>User code</th><th>Cost centre</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Gross outflow</th><th class="text-right">Credits</th><th class="text-right">Posted</th><th class="text-right">Pending</th><th class="text-right">Authorized not posted</th><th class="text-right">Missing receipts</th><th class="text-right">Receipt coverage</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseTabUserTable"></tbody></table></div>
             </article>
         </section>
         <section id="expenseTabUsers" class="expense-tab-pane" role="tabpanel" hidden>
@@ -292,11 +301,11 @@
             </div>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete user-wise consolidated view</span><h3>Spend by user</h3></div><span id="expenseUserCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>User</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Codes</th><th class="text-right">P&amp;L spend</th><th class="text-right">Capital / advances</th><th class="text-right">Unclassified</th><th class="text-right">Receipts</th><th class="text-right">Change</th></tr></thead><tbody id="expenseUserTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>User</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Codes</th><th class="text-right">P&amp;L spend</th><th class="text-right">Capital / advances</th><th class="text-right">Unclassified</th><th class="text-right">Receipts</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseUserTable"></tbody></table></div>
             </article>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete user-wise granular view</span><h3>User, expense code, and GL detail</h3></div><span id="expenseUserExpenseCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>User</th><th>Category</th><th>Expense code</th><th>Description</th><th>GL account / group</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Change</th></tr></thead><tbody id="expenseUserExpenseTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>User</th><th>Category</th><th>Expense code</th><th>Description</th><th>GL account / group</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Tabs</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseUserExpenseTable"></tbody></table></div>
             </article>
         </section>
 
@@ -320,15 +329,15 @@
             </div>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete accounting view</span><h3>Expense codes and GL classification</h3></div><span id="expenseCodeCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Executive category</th><th>Expense code</th><th>Description</th><th>GL account</th><th>GL group</th><th>Account section</th><th>Spend class</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Change</th></tr></thead><tbody id="expenseCodeTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Executive category</th><th>Expense code</th><th>Description</th><th>GL account</th><th>GL group</th><th>Account section</th><th>Spend class</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseCodeTable"></tbody></table></div>
             </article>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">Complete ledger grouping</span><h3>GL group totals</h3></div><span id="expenseGlCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>GL group</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th></tr></thead><tbody id="expenseGlTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>GL group</th><th class="text-right">Net spend</th><th class="text-right">Share</th><th class="text-right">Transactions</th><th class="text-right">Expense codes</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseGlTable"></tbody></table></div>
             </article>
             <article class="expense-panel expense-detail-panel">
                 <header><div><span class="expense-panel-kicker">PKR amount validation</span><h3>PKR source amounts</h3></div><span id="expenseCurrencyCaption" class="expense-panel-meta"></span></header>
-                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Currency</th><th class="text-right">Rate applied</th><th class="text-right">Source amount</th><th class="text-right">Reported PKR spend</th><th class="text-right">Transactions</th></tr></thead><tbody id="expenseCurrencyTable"></tbody></table></div>
+                <div class="table-responsive expense-table-wrap"><table class="table expense-table"><thead><tr><th>Currency</th><th class="text-right">Rate applied</th><th class="text-right">Source amount</th><th class="text-right">Reported PKR spend</th><th class="text-right">Transactions</th><th class="text-right">Change vs prior</th></tr></thead><tbody id="expenseCurrencyTable"></tbody></table></div>
             </article>
         </section>
 

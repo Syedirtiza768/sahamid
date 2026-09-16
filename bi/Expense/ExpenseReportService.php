@@ -47,6 +47,7 @@ class ExpenseReportService
 		$summary['previous_period_total'] = $previousSummary['net_total'];
 		$summary['change_amount'] = $summary['net_total'] - $previousSummary['net_total'];
 		$summary['change_percent'] = $this->percentChange($summary['net_total'], $previousSummary['net_total']);
+		$summary['comparison'] = $this->buildSummaryComparison($summary, $previousSummary, $comparisonRange);
 
 		$currentCodes = $this->fetchExpenseCodes($currentWhere);
 		$previousCodes = $this->fetchExpenseCodes($comparisonWhere);
@@ -59,16 +60,16 @@ class ExpenseReportService
 		$summary['unclassified_count'] = $classTotals['Unclassified']['transaction_count'];
 		$summary['unclassified_code_count'] = $classTotals['Unclassified']['expense_code_count'];
 		$categories = $this->rollUpCategories($codes, $summary['net_total']);
-		$monthly = $this->fetchMonthly($currentWhere, $request->getDateRange());
-		$statuses = $this->fetchStatuses($currentWhere, $summary['net_total']);
-		$costCenters = $this->fetchCostCenters($currentWhere, $summary['net_total']);
-		$owners = $this->fetchOwners($currentWhere, $summary['net_total']);
+		$monthly = $this->fetchMonthly($currentWhere, $request->getDateRange(), $comparisonWhere, $comparisonRange);
+		$statuses = $this->fetchStatuses($currentWhere, $comparisonWhere, $summary['net_total']);
+		$costCenters = $this->fetchCostCenters($currentWhere, $comparisonWhere, $summary['net_total']);
+		$owners = $this->fetchOwners($currentWhere, $comparisonWhere, $summary['net_total']);
 		$users = $this->fetchUsers($currentWhere, $comparisonWhere, $summary['net_total']);
-		$tabs = $this->fetchTabs($currentWhere, $summary['net_total']);
-		$tabUsers = $this->fetchTabUsers($currentWhere, $summary['net_total']);
+		$tabs = $this->fetchTabs($currentWhere, $comparisonWhere, $summary['net_total']);
+		$tabUsers = $this->fetchTabUsers($currentWhere, $comparisonWhere, $summary['net_total']);
 		$userExpenses = $this->fetchUserExpenses($currentWhere, $comparisonWhere, $summary['net_total'], $definitions);
 		$users = $this->reconcileUserClassTotals($users, $userExpenses);
-		$currencies = $this->fetchCurrencies($currentWhere, $summary['net_total']);
+		$currencies = $this->fetchCurrencies($currentWhere, $comparisonWhere, $summary['net_total']);
 		$transactions = $this->fetchTransactions($currentWhere, $request, $includeAllTransactions);
 		$options = $this->fetchFilterOptions($definitions);
 		$insights = $this->buildInsights($summary, $categories, $owners);
@@ -267,6 +268,102 @@ class ExpenseReportService
 		);
 	}
 
+	private function buildSummaryComparison(array $current, array $previous, array $previousRange)
+	{
+		$metrics = array();
+		foreach (array('net_total', 'gross_outflow', 'credits', 'transaction_count', 'average_transaction', 'posted_total', 'pending_authorization_total', 'authorized_unposted_total') as $field) {
+			$currentValue = isset($current[$field]) ? (float) $current[$field] : 0.0;
+			$previousValue = isset($previous[$field]) ? (float) $previous[$field] : 0.0;
+			$metrics[$field] = array(
+				'current' => $currentValue,
+				'previous' => $previousValue,
+				'change' => $currentValue - $previousValue,
+				'change_percent' => $this->percentChange($currentValue, $previousValue),
+			);
+		}
+		$currentCoverage = isset($current['receipt_coverage_percent']) ? (float) $current['receipt_coverage_percent'] : 100.0;
+		$previousCoverage = isset($previous['receipt_coverage_percent']) ? (float) $previous['receipt_coverage_percent'] : 100.0;
+		$metrics['receipt_coverage_percent'] = array(
+			'current' => $currentCoverage,
+			'previous' => $previousCoverage,
+			'change' => $currentCoverage - $previousCoverage,
+			'change_points' => $currentCoverage - $previousCoverage,
+			'change_percent' => $this->percentChange($currentCoverage, $previousCoverage),
+		);
+		return array('previous_range' => $previousRange, 'metrics' => $metrics);
+	}
+
+	private function comparisonRowKey(array $row, array $keyFields)
+	{
+		$parts = array();
+		foreach ($keyFields as $field) {
+			$parts[] = strtolower(trim((string) (isset($row[$field]) ? $row[$field] : '')));
+		}
+		return implode(chr(31), $parts);
+	}
+
+	private function mergeComparisonRows(array $current, array $previous, array $keyFields, $grandTotal, array $numericFields, array $integerFields)
+	{
+		$currentByKey = array();
+		$previousByKey = array();
+		foreach ($current as $row) { $currentByKey[$this->comparisonRowKey($row, $keyFields)] = $row; }
+		foreach ($previous as $row) { $previousByKey[$this->comparisonRowKey($row, $keyFields)] = $row; }
+		$keys = array_unique(array_merge(array_keys($currentByKey), array_keys($previousByKey)));
+		$rows = array();
+		foreach ($keys as $key) {
+			$hasCurrent = isset($currentByKey[$key]);
+			$hasPrevious = isset($previousByKey[$key]);
+			$currentRow = $hasCurrent ? $currentByKey[$key] : array();
+			$previousRow = $hasPrevious ? $previousByKey[$key] : array();
+			$row = $hasCurrent ? $currentRow : $previousRow;
+			foreach ($numericFields as $field) {
+				$currentValue = $hasCurrent && isset($currentRow[$field]) ? (float) $currentRow[$field] : 0.0;
+				$previousValue = $hasPrevious && isset($previousRow[$field]) ? (float) $previousRow[$field] : 0.0;
+				$row[$field] = $currentValue;
+				if ($field !== 'total') {
+					$row['previous_' . $field] = $previousValue;
+					$row[$field . '_change'] = $currentValue - $previousValue;
+					$row[$field . '_change_percent'] = $this->percentChange($currentValue, $previousValue);
+				}
+			}
+			foreach ($integerFields as $field) {
+				$currentValue = $hasCurrent && isset($currentRow[$field]) ? (int) $currentRow[$field] : 0;
+				$previousValue = $hasPrevious && isset($previousRow[$field]) ? (int) $previousRow[$field] : 0;
+				$row[$field] = $currentValue;
+				$row['previous_' . $field] = $previousValue;
+				$row[$field . '_change'] = $currentValue - $previousValue;
+				$row[$field . '_change_percent'] = $this->percentChange($currentValue, $previousValue);
+			}
+			$previousTotal = $hasPrevious && isset($previousRow['total']) ? (float) $previousRow['total'] : 0.0;
+			$row['previous_total'] = $previousTotal;
+			$row['change_amount'] = (float) $row['total'] - $previousTotal;
+			$row['change_percent'] = $this->percentChange($row['total'], $previousTotal);
+			$row['previous_transaction_count'] = $hasPrevious && isset($previousRow['transaction_count']) ? (int) $previousRow['transaction_count'] : 0;
+			$row['transaction_change'] = (int) $row['transaction_count'] - $row['previous_transaction_count'];
+			$row['transaction_change_percent'] = $this->percentChange($row['transaction_count'], $row['previous_transaction_count']);
+			$row['share_percent'] = $grandTotal != 0 ? ((float) $row['total'] / $grandTotal) * 100 : 0.0;
+			if (in_array('missing_receipt_count', $integerFields, true)) {
+				$row['receipt_coverage_percent'] = $row['transaction_count'] > 0
+					? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
+				$previousMissing = $hasPrevious && isset($previousRow['missing_receipt_count']) ? (int) $previousRow['missing_receipt_count'] : 0;
+				$row['previous_receipt_coverage_percent'] = $row['previous_transaction_count'] > 0
+					? (($row['previous_transaction_count'] - $previousMissing) / $row['previous_transaction_count']) * 100 : 100.0;
+				$row['receipt_coverage_change_points'] = $row['receipt_coverage_percent'] - $row['previous_receipt_coverage_percent'];
+			}
+			$row['comparison_status'] = $hasCurrent ? ($hasPrevious ? 'Compared' : 'New') : 'No current activity';
+			$rows[] = $row;
+		}
+		usort($rows, function ($left, $right) {
+			$leftMagnitude = max(abs((float) $left['total']), abs((float) $left['previous_total']));
+			$rightMagnitude = max(abs((float) $right['total']), abs((float) $right['previous_total']));
+			if ($leftMagnitude == $rightMagnitude) {
+				return strcmp((string) ($left['label'] ?? $left['codeexpense'] ?? $left['tabcode'] ?? $left['owner'] ?? ''), (string) ($right['label'] ?? $right['codeexpense'] ?? $right['tabcode'] ?? $right['owner'] ?? ''));
+			}
+			return $leftMagnitude < $rightMagnitude ? 1 : -1;
+		});
+		return $rows;
+	}
+
 	private function summarizeSpendClasses(array $codes)
 	{
 		$totals = array(
@@ -391,9 +488,13 @@ class ExpenseReportService
 			$params[] = $this->context->getUserId();
 		}
 		if ($request->getCostCenter() !== null) {
-			$conditions[] = 'pt.typetabcode = ?';
-			$types .= 's';
-			$params[] = $request->getCostCenter();
+			if ($request->getCostCenter() === '__unassigned__') {
+				$conditions[] = "COALESCE(TRIM(pt.typetabcode), '') = ''";
+			} else {
+				$conditions[] = 'pt.typetabcode = ?';
+				$types .= 's';
+				$params[] = $request->getCostCenter();
+			}
 		}
 		if ($request->getTabCode() !== null) {
 			$conditions[] = 'd.tabcode = ?';
@@ -692,14 +793,17 @@ class ExpenseReportService
 				}
 			}
 			$row['previous_total'] = $previousRow && isset($previousRow['total']) ? (float) $previousRow['total'] : 0.0;
+			$row['previous_transaction_count'] = $previousRow && isset($previousRow['transaction_count']) ? (int) $previousRow['transaction_count'] : 0;
 			$row['change_amount'] = $row['total'] - $row['previous_total'];
 			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
+			$row['transaction_change'] = $row['transaction_count'] - $row['previous_transaction_count'];
+			$row['transaction_change_percent'] = $this->percentChange($row['transaction_count'], $row['previous_transaction_count']);
 			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
 			$row['receipt_coverage_percent'] = $row['transaction_count'] > 0
 				? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
-			$row['catalog_status'] = $definition ? 'Configured' : 'Unmapped transaction code';
-			$row['activity_status'] = $row['transaction_count'] > 0
-				? 'Active' : ($row['previous_total'] != 0.0 ? 'No current activity' : 'No activity');
+				$row['catalog_status'] = $definition ? 'Configured' : 'Unmapped transaction code';
+				$row['activity_status'] = $row['transaction_count'] > 0
+					? 'Active' : ($row['previous_transaction_count'] > 0 ? 'No current activity' : 'No activity');
 			$rows[] = $row;
 		}
 
@@ -712,32 +816,40 @@ class ExpenseReportService
 		return $rows;
 	}
 
+	private function decorateExpenseCodesWithComparison(array $current, array $previous, array $definitions, $grandTotal)
+	{
+		$decorate = function (array $sourceRows) use ($definitions) {
+			$rows = array();
+			foreach ($sourceRows as $row) {
+				$code = (string) $row['codeexpense'];
+				$definition = isset($definitions[$code]) ? $definitions[$code] : null;
+				$row['category'] = $definition ? $definition['category'] : ExpenseCategoryClassifier::UNCLASSIFIED;
+				$row['spend_class'] = $definition ? $definition['spend_class'] : 'Unclassified';
+				foreach (array('total', 'gross_outflow', 'credits', 'local_purchase_total', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) {
+					$row[$field] = isset($row[$field]) ? (float) $row[$field] : 0.0;
+				}
+				foreach (array('transaction_count', 'tab_count', 'user_count', 'missing_receipt_count', 'local_purchase_count') as $field) {
+					$row[$field] = isset($row[$field]) ? (int) $row[$field] : 0;
+				}
+				$row['receipt_coverage_percent'] = $row['transaction_count'] > 0
+					? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
+				$rows[] = $row;
+			}
+			return $rows;
+		};
+		return $this->mergeComparisonRows(
+			$decorate($current),
+			$decorate($previous),
+			array('codeexpense'),
+			$grandTotal,
+			array('total', 'gross_outflow', 'credits', 'local_purchase_total', 'posted_total', 'pending_total', 'authorized_unposted_total'),
+			array('transaction_count', 'tab_count', 'user_count', 'missing_receipt_count', 'local_purchase_count')
+		);
+	}
+
 	private function decorateExpenseCodes(array $current, array $previous, array $definitions, $grandTotal)
 	{
-		$previousByCode = array();
-		foreach ($previous as $row) {
-			$previousByCode[(string) $row['codeexpense']] = (float) $row['total'];
-		}
-		$rows = array();
-		foreach ($current as $row) {
-			$code = (string) $row['codeexpense'];
-			$definition = isset($definitions[$code]) ? $definitions[$code] : null;
-			$row['category'] = $definition ? $definition['category'] : ExpenseCategoryClassifier::UNCLASSIFIED;
-			$row['spend_class'] = $definition ? $definition['spend_class'] : 'Unclassified';
-			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) {
-				$row[$field] = (float) $row[$field];
-			}
-			$row['transaction_count'] = (int) $row['transaction_count'];
-			$row['previous_total'] = isset($previousByCode[$code]) ? $previousByCode[$code] : 0.0;
-			$row['change_amount'] = $row['total'] - $row['previous_total'];
-			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
-			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
-			$rows[] = $row;
-		}
-		usort($rows, function ($left, $right) {
-			return $left['total'] == $right['total'] ? strcmp($left['description'], $right['description']) : ($left['total'] < $right['total'] ? 1 : -1);
-		});
-		return $rows;
+		return $this->decorateExpenseCodesWithComparison($current, $previous, $definitions, $grandTotal);
 	}
 
 	private function rollUpCategories(array $codes, $grandTotal)
@@ -748,53 +860,103 @@ class ExpenseReportService
 			if (!isset($categories[$name])) {
 				$categories[$name] = array(
 					'category' => $name, 'total' => 0.0, 'gross_outflow' => 0.0, 'credits' => 0.0,
-					'previous_total' => 0.0, 'transaction_count' => 0, 'posted_total' => 0.0,
+					'previous_total' => 0.0, 'transaction_count' => 0, 'previous_transaction_count' => 0, 'posted_total' => 0.0,
 					'pending_total' => 0.0, 'authorized_unposted_total' => 0.0, 'expense_code_count' => 0,
 				);
 			}
 			foreach (array('total', 'gross_outflow', 'credits', 'previous_total', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) {
 				$categories[$name][$field] += $code[$field];
-			}
-			$categories[$name]['transaction_count'] += $code['transaction_count'];
-			$categories[$name]['expense_code_count']++;
+				}
+				$categories[$name]['transaction_count'] += $code['transaction_count'];
+				$categories[$name]['previous_transaction_count'] += $code['previous_transaction_count'];
+				$categories[$name]['expense_code_count']++;
 		}
 		$rows = array_values($categories);
 		foreach ($rows as &$row) {
-			$row['change_amount'] = $row['total'] - $row['previous_total'];
-			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
-			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
+				$row['change_amount'] = $row['total'] - $row['previous_total'];
+				$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
+				$row['transaction_change'] = $row['transaction_count'] - $row['previous_transaction_count'];
+				$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
 		}
 		unset($row);
 		usort($rows, function ($left, $right) { return $left['total'] < $right['total'] ? 1 : ($left['total'] > $right['total'] ? -1 : 0); });
 		return $rows;
 	}
 
-	private function fetchMonthly(array $where, array $range)
+	private function fetchMonthlyComparison(array $where, array $range, array $previousWhere, array $previousRange)
 	{
-		$sql = "SELECT DATE_FORMAT(d.date, '%Y-%m') AS period, COALESCE(SUM(" . $this->netAmountSql() . '), 0) AS total,
-			COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow,
-			COALESCE(SUM(' . $this->creditAmountSql() . '), 0) AS credits, COUNT(*) AS transaction_count'
-			. $this->fromSql() . $where['sql'] . ' GROUP BY DATE_FORMAT(d.date, \'%Y-%m\') ORDER BY period';
-		$byPeriod = array();
+		$currentByPeriod = array();
+		foreach ($this->queryMonthlyRows($where) as $row) {
+			$currentByPeriod[$row['period']] = $row;
+		}
+		$previousByPeriod = array();
+		foreach ($this->queryMonthlyRows($previousWhere) as $row) {
+			$previousByPeriod[$row['period']] = $row;
+		}
+		$rows = array();
+		$cursor = new \DateTimeImmutable(substr($range['start'], 0, 7) . '-01');
+		$last = new \DateTimeImmutable(substr($range['end'], 0, 7) . '-01');
+		$previousCursor = new \DateTimeImmutable(substr($previousRange['start'], 0, 7) . '-01');
+		while ($cursor <= $last) {
+			$currentKey = $cursor->format('Y-m');
+			$previousKey = $previousCursor->format('Y-m');
+			$current = isset($currentByPeriod[$currentKey]) ? $currentByPeriod[$currentKey] : array('period' => $currentKey, 'total' => 0.0, 'gross_outflow' => 0.0, 'credits' => 0.0, 'transaction_count' => 0);
+			$previous = isset($previousByPeriod[$previousKey]) ? $previousByPeriod[$previousKey] : array('period' => $previousKey, 'total' => 0.0, 'gross_outflow' => 0.0, 'credits' => 0.0, 'transaction_count' => 0);
+			$current['comparison_period'] = $previousKey;
+			$current['previous_total'] = (float) $previous['total'];
+			$current['previous_gross_outflow'] = (float) $previous['gross_outflow'];
+			$current['previous_credits'] = (float) $previous['credits'];
+			$current['previous_transaction_count'] = (int) $previous['transaction_count'];
+			$current['change_amount'] = (float) $current['total'] - $current['previous_total'];
+			$current['change_percent'] = $this->percentChange($current['total'], $current['previous_total']);
+			$current['transaction_change'] = (int) $current['transaction_count'] - $current['previous_transaction_count'];
+			$current['transaction_change_percent'] = $this->percentChange($current['transaction_count'], $current['previous_transaction_count']);
+			$current['comparison_status'] = $current['transaction_count'] > 0 ? ($current['previous_transaction_count'] > 0 ? 'Compared' : 'New') : ($current['previous_transaction_count'] > 0 ? 'No current activity' : 'No activity');
+			$rows[] = $current;
+			$cursor = $cursor->modify('+1 month');
+			$previousCursor = $previousCursor->modify('+1 month');
+		}
+		return $rows;
+	}
+
+	private function queryMonthlyRows(array $where)
+	{
+		$quote = chr(39);
+		$sql = 'SELECT DATE_FORMAT(d.date, ' . $quote . '%Y-%m' . $quote . ') AS period';
+		$sql .= ' , COALESCE(SUM(' . $this->netAmountSql() . '), 0) AS total';
+		$sql .= ' , COALESCE(SUM(' . $this->grossAmountSql() . '), 0) AS gross_outflow';
+		$sql .= ' , COALESCE(SUM(' . $this->creditAmountSql() . '), 0) AS credits, COUNT(*) AS transaction_count';
+		$sql .= $this->fromSql() . $where['sql'];
+		$sql .= ' GROUP BY DATE_FORMAT(d.date, ' . $quote . '%Y-%m' . $quote . ') ORDER BY period';
+		$rows = array();
 		foreach ($this->queryRows($sql, $where['types'], $where['params']) as $row) {
 			$row['total'] = (float) $row['total'];
 			$row['gross_outflow'] = (float) $row['gross_outflow'];
 			$row['credits'] = (float) $row['credits'];
 			$row['transaction_count'] = (int) $row['transaction_count'];
-			$byPeriod[$row['period']] = $row;
-		}
-		$rows = array();
-		$cursor = new \DateTimeImmutable(substr($range['start'], 0, 7) . '-01');
-		$last = new \DateTimeImmutable(substr($range['end'], 0, 7) . '-01');
-		while ($cursor <= $last) {
-			$key = $cursor->format('Y-m');
-			$rows[] = isset($byPeriod[$key]) ? $byPeriod[$key] : array('period' => $key, 'total' => 0.0, 'gross_outflow' => 0.0, 'credits' => 0.0, 'transaction_count' => 0);
-			$cursor = $cursor->modify('+1 month');
+			$rows[] = $row;
 		}
 		return $rows;
 	}
 
-	private function fetchStatuses(array $where, $grandTotal)
+	private function fetchMonthly(array $where, array $range, array $previousWhere, array $previousRange)
+	{
+		return $this->fetchMonthlyComparison($where, $range, $previousWhere, $previousRange);
+	}
+
+	private function fetchStatuses(array $where, array $previousWhere, $grandTotal)
+	{
+		return $this->mergeComparisonRows(
+			$this->fetchStatusesCurrent($where, $grandTotal),
+			$this->fetchStatusesCurrent($previousWhere, $grandTotal),
+			array('workflow_status'),
+			$grandTotal,
+			array('total'),
+			array('transaction_count')
+		);
+	}
+
+	private function fetchStatusesCurrent(array $where, $grandTotal)
 	{
 		$status = $this->statusSql();
 		$sql = 'SELECT ' . $status . ' AS workflow_status, COALESCE(SUM(' . $this->netAmountSql() . '), 0) AS total, COUNT(*) AS transaction_count'
@@ -802,7 +964,19 @@ class ExpenseReportService
 		return $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
 	}
 
-	private function fetchCostCenters(array $where, $grandTotal)
+	private function fetchCostCenters(array $where, array $previousWhere, $grandTotal)
+	{
+		return $this->mergeComparisonRows(
+			$this->fetchCostCentersCurrent($where, $grandTotal),
+			$this->fetchCostCentersCurrent($previousWhere, $grandTotal),
+			array('cost_center_code', 'cost_center'),
+			$grandTotal,
+			array('total'),
+			array('transaction_count')
+		);
+	}
+
+	private function fetchCostCentersCurrent(array $where, $grandTotal)
 	{
 		$sql = "SELECT COALESCE(pt.typetabcode, '') AS cost_center_code, COALESCE(ptt.typetabdescription, 'Unassigned') AS cost_center,
 			COALESCE(SUM(" . $this->netAmountSql() . '), 0) AS total, COUNT(*) AS transaction_count'
@@ -810,7 +984,19 @@ class ExpenseReportService
 		return $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
 	}
 
-	private function fetchOwners(array $where, $grandTotal)
+	private function fetchOwners(array $where, array $previousWhere, $grandTotal)
+	{
+		return $this->mergeComparisonRows(
+			$this->fetchOwnersCurrent($where, $grandTotal),
+			$this->fetchOwnersCurrent($previousWhere, $grandTotal),
+			array('tabcode', 'usercode', 'owner', 'cost_center'),
+			$grandTotal,
+			array('total'),
+			array('transaction_count')
+		);
+	}
+
+	private function fetchOwnersCurrent(array $where, $grandTotal)
 	{
 		$sql = "SELECT d.tabcode, COALESCE(pt.usercode, '') AS usercode,
 			COALESCE(NULLIF(TRIM(wu.realname), ''), NULLIF(TRIM(pt.usercode), ''), 'Unassigned') AS owner,
@@ -820,7 +1006,19 @@ class ExpenseReportService
 		return $this->normalizeBreakdown($this->queryRows($sql, $where['types'], $where['params']), $grandTotal);
 	}
 
-	private function fetchTabs(array $where, $grandTotal)
+	private function fetchTabs(array $where, array $previousWhere, $grandTotal)
+	{
+		return $this->mergeComparisonRows(
+			$this->fetchTabsCurrent($where, $grandTotal),
+			$this->fetchTabsCurrent($previousWhere, $grandTotal),
+			array('tabcode', 'cost_center'),
+			$grandTotal,
+			array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total'),
+			array('user_count', 'transaction_count', 'expense_code_count', 'missing_receipt_count')
+		);
+	}
+
+	private function fetchTabsCurrent(array $where, $grandTotal)
 	{
 		$net = $this->netAmountSql();
 		$sql = 'SELECT d.tabcode,
@@ -850,7 +1048,19 @@ class ExpenseReportService
 		return $rows;
 	}
 
-	private function fetchTabUsers(array $where, $grandTotal)
+	private function fetchTabUsers(array $where, array $previousWhere, $grandTotal)
+	{
+		return $this->mergeComparisonRows(
+			$this->fetchTabUsersCurrent($where, $grandTotal),
+			$this->fetchTabUsersCurrent($previousWhere, $grandTotal),
+			array('tabcode', 'usercode', 'owner', 'cost_center'),
+			$grandTotal,
+			array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total'),
+			array('transaction_count', 'expense_code_count', 'missing_receipt_count')
+		);
+	}
+
+	private function fetchTabUsersCurrent(array $where, $grandTotal)
 	{
 		$owner = $this->ownerSql();
 		$net = $this->netAmountSql();
@@ -881,32 +1091,41 @@ class ExpenseReportService
 		return $rows;
 	}
 
-	private function fetchUsers(array $where, array $previousWhere, $grandTotal)
+	private function fetchUsersWithComparison(array $where, array $previousWhere, $grandTotal)
 	{
-		$current = $this->queryUserTotals($where);
-		$previous = $this->queryUserTotals($previousWhere);
-		$previousByUser = array();
-		foreach ($previous as $row) {
-			$previousByUser[$this->userKey($row)] = (float) $row['total'];
-		}
+		$current = $this->normalizeUserTotals($this->queryUserTotals($where));
+		$previous = $this->normalizeUserTotals($this->queryUserTotals($previousWhere));
+		return $this->mergeComparisonRows(
+			$current,
+			$previous,
+			array('usercode', 'owner'),
+			$grandTotal,
+			array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total', 'pnl_total', 'balance_sheet_total'),
+			array('transaction_count', 'tab_count', 'expense_code_count', 'missing_receipt_count')
+		);
+	}
+
+	private function normalizeUserTotals(array $sourceRows)
+	{
 		$rows = array();
-		$numeric = array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total', 'pnl_total', 'balance_sheet_total');
-		$integers = array('transaction_count', 'tab_count', 'expense_code_count', 'missing_receipt_count');
-		foreach ($current as $row) {
-			foreach ($numeric as $field) { $row[$field] = (float) $row[$field]; }
-			foreach ($integers as $field) { $row[$field] = (int) $row[$field]; }
+		foreach ($sourceRows as $row) {
+			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total', 'pnl_total', 'balance_sheet_total') as $field) {
+				$row[$field] = isset($row[$field]) ? (float) $row[$field] : 0.0;
+			}
+			foreach (array('transaction_count', 'tab_count', 'expense_code_count', 'missing_receipt_count') as $field) {
+				$row[$field] = isset($row[$field]) ? (int) $row[$field] : 0;
+			}
 			$row['user_key'] = $this->userKey($row);
-			$row['previous_total'] = isset($previousByUser[$row['user_key']]) ? $previousByUser[$row['user_key']] : 0.0;
-			$row['change_amount'] = $row['total'] - $row['previous_total'];
-			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
-			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
-			$row['receipt_coverage_percent'] = $row['transaction_count'] > 0 ? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
+			$row['receipt_coverage_percent'] = $row['transaction_count'] > 0
+				? (($row['transaction_count'] - $row['missing_receipt_count']) / $row['transaction_count']) * 100 : 100.0;
 			$rows[] = $row;
 		}
-		usort($rows, function ($left, $right) {
-			return $left['total'] == $right['total'] ? strcmp($left['owner'], $right['owner']) : ($left['total'] < $right['total'] ? 1 : -1);
-		});
 		return $rows;
+	}
+
+	private function fetchUsers(array $where, array $previousWhere, $grandTotal)
+	{
+		return $this->fetchUsersWithComparison($where, $previousWhere, $grandTotal);
 	}
 
 	private function queryUserTotals(array $where)
@@ -929,36 +1148,43 @@ class ExpenseReportService
 		return $this->queryRows($sql, $where['types'], $where['params']);
 	}
 
-	private function fetchUserExpenses(array $where, array $previousWhere, $grandTotal, array $definitions)
+	private function fetchUserExpensesWithComparison(array $where, array $previousWhere, $grandTotal, array $definitions)
 	{
-		$current = $this->queryUserExpenseDetails($where);
-		$previous = $this->queryUserExpenseDetails($previousWhere);
-		$previousByKey = array();
-		foreach ($previous as $row) {
-			$previousByKey[$this->userExpenseKey($row)] = (float) $row['total'];
-		}
+		$current = $this->normalizeUserExpenseRows($this->queryUserExpenseDetails($where), $definitions);
+		$previous = $this->normalizeUserExpenseRows($this->queryUserExpenseDetails($previousWhere), $definitions);
+		return $this->mergeComparisonRows(
+			$current,
+			$previous,
+			array('usercode', 'owner', 'codeexpense'),
+			$grandTotal,
+			array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total'),
+			array('transaction_count', 'tab_count')
+		);
+	}
+
+	private function normalizeUserExpenseRows(array $sourceRows, array $definitions)
+	{
 		$rows = array();
-		foreach ($current as $row) {
+		foreach ($sourceRows as $row) {
 			$code = (string) $row['codeexpense'];
 			$definition = isset($definitions[$code]) ? $definitions[$code] : null;
 			$row['category'] = $definition ? $definition['category'] : ExpenseCategoryClassifier::UNCLASSIFIED;
 			$row['spend_class'] = $definition ? $definition['spend_class'] : 'Unclassified';
-			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) { $row[$field] = (float) $row[$field]; }
-			foreach (array('transaction_count', 'tab_count') as $field) { $row[$field] = (int) $row[$field]; }
+			foreach (array('total', 'gross_outflow', 'credits', 'posted_total', 'pending_total', 'authorized_unposted_total') as $field) {
+				$row[$field] = isset($row[$field]) ? (float) $row[$field] : 0.0;
+			}
+			foreach (array('transaction_count', 'tab_count') as $field) {
+				$row[$field] = isset($row[$field]) ? (int) $row[$field] : 0;
+			}
 			$row['user_key'] = $this->userKey($row);
-			$row['previous_total'] = isset($previousByKey[$this->userExpenseKey($row)]) ? $previousByKey[$this->userExpenseKey($row)] : 0.0;
-			$row['change_amount'] = $row['total'] - $row['previous_total'];
-			$row['change_percent'] = $this->percentChange($row['total'], $row['previous_total']);
-			$row['share_percent'] = $grandTotal != 0 ? ($row['total'] / $grandTotal) * 100 : 0.0;
 			$rows[] = $row;
 		}
-		usort($rows, function ($left, $right) {
-			if ($left['total'] == $right['total']) {
-				return strcmp($left['owner'] . '|' . $left['description'], $right['owner'] . '|' . $right['description']);
-			}
-			return $left['total'] < $right['total'] ? 1 : -1;
-		});
 		return $rows;
+	}
+
+	private function fetchUserExpenses(array $where, array $previousWhere, $grandTotal, array $definitions)
+	{
+		return $this->fetchUserExpensesWithComparison($where, $previousWhere, $grandTotal, $definitions);
 	}
 
 	private function queryUserExpenseDetails(array $where)
@@ -990,7 +1216,19 @@ class ExpenseReportService
 		return $this->userKey($row) . '|expense:' . (string) $row['codeexpense'];
 	}
 
-	private function fetchCurrencies(array $where, $grandTotal)
+	private function fetchCurrencies(array $where, array $previousWhere, $grandTotal)
+	{
+		return $this->mergeComparisonRows(
+			$this->fetchCurrenciesCurrent($where, $grandTotal),
+			$this->fetchCurrenciesCurrent($previousWhere, $grandTotal),
+			array('currency'),
+			$grandTotal,
+			array('total', 'original_total'),
+			array('transaction_count')
+		);
+	}
+
+	private function fetchCurrenciesCurrent(array $where, $grandTotal)
 	{
 		$sql = "SELECT 'PKR' AS currency,
 			1 AS current_rate,
@@ -1097,8 +1335,9 @@ class ExpenseReportService
 		$accountGroups = array();
 		$sections = array();
 		foreach ($rows as $row) {
-			$centerKey = (string) $row['cost_center_code'];
-			$centers[$centerKey] = array('value' => $centerKey, 'label' => trim($row['cost_center']));
+                $centerKey = trim((string) $row['cost_center_code']);
+                $centerValue = $centerKey !== '' ? $centerKey : '__unassigned__';
+                $centers[$centerValue] = array('value' => $centerValue, 'label' => $centerKey !== '' ? trim($row['cost_center']) : 'Unassigned');
 			$tabs[(string) $row['tabcode']] = array('value' => (string) $row['tabcode'], 'label' => trim($row['tabcode']));
 			$currencies[(string) $row['currency']] = array('value' => (string) $row['currency'], 'label' => (string) $row['currency']);
 			$userCode = trim((string) $row['usercode']);
