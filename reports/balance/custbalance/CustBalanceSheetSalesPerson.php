@@ -6,7 +6,7 @@
 	include('../../../includes/SQL_CommonFunctions.inc');
 
 	if(isset($_GET['location']) && $_GET['location'] == 'SR'){
-		if(!userHasPermission($db, 'CustomerBalanceSheetSRSP')) {
+		if(!userHasPermission($db, 'CustomerBalanceSheetSRSP') && !userHasPermission($db, 'CustomerBalanceSheetSRSPAll')) {
 			header("Location: /sahamid/v2/reportLinks.php");
 			exit;
 		}

@@ -4,7 +4,9 @@
 
 	include('../../../includes/session.inc');
 	include('../../../includes/SQL_CommonFunctions.inc');
-    $allowed=[8,10,22,23];
+	$allowed=[8,10,22,23];
+	$canViewAllSalesPeople = in_array($_SESSION['AccessLevel'], $allowed) || userHasPermission($db, 'executive_listing');
+	$canViewAllSrSalesPeople = isset($_GET['location']) && $_GET['location'] === 'SR' && userHasPermission($db, 'CustomerBalanceSheetSRSPAll');
 	$SQL = 'SELECT salesman.salesmanname,debtorsmaster.debtorno,debtorsmaster.name,
 				SUM(CASE WHEN GSTwithhold = 0 AND WHT = 0 
 						THEN ovamount-alloc
@@ -25,7 +27,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
+            if (!$canViewAllSalesPeople && !$canViewAllSrSalesPeople)
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -68,7 +70,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
+            if (!$canViewAllSalesPeople && !$canViewAllSrSalesPeople)
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -116,7 +118,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
+            if (!$canViewAllSalesPeople && !$canViewAllSrSalesPeople)
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -163,7 +165,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
+            if (!$canViewAllSalesPeople && !$canViewAllSrSalesPeople)
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -211,7 +213,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
+            if (!$canViewAllSalesPeople && !$canViewAllSrSalesPeople)
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
@@ -257,7 +259,7 @@
 			WHERE debtortrans.type=10 
 			AND debtortrans.settled=0 
 			AND debtortrans.reversed=0';
-            if (!in_array($_SESSION['AccessLevel'], $allowed) && !userHasPermission($db, 'executive_listing'))
+            if (!$canViewAllSalesPeople && !$canViewAllSrSalesPeople)
             {
                 $SQL.=' AND salesman.salesmanname ="'.$_SESSION['UsersRealName'].'"';
             }
