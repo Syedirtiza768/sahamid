@@ -17,12 +17,7 @@
 			ON locstock.stockid = stockmaster.stockid
 			INNER JOIN manufacturers
 			ON stockmaster.brand = manufacturers.manufacturers_id
-			INNER JOIN stockcategory
-			ON stockmaster.categoryid=stockcategory.categoryid
-			WHERE (stockcategory.stocktype='F' 
-				OR stockcategory.stocktype='D' 
-				OR stockcategory.stocktype='L')
-			AND (stockmaster.mnfCode LIKE '" . $SearchString . "'
+			WHERE (stockmaster.mnfCode LIKE '" . $SearchString . "'
 				OR stockmaster.stockid LIKE '" . $SearchString. "'
 				OR stockmaster.description LIKE '%" . $SearchString. "%')
 			AND stockmaster.mbflag <>'G'
