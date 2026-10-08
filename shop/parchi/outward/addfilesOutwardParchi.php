@@ -829,7 +829,9 @@
 				$.post("api/itemSearch.php", {
 					FormID: '<?php echo $_SESSION['FormID']; ?>',
 					term: term,
-					itemIndex: itemIndex
+					itemIndex: itemIndex,
+					parchi: '<?php echo trim($_GET['parchi']); ?>',
+					obo: '<?php echo $parchiDetails['on_behalf_of']; ?>'
 				}, function(res, status, something){
 					res = JSON.parse(res);
 					table.clear().draw();
