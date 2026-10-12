@@ -1,0 +1,187 @@
+1
+00:00:00,000 --> 00:00:02,874
+Welcome to Sales Performance Reporting.
+
+2
+00:00:03,054 --> 00:00:10,552
+This walkthrough follows a manager from a live ERP report into the supporting activity, setup and saved exports.
+
+3
+00:00:10,732 --> 00:00:14,111
+The report reads the existing company database.
+
+4
+00:00:14,291 --> 00:00:23,673
+It keeps quotations, actual customer purchase order receipts, ERP order confirmations and delivery challans as separate measures.
+
+5
+00:00:23,853 --> 00:00:29,861
+The figures and source coverage remain provisional where the business definitions have not yet been approved.
+
+6
+00:00:30,511 --> 00:00:36,370
+The journey starts with a reporting period, a comparison period and a historical cutoff.
+
+7
+00:00:36,550 --> 00:00:42,493
+Company viewers may also select an approved team population, teams or salespeople.
+
+8
+00:00:42,673 --> 00:00:50,141
+The server checks each requested scope against the viewer's permissions; choosing a filter cannot expand those permissions.
+
+9
+00:00:50,321 --> 00:00:58,194
+Named populations require a separately approved mapping, and cannot be combined with direct team or salesperson filters.
+
+10
+00:00:58,844 --> 00:01:02,308
+Month View brings the selected activity together.
+
+11
+00:01:02,488 --> 00:01:10,086
+The KPI cards summarize the current and comparison periods; the daily table and chart show when activity happened.
+
+12
+00:01:10,266 --> 00:01:16,449
+A dash means a value is zero or unavailable, so it must not be read as a confirmed zero.
+
+13
+00:01:16,629 --> 00:01:23,952
+Customer PO receipts are captured receipts, while order confirmations are shown separately as an OC proxy.
+
+14
+00:01:24,132 --> 00:01:28,461
+These are not interchangeable measures or a certified revenue total.
+
+15
+00:01:29,111 --> 00:01:34,885
+Weekly Overview groups dates from Monday through Sunday, including incomplete weeks.
+
+16
+00:01:35,065 --> 00:01:42,273
+Team Comparison breaks activity down by team and salesperson, with a weekly team view and a weekday matrix.
+
+17
+00:01:42,453 --> 00:01:47,561
+The weekday matrix can show a count, raw value or normalized value.
+
+18
+00:01:47,741 --> 00:01:54,419
+Daily averages use Monday through Saturday reporting days, with configured calendar overrides applied.
+
+19
+00:01:54,599 --> 00:02:02,532
+Older ERP records may use current team membership as a provisional attribution, and ambiguous owners remain unassigned.
+
+20
+00:02:03,182 --> 00:02:09,430
+From the summary, the manager can inspect supporting quotation documents and their source facts.
+
+21
+00:02:09,610 --> 00:02:16,873
+Ordinary quotations use option-zero line details; quick quotations use their recorded price and quantity.
+
+22
+00:02:17,053 --> 00:02:21,747
+For older records, the document date is a proxy for issue date.
+
+23
+00:02:21,927 --> 00:02:26,266
+Captured issue events provide dated snapshots going forward.
+
+24
+00:02:26,446 --> 00:02:35,443
+Values in other currencies are not silently converted to Pakistani rupees, and unknown values stay unavailable instead of being filled with zero.
+
+25
+00:02:36,093 --> 00:02:39,837
+Now we'll enter demo data to show how the forms work.
+
+26
+00:02:40,017 --> 00:02:46,880
+We use an existing test case with no prior reporting captures, and every entry is tagged demo only.
+
+27
+00:02:47,060 --> 00:02:51,379
+First, we record an enquiry receipt at nine fifteen.
+
+28
+00:02:51,559 --> 00:03:00,027
+Next, we record a customer-contact response at nine twenty-five, then a follow-up call at nine thirty-five with a next action.
+
+29
+00:03:00,207 --> 00:03:05,030
+Each form saves to the reporting database and appears in the case timeline.
+
+30
+00:03:05,210 --> 00:03:10,044
+These are synthetic walkthrough records, not real customer activity.
+
+31
+00:03:10,694 --> 00:03:17,712
+The customer PO form captures the case, reference, receipt date and time, and any supplied amount.
+
+32
+00:03:17,892 --> 00:03:27,610
+For this walkthrough only, we use a unique demo-only reference and leave the amount blank, so the report shows a receipt count with no invented money value.
+
+33
+00:03:27,790 --> 00:03:34,203
+Next, an administrator can review the calculated figures and select partial with an evidence note.
+
+34
+00:03:34,383 --> 00:03:40,841
+We leave that coverage review unsubmitted; demo entries do not certify full company coverage.
+
+35
+00:03:41,491 --> 00:03:50,839
+Historical source figures can be previewed from a CSV and retained first as unverified observations, with their source version and evidence location.
+
+36
+00:03:51,019 --> 00:03:58,967
+After source review, an eligible frozen report can be compared on the same full period, scope and end-of-day cutoff.
+
+37
+00:03:59,147 --> 00:04:05,465
+A discrepancy is recorded for investigation; reconciliation does not alter the report.
+
+38
+00:04:05,645 --> 00:04:13,238
+Normalized value adjustments preserve document counts and affect results only after a different authorized user approves them.
+
+39
+00:04:13,888 --> 00:04:19,157
+When the scope and periods are ready, an authorized user can freeze the report.
+
+40
+00:04:19,337 --> 00:04:26,305
+The saved run keeps the selected scope, periods, cutoff, calendar and supporting source facts together.
+
+41
+00:04:26,485 --> 00:04:30,259
+Later changes to live records do not rewrite that run.
+
+42
+00:04:30,439 --> 00:04:38,812
+CSV, Excel and PDF downloads come from the same saved run, so the figures and supporting detail stay aligned.
+
+43
+00:04:38,992 --> 00:04:42,801
+Access is checked again when someone loads or exports it.
+
+44
+00:04:43,451 --> 00:04:50,834
+The report is connected to the local ERP database, and the walkthrough entries have been saved in its reporting tables.
+
+45
+00:04:51,014 --> 00:04:59,136
+They use an existing test case and every entry is tagged demo only, including the PO example; no amount was invented.
+
+46
+00:04:59,316 --> 00:05:05,600
+The report now demonstrates saved events and a counted receipt while keeping the receipt value unavailable.
+
+47
+00:05:05,780 --> 00:05:15,402
+Historical coverage and business definitions remain provisional, so keep these records in the demo environment and review definitions before operational use.

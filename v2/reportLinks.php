@@ -10,6 +10,7 @@
 	$links = [];
 	
 	$links['Sales'] = [
+		'Sales Performance (Month / Week / Team)' => '../v3/salesPerformanceReport.php',
 		'Comprehensive Salesperson History' 			=> '../reports/sales/salesPersonHistoryFilter.php',
 		'Comprehensive Salesperson History (Shop Sale)' 			=> '../reports/shopsale/salesPersonHistoryFilter.php',
 		'Salescase Watchlist' 			=> '../salescase/salescaseWatchlist.php',

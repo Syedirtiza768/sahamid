@@ -1,0 +1,78 @@
+{
+  "title": "Sales Performance Reporting — Synchronized Walkthrough",
+  "language": "en-US",
+  "voice": "Microsoft Zira Desktop",
+  "visualEdition": "Illustrative interface scenes; live figures, customer details, and ERP identifiers are masked. Demo-only activity was seeded against an existing test case; all sample entries are labeled DEMO ONLY and the PO amount is left blank.",
+  "scenes": [
+    {
+      "id": "01-intro",
+      "title": "Opening: a live ERP report",
+      "screen": "Open Sales Performance from the ERP reporting navigation. Show the real page and report metadata. Keep the viewer signed in; do not show credentials or unrelated tabs.",
+      "action": "Hold on the loaded report long enough to establish that these are live ERP records. Do not add or edit any data.",
+      "narration": "Welcome to Sales Performance Reporting. This walkthrough follows a manager from a live ERP report into the supporting activity, setup and saved exports. The report reads the existing company database. It keeps quotations, actual customer purchase order receipts, ERP order confirmations and delivery challans as separate measures. The figures and source coverage remain provisional where the business definitions have not yet been approved."
+    },
+    {
+      "id": "02-scope-filters",
+      "title": "Choose a period and authorized scope",
+      "screen": "Frame the Reporting period, Compare with, Historical cutoff, Approved team population, Teams and Salespeople controls. Show only controls available to this signed-in user.",
+      "action": "Point to the period and cutoff. If changing a filter is necessary, use a safe read-only selection and reapply; do not save a setup change.",
+      "narration": "The journey starts with a reporting period, a comparison period and a historical cutoff. Company viewers may also select an approved team population, teams or salespeople. The server checks each requested scope against the viewer's permissions; choosing a filter cannot expand those permissions. Named populations require a separately approved mapping, and cannot be combined with direct team or salesperson filters."
+    },
+    {
+      "id": "03-month-view",
+      "title": "Read the monthly picture",
+      "screen": "Show Month View, the KPI cards, Daily activity, Period comparison and Daily activity trend. Keep displayed values legible; avoid zooming into customer identifiers.",
+      "action": "Move from KPIs to the comparison table and trend. Read only values that are actually visible and appropriate for the audience.",
+      "narration": "Month View brings the selected activity together. The KPI cards summarize the current and comparison periods; the daily table and chart show when activity happened. A dash means a value is zero or unavailable, so it must not be read as a confirmed zero. Customer PO receipts are captured receipts, while order confirmations are shown separately as an OC proxy. These are not interchangeable measures or a certified revenue total."
+    },
+    {
+      "id": "04-week-team",
+      "title": "Move from weeks to team patterns",
+      "screen": "Show Weekly Overview, then Team Comparison. Include weekly detail and the weekday comparison controls/table if populated.",
+      "action": "Switch tabs. Point to Monday–Sunday week groupings and the weekday matrix measure/display selectors. Do not infer rank or target attainment where none is shown.",
+      "narration": "Weekly Overview groups dates from Monday through Sunday, including incomplete weeks. Team Comparison breaks activity down by team and salesperson, with a weekly team view and a weekday matrix. The weekday matrix can show a count, raw value or normalized value. Daily averages use Monday through Saturday reporting days, with configured calendar overrides applied. Older ERP records may use current team membership as a provisional attribution, and ambiguous owners remain unassigned."
+    },
+    {
+      "id": "05-source-detail",
+      "title": "Inspect the supporting records",
+      "screen": "Scroll to quotation supporting documents or use its in-page drilldown. Show the table structure and status labels without exposing sensitive names, references, or amounts in a public recording.",
+      "action": "Open a detail panel only if it is safe to show. Point out the source-document basis, date and value status. Do not issue or alter a quotation.",
+      "narration": "From the summary, the manager can inspect supporting quotation documents and their source facts. Ordinary quotations use option-zero line details; quick quotations use their recorded price and quantity. For older records, the document date is a proxy for issue date. Captured issue events provide dated snapshots going forward. Values in other currencies are not silently converted to Pakistani rupees, and unknown values stay unavailable instead of being filled with zero."
+    },
+    {
+      "id": "06-activity-capture",
+      "title": "Enter and save the activity forms",
+      "screen": "Show the local Sales Performance capture forms with a masked test case, dates, and DEMO ONLY notes. Keep company and case identifiers out of the video.",
+      "action": "Enter one demo enquiry receipt at 09:15, a customer-contact response at 09:25, and a call follow-up at 09:35 using the existing test-only case. Show each success state and the resulting event timeline. Make clear these are synthetic walkthrough records, not customer activity.",
+      "narration": "Now we'll enter demo data to show how the forms work. We use an existing test case with no prior reporting captures, and every entry is tagged demo only. First, we record an enquiry receipt at nine fifteen. Next, we record a customer-contact response at nine twenty-five, then a follow-up call at nine thirty-five with a next action. Each form saves to the reporting database and appears in the case timeline. These are synthetic walkthrough records, not real customer activity."
+    },
+    {
+      "id": "07-coverage-setup",
+      "title": "Record a demo PO and review coverage",
+      "screen": "Show the Customer PO receipt form populated with a DEMO ONLY reference and no amount, followed by a Partial coverage review draft. Keep the coverage review visibly unsubmitted.",
+      "action": "Save the tagged test-only receipt with its amount left blank, then show it as a count with unavailable value. Enter a Partial coverage note in the administrator review form but leave it unsubmitted; demo entries do not certify company-wide completeness.",
+      "narration": "The customer PO form captures the case, reference, receipt date and time, and any supplied amount. For this walkthrough only, we use a unique demo-only reference and leave the amount blank, so the report shows a receipt count with no invented money value. Next, an administrator can review the calculated figures and select partial with an evidence note. We leave that coverage review unsubmitted; demo entries do not certify full company coverage."
+    },
+    {
+      "id": "08-reference-review",
+      "title": "Handle source comparisons carefully",
+      "screen": "Show Reference observations and reconciliation, then Normalized value adjustments when authorized. Avoid displaying imported source figures unless their evidence is cleared for recording.",
+      "action": "Point to Preview CSV and the review/status fields. Explain the second-person approval for value adjustments. Do not import, reconcile, request or approve records on camera.",
+      "narration": "Historical source figures can be previewed from a CSV and retained first as unverified observations, with their source version and evidence location. After source review, an eligible frozen report can be compared on the same full period, scope and end-of-day cutoff. A discrepancy is recorded for investigation; reconciliation does not alter the report. Normalized value adjustments preserve document counts and affect results only after a different authorized user approves them."
+    },
+    {
+      "id": "09-freeze-export",
+      "title": "Freeze and export one consistent report",
+      "screen": "Show Freeze report and CSV, Excel and PDF controls. If the signed-in account has create-run permission, demonstrate freezing the selected genuine report and then downloading an export only if appropriate for the audience.",
+      "action": "Freezing creates an auditable saved run. If a real run is created, show its key briefly, then mask it in the final edit. Do not paste run keys into public materials. Exports require an authorized saved run.",
+      "narration": "When the scope and periods are ready, an authorized user can freeze the report. The saved run keeps the selected scope, periods, cutoff, calendar and supporting source facts together. Later changes to live records do not rewrite that run. CSV, Excel and PDF downloads come from the same saved run, so the figures and supporting detail stay aligned. Access is checked again when someone loads or exports it."
+    },
+    {
+      "id": "10-close",
+      "title": "Close: what the report means today",
+      "screen": "Return to the report header or a clean overview. End on the real reporting page, not a synthetic dashboard.",
+      "action": "Hold a clean closing frame. Add a small closing title in editing only if desired: 'Live ERP data · Provisional definitions · Authorized scope'.",
+      "narration": "The report is connected to the local ERP database, and the walkthrough entries have been saved in its reporting tables. They use an existing test case and every entry is tagged demo only, including the PO example; no amount was invented. The report now demonstrates saved events and a counted receipt while keeping the receipt value unavailable. Historical coverage and business definitions remain provisional, so keep these records in the demo environment and review definitions before operational use."
+    }
+  ]
+}
