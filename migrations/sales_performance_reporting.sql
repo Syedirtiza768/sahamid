@@ -1,6 +1,13 @@
 -- Sales performance reporting support tables.
 -- Additive migration: operational quotation, OC and DC records are unchanged.
 
+CREATE TABLE IF NOT EXISTS sales_performance_schema_migrations (
+    version_no INT NOT NULL,
+    migration_name VARCHAR(120) NOT NULL,
+    applied_at DATETIME NOT NULL,
+    PRIMARY KEY (version_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS sales_performance_followups (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     activity_date DATE NOT NULL,
@@ -63,3 +70,7 @@ SELECT 'Approve Sales Performance Adjustments', 'sales_performance_adjustments_a
 WHERE NOT EXISTS (
     SELECT 1 FROM permissions WHERE slug = 'sales_performance_adjustments_approve'
 );
+
+INSERT INTO sales_performance_schema_migrations (version_no, migration_name, applied_at)
+VALUES (1, 'sales_performance_reporting', NOW())
+ON DUPLICATE KEY UPDATE migration_name=VALUES(migration_name);

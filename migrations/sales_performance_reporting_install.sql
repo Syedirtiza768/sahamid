@@ -8,6 +8,13 @@
 -- Sales performance reporting support tables.
 -- Additive migration: operational quotation, OC and DC records are unchanged.
 
+CREATE TABLE IF NOT EXISTS sales_performance_schema_migrations (
+    version_no INT NOT NULL,
+    migration_name VARCHAR(120) NOT NULL,
+    applied_at DATETIME NOT NULL,
+    PRIMARY KEY (version_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS sales_performance_followups (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     activity_date DATE NOT NULL,
@@ -70,6 +77,10 @@ SELECT 'Approve Sales Performance Adjustments', 'sales_performance_adjustments_a
 WHERE NOT EXISTS (
     SELECT 1 FROM permissions WHERE slug = 'sales_performance_adjustments_approve'
 );
+
+INSERT INTO sales_performance_schema_migrations (version_no, migration_name, applied_at)
+VALUES (1, 'sales_performance_reporting', NOW())
+ON DUPLICATE KEY UPDATE migration_name=VALUES(migration_name);
 -- END source: sales_performance_reporting.sql
 
 -- BEGIN source: sales_performance_reporting_v2.sql
@@ -601,6 +612,10 @@ SET @sp_ddl = IF((SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_schema=DATABASE() AND table_name='sales_performance_followups' AND index_name='idx_sp_followup_correction')=0,
     'ALTER TABLE sales_performance_followups ADD KEY idx_sp_followup_correction (corrected_from_id)', 'SELECT 1');
 PREPARE sp_stmt FROM @sp_ddl; EXECUTE sp_stmt; DEALLOCATE PREPARE sp_stmt;
+
+INSERT INTO sales_performance_schema_migrations (version_no, migration_name, applied_at)
+VALUES (3, 'sales_performance_reporting_v3', NOW())
+ON DUPLICATE KEY UPDATE migration_name=VALUES(migration_name);
 -- END source: sales_performance_reporting_v3.sql
 
 -- BEGIN source: sales_performance_reporting_v4.sql
@@ -625,6 +640,10 @@ SET @sp_ddl = IF((SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_schema=DATABASE() AND table_name='sales_performance_enquiry_events' AND index_name='idx_sp_enquiry_void')=0,
     'ALTER TABLE sales_performance_enquiry_events ADD KEY idx_sp_enquiry_void (voids_event_id)', 'SELECT 1');
 PREPARE sp_stmt FROM @sp_ddl; EXECUTE sp_stmt; DEALLOCATE PREPARE sp_stmt;
+
+INSERT INTO sales_performance_schema_migrations (version_no, migration_name, applied_at)
+VALUES (4, 'sales_performance_reporting_v4', NOW())
+ON DUPLICATE KEY UPDATE migration_name=VALUES(migration_name);
 -- END source: sales_performance_reporting_v4.sql
 
 -- BEGIN source: sales_performance_reporting_v5.sql
@@ -664,6 +683,10 @@ SET @sp_ddl = IF((SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_schema=DATABASE() AND table_name='sales_performance_po_receipts' AND index_name='uq_sp_po_receipt_void_idempotency')=0,
     'ALTER TABLE sales_performance_po_receipts ADD UNIQUE KEY uq_sp_po_receipt_void_idempotency (void_idempotency_key)', 'SELECT 1');
 PREPARE sp_stmt FROM @sp_ddl; EXECUTE sp_stmt; DEALLOCATE PREPARE sp_stmt;
+
+INSERT INTO sales_performance_schema_migrations (version_no, migration_name, applied_at)
+VALUES (5, 'sales_performance_reporting_v5', NOW())
+ON DUPLICATE KEY UPDATE migration_name=VALUES(migration_name);
 -- END source: sales_performance_reporting_v5.sql
 
 -- BEGIN source: sales_performance_reporting_v6.sql

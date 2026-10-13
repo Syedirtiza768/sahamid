@@ -2423,8 +2423,8 @@ try {
 			if (!count($teamCheck)) spRespond(400, array('status' => 'error', 'code' => 'invalid_coverage', 'message' => 'That team no longer exists.'));
 		}
 		if (trim($note) === '') spRespond(400, array('status' => 'error', 'code' => 'coverage_evidence_required', 'message' => 'Add a short evidence or unresolved-items note for every coverage submission.'));
-		$reviewMetricsJson = isset($_POST['coverage_review_metrics_json']) && is_string($_POST['coverage_review_metrics_json']) ? $_POST['coverage_review_metrics_json'] : '';
-		$reviewContextJson = isset($_POST['coverage_review_context_json']) && is_string($_POST['coverage_review_context_json']) ? $_POST['coverage_review_context_json'] : '';
+		$reviewMetricsJson = isset($_POST['coverage_review_metrics_json']) && is_string($_POST['coverage_review_metrics_json']) ? htmlspecialchars_decode(stripslashes($_POST['coverage_review_metrics_json']), ENT_COMPAT) : '';
+		$reviewContextJson = isset($_POST['coverage_review_context_json']) && is_string($_POST['coverage_review_context_json']) ? htmlspecialchars_decode(stripslashes($_POST['coverage_review_context_json']), ENT_COMPAT) : '';
 		$reviewSignature = spPostText('coverage_review_signature', 64);
 		$reviewMetrics = $reviewMetricsJson !== '' && strlen($reviewMetricsJson) <= 30000 ? json_decode($reviewMetricsJson, true) : null;
 		$reviewContext = $reviewContextJson !== '' && strlen($reviewContextJson) <= 3000 ? json_decode($reviewContextJson, true) : null;
@@ -2811,7 +2811,7 @@ try {
 		if ($action === 'export_run') {
 			$format = isset($_GET['format']) && is_string($_GET['format']) ? strtolower($_GET['format']) : '';
 			if (!in_array($format, array('csv', 'xlsx', 'pdf'), true)) spRespond(400, array('status' => 'error', 'code' => 'invalid_export_format', 'message' => 'Choose CSV, Excel workbook or PDF.'));
-			$factColumns = 'fact_id, metric_family, source_type, source_key, source_version, salescaseref, customer, branch, actor_user_id, entered_by_user_id, credited_salesman_code, credited_team_id, attribution_basis, attribution_version, business_at, recorded_at, date_basis, raw_amount, net_amount, normalized_amount, currency, reporting_currency, tax_basis, tax_rule_version, raw_count_eligible, normalized_count_eligible, value_status, coverage_status, eligibility_status, warnings_text, normalization_references, source_evidence, calculation_version';
+			$factColumns = 'fact_id, metric_family, source_type, source_key, source_version, salescaseref, customer, branch, actor_user_id, entered_by_user_id, credited_salesperson_code AS credited_salesman_code, credited_team_id, attribution_basis, attribution_version, business_at, recorded_at, date_basis, raw_amount, net_amount, normalized_amount, currency, reporting_currency, tax_basis, tax_rule_version, raw_count_eligible, normalized_count_eligible, value_status, coverage_status, eligibility_status, warnings_text, normalization_references, source_evidence, calculation_version';
 			$factRows = spRows($db, 'SELECT ' . $factColumns . ' FROM sales_performance_report_run_facts WHERE run_id=? ORDER BY fact_id', array((string) $runs[0]['id']));
 			if ($integrityStatus === 'verified' && !hash_equals((string) $runs[0]['content_hash'], spFrozenRunContentHashFromFacts($runs[0]['totals_text'], $factRows))) {
 				spRespond(409, array('status' => 'error', 'code' => 'run_integrity_failed', 'message' => 'The saved report evidence no longer matches its frozen content hash.'));
@@ -2826,7 +2826,7 @@ try {
 				$evidence = json_decode((string) $factRow['source_evidence'], true);
 				$exportEvidence = is_array($evidence) && isset($evidence['_sales_performance_export']) && is_array($evidence['_sales_performance_export']) ? $evidence['_sales_performance_export'] : array();
 				$factRow['period_role'] = isset($exportEvidence['period_role']) && $exportEvidence['period_role'] === 'comparison' ? 'comparison' : 'current';
-				$factRow['credited_salesperson'] = isset($exportEvidence['credited_salesperson']) ? $exportEvidence['credited_salesperson'] : $factRow['credited_salesperson_code'];
+				$factRow['credited_salesperson'] = isset($exportEvidence['credited_salesperson']) ? $exportEvidence['credited_salesperson'] : $factRow['credited_salesman_code'];
 				$factRow['credited_team'] = isset($exportEvidence['credited_team']) ? $exportEvidence['credited_team'] : $factRow['credited_team_id'];
 				$factRow['is_revision'] = !empty($exportEvidence['is_revision']);
 				$factRow['reporting_raw_amount'] = isset($exportEvidence['reporting_raw_amount']) ? $exportEvidence['reporting_raw_amount'] : null;
