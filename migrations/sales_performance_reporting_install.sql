@@ -1,5 +1,5 @@
 -- Consolidated Sales Performance reporting migration.
--- Includes the base migration and v2 through v9 in dependency order.
+-- Includes the base migration and v2 through v10 in dependency order.
 -- Select the ERP application database before running this file.
 -- MariaDB 10.3 / MySQL 5.7 compatible. Run with stop-on-error enabled; DDL is not transactional.
 -- Seeds permission definitions but does not grant permissions to users.
@@ -838,3 +838,18 @@ INSERT INTO sales_performance_schema_migrations (version_no, migration_name, app
 VALUES (9, 'sales_performance_reporting_v9', NOW())
 ON DUPLICATE KEY UPDATE migration_name=VALUES(migration_name);
 -- END source: sales_performance_reporting_v9.sql
+
+-- BEGIN source: sales_performance_reporting_v10.sql
+-- Sales reporting v10: register the report in the ERP Reports page security map.
+-- Apply after sales_performance_reporting.sql and v2 through v9.
+
+INSERT INTO scripts (script, pagesecurity, description)
+VALUES ('salesPerformanceReport.php', 2, 'Sales Performance reporting by month, week and team')
+ON DUPLICATE KEY UPDATE
+    pagesecurity = VALUES(pagesecurity),
+    description = VALUES(description);
+
+INSERT INTO sales_performance_schema_migrations (version_no, migration_name, applied_at)
+VALUES (10, 'sales_performance_reporting_v10', NOW())
+ON DUPLICATE KEY UPDATE migration_name=VALUES(migration_name);
+-- END source: sales_performance_reporting_v10.sql
