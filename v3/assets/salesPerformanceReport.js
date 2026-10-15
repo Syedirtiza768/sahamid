@@ -5,6 +5,7 @@
 	if (!app.length) return;
 
 	var apiUrl = app.data('api-url');
+	var canCapture = String(app.data('can-capture-events')) === '1';
 	var reportData = null;
 	var documentQuery = null;
 	var documentPage = 1;
@@ -440,8 +441,8 @@
 			var status = row.voided_at ? (row.has_correction ? 'Corrected on ' : 'Voided on ') + row.voided_at + ' by ' + (row.voided_by || 'unknown') : (row.corrected_from_id ? 'Corrected version' : 'Active');
 			var auditReason = row.void_reason ? '<br><span class="text-muted">' + escapeHtml(row.void_reason) + '</span>' : '';
 			var actions = '';
-			if (row.can_correct) actions += '<button type="button" class="btn btn-xs btn-default sp-correct-followup" data-followup-id="' + escapeHtml(row.id) + '">Correct</button> ';
-			if (row.can_void) actions += '<button type="button" class="btn btn-xs btn-link text-danger sp-void-followup" data-followup-id="' + escapeHtml(row.id) + '">Void</button>';
+			if (canCapture && row.can_correct) actions += '<button type="button" class="btn btn-xs btn-default sp-correct-followup" data-followup-id="' + escapeHtml(row.id) + '">Correct</button> ';
+			if (canCapture && row.can_void) actions += '<button type="button" class="btn btn-xs btn-link text-danger sp-void-followup" data-followup-id="' + escapeHtml(row.id) + '">Void</button>';
 			html += '<tr><td>' + escapeHtml(row.activity_at || row.activity_date) + '</td><td>' + escapeHtml(row.salesman) + '</td><td>' + escapeHtml(row.salescaseref || '—') + '</td>' +
 				'<td>' + escapeHtml(row.activity_type) + '</td><td>' + escapeHtml(row.outcome || '—') + '</td><td>' + escapeHtml(row.next_action_date || '—') + '</td>' +
 				'<td>' + escapeHtml(row.next_action || '—') + '</td><td>' + escapeHtml(row.entered_by_user_id || row.created_by || '—') + '</td>' +
@@ -468,8 +469,8 @@
 			if (row.voids_event_id) details.push('Voids event #' + row.voids_event_id);
 			var auditReasonHtml = auditReason ? '<br><span class="text-muted">' + escapeHtml(auditReason) + '</span>' : '';
 			var actions = '';
-			if (row.can_correct) actions += '<button type="button" class="btn btn-xs btn-default sp-correct-enquiry-event" data-event-id="' + escapeHtml(row.id) + '">Correct</button> ';
-			if (row.can_void) actions += '<button type="button" class="btn btn-xs btn-link text-danger sp-void-enquiry-event" data-event-id="' + escapeHtml(row.id) + '">Void</button>';
+			if (canCapture && row.can_correct) actions += '<button type="button" class="btn btn-xs btn-default sp-correct-enquiry-event" data-event-id="' + escapeHtml(row.id) + '">Correct</button> ';
+			if (canCapture && row.can_void) actions += '<button type="button" class="btn btn-xs btn-link text-danger sp-void-enquiry-event" data-event-id="' + escapeHtml(row.id) + '">Void</button>';
 			html += '<tr><td>' + escapeHtml(row.business_at) + '</td><td>' + escapeHtml(row.salescaseref) + '</td><td>' + escapeHtml(row.episode_no) + '</td>' +
 				'<td>' + escapeHtml(labels[row.event_type] || row.event_type) + '</td><td>' + escapeHtml(details.join(' · ') || '—') + '</td>' +
 				'<td>' + escapeHtml(row.entered_by_user_id || '—') + '</td><td>' + escapeHtml(row.recorded_at || '—') + '</td>' +
@@ -492,8 +493,8 @@
 			if (row.evidence_reference) links.push('Evidence: ' + row.evidence_reference);
 			var amount = row.stated_amount === null ? '—' : formatDecimal(row.stated_amount) + ' ' + (row.currency || '');
 			var actions = '';
-			if (row.can_correct) actions += '<button type="button" class="btn btn-xs btn-default sp-correct-po-receipt" data-receipt-id="' + escapeHtml(row.id) + '">Correct</button> ';
-			if (row.can_void) actions += '<button type="button" class="btn btn-xs btn-link text-danger sp-void-po-receipt" data-receipt-id="' + escapeHtml(row.id) + '">Void</button>';
+			if (canCapture && row.can_correct) actions += '<button type="button" class="btn btn-xs btn-default sp-correct-po-receipt" data-receipt-id="' + escapeHtml(row.id) + '">Correct</button> ';
+			if (canCapture && row.can_void) actions += '<button type="button" class="btn btn-xs btn-link text-danger sp-void-po-receipt" data-receipt-id="' + escapeHtml(row.id) + '">Void</button>';
 			html += '<tr><td>' + escapeHtml(row.received_at) + '</td><td>' + escapeHtml(row.salescaseref || '—') + '</td>' +
 				'<td>' + escapeHtml(row.customer_reference_original) + '</td><td>' + escapeHtml(amount) + '</td><td>' + escapeHtml(row.tax_basis) + '</td>' +
 				'<td>' + escapeHtml(links.join(' · ') || '—') + '</td><td>' + escapeHtml(row.entered_by_user_id || '—') + '</td>' +

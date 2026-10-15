@@ -89,7 +89,7 @@ include_once('includes/sidebar.php');
 	 data-currency="PKR"
 	 data-form-id="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>"
 	 data-can-create-run="<?php echo $canCreateRun ? '1' : '0'; ?>"
-	 data-can-capture-events="<?php echo $canCaptureEvents ? '1' : '0'; ?>"
+	 data-can-capture-events="0"
 	 data-can-manage-adjustments="<?php echo $canManageAdjustments ? '1' : '0'; ?>"
 	 data-can-approve-adjustments="<?php echo $canApproveAdjustments ? '1' : '0'; ?>">
 	<section class="content-header sp-header">
@@ -217,96 +217,14 @@ include_once('includes/sidebar.php');
 
 			<div class="sp-card" id="sp-followup-card">
 					<div class="sp-card-heading"><div><h3>Follow-up activity</h3><p>Captured follow-ups can be corrected or voided with a reason. The prior version stays in the audit history; frozen reports do not change.</p></div></div>
-						<?php if ($canCaptureEvents) { ?><form id="sp-followup-form" class="sp-followup-form">
-					<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-					<input type="hidden" name="action" value="add_followup">
-					<input type="hidden" name="idempotency_key" value="">
-					<input type="hidden" name="corrected_from_id" value="">
-					<div class="sp-followup-fields">
-						<label>Date<input class="form-control" type="date" name="activity_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-						<label>Time<input class="form-control" type="time" name="activity_time" value="<?php echo htmlspecialchars(date('H:i'), ENT_QUOTES, 'UTF-8'); ?>" required></label>
-						<label>Sales case reference (optional)<input class="form-control" type="text" name="salescaseref" maxlength="40" placeholder="e.g. SC-12345"></label>
-						<label>Previous quotation number (optional)<input class="form-control" type="text" name="quotation_orderno" maxlength="12" placeholder="Must belong to this case and predate the follow-up"></label>
-						<label>Activity type<select class="form-control" name="activity_type"><option value="call">Call</option><option value="visit">Visit</option><option value="email">Email</option><option value="meeting">Meeting</option><option value="other">Other</option></select></label>
-						<label>Outcome<input class="form-control" type="text" name="outcome" maxlength="255" placeholder="Brief outcome"></label>
-						<label>Next action<input class="form-control" type="text" name="next_action" maxlength="500" placeholder="Optional next step"></label>
-						<label>Next action date<input class="form-control" type="date" name="next_action_date"></label>
-						<label class="sp-followup-notes">Notes<textarea class="form-control" name="notes" maxlength="4000" rows="2" placeholder="Optional notes"></textarea></label>
-						<label class="sp-followup-notes">Correction reason (only when correcting)<textarea class="form-control" name="correction_reason" maxlength="500" rows="2" placeholder="Explain the correction; this is saved with the prior version"></textarea></label>
-					</div>
-					<div class="sp-form-actions"><button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Record follow-up</button><span id="sp-followup-message" aria-live="polite"></span></div>
-				</form><?php } else { ?><p class="text-muted">Follow-up capture is hidden because the event-capture capability has not been granted.</p><?php } ?>
-				<?php if ($canCaptureEvents) { ?><form id="sp-void-followup-form" style="display:none">
-					<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-					<input type="hidden" name="action" value="void_followup">
-					<input type="hidden" name="record_id" value="">
-					<input type="hidden" name="reason" value="">
-				</form><?php } ?>
+						<?php if ($canCaptureEvents) { ?><p class="text-muted">Follow-ups are recorded on <a href="salesActivity.php">My Sales Activity</a>. Corrections and voids are made there, on your own entries.</p><?php } ?>
 				<div class="table-responsive"><table class="table table-striped sp-table" id="sp-followup-table"></table></div>
 			</div>
 
 			<?php if ($canCaptureEvents) { ?>
-			<div class="sp-card" id="sp-enquiry-event-card">
-				<div class="sp-card-heading"><div><h3>Enquiry events</h3><p>Record actual receipt, response and outcome events. These entries create prospective history; they do not reconstruct older response timelines.</p></div></div>
-				<form id="sp-enquiry-event-form" class="sp-followup-form">
-					<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-					<input type="hidden" name="action" value="capture_enquiry_event">
-					<input type="hidden" name="idempotency_key" value="">
-					<input type="hidden" name="event_id" value="">
-					<div class="sp-followup-fields">
-						<label>Sales case reference<input class="form-control" type="text" name="salescaseref" maxlength="40" required></label>
-						<label>Event<select class="form-control" name="event_type"><option value="received">Enquiry received</option><option value="response">Response made</option><option value="company_decline">Company declined</option><option value="customer_rejection">Customer rejected</option><option value="cancellation">Cancelled</option><option value="duplicate">Duplicate</option><option value="success">Successful close</option><option value="reopen">Reopen</option></select></label>
-						<label>Date<input class="form-control" type="date" name="event_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-						<label>Time<input class="form-control" type="time" name="event_time" value="<?php echo htmlspecialchars(date('H:i'), ENT_QUOTES, 'UTF-8'); ?>" required></label>
-						<label>Response type<select class="form-control" name="response_code"><option value="">Not applicable</option><option value="contacted">Customer contacted</option><option value="quotation_issued">Quotation issued</option><option value="clarification">Clarification sent</option><option value="other">Other response</option></select></label>
-						<label>Outcome reason<input class="form-control" type="text" name="reason_code" maxlength="40" placeholder="Required for company decline"></label>
-						<label>Evidence reference<input class="form-control" type="text" name="evidence_reference" maxlength="500" placeholder="Optional ERP document or file reference"></label>
-						<label class="sp-followup-notes">Notes<textarea class="form-control" name="notes" maxlength="2000" rows="2"></textarea></label>
-						<label class="sp-followup-notes">Correction reason (only when correcting)<textarea class="form-control" name="correction_reason" maxlength="500" rows="2" placeholder="Explain what was wrong in the prior entry"></textarea></label>
-					</div>
-					<div class="sp-form-actions"><button id="sp-enquiry-event-submit" type="submit" class="btn btn-primary">Record enquiry event</button><span id="sp-enquiry-event-message" aria-live="polite"></span></div>
-				</form>
-				<form id="sp-void-enquiry-event-form" style="display:none">
-					<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-					<input type="hidden" name="action" value="void_enquiry_event">
-					<input type="hidden" name="event_id" value="">
-					<input type="hidden" name="void_reason" value="">
-					<input type="hidden" name="idempotency_key" value="">
-				</form>
-				<div class="table-responsive"><table class="table table-striped sp-table" id="sp-enquiry-event-table"></table></div>
-			</div>
-
-			<div class="sp-card" id="sp-po-receipt-card">
-				<div class="sp-card-heading"><div><h3>Customer PO receipt</h3><p>Count the customer’s actual PO receipt separately from ERP order confirmations. Reuploads with the same customer, branch and PO reference are rejected as duplicates.</p></div></div>
-				<form id="sp-po-receipt-form" class="sp-followup-form">
-					<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-					<input type="hidden" name="action" value="capture_po_receipt">
-					<input type="hidden" name="idempotency_key" value="">
-					<input type="hidden" name="receipt_id" value="">
-					<div class="sp-followup-fields">
-						<label>Sales case reference<input class="form-control" type="text" name="salescaseref" maxlength="40" required></label>
-						<label>Customer PO reference<input class="form-control" type="text" name="customer_reference" maxlength="150" required></label>
-						<label>Actually received date<input class="form-control" type="date" name="received_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-						<label>Time<input class="form-control" type="time" name="received_time" value="<?php echo htmlspecialchars(date('H:i'), ENT_QUOTES, 'UTF-8'); ?>" required></label>
-						<label>PO stated amount<input class="form-control" type="number" name="stated_amount" min="0" step="0.01" placeholder="Optional"></label>
-						<label>Currency<input class="form-control" type="text" name="currency" maxlength="3" value="PKR"></label>
-						<label>Amount basis<select class="form-control" name="tax_basis"><option value="unknown">Unknown</option><option value="exclusive">Excludes GST</option><option value="inclusive">Includes GST</option></select></label>
-						<label>Linked quotation number (optional)<input class="form-control" type="text" name="quotation_orderno" maxlength="12"></label>
-						<label>Linked OC number (optional)<input class="form-control" type="text" name="oc_orderno" maxlength="12"></label>
-						<label>Linked OC PO number (optional)<input class="form-control" type="text" name="oc_pono" maxlength="12"></label>
-						<label>Evidence reference<input class="form-control" type="text" name="evidence_reference" maxlength="500" placeholder="Optional ERP document or file reference"></label>
-						<label class="sp-followup-notes">Correction reason (only when correcting)<textarea class="form-control" name="correction_reason" maxlength="500" rows="2" placeholder="Explain what was wrong in the prior receipt"></textarea></label>
-					</div>
-					<div class="sp-form-actions"><button id="sp-po-receipt-submit" type="submit" class="btn btn-primary">Record PO receipt</button><span id="sp-po-receipt-message" aria-live="polite"></span></div>
-				</form>
-				<form id="sp-void-po-receipt-form" style="display:none">
-					<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-					<input type="hidden" name="action" value="void_po_receipt">
-					<input type="hidden" name="receipt_id" value="">
-					<input type="hidden" name="void_reason" value="">
-					<input type="hidden" name="idempotency_key" value="">
-				</form>
-				<div class="table-responsive"><table class="table table-striped sp-table" id="sp-po-receipt-table"></table></div>
+			<div class="sp-card" id="sp-activity-entry-card">
+				<div class="sp-card-heading"><div><h3>Record sales activity</h3><p>Salespeople record their own follow-ups, enquiry events, customer POs and quotations sent on the My Sales Activity page. This report shows the consolidated result.</p></div></div>
+				<p><a class="btn btn-primary" href="salesActivity.php"><i class="fa fa-pencil-square-o"></i> Open My Sales Activity</a></p>
 			</div>
 			<?php } ?>
 
@@ -440,7 +358,6 @@ include_once('includes/sidebar.php');
 	<div class="modal-dialog modal-lg" role="document"><div class="modal-content">
 		<div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="sp-documents-title">Quotation supporting documents</h4></div>
 	<div class="modal-body">
-		<?php if ($canCaptureEvents) { ?><div class="sp-issue-capture"><label>Actual sent date<input class="form-control" type="date" id="sp-issued-date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>"></label><label>Time<input class="form-control" type="time" id="sp-issued-time" value="<?php echo htmlspecialchars(date('H:i'), ENT_QUOTES, 'UTF-8'); ?>"></label><span>Record an issue only after confirming that the quotation was sent.</span></div><?php } ?>
 		<div id="sp-documents-message" class="text-muted" role="status"></div><div class="table-responsive"><table class="table table-striped sp-table" id="sp-documents-table"></table></div><button type="button" class="btn btn-default" id="sp-documents-more" style="display:none">Load more</button>
 	</div>
 	</div></div>

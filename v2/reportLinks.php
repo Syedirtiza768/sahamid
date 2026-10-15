@@ -11,6 +11,7 @@
 	
 	$links['Sales'] = [
 		'Sales Performance (Month / Week / Team)' => '../v3/salesPerformanceReport.php',
+		'My Sales Activity (record my follow-ups, enquiries, POs)' => '../v3/salesActivity.php',
 		'Comprehensive Salesperson History' 			=> '../reports/sales/salesPersonHistoryFilter.php',
 		'Comprehensive Salesperson History (Shop Sale)' 			=> '../reports/shopsale/salesPersonHistoryFilter.php',
 		'Salescase Watchlist' 			=> '../salescase/salescaseWatchlist.php',
