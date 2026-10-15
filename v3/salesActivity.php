@@ -18,6 +18,7 @@ include_once('includes/header.php');
 include_once('includes/sidebar.php');
 ?>
 <link rel="stylesheet" href="assets/salesPerformanceReport.css">
+<link rel="stylesheet" href="assets/bower_components/select2/dist/css/select2.min.css">
 
 <div class="content-wrapper sp-page" id="my-activity-app"
 	 data-api-url="api/salesPerformanceReport.php"
@@ -72,7 +73,7 @@ include_once('includes/sidebar.php');
 							<input type="hidden" name="action" value="capture_enquiry_event">
 							<input type="hidden" name="idempotency_key" value="">
 							<div class="sp-followup-fields">
-								<label>Sales case<select class="form-control ma-case-select" name="salescaseref" required></select></label>
+								<label>Sales case<select class="form-control ma-case-select" name="salescaseref" data-required="1"></select></label>
 								<label>Event<select class="form-control" name="event_type">
 									<option value="received">Enquiry received</option>
 									<option value="response">Response made</option>
@@ -103,7 +104,7 @@ include_once('includes/sidebar.php');
 							<input type="hidden" name="action" value="capture_po_receipt">
 							<input type="hidden" name="idempotency_key" value="">
 							<div class="sp-followup-fields">
-								<label>Sales case<select class="form-control ma-case-select" name="salescaseref" required></select></label>
+								<label>Sales case<select class="form-control ma-case-select" name="salescaseref" data-required="1"></select></label>
 								<label>Customer PO reference<input class="form-control" type="text" name="customer_reference" maxlength="150" required></label>
 								<label>Date received<input class="form-control" type="date" name="received_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
 								<label>Time<input class="form-control" type="time" name="received_time" value="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>" required></label>
@@ -126,7 +127,7 @@ include_once('includes/sidebar.php');
 							<input type="hidden" name="action" value="record_quote_issue">
 							<input type="hidden" name="idempotency_key" value="">
 							<div class="sp-followup-fields">
-								<label>Quotation<select class="form-control" name="orderno" required></select></label>
+								<label>Quotation<select class="form-control" name="orderno" data-required="1"></select></label>
 								<label>Issue type<select class="form-control" name="issue_kind"><option value="issued">First issue</option><option value="revised">Revised</option><option value="resent">Sent again</option></select></label>
 								<label>Date sent<input class="form-control" type="date" name="issued_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
 								<label>Time<input class="form-control" type="time" name="issued_time" value="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>" required></label>
@@ -152,4 +153,5 @@ include_once('includes/sidebar.php');
 </div>
 
 <?php include_once('includes/footer.php'); ?>
+<script src="assets/bower_components/select2/dist/js/select2.full.min.js"></script>
 <script src="assets/salesActivity.js"></script>

@@ -1414,6 +1414,44 @@ try {
 		spRespond(200, array('status' => 'success', 'salesperson' => $userName, 'cases' => $myCases, 'quotations' => $myQuotations,
 			'followups' => $myFollowups, 'enquiry_events' => $myEnquiryEvents, 'po_receipts' => $myPoReceipts));
 	}
+	if ($action === 'lookup_cases' || $action === 'lookup_quotations') {
+		// Type-ahead for the activity page. Results are limited to the signed-in salesperson's own cases (salesman match) and their quotations.
+		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to record sales activity.'));
+		$term = isset($_GET['q']) && is_string($_GET['q']) ? trim(substr($_GET['q'], 0, 60)) : '';
+		$like = '%' . addcslashes($term, '%_\\') . '%';
+		$limit = isset($_GET['limit']) && ctype_digit((string) $_GET['limit']) ? min(50, max(1, (int) $_GET['limit'])) : 20;
+		if ($action === 'lookup_cases') {
+			$cases = spRows($db,
+				"SELECT sc.salescaseref, sc.debtorno, sc.branchcode, sc.salescasedescription, dm.name AS customer_name, cb.brname AS branch_name
+				 FROM salescase sc
+				 LEFT JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno
+				 LEFT JOIN custbranch cb ON cb.debtorno = sc.debtorno AND cb.branchcode = sc.branchcode
+				 WHERE sc.salesman = ? AND (sc.salescaseref LIKE ? OR dm.name LIKE ? OR sc.salescasedescription LIKE ?)
+				 ORDER BY sc.commencementdate DESC, sc.salescaseref DESC LIMIT $limit",
+				array($userName, $like, $like, $like));
+			spRespond(200, array('status' => 'success', 'cases' => $cases));
+		}
+		$caseFilter = isset($_GET['case']) && is_string($_GET['case']) ? trim(substr($_GET['case'], 0, 40)) : '';
+		$quoteWhere = 'sc.salesman = ? AND so.quotation = 1';
+		$quoteParams = array($userName);
+		if ($caseFilter !== '') {
+			$quoteWhere .= ' AND so.salescaseref = ?';
+			$quoteParams[] = $caseFilter;
+		}
+		if ($term !== '') {
+			$quoteWhere .= ' AND (CAST(so.orderno AS CHAR) LIKE ? OR so.salescaseref LIKE ? OR dm.name LIKE ?)';
+			array_push($quoteParams, $like, $like, $like);
+		}
+		$quotations = spRows($db,
+			"SELECT so.orderno, so.salescaseref, DATE_FORMAT(so.orddate, '%Y-%m-%d') AS orddate, dm.name AS customer_name
+			 FROM salesorders so
+			 INNER JOIN salescase sc ON sc.salescaseref = so.salescaseref
+			 LEFT JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno
+			 WHERE $quoteWhere
+			 ORDER BY so.orderno DESC LIMIT $limit",
+			$quoteParams);
+		spRespond(200, array('status' => 'success', 'quotations' => $quotations));
+	}
 	if ($action === 'add_followup') {
 		spRequireFormToken();
 		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to capture reporting activity.'));

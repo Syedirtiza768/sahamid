@@ -4,8 +4,6 @@
 	var app = $('#my-activity-app');
 	var apiUrl = app.data('api-url');
 	var formId = app.data('form-id');
-	var cases = [];
-	var quotations = [];
 
 	function escapeHtml(value) {
 		return String(value === null || value === undefined ? '' : value)
@@ -29,38 +27,57 @@
 	}
 
 	function quoteLabel(item) {
-		return 'Q#' + item.orderno + ' · ' + item.salescaseref + ' · ' + item.orddate;
+		var customer = item.customer_name ? ' · ' + item.customer_name : '';
+		return 'Q#' + item.orderno + ' · ' + item.salescaseref + customer + ' · ' + item.orddate;
 	}
 
-	function fillCaseSelects() {
+	// Type-ahead search against the server, limited to the signed-in salesperson's own cases and quotations.
+	function lookup(select, action, labelFor, caseFor, placeholder, allowClear) {
+		if (!select.find('option[value=""]').length) select.prepend('<option value=""></option>');
+		select.select2({
+			width: '100%',
+			placeholder: placeholder,
+			allowClear: allowClear,
+			minimumInputLength: 0,
+			ajax: {
+				url: apiUrl,
+				dataType: 'json',
+				delay: 250,
+				data: function (params) {
+					return { action: action, q: params.term || '', case: caseFor(), limit: 20 };
+				},
+				processResults: function (response) {
+					var items = response.status === 'success' ? (action === 'lookup_cases' ? response.cases : response.quotations) : [];
+					return {
+						results: $.map(items || [], function (item) {
+							var id = action === 'lookup_cases' ? item.salescaseref : item.orderno;
+							return { id: String(id), text: labelFor(item) };
+						})
+					};
+				}
+			}
+		});
+	}
+
+	function initLookups() {
 		$('select.ma-case-select').each(function () {
 			var select = $(this);
-			var optional = select.attr('name') === 'salescaseref' && select.closest('form').attr('id') === 'ma-followup-form';
-			var html = optional ? '<option value="">No case (general activity)</option>' : '<option value="">Choose a case</option>';
-			$.each(cases, function (_, item) {
-				html += '<option value="' + escapeHtml(item.salescaseref) + '">' + escapeHtml(caseLabel(item)) + '</option>';
-			});
-			select.html(html);
+			var optional = select.closest('form').attr('id') === 'ma-followup-form';
+			lookup(select, 'lookup_cases', caseLabel, function () { return ''; },
+				optional ? 'No case (general activity)' : 'Search your cases by number, customer or description…', optional);
 		});
-	}
-
-	function fillQuoteSelects() {
 		$('select.ma-quote-select').each(function () {
 			var select = $(this);
-			var caseRef = select.closest('form').find('select.ma-case-select').val() || '';
-			var html = '<option value="">None</option>';
-			$.each(quotations, function (_, item) {
-				if (caseRef !== '' && item.salescaseref !== caseRef) return;
-				html += '<option value="' + escapeHtml(item.orderno) + '">' + escapeHtml(quoteLabel(item)) + '</option>';
-			});
-			select.html(html);
+			lookup(select, 'lookup_quotations', quoteLabel, function () {
+				return select.closest('form').find('select.ma-case-select').val() || '';
+			}, 'None', true);
 		});
-		var quoteSent = $('#ma-quote-form select[name="orderno"]');
-		var quoteHtml = '<option value="">Choose a quotation</option>';
-		$.each(quotations, function (_, item) {
-			quoteHtml += '<option value="' + escapeHtml(item.orderno) + '">' + escapeHtml(quoteLabel(item)) + '</option>';
+		lookup($('#ma-quote-form select[name="orderno"]'), 'lookup_quotations', quoteLabel, function () { return ''; },
+			'Search your quotations by number or customer…', false);
+		// A different case invalidates a quotation chosen for the previous one.
+		$('select.ma-case-select').on('change', function () {
+			$(this).closest('form').find('select.ma-quote-select').val(null).trigger('change');
 		});
-		quoteSent.html(quoteHtml);
 	}
 
 	function renderTables(data) {
@@ -106,14 +123,10 @@
 					showMessage(data.message || 'Your activity could not be loaded.', 'error');
 					return;
 				}
-				cases = data.cases || [];
-				quotations = data.quotations || [];
-				fillCaseSelects();
-				fillQuoteSelects();
 				renderTables(data);
 				$('#ma-loading').hide();
 				$('#ma-content').show();
-				if (!cases.length) showMessage('No sales cases are assigned to you yet. Ask your sales manager to check the case assignment.', 'error');
+				if (!(data.cases || []).length) showMessage('No sales cases are assigned to you yet. Ask your sales manager to check the case assignment.', 'error');
 			})
 			.fail(function (xhr) {
 				$('#ma-loading').hide();
@@ -127,6 +140,9 @@
 			keep[this.name] = this.value;
 		});
 		form[0].reset();
+		form.find('select').each(function () {
+			if ($(this).data('select2')) $(this).val(null).trigger('change');
+		});
 		$.each(keep, function (name, value) { form.find('[name="' + name + '"]').val(value); });
 		form.find('[name="idempotency_key"]').val(makeKey());
 	}
@@ -141,7 +157,6 @@
 					form.find('.ma-form-message').text('');
 					resetForm(form);
 				}
-				fillQuoteSelects();
 				loadActivity();
 			})
 			.fail(function (xhr) {
@@ -152,8 +167,6 @@
 			.always(function () { if (button) button.prop('disabled', false); });
 	}
 
-	$('.ma-case-select').on('change', fillQuoteSelects);
-
 	$('#ma-followup-form, #ma-enquiry-form, #ma-po-form, #ma-quote-form').each(function () {
 		$(this).find('[name="idempotency_key"]').val(makeKey());
 	});
@@ -161,13 +174,15 @@
 	$('#ma-followup-form, #ma-enquiry-form, #ma-po-form, #ma-quote-form').on('submit', function (event) {
 		event.preventDefault();
 		var form = $(this);
-		var data = form.serializeArray();
-		var caseField = form.find('select.ma-case-select');
-		if (caseField.length && caseField.prop('required') && !caseField.val()) {
-			showMessage('Choose one of your sales cases.', 'error');
+		var missing = false;
+		form.find('select[data-required="1"]').each(function () {
+			if (!$(this).val()) missing = true;
+		});
+		if (missing) {
+			showMessage('Choose a sales case or quotation from the list.', 'error');
 			return;
 		}
-		postAction($.param(data), form);
+		postAction($.param(form.serializeArray()), form);
 	});
 
 	$(document).on('click', '.ma-void', function () {
@@ -185,5 +200,6 @@
 	});
 
 	$('#ma-message').hide();
+	initLookups();
 	loadActivity();
 })(jQuery);
