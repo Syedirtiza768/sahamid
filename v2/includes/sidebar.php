@@ -836,6 +836,13 @@
           <?php } ?>
         </ul>
       </li>
+      <?php if (userHasPermission($db, 'sales_performance_capture_events')) { ?>
+      <li class="<?php ecif($active == "my_sales_activity", "active") ?>">
+        <a href="<?php echo $NewRootPath; ?>v3/salesActivity.php">
+          <i class="fa fa-pencil-square-o"></i> <span>My Sales Activity</span>
+        </a>
+      </li>
+      <?php } ?>
       <li class="treeview <?php ecif($active == "reports", "active") ?>">
         <a href="<?php echo $NewRootPath; ?>v2/reportLinks.php">
           <i class="fa fa-file-text"></i> <span>Reports</span>
