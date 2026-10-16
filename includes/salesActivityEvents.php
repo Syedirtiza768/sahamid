@@ -245,11 +245,13 @@ function saActRecordQuotationIssue($db, $orderNo, $actorId, $issuedAt = null, $s
 	if ($manageTransaction && !mysqli_begin_transaction($db)) return;
 	try {
 		saActLock($db, 'quotation_issue', (string) $orderNo);
-		// Same content already recorded (retry, or an unchanged re-save): nothing new to record.
-		$existing = saActQuery($db, "SELECT id FROM sales_performance_quotation_issues WHERE idempotency_key=? OR (orderno=? AND source_hash=? AND issue_kind<>'resent') LIMIT 1 FOR UPDATE", array($key, (string) $orderNo, $snapshot['source_hash']));
-		if (count($existing)) { if ($manageTransaction) mysqli_rollback($db); return; }
+		// The current version: if it is already the latest recorded, nothing new to record (retry, or an unchanged re-save).
+		$current = saActQuery($db, "SELECT source_hash FROM sales_performance_quotation_issues WHERE orderno=? AND issue_kind IN ('issued','revised') ORDER BY issue_sequence DESC LIMIT 1 FOR UPDATE", array((string) $orderNo));
+		if (count($current) && $current[0]['source_hash'] === $snapshot['source_hash']) { if ($manageTransaction) mysqli_rollback($db); return; }
 		$sequenceRows = saActQuery($db, 'SELECT issue_sequence FROM sales_performance_quotation_issues WHERE orderno=? ORDER BY issue_sequence DESC LIMIT 1 FOR UPDATE', array((string) $orderNo));
 		$sequence = count($sequenceRows) ? (int) $sequenceRows[0]['issue_sequence'] + 1 : 1;
+		// Each recording gets its own key, so a version that comes back later (A, B, A) is recorded again.
+		$key = 'auto-quote-' . substr(sha1($orderNo . '|' . $snapshot['source_hash'] . '|' . $sequence), 0, 40);
 		$prior = saActQuery($db, "SELECT id FROM sales_performance_quotation_issues WHERE canonical_family_key=? AND issue_kind<>'resent' ORDER BY issued_at DESC, id DESC LIMIT 1 FOR UPDATE", array($family));
 		$attribution = saActAttribution($db, $cases[0]['salesman'], date('Y-m-d'));
 		$teamId = $attribution['team_id'] === null ? null : (string) $attribution['team_id'];
@@ -260,6 +262,8 @@ function saActRecordQuotationIssue($db, $orderNo, $actorId, $issuedAt = null, $s
 				count($prior) ? $prior[0]['id'] : null, $issueKind, $issuedAt === null ? date('Y-m-d H:i:s') : $issuedAt, (string) $actorId, (string) $actorId,
 				$attribution['salesman_code'], $teamId, 'auto_erp@' . $attribution['basis'], $snapshot['line_snapshot'],
 				$fact['raw_amount'], $fact['net_amount'], $taxAmount, $fact['currency'], $fact['tax_basis'], $fact['tax_rule_version'], $key));
+		// The new version replaces earlier drafts: they stay in the history but no longer count in reports.
+		saActQuery($db, "UPDATE sales_performance_quotation_issues SET issue_kind='superseded' WHERE orderno=? AND issue_kind IN ('issued','revised') AND issue_sequence<>?", array((string) $orderNo, (string) $sequence));
 		saActQuery($db, "UPDATE sales_performance_normalization_locks SET revision_no=revision_no+1, updated_at=NOW() WHERE source_type='quotation_issue' AND source_key=? AND policy_version='normalized-value-v1'", array((string) $orderNo));
 		if ($manageTransaction && !mysqli_commit($db)) throw new Exception('commit failed');
 	} catch (Throwable $e) {
