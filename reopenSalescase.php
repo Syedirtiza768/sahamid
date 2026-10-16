@@ -1,6 +1,7 @@
 <?php 
 	
 	include('includes/session.inc');
+	include_once('includes/salesActivityEvents.php');
 	include('includes/SQL_CommonFunctions.inc');
     if(!userHasPermission($db,"reopen_salescase")){
         header("Location: /sahamid");
@@ -25,6 +26,7 @@ if(isset($_POST['salescaseref'])){
 
 		$SQL = "UPDATE salescase SET closed=0,closingreason='' WHERE salescaseref='".$salescaseref."'";
 		$res = DB_Query($SQL, $db);
+		saActCaseReopened($db, $salescaseref, $_SESSION['UserID']);
 
 		if(!$res){
 

@@ -3,6 +3,7 @@
 /* $Id: WWW_Users.php 6467 2013-12-02 03:19:37Z exsonqu $*/
 include('includes/DefineSalesCaseClass.php');
 include('includes/session.inc');
+include_once('includes/salesActivityEvents.php');
 ?>
 
 <?php
@@ -87,6 +88,7 @@ AND !isset($_POST['updatesalescase'])
 		$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
 				$DbgMsg =  _('The following SQL to insert the stock movement record was used');
 				$ResultX = DB_query($sql, $db, $ErrMsg, $DbgMsg, true);
+				saActCaseClosed($db, $salescaseref, $_POST['caseclosereasonsquotation'], $_SESSION['UserID']);
 	
 }
 if (isset($_POST['caseclosereasonsenquiry']) AND !isset($_POST['submitsalescase']) AND !isset($_POST['updatecontacts'])
@@ -111,6 +113,7 @@ AND !isset($_POST['updatesalescase']))
 		$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
 				$DbgMsg =  _('The following SQL to insert the stock movement record was used');
 				$ResultX = DB_query($sql, $db, $ErrMsg, $DbgMsg, true);
+				saActCaseClosed($db, $salescaseref, $_POST['caseclosereasonsenquiry'], $_SESSION['UserID']);
 }
 
 if (isset($_POST['caseclosereasonspo']) AND !isset($_POST['submitsalescase']) AND !isset($_POST['updatecontacts'])
@@ -135,6 +138,7 @@ AND !isset($_POST['updatesalescase']))
 		$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
 				$DbgMsg =  _('The following SQL to insert the stock movement record was used');
 				$ResultX = DB_query($sql, $db, $ErrMsg, $DbgMsg, true);
+				saActCaseClosed($db, $salescaseref, $_POST['caseclosereasonspo'], $_SESSION['UserID']);
 }
 
 if(isset($_POST['closesalescase']))
@@ -155,6 +159,7 @@ if(isset($_POST['closesalescase']))
 		$ErrMsg =  _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The stock movement record for the incoming stock cannot be added because');
 				$DbgMsg =  _('The following SQL to insert the stock movement record was used');
 				$ResultX = DB_query($sql, $db, $ErrMsg, $DbgMsg, true);
+				saActCaseClosed($db, $salescaseref, 'Case Closed', $_SESSION['UserID']);
 }
 $ViewTopic= 'Sales Case';
 $BookMark = 'CreateSalesCase';

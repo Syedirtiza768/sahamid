@@ -6,6 +6,7 @@
 
 	include('../misc.php');
 	include('../../includes/session.inc');
+	include_once('../../includes/salesActivityEvents.php');
 	include('../../includes/SQL_CommonFunctions.inc');
 
 	$response = [];
@@ -463,6 +464,7 @@ mysqli_query($db, $SQL);*/
 			AND orderno ='".$eorderno."'";
 
 	$result = mysqli_query($db, $SQL);
+	if ($result) saActQuotationSaved($db, $salescaseref, $_SESSION['UserID']);
 
 	if(!$result){
 

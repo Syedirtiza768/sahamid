@@ -3,6 +3,7 @@
   	$PathPrefix='../';
 
     include('misc.php');
+  	include_once('../includes/salesActivityEvents.php');
   	include('../includes/session.inc');
   	include('../includes/CountriesArray.php');
 
@@ -31,6 +32,7 @@
               '".$_POST['customer']."','".$_POST['branch']."','".date('Y-m-d H:i:s')."',0)";
 
       DB_query($SQL,$db);
+      saActCaseOpened($db, $_POST['salescaseref'], $_SESSION['UserID']);
 
       foreach ($_POST['contacts'] as $contact) {
       

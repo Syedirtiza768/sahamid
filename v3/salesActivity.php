@@ -36,8 +36,6 @@ include_once('includes/sidebar.php');
 		<div id="ma-content" style="display:none">
 			<ul class="nav nav-tabs sp-tabs" role="tablist">
 				<li class="active"><a href="#ma-followup-tab" data-toggle="tab">Follow-up</a></li>
-				<li><a href="#ma-enquiry-tab" data-toggle="tab">Enquiry event</a></li>
-				<li><a href="#ma-po-tab" data-toggle="tab">Customer PO received</a></li>
 				<li><a href="#ma-quote-tab" data-toggle="tab">Quotation sent</a></li>
 			</ul>
 			<div class="tab-content sp-tab-content">
@@ -64,60 +62,6 @@ include_once('includes/sidebar.php');
 								<label class="sp-followup-notes ma-correction-only" style="display:none">Reason for the edit (required)<textarea class="form-control" name="correction_reason" maxlength="500" rows="2" placeholder="What was wrong with the original entry"></textarea></label>
 							</div>
 							<div class="sp-form-actions"><button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Save follow-up</button> <button type="button" id="ma-cancel-edit" class="btn btn-default" style="display:none">Cancel edit</button><span class="ma-form-message" aria-live="polite"></span></div>
-						</form>
-					</div>
-				</div>
-
-				<div class="tab-pane" id="ma-enquiry-tab">
-					<div class="sp-card">
-						<div class="sp-card-heading"><div><h3>Record an enquiry event</h3><p>Enquiry received, response made, company decline, customer rejection, cancellation, duplicate, successful close or reopen.</p></div></div>
-						<form id="ma-enquiry-form" class="sp-followup-form">
-							<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="action" value="capture_enquiry_event">
-							<input type="hidden" name="idempotency_key" value="">
-							<div class="sp-followup-fields">
-								<label>Sales case<select class="form-control ma-case-select" name="salescaseref" data-required="1"></select></label>
-								<label>Event<select class="form-control" name="event_type">
-									<option value="received">Enquiry received</option>
-									<option value="response">Response made</option>
-									<option value="company_decline">Company declined</option>
-									<option value="customer_rejection">Customer rejected</option>
-									<option value="cancellation">Cancelled</option>
-									<option value="duplicate">Duplicate</option>
-									<option value="success">Successful close</option>
-									<option value="reopen">Reopen</option>
-								</select></label>
-								<label>Date<input class="form-control" type="date" name="event_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-								<label>Time<input class="form-control" type="time" name="event_time" value="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-								<label>Response type<select class="form-control" name="response_code"><option value="">Not applicable</option><option value="contacted">Customer contacted</option><option value="quotation_issued">Quotation issued</option><option value="clarification">Clarification sent</option><option value="other">Other response</option></select></label>
-								<label>Outcome reason<input class="form-control" type="text" name="reason_code" maxlength="40" placeholder="Required for company decline"></label>
-								<label>Evidence reference<input class="form-control" type="text" name="evidence_reference" maxlength="500" placeholder="Optional ERP document or file reference"></label>
-								<label class="sp-followup-notes">Notes<textarea class="form-control" name="notes" maxlength="2000" rows="2"></textarea></label>
-							</div>
-							<div class="sp-form-actions"><button type="submit" class="btn btn-primary">Save enquiry event</button><span class="ma-form-message" aria-live="polite"></span></div>
-						</form>
-					</div>
-				</div>
-
-				<div class="tab-pane" id="ma-po-tab">
-					<div class="sp-card">
-						<div class="sp-card-heading"><div><h3>Record a customer PO received</h3><p>The customer’s actual PO, not the ERP order confirmation. The same customer PO reference cannot be recorded twice.</p></div></div>
-						<form id="ma-po-form" class="sp-followup-form">
-							<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="action" value="capture_po_receipt">
-							<input type="hidden" name="idempotency_key" value="">
-							<div class="sp-followup-fields">
-								<label>Sales case<select class="form-control ma-case-select" name="salescaseref" data-required="1"></select></label>
-								<label>Customer PO reference<input class="form-control" type="text" name="customer_reference" maxlength="150" required></label>
-								<label>Date received<input class="form-control" type="date" name="received_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-								<label>Time<input class="form-control" type="time" name="received_time" value="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-								<label>PO stated amount<input class="form-control" type="number" name="stated_amount" min="0" step="0.01" placeholder="Optional"></label>
-								<label>Currency<input class="form-control" type="text" name="currency" maxlength="3" value="PKR"></label>
-								<label>Amount basis<select class="form-control" name="tax_basis"><option value="unknown">Unknown</option><option value="exclusive">Excludes GST</option><option value="inclusive">Includes GST</option></select></label>
-								<label>Linked quotation (optional)<select class="form-control ma-quote-select" name="quotation_orderno"><option value="">None</option></select></label>
-								<label>Evidence reference<input class="form-control" type="text" name="evidence_reference" maxlength="500" placeholder="Optional ERP document or file reference"></label>
-							</div>
-							<div class="sp-form-actions"><button type="submit" class="btn btn-primary">Save PO receipt</button><span class="ma-form-message" aria-live="polite"></span></div>
 						</form>
 					</div>
 				</div>

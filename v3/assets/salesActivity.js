@@ -105,7 +105,7 @@
 		$.each(rows, function (_, row) {
 			html += '<tr class="' + (row.is_voided ? 'text-muted' : '') + '"><td>' + escapeHtml(row.business_at) + '</td><td>' + escapeHtml(row.salescaseref) + '</td>' +
 				'<td>' + escapeHtml(row.event_type) + '</td><td>' + escapeHtml(row.response_code || row.reason_code || '') + '</td><td>' + escapeHtml(row.notes || '') + '</td>' +
-				'<td>' + (row.is_voided ? 'Voided' : '<button type="button" class="btn btn-xs btn-link text-danger ma-void" data-kind="enquiry" data-id="' + escapeHtml(row.id) + '">Void</button>') + '</td></tr>';
+				'<td>' + (row.is_voided ? 'Voided' : '') + '</td></tr>';
 		});
 		if (!rows.length) html += '<tr><td colspan="6" class="text-muted">No enquiry events in the last 60 days.</td></tr>';
 		$('#ma-enquiry-table').html(html + '</tbody>');
@@ -117,7 +117,7 @@
 			html += '<tr class="' + (active ? '' : 'text-muted') + '"><td>' + escapeHtml(row.received_at) + '</td><td>' + escapeHtml(row.salescaseref) + '</td>' +
 				'<td>' + escapeHtml(row.customer_reference) + '</td><td>' + (row.stated_amount ? escapeHtml(row.currency) + ' ' + escapeHtml(row.stated_amount) : '—') + '</td>' +
 				'<td>' + (active ? 'Recorded' : 'Voided: ' + escapeHtml(row.void_reason || '')) + '</td>' +
-				'<td>' + (active ? '<button type="button" class="btn btn-xs btn-link text-danger ma-void" data-kind="po" data-id="' + escapeHtml(row.id) + '">Void</button>' : '') + '</td></tr>';
+				'<td>' + (active ? '' : '') + '</td></tr>';
 		});
 		if (!rows.length) html += '<tr><td colspan="6" class="text-muted">No customer POs in the last 60 days.</td></tr>';
 		$('#ma-po-table').html(html + '</tbody>');

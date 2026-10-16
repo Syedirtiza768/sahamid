@@ -1,5 +1,6 @@
 <?php
 
+	include_once("../../includes/salesActivityEvents.php");
 	include("../misc.php");
 	session_start();
 	$db = createDBConnection();
@@ -53,6 +54,7 @@
 						values ("'.$salescaseref.'",'.$max .',"'.$poname.'")';
 
 			mysqli_query($db,$sqlpo);
+			saActPoReceived($db, $salescaseref, $poname, $_SESSION['UserID']);
 			mysqli_query($db,$sqlC);
 		
 		}
