@@ -209,12 +209,27 @@ function spCoverageStatuses($db, $from, $through, $scopeKey, array $teamIds, $no
 	return $statuses;
 }
 
+// An enquiry event is effective unless it is itself a void, has been voided, or has an active correction.
+// The excluded ids are loaded once per request, so the report does not repeat those checks for every row.
 function spEffectiveEnquiryEventPredicate($alias) {
-	return $alias . ".voids_event_id IS NULL
-		AND NOT EXISTS (SELECT 1 FROM sales_performance_enquiry_events event_void WHERE event_void.voids_event_id=" . $alias . ".id)
-		AND NOT EXISTS (SELECT 1 FROM sales_performance_enquiry_events event_correction
-			WHERE event_correction.corrects_event_id=" . $alias . ".id AND event_correction.voids_event_id IS NULL
-			AND NOT EXISTS (SELECT 1 FROM sales_performance_enquiry_events correction_void WHERE correction_void.voids_event_id=event_correction.id))";
+	$excluded = spExcludedEnquiryEventIds();
+	return $alias . ".voids_event_id IS NULL" . (count($excluded) ? " AND " . $alias . ".id NOT IN (" . implode(',', $excluded) . ")" : "");
+}
+
+function spExcludedEnquiryEventIds() {
+	static $excluded = null;
+	if ($excluded !== null) return $excluded;
+	global $db;
+	$voided = spRows($db, "SELECT DISTINCT voids_event_id AS id FROM sales_performance_enquiry_events WHERE voids_event_id IS NOT NULL", array());
+	$voidedIds = array_map('intval', array_column($voided, 'id'));
+	$voidedSet = array_flip($voidedIds);
+	$corrections = spRows($db, "SELECT id, corrects_event_id FROM sales_performance_enquiry_events WHERE corrects_event_id IS NOT NULL AND voids_event_id IS NULL", array());
+	$excluded = $voidedIds;
+	foreach ($corrections as $correction) {
+		if (!isset($voidedSet[(int) $correction['id']])) $excluded[] = (int) $correction['corrects_event_id'];
+	}
+	$excluded = array_values(array_unique($excluded));
+	return $excluded;
 }
 
 function spEnquiryEventSequenceIsValid(array $events, $episodeNo) {
