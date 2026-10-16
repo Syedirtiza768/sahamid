@@ -1613,6 +1613,7 @@ try {
 	}
 
 	if ($action === 'capture_enquiry_event') {
+		spRespond(403, array('status' => 'error', 'code' => 'automatic', 'message' => 'Enquiry events are recorded automatically from case and quotation records.'));
 		spRequireFormToken();
 		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to capture reporting events.'));
 		$caseRef = spPostText('salescaseref', 40);
@@ -1831,6 +1832,7 @@ try {
 	}
 
 	if ($action === 'record_quote_issue') {
+		spRespond(403, array('status' => 'error', 'code' => 'automatic', 'message' => 'Quotation issues are recorded automatically when the quotation is saved.'));
 		spRequireFormToken();
 		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to capture quotation issue events.'));
 		$orderNo = spPostText('orderno', 12);
@@ -1907,6 +1909,7 @@ try {
 	}
 
 	if ($action === 'capture_po_receipt') {
+		spRespond(403, array('status' => 'error', 'code' => 'automatic', 'message' => 'Customer POs are recorded automatically when the PO is uploaded to the case.'));
 		spRequireFormToken();
 		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to capture reporting events.'));
 		$caseRef = spPostText('salescaseref', 40);

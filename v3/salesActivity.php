@@ -36,7 +36,6 @@ include_once('includes/sidebar.php');
 		<div id="ma-content" style="display:none">
 			<ul class="nav nav-tabs sp-tabs" role="tablist">
 				<li class="active"><a href="#ma-followup-tab" data-toggle="tab">Follow-up</a></li>
-				<li><a href="#ma-quote-tab" data-toggle="tab">Quotation sent</a></li>
 			</ul>
 			<div class="tab-content sp-tab-content">
 
@@ -62,25 +61,6 @@ include_once('includes/sidebar.php');
 								<label class="sp-followup-notes ma-correction-only" style="display:none">Reason for the edit (required)<textarea class="form-control" name="correction_reason" maxlength="500" rows="2" placeholder="What was wrong with the original entry"></textarea></label>
 							</div>
 							<div class="sp-form-actions"><button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Save follow-up</button> <button type="button" id="ma-cancel-edit" class="btn btn-default" style="display:none">Cancel edit</button><span class="ma-form-message" aria-live="polite"></span></div>
-						</form>
-					</div>
-				</div>
-
-				<div class="tab-pane" id="ma-quote-tab">
-					<div class="sp-card">
-						<div class="sp-card-heading"><div><h3>Record a quotation sent</h3><p>Record the date you actually sent the quotation to the customer. Only your own quotations from the last 180 days are listed.</p></div></div>
-						<form id="ma-quote-form" class="sp-followup-form">
-							<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="action" value="record_quote_issue">
-							<input type="hidden" name="idempotency_key" value="">
-							<div class="sp-followup-fields">
-								<label>Quotation<select class="form-control" name="orderno" data-required="1"></select></label>
-								<label>Issue type<select class="form-control" name="issue_kind"><option value="issued">First issue</option><option value="revised">Revised</option><option value="resent">Sent again</option></select></label>
-								<label>Date sent<input class="form-control" type="date" name="issued_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-								<label>Time<input class="form-control" type="time" name="issued_time" value="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>" required></label>
-								<label class="sp-followup-notes">Evidence reference<input class="form-control" type="text" name="evidence_reference" maxlength="500" placeholder="Optional email or file reference"></label>
-							</div>
-							<div class="sp-form-actions"><button type="submit" class="btn btn-primary">Save quotation sent</button><span class="ma-form-message" aria-live="polite"></span></div>
 						</form>
 					</div>
 				</div>

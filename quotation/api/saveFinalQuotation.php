@@ -608,6 +608,7 @@ mysqli_query($db, $SQL);*/
 
 	mysqli_query($db, $SQL);
 
+	saActQuotationIssued($db, $eorderno, $_SESSION['UserID']);
 	echo json_encode([]);
 
 ?>

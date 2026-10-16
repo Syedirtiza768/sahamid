@@ -193,3 +193,84 @@ function saActPoReceived($db, $caseRef, $reference, $actorId) {
 		saActLog('po received ' . $caseRef . ': ' . $e->getMessage());
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Quotation issue snapshots, recorded when a quotation is saved.
+// Mirrors the rules of the Sales Performance quotation issue: one snapshot per distinct
+// quotation content (source hash), issue sequence per quotation, and the preceding issue of the same family.
+// ---------------------------------------------------------------------------
+
+function saActLock($db, $sourceType, $sourceKey) {
+	saActQuery($db, "INSERT IGNORE INTO sales_performance_normalization_locks (source_type, source_key, policy_version, revision_no, updated_at) VALUES (?, ?, 'normalized-value-v1', 0, NOW())", array($sourceType, $sourceKey));
+	$locked = saActQuery($db, "SELECT revision_no FROM sales_performance_normalization_locks WHERE source_type=? AND source_key=? AND policy_version='normalized-value-v1' FOR UPDATE", array($sourceType, $sourceKey));
+	if (!count($locked)) throw new Exception('Could not secure the normalization review.');
+}
+
+// Root of a quotation's revision chain, so a revised quotation links to the issue it replaces.
+function saActQuotationFamily($db, $orderNo, $revisionFor) {
+	$root = trim((string) $revisionFor);
+	if ($root === '' || !ctype_digit($root)) return (string) $orderNo;
+	$seen = array((string) $orderNo => true);
+	for ($step = 0; $step < 20; $step++) {
+		if (isset($seen[$root])) return $root;
+		$seen[$root] = true;
+		$rows = saActQuery($db, "SELECT revision_for FROM salesorders WHERE orderno=? AND quotation=1 LIMIT 1", array($root));
+		if (!count($rows) || trim((string) $rows[0]['revision_for']) === '') return $root;
+		$next = trim((string) $rows[0]['revision_for']);
+		if (!ctype_digit($next)) return $root;
+		$root = $next;
+	}
+	return $root;
+}
+
+function saActRecordQuotationIssue($db, $orderNo, $actorId) {
+	if (!saActTableExists($db) || !ctype_digit((string) $orderNo)) return;
+	require_once __DIR__ . '/../bi/bootstrap.php';
+	$source = new \SAHamid\BI\Commercial\Source\QuotationSource();
+	$snapshot = $source->snapshotDocument($db, (string) $orderNo);
+	if ($snapshot === null) return;
+	$fact = $snapshot['fact'];
+	$caseRef = (string) $fact['salescaseref'];
+	if ($caseRef === '') return;
+	$cases = saActQuery($db, 'SELECT salescaseref, salesman FROM salescase WHERE salescaseref=? LIMIT 1', array($caseRef));
+	if (!count($cases)) return;
+	$issueKind = !empty($fact['is_revision']) ? 'revised' : 'issued';
+	$family = saActQuotationFamily($db, $orderNo, isset($fact['revision_for']) ? $fact['revision_for'] : '');
+	$taxAmount = null;
+	if ($fact['net_amount'] !== null && $fact['raw_amount'] !== null && strpos($fact['tax_basis'], 'inclusive') !== false) $taxAmount = \SAHamid\BI\Commercial\DecimalAmount::subtract($fact['raw_amount'], $fact['net_amount']);
+	elseif ($fact['net_amount'] !== null && strpos($fact['tax_basis'], 'exclusive') !== false) $taxAmount = '0.00';
+	$key = 'auto-quote-' . substr(sha1($orderNo . '|' . $snapshot['source_hash']), 0, 40);
+	if (!mysqli_begin_transaction($db)) return;
+	try {
+		saActLock($db, 'quotation_issue', (string) $orderNo);
+		// Same content already recorded (retry, or an unchanged re-save): nothing new to record.
+		$existing = saActQuery($db, "SELECT id FROM sales_performance_quotation_issues WHERE idempotency_key=? OR (orderno=? AND source_hash=? AND issue_kind<>'resent') LIMIT 1 FOR UPDATE", array($key, (string) $orderNo, $snapshot['source_hash']));
+		if (count($existing)) { mysqli_rollback($db); return; }
+		$sequenceRows = saActQuery($db, 'SELECT issue_sequence FROM sales_performance_quotation_issues WHERE orderno=? ORDER BY issue_sequence DESC LIMIT 1 FOR UPDATE', array((string) $orderNo));
+		$sequence = count($sequenceRows) ? (int) $sequenceRows[0]['issue_sequence'] + 1 : 1;
+		$prior = saActQuery($db, "SELECT id FROM sales_performance_quotation_issues WHERE canonical_family_key=? AND issue_kind<>'resent' ORDER BY issued_at DESC, id DESC LIMIT 1 FOR UPDATE", array($family));
+		$attribution = saActAttribution($db, $cases[0]['salesman'], date('Y-m-d'));
+		$teamId = $attribution['team_id'] === null ? null : (string) $attribution['team_id'];
+		saActQuery($db,
+			"INSERT INTO sales_performance_quotation_issues (orderno, issue_sequence, source_hash, salescaseref, debtorno, branchcode, canonical_family_key, preceding_issue_id, issue_kind, issued_at, recorded_at, actor_user_id, entered_by_user_id, credited_salesman_code, event_team_id, attribution_basis, line_snapshot, raw_amount, net_amount, tax_amount, currency, tax_basis, valuation_policy_version, evidence_reference, idempotency_key)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)",
+			array((string) $orderNo, (string) $sequence, $snapshot['source_hash'], $caseRef, $fact['customer'], $fact['branch'], $family,
+				count($prior) ? $prior[0]['id'] : null, $issueKind, date('Y-m-d H:i:s'), (string) $actorId, (string) $actorId,
+				$attribution['salesman_code'], $teamId, 'auto_erp@' . $attribution['basis'], $snapshot['line_snapshot'],
+				$fact['raw_amount'], $fact['net_amount'], $taxAmount, $fact['currency'], $fact['tax_basis'], $fact['tax_rule_version'], $key));
+		saActQuery($db, "UPDATE sales_performance_normalization_locks SET revision_no=revision_no+1, updated_at=NOW() WHERE source_type='quotation_issue' AND source_key=? AND policy_version='normalized-value-v1'", array((string) $orderNo));
+		if (!mysqli_commit($db)) throw new Exception('commit failed');
+	} catch (Throwable $e) {
+		mysqli_rollback($db);
+		throw $e;
+	}
+}
+
+// Called when a quotation save completes, so the line items are in place for the snapshot.
+function saActQuotationIssued($db, $orderNo, $actorId) {
+	try {
+		saActRecordQuotationIssue($db, $orderNo, $actorId);
+	} catch (Throwable $e) {
+		saActLog('quotation issue ' . $orderNo . ': ' . $e->getMessage());
+	}
+}
