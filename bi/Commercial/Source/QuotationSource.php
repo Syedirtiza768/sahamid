@@ -174,7 +174,18 @@ class QuotationSource
 		$fact = null;
 		foreach ($facts as $candidate) if ($candidate['source_key'] === (string) $orderNo) { $fact = $candidate; break; }
 		if ($fact === null) return null;
-		if ($fact['source_type'] === 'quick_quotation_option_zero') {
+		return $this->snapshotFromFact($db, $orderNo, $fact);
+	}
+
+	/**
+	 * Freeze lines for a document whose source fact is already known. Bulk backfills pass the lines they already loaded in one batch
+	 * ($lines, same columns and order as the per-document query), which avoids a full scan of the options table per document.
+	 */
+	public function snapshotFromFact($db, $orderNo, array $fact, $lines = null)
+	{
+		if ($lines !== null) {
+			// Lines already loaded for this document.
+		} elseif ($fact['source_type'] === 'quick_quotation_option_zero') {
 			$lines = $this->query($db, 'SELECT * FROM salesorderoptions WHERE orderno=? AND optionno=0 ORDER BY lineno', array((string) $orderNo));
 		} else {
 			$lines = $this->query($db,

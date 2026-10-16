@@ -223,11 +223,13 @@ function saActQuotationFamily($db, $orderNo, $revisionFor) {
 	return $root;
 }
 
-function saActRecordQuotationIssue($db, $orderNo, $actorId) {
+function saActRecordQuotationIssue($db, $orderNo, $actorId, $issuedAt = null, $snapshot = null, $manageTransaction = true) {
 	if (!saActTableExists($db) || !ctype_digit((string) $orderNo)) return;
-	require_once __DIR__ . '/../bi/bootstrap.php';
+	if ($snapshot === null) {
+		require_once __DIR__ . '/../bi/bootstrap.php';
 	$source = new \SAHamid\BI\Commercial\Source\QuotationSource();
-	$snapshot = $source->snapshotDocument($db, (string) $orderNo);
+		$snapshot = $source->snapshotDocument($db, (string) $orderNo);
+	}
 	if ($snapshot === null) return;
 	$fact = $snapshot['fact'];
 	$caseRef = (string) $fact['salescaseref'];
@@ -240,12 +242,12 @@ function saActRecordQuotationIssue($db, $orderNo, $actorId) {
 	if ($fact['net_amount'] !== null && $fact['raw_amount'] !== null && strpos($fact['tax_basis'], 'inclusive') !== false) $taxAmount = \SAHamid\BI\Commercial\DecimalAmount::subtract($fact['raw_amount'], $fact['net_amount']);
 	elseif ($fact['net_amount'] !== null && strpos($fact['tax_basis'], 'exclusive') !== false) $taxAmount = '0.00';
 	$key = 'auto-quote-' . substr(sha1($orderNo . '|' . $snapshot['source_hash']), 0, 40);
-	if (!mysqli_begin_transaction($db)) return;
+	if ($manageTransaction && !mysqli_begin_transaction($db)) return;
 	try {
 		saActLock($db, 'quotation_issue', (string) $orderNo);
 		// Same content already recorded (retry, or an unchanged re-save): nothing new to record.
 		$existing = saActQuery($db, "SELECT id FROM sales_performance_quotation_issues WHERE idempotency_key=? OR (orderno=? AND source_hash=? AND issue_kind<>'resent') LIMIT 1 FOR UPDATE", array($key, (string) $orderNo, $snapshot['source_hash']));
-		if (count($existing)) { mysqli_rollback($db); return; }
+		if (count($existing)) { if ($manageTransaction) mysqli_rollback($db); return; }
 		$sequenceRows = saActQuery($db, 'SELECT issue_sequence FROM sales_performance_quotation_issues WHERE orderno=? ORDER BY issue_sequence DESC LIMIT 1 FOR UPDATE', array((string) $orderNo));
 		$sequence = count($sequenceRows) ? (int) $sequenceRows[0]['issue_sequence'] + 1 : 1;
 		$prior = saActQuery($db, "SELECT id FROM sales_performance_quotation_issues WHERE canonical_family_key=? AND issue_kind<>'resent' ORDER BY issued_at DESC, id DESC LIMIT 1 FOR UPDATE", array($family));
@@ -255,13 +257,13 @@ function saActRecordQuotationIssue($db, $orderNo, $actorId) {
 			"INSERT INTO sales_performance_quotation_issues (orderno, issue_sequence, source_hash, salescaseref, debtorno, branchcode, canonical_family_key, preceding_issue_id, issue_kind, issued_at, recorded_at, actor_user_id, entered_by_user_id, credited_salesman_code, event_team_id, attribution_basis, line_snapshot, raw_amount, net_amount, tax_amount, currency, tax_basis, valuation_policy_version, evidence_reference, idempotency_key)
 			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)",
 			array((string) $orderNo, (string) $sequence, $snapshot['source_hash'], $caseRef, $fact['customer'], $fact['branch'], $family,
-				count($prior) ? $prior[0]['id'] : null, $issueKind, date('Y-m-d H:i:s'), (string) $actorId, (string) $actorId,
+				count($prior) ? $prior[0]['id'] : null, $issueKind, $issuedAt === null ? date('Y-m-d H:i:s') : $issuedAt, (string) $actorId, (string) $actorId,
 				$attribution['salesman_code'], $teamId, 'auto_erp@' . $attribution['basis'], $snapshot['line_snapshot'],
 				$fact['raw_amount'], $fact['net_amount'], $taxAmount, $fact['currency'], $fact['tax_basis'], $fact['tax_rule_version'], $key));
 		saActQuery($db, "UPDATE sales_performance_normalization_locks SET revision_no=revision_no+1, updated_at=NOW() WHERE source_type='quotation_issue' AND source_key=? AND policy_version='normalized-value-v1'", array((string) $orderNo));
-		if (!mysqli_commit($db)) throw new Exception('commit failed');
+		if ($manageTransaction && !mysqli_commit($db)) throw new Exception('commit failed');
 	} catch (Throwable $e) {
-		mysqli_rollback($db);
+		if ($manageTransaction) mysqli_rollback($db);
 		throw $e;
 	}
 }
