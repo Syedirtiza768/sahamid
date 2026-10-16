@@ -11,6 +11,16 @@ header('Content-Type: application/json; charset=utf-8');
 date_default_timezone_set('Asia/Karachi');
 require_once '../../bi/bootstrap.php';
 
+// Stage timings for the report. Returned only when the request includes timings=1.
+$spStageTimings = array();
+$spStageClock = microtime(true);
+function spStage($label) {
+	global $spStageTimings, $spStageClock;
+	$now = microtime(true);
+	$spStageTimings[] = array('stage' => $label, 'ms' => round(($now - $spStageClock) * 1000));
+	$spStageClock = $now;
+}
+
 function spRespond($status, $payload) {
 	http_response_code($status);
 	echo json_encode($payload);
@@ -3003,10 +3013,14 @@ try {
 	$calendarFrom = min($currentPeriod['from'], $comparisonPeriod['from']);
 	$calendarThrough = max($currentPeriod['to'], $comparisonPeriod['to']);
 	$calendarOverrides = spLoadCalendarOverrides($db, $calendarFrom, $calendarThrough, $reportCalendarVersion);
+	spStage('setup and calendar');
 	$current = spLoadPeriod($db, $currentPeriod['from'], $currentPeriod['to'], $scopeNames, $reportTeamRows, $reportTeamBySalesman, $followupStart, $businessCutoff, $coverageScope, $teamMembershipHistory, $calendarOverrides, $namedPopulation, $allTeamRows);
+	spStage('current period');
 	$comparison = spLoadPeriod($db, $comparisonPeriod['from'], $comparisonPeriod['to'], $scopeNames, $reportTeamRows, $reportTeamBySalesman, $followupStart, $comparisonCutoff, $coverageScope, $teamMembershipHistory, $calendarOverrides, $namedPopulation, $allTeamRows);
+	spStage('comparison period');
 	$currentEnquiryStatus = spEnquiryStatus($db, $currentPeriod['from'], $businessCutoff, $scopeNames, $namedPopulation);
 	$comparisonEnquiryStatus = spEnquiryStatus($db, $comparisonPeriod['from'], $comparisonCutoff, $scopeNames, $namedPopulation);
+	spStage('enquiry status');
 	$newUnansweredByDate = array();
 	foreach ($currentEnquiryStatus['daily_new_unanswered'] as $row) $newUnansweredByDate[$row['report_date']] = (int) $row['record_count'];
 	foreach ($current['daily'] as &$dailyItem) $dailyItem['unanswered_new_count'] = isset($newUnansweredByDate[$dailyItem['date']]) ? $newUnansweredByDate[$dailyItem['date']] : 0;
@@ -3169,6 +3183,7 @@ try {
 		);
 	}
 
+	spStage('summary and tables');
 	$responsePayload = array(
 		'status' => 'success',
 		'meta' => array(
@@ -3298,6 +3313,8 @@ try {
 	if ($canAdminSetup) {
 		$responsePayload = array_merge($responsePayload, array('can_admin_setup' => true), spAdminSetupPayload($db, $userId, $canApproveNamedScope));
 	}
+	spStage('response built');
+	if (isset($_GET['timings'])) $responsePayload['_timings'] = $spStageTimings;
 	spRespond(200, $responsePayload);
 	} catch (\SAHamid\BI\Exception\BIException $e) {
 		spRespond($e->getHttpStatus(), array('status' => 'error', 'code' => $e->getErrorCode(), 'message' => $e->getMessage(), 'details' => $e->getDetails()));
