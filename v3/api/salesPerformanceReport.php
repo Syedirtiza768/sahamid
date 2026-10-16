@@ -1388,12 +1388,21 @@ try {
 		$myFollowups = spRows($db,
 			"SELECT f.id, DATE_FORMAT(COALESCE(f.actual_activity_at, CONCAT(f.activity_date, ' 00:00:00')), '%Y-%m-%d %H:%i') AS activity_at,
 				f.salescaseref, f.quotation_orderno, f.activity_type, f.outcome, f.next_action,
+				DATE_FORMAT(f.activity_date, '%Y-%m-%d') AS activity_date,
 				DATE_FORMAT(f.next_action_date, '%Y-%m-%d') AS next_action_date, f.notes,
-				DATE_FORMAT(f.voided_at, '%Y-%m-%d %H:%i') AS voided_at, f.void_reason
+				f.entered_by_user_id, f.created_by,
+				DATE_FORMAT(f.voided_at, '%Y-%m-%d %H:%i') AS voided_at, f.void_reason,
+				EXISTS (SELECT 1 FROM sales_performance_followups c WHERE c.corrected_from_id = f.id) AS has_correction
 			 FROM sales_performance_followups f
 			 WHERE f.salesman = ? AND f.activity_date >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
 			 ORDER BY f.actual_activity_at DESC, f.id DESC LIMIT 200",
 			array($userName));
+		foreach ($myFollowups as &$myFollowup) {
+			$enteredBy = (string) ($myFollowup['entered_by_user_id'] !== null ? $myFollowup['entered_by_user_id'] : $myFollowup['created_by']);
+			$myFollowup['can_edit'] = $myFollowup['voided_at'] === null && !(bool) $myFollowup['has_correction'] && $enteredBy === (string) $userId;
+			$myFollowup['has_correction'] = (bool) $myFollowup['has_correction'];
+		}
+		unset($myFollowup);
 		$myEnquiryEvents = spRows($db,
 			"SELECT e.id, e.salescaseref, e.event_type, DATE_FORMAT(e.business_at, '%Y-%m-%d %H:%i') AS business_at,
 				e.response_code, e.reason_code, e.notes, e.evidence_reference,
@@ -1517,7 +1526,7 @@ try {
 				}
 				if ($parent['salescaseref'] !== $caseRef) { mysqli_rollback($db); spRespond(409, array('status' => 'error', 'code' => 'followup_case_changed', 'message' => 'A correction must remain linked to the original sales case.')); }
 				$enteredByParent = (string) ($parent['entered_by_user_id'] !== null ? $parent['entered_by_user_id'] : $parent['created_by']);
-				if ($enteredByParent !== (string) $userId && !$canViewCompany) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'Only the original reporter or a company reporting manager can correct this follow-up.')); }
+				if ($enteredByParent !== (string) $userId) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'Only the person who recorded this follow-up can edit it.')); }
 				$children = spRows($db, 'SELECT id FROM sales_performance_followups WHERE corrected_from_id=? LIMIT 1 FOR UPDATE', array((string) $correctionId));
 				if (count($children)) { mysqli_rollback($db); spRespond(409, array('status' => 'error', 'code' => 'followup_already_corrected', 'message' => 'A correction already exists for this follow-up. Correct the latest version instead.')); }
 				if ($caseRef !== '') {
@@ -1587,12 +1596,8 @@ try {
 			if (!count($targetRows)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'message' => 'That follow-up was not found.')); }
 			$target = $targetRows[0];
 			$enteredBy = (string) ($target['entered_by_user_id'] !== null ? $target['entered_by_user_id'] : $target['created_by']);
-			$authorized = $enteredBy === (string) $userId || $canViewCompany;
-			if (!$authorized && $target['salescaseref'] !== '') {
-				$case = spCanAccessCase($db, $target['salescaseref'], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf);
-				$authorized = is_array($case);
-			}
-			if (!$authorized) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That follow-up is outside your authorized reporting scope.')); }
+			// Only the person who recorded a follow-up may void it; managers see it in reports but do not change it.
+			if ($enteredBy !== (string) $userId) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'Only the person who recorded this follow-up can void it.')); }
 			if ($target['voided_at'] !== null) {
 				mysqli_rollback($db);
 				spRespond(200, array('status' => 'success', 'message' => 'That follow-up was already voided.', 'duplicate' => true));
@@ -3031,8 +3036,8 @@ try {
 		foreach ($followups as &$followupRow) {
 			$entryUser = (string) ($followupRow['entered_by_user_id'] !== null ? $followupRow['entered_by_user_id'] : $followupRow['created_by']);
 			$active = $followupRow['voided_at'] === null;
-			$followupRow['can_void'] = $active && $canCaptureEvents && ($entryUser === (string) $userId || $canViewCompany || $canViewTeams || $canViewSelf);
-			$followupRow['can_correct'] = $active && $canCaptureEvents && ($entryUser === (string) $userId || $canViewCompany);
+			$followupRow['can_void'] = $active && $canCaptureEvents && $entryUser === (string) $userId;
+			$followupRow['can_correct'] = $active && $canCaptureEvents && $entryUser === (string) $userId;
 			$followupRow['has_correction'] = (bool) $followupRow['has_correction'];
 		}
 		unset($followupRow);

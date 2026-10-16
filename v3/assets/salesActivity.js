@@ -4,6 +4,7 @@
 	var app = $('#my-activity-app');
 	var apiUrl = app.data('api-url');
 	var formId = app.data('form-id');
+	var followupRows = [];
 
 	function escapeHtml(value) {
 		return String(value === null || value === undefined ? '' : value)
@@ -85,10 +86,16 @@
 		var html = '<thead><tr><th>When</th><th>Case</th><th>Quotation</th><th>Type</th><th>Outcome</th><th>Next action</th><th></th></tr></thead><tbody>';
 		$.each(rows, function (_, row) {
 			var voided = row.voided_at !== null;
-			html += '<tr class="' + (voided ? 'text-muted' : '') + '"><td>' + escapeHtml(row.activity_at) + '</td><td>' + escapeHtml(row.salescaseref || '—') + '</td>' +
+			var status = voided ? 'Voided: ' + escapeHtml(row.void_reason || '') : (row.has_correction ? 'Replaced by an edit' : '');
+			var actions = '';
+			if (row.can_edit) {
+				actions = '<button type="button" class="btn btn-xs btn-default ma-edit-followup" data-id="' + escapeHtml(row.id) + '">Edit</button> ' +
+					'<button type="button" class="btn btn-xs btn-link text-danger ma-void" data-kind="followup" data-id="' + escapeHtml(row.id) + '">Void</button>';
+			}
+			html += '<tr class="' + (voided || row.has_correction ? 'text-muted' : '') + '"><td>' + escapeHtml(row.activity_at) + '</td><td>' + escapeHtml(row.salescaseref || '—') + '</td>' +
 				'<td>' + (row.quotation_orderno ? 'Q#' + escapeHtml(row.quotation_orderno) : '—') + '</td><td>' + escapeHtml(row.activity_type) + '</td>' +
 				'<td>' + escapeHtml(row.outcome) + '</td><td>' + escapeHtml(row.next_action || '') + (row.next_action_date ? ' · ' + escapeHtml(row.next_action_date) : '') + '</td>' +
-				'<td>' + (voided ? 'Voided: ' + escapeHtml(row.void_reason || '') : '<button type="button" class="btn btn-xs btn-link text-danger ma-void" data-kind="followup" data-id="' + escapeHtml(row.id) + '">Void</button>') + '</td></tr>';
+				'<td>' + (status ? status + ' ' : '') + actions + '</td></tr>';
 		});
 		if (!rows.length) html += '<tr><td colspan="7" class="text-muted">No follow-ups in the last 60 days.</td></tr>';
 		$('#ma-followup-table').html(html + '</tbody>');
@@ -123,6 +130,7 @@
 					showMessage(data.message || 'Your activity could not be loaded.', 'error');
 					return;
 				}
+				followupRows = data.followups || [];
 				renderTables(data);
 				$('#ma-loading').hide();
 				$('#ma-content').show();
@@ -145,6 +153,40 @@
 		});
 		$.each(keep, function (name, value) { form.find('[name="' + name + '"]').val(value); });
 		form.find('[name="idempotency_key"]').val(makeKey());
+		form.find('[name="corrected_from_id"]').val('');
+		form.find('.ma-correction-only').hide();
+		if (form.data('submit-label')) form.find('button[type="submit"]').html(form.data('submit-label'));
+		form.find('#ma-cancel-edit').hide();
+		$('#ma-edit-banner').hide().text('');
+	}
+
+	// Loads one of the signed-in person's own follow-ups into the form as a correction. The original stays in the audit history.
+	function startEdit(row) {
+		var form = $('#ma-followup-form');
+		function setSelect(select, value, text) {
+			if (!value) { select.val(null).trigger('change'); return; }
+			if (!select.find('option[value="' + value + '"]').length) select.append(new Option(text, value, true, true));
+			select.val(value).trigger('change');
+		}
+		form.find('[name="corrected_from_id"]').val(row.id);
+		form.find('[name="activity_date"]').val(row.activity_date);
+		form.find('[name="activity_time"]').val((row.activity_at || '').slice(11, 16));
+		// Case first: changing the case clears the quotation, so the quotation is set afterwards.
+		setSelect(form.find('select[name="salescaseref"]'), row.salescaseref || '', row.salescaseref || '');
+		setSelect(form.find('select[name="quotation_orderno"]'), row.quotation_orderno ? String(row.quotation_orderno) : '', row.quotation_orderno ? 'Q#' + row.quotation_orderno : '');
+		form.find('[name="activity_type"]').val(row.activity_type);
+		form.find('[name="outcome"]').val(row.outcome || '');
+		form.find('[name="next_action"]').val(row.next_action || '');
+		form.find('[name="next_action_date"]').val(row.next_action_date || '');
+		form.find('[name="notes"]').val(row.notes || '');
+		form.find('[name="correction_reason"]').val('');
+		form.find('[name="idempotency_key"]').val(makeKey());
+		form.find('.ma-correction-only').show();
+		form.find('button[type="submit"]').html('<i class="fa fa-save"></i> Save edit');
+		form.find('#ma-cancel-edit').show();
+		$('#ma-edit-banner').text('Editing the follow-up from ' + (row.activity_at || '') + '. Enter the reason for the edit below. The original stays in the audit history.').show();
+		$('a[href="#ma-followup-tab"]').tab('show');
+		$('html, body').animate({ scrollTop: form.offset().top - 120 }, 200);
 	}
 
 	function postAction(data, form) {
@@ -182,7 +224,22 @@
 			showMessage('Choose a sales case or quotation from the list.', 'error');
 			return;
 		}
+		if (form.find('[name="corrected_from_id"]').val() && $.trim(form.find('[name="correction_reason"]').val()) === '') {
+			showMessage('Enter the reason for the edit.', 'error');
+			return;
+		}
 		postAction($.param(form.serializeArray()), form);
+	});
+
+	$(document).on('click', '.ma-edit-followup', function () {
+		var id = String($(this).data('id'));
+		var row = $.grep(followupRows, function (item) { return String(item.id) === id; })[0];
+		if (row) startEdit(row);
+	});
+
+	$('#ma-cancel-edit').on('click', function () {
+		resetForm($('#ma-followup-form'));
+		$('#ma-followup-form').find('.ma-form-message').text('');
 	});
 
 	$(document).on('click', '.ma-void', function () {
@@ -199,6 +256,9 @@
 		postAction(data, null);
 	});
 
+	$('#ma-followup-form, #ma-enquiry-form, #ma-po-form, #ma-quote-form').each(function () {
+		$(this).data('submit-label', $(this).find('button[type="submit"]').html());
+	});
 	$('#ma-message').hide();
 	initLookups();
 	loadActivity();

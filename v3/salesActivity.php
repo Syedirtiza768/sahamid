@@ -44,11 +44,13 @@ include_once('includes/sidebar.php');
 
 				<div class="tab-pane active" id="ma-followup-tab">
 					<div class="sp-card">
-						<div class="sp-card-heading"><div><h3>Record a follow-up</h3><p>Calls, visits, emails and meetings. Leave the case blank for general activity that is not tied to a case.</p></div></div>
+						<div class="sp-card-heading"><div><h3>Record a follow-up</h3><p>Calls, visits, emails and meetings. Leave the case blank for general activity that is not tied to a case. You can edit or void only the follow-ups you recorded.</p></div></div>
+						<div id="ma-edit-banner" class="sp-assumption-note" style="display:none"></div>
 						<form id="ma-followup-form" class="sp-followup-form">
 							<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
 							<input type="hidden" name="action" value="add_followup">
 							<input type="hidden" name="idempotency_key" value="">
+							<input type="hidden" name="corrected_from_id" value="">
 							<div class="sp-followup-fields">
 								<label>Date<input class="form-control" type="date" name="activity_date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" max="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" required></label>
 								<label>Time<input class="form-control" type="time" name="activity_time" value="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>" required></label>
@@ -59,8 +61,9 @@ include_once('includes/sidebar.php');
 								<label>Next action<input class="form-control" type="text" name="next_action" maxlength="500" placeholder="Optional next step"></label>
 								<label>Next action date<input class="form-control" type="date" name="next_action_date"></label>
 								<label class="sp-followup-notes">Notes<textarea class="form-control" name="notes" maxlength="4000" rows="2" placeholder="Optional notes"></textarea></label>
+								<label class="sp-followup-notes ma-correction-only" style="display:none">Reason for the edit (required)<textarea class="form-control" name="correction_reason" maxlength="500" rows="2" placeholder="What was wrong with the original entry"></textarea></label>
 							</div>
-							<div class="sp-form-actions"><button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Save follow-up</button><span class="ma-form-message" aria-live="polite"></span></div>
+							<div class="sp-form-actions"><button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Save follow-up</button> <button type="button" id="ma-cancel-edit" class="btn btn-default" style="display:none">Cancel edit</button><span class="ma-form-message" aria-live="polite"></span></div>
 						</form>
 					</div>
 				</div>
