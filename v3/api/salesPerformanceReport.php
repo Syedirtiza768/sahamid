@@ -3061,7 +3061,18 @@ try {
 		$effectiveHistory = spEffectiveEnquiryEventPredicate('e');
 		$effectiveCorrection = spEffectiveEnquiryEventPredicate('active_correction');
 		$effectiveLater = spEffectiveEnquiryEventPredicate('later');
-		$enquiryEventHistory = spRows($db,
+		// Find the newest 250 events first, then compute the detail columns only for those rows.
+		// The detail columns use per-row subqueries, which are slow when run over the whole table.
+		$recentIds = spRows($db,
+			"SELECT e.id FROM sales_performance_enquiry_events e
+			 INNER JOIN salescase sc ON sc.salescaseref=e.salescaseref
+			 LEFT JOIN salesman sm ON sm.salesmancode=e.credited_salesman_code
+			 WHERE 1=1 $eventHistoryScope
+			 ORDER BY e.recorded_at DESC,e.id DESC LIMIT 250",
+			$eventHistoryParams
+		);
+		$recentIdList = implode(',', array_map('intval', array_column($recentIds, 'id')));
+		$enquiryEventHistory = $recentIdList === '' ? array() : spRows($db,
 			"SELECT e.id,e.salescaseref,e.episode_no,e.event_type,
 				DATE_FORMAT(e.business_at,'%Y-%m-%d %H:%i') AS business_at,DATE_FORMAT(e.recorded_at,'%Y-%m-%d %H:%i') AS recorded_at,
 				e.actor_user_id,e.entered_by_user_id,e.credited_salesman_code,e.event_team_id,e.response_code,e.reason_code,e.notes,e.evidence_reference,
@@ -3079,9 +3090,9 @@ try {
 					AND (later.episode_no>e.episode_no OR (later.episode_no=e.episode_no AND (later.business_at>e.business_at OR (later.business_at=e.business_at AND later.id>e.id))))) AS has_later_event
 			 FROM sales_performance_enquiry_events e INNER JOIN salescase sc ON sc.salescaseref=e.salescaseref
 			 LEFT JOIN salesman sm ON sm.salesmancode=e.credited_salesman_code
-			 WHERE 1=1 $eventHistoryScope
+			 WHERE e.id IN ($recentIdList)
 			 ORDER BY e.recorded_at DESC,e.id DESC LIMIT 250",
-			$eventHistoryParams
+			array()
 		);
 		foreach ($enquiryEventHistory as &$enquiryEventRow) {
 			$active = (int) $enquiryEventRow['is_effective'] === 1 && $enquiryEventRow['event_type'] !== 'void';
