@@ -20,6 +20,12 @@ if (!isset($_SESSION['UserID'])) {
 	exit;
 }
 
+if (!userHasPermission($db, 'scm_data')) {
+	http_response_code(403);
+	echo json_encode(['ok' => false, 'error' => 'You do not have access to SCM data']);
+	exit;
+}
+
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method === 'DELETE') {

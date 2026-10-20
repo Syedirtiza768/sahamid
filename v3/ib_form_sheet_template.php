@@ -6,6 +6,13 @@ $PathPrefix = '../';
 include_once __DIR__ . '/config.php';
 require_once $PathPrefix . 'includes/IBFormSheet.inc';
 
+if (!isset($_SESSION['UserID']) || !userHasPermission($db, 'scm_data')) {
+	header('HTTP/1.1 403 Forbidden');
+	header('Content-Type: text/plain; charset=UTF-8');
+	echo 'You do not have access to SCM data.';
+	exit;
+}
+
 $autoload = $PathPrefix . 'vendor/autoload.php';
 if (!is_readable($autoload)) {
 	header('HTTP/1.1 503 Service Unavailable');

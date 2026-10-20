@@ -3,11 +3,24 @@ $active = 'ib_form_sheet';
 include_once 'config.php';
 require_once $PathPrefix . 'includes/IBFormSheet.inc';
 
+// SCM data holds company-wide payment totals; only users granted scm_data may open or change it.
+// v3/config.php skips the login and form-token checks, so both are enforced here.
+if (!isset($_SESSION['UserID']) || !userHasPermission($db, 'scm_data')) {
+	header('Location: ' . $NewRootPath . 'v2/reportLinks.php');
+	exit;
+}
+
 $flashOk = '';
 $flashErr = '';
 $flashWarn = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_excel_upload'])) {
+$isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+$postOk = $isPost && isset($_POST['FormID'], $_SESSION['FormID']) && hash_equals((string)$_SESSION['FormID'], (string)$_POST['FormID']);
+if ($isPost && !$postOk) {
+	$flashErr = 'The form session expired. Refresh the page and try again.';
+}
+
+if ($postOk && isset($_POST['bulk_excel_upload'])) {
 	$autoload = $PathPrefix . 'vendor/autoload.php';
 	if (!is_readable($autoload)) {
 		$flashErr = 'Excel import requires Composer dependencies (vendor/). Run composer install on the server.';
@@ -41,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_excel_upload']))
 	}
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ib_form'])) {
+if ($postOk && isset($_POST['delete_ib_form'])) {
 	$delId = isset($_POST['delete_id']) ? (int)$_POST['delete_id'] : 0;
 	$r = ib_form_sheet_delete_by_id($db, $delId);
 	if (!empty($r['ok'])) {
@@ -51,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ib_form'])) {
 	$flashErr = $r['error'] ?? 'Could not delete.';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_ib_form'])) {
+if ($postOk && isset($_POST['save_ib_form'])) {
 	$editId = isset($_POST['edit_id']) ? (int)$_POST['edit_id'] : 0;
 	if ($editId > 0) {
 		$r = ib_form_sheet_update_by_id($db, $editId, $_POST, $_SESSION['UserID'] ?? '');
@@ -148,6 +161,7 @@ include_once 'includes/sidebar.php';
 						<?php } ?>
 					</div>
 					<form class="box-body" method="post" action="">
+						<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>" />
 						<input type="hidden" name="save_ib_form" value="1" />
 						<?php if ($editId) { ?>
 							<input type="hidden" name="edit_id" value="<?php echo (int)$editId; ?>" />
@@ -196,6 +210,7 @@ include_once 'includes/sidebar.php';
 						</div>
 					</div>
 					<form class="box-body" method="post" action="" enctype="multipart/form-data">
+						<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>" />
 						<input type="hidden" name="bulk_excel_upload" value="1" />
 						<p class="text-muted">First sheet only. Row 1: use the <strong>exact</strong> template column names (any order) or six columns <strong>A–F</strong> in template order. Row 2 onward: data; up to 2000 rows. Existing months are updated. Legacy files with keyword-style headers still work when columns are detected.</p>
 						<?php if (function_exists('ib_form_sheet_import_template_headers')) { ?>
@@ -242,6 +257,7 @@ include_once 'includes/sidebar.php';
 										<td class="text-right text-nowrap">
 											<a class="btn btn-xs btn-default" href="<?php echo htmlspecialchars($NewRootPath . 'v3/ib_form_sheet.php?edit=' . (int)$row['id'], ENT_QUOTES, 'UTF-8'); ?>">Edit</a>
 											<form method="post" action="" style="display:inline" onsubmit="return confirm('Delete this entry?');">
+												<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>" />
 												<input type="hidden" name="delete_ib_form" value="1" />
 												<input type="hidden" name="delete_id" value="<?php echo (int)$row['id']; ?>" />
 												<button type="submit" class="btn btn-xs btn-danger">Delete</button>
