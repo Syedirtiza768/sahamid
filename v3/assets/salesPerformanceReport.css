@@ -465,3 +465,37 @@
 	.sp-page { margin-left: 0 !important; }
 	.sp-card { box-shadow: none; break-inside: avoid; }
 }
+
+/* My Sales Activity */
+.ma-case-scroll {
+	max-height: 340px;
+	overflow-y: auto;
+}
+
+.ma-case-quotes {
+	margin: 4px 0 12px;
+	padding: 8px 12px;
+	border: 1px solid #e3e8ed;
+	border-radius: 4px;
+	background: #fafbfc;
+}
+
+.ma-case-quotes .sp-subtable-title {
+	margin-top: 4px;
+}
+
+.ma-filter-fields {
+	align-items: end;
+	margin-bottom: 14px;
+}
+
+.ma-filter-actions {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+}
+
+.sp-form-actions .btn .ma-submit-label {
+	color: inherit;
+	font-size: inherit;
+}

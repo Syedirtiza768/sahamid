@@ -76,7 +76,9 @@ $currency=$TransferRow2['rate_clause'];
 $values=$TransferRow2['clause_rates'];
 
 
-if(!($_SESSION['AccessLevel'] == 22 || $_SESSION['AccessLevel'] == 8 || $_SESSION['AccessLevel'] == 10)) {
+// Same case hierarchy as My Sales Activity: senior roles and company sales reporting see every quotation;
+// others see their own cases, cases of salespeople granted in salescase_permissions, and their team members' cases if they lead a team.
+if(!($_SESSION['AccessLevel'] == 22 || $_SESSION['AccessLevel'] == 8 || $_SESSION['AccessLevel'] == 10 || userHasPermission($db, 'sales_performance_view_all'))) {
 
 	
 	
@@ -90,7 +92,9 @@ if(!($_SESSION['AccessLevel'] == 22 || $_SESSION['AccessLevel'] == 8 || $_SESSIO
 			INNER JOIN www_users ON www_users.realname = salescase.salesman
 			WHERE salescase.salescaseref = "'.$TransferRow2['salescaseref'].'"
 			AND ( salescase.salesman ="'.$_SESSION['UsersRealName'].'"
-			OR www_users.userid IN ("'.implode('","', $canAccess).'") )';
+			OR www_users.userid IN ("'.implode('","', $canAccess).'")
+			OR EXISTS (SELECT 1 FROM salesteam WHERE salesteam.lead = "'.mysqli_real_escape_string($db, $_SESSION['UsersRealName']).'"
+				AND FIND_IN_SET(salescase.salesman, REPLACE(salesteam.members, ", ", ",")) > 0) )';
 	$res = mysqli_query($db, $SQL);
 
 	if(!$res || mysqli_num_rows($res) == 0){

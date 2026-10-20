@@ -1011,6 +1011,109 @@ function spCanAccessCaseRow($db, array $case, $userName, $userId, $canViewCompan
 	return false;
 }
 
+// Salespeople whose cases the user may see and record on in My Sales Activity, or null for every case.
+function spActivitySalesmen($db, $userId, $userName, $seeAll) {
+	if ($seeAll) return null;
+	$names = array();
+	$add = function ($name) use (&$names) {
+		$name = trim((string) $name);
+		if ($name !== '') $names[strtolower($name)] = $name;
+	};
+	$add($userName);
+	foreach (spRows($db, 'SELECT members FROM salesteam WHERE lead = ?', array($userName)) as $team) {
+		foreach (explode(',', (string) $team['members']) as $member) $add($member);
+	}
+	foreach (spRows($db, 'SELECT u.realname FROM salescase_permissions p INNER JOIN www_users u ON u.userid = p.can_access WHERE p.user = ?', array($userId)) as $row) $add($row['realname']);
+	return array_values($names);
+}
+
+function spSalesmanInScope($salesman, $salesmen) {
+	if ($salesmen === null) return true;
+	$salesman = strtolower(trim((string) $salesman));
+	foreach ($salesmen as $name) if (strtolower($name) === $salesman) return true;
+	return false;
+}
+
+// SQL fragment limiting $column to the activity scope; appends its parameters to $params.
+function spSalesmanScopeSql($column, $salesmen, array &$params) {
+	if ($salesmen === null) return '1=1';
+	foreach ($salesmen as $name) $params[] = $name;
+	return $column . ' IN (' . implode(',', array_fill(0, count($salesmen), '?')) . ')';
+}
+
+function spCanCaptureCase($db, $caseRef, $salesmen) {
+	$rows = spRows($db, 'SELECT salescaseref, salesman, debtorno, branchcode FROM salescase WHERE salescaseref = ? LIMIT 1', array($caseRef));
+	if (count($rows) === 0) return null;
+	return spSalesmanInScope($rows[0]['salesman'], $salesmen) ? $rows[0] : false;
+}
+
+function spCanCaptureCaseRow(array $case, $salesmen) {
+	return spSalesmanInScope($case['salesman'], $salesmen);
+}
+
+// Grand total as PDFQuotation.php prints it: first-option line subtotal, plus GST by GSTadd, services and
+// quote date, plus withholding tax. Null when the quotation prints no total.
+function spQuotationGrandTotal(array $quote) {
+	if ($quote['base_value'] === null) return null;
+	$base = (float) $quote['base_value'];
+	$services = (string) $quote['services'] === '1';
+	$gstRate = 0.0;
+	if ($quote['GSTadd'] === 'update') $gstRate = $services ? 0.16 : 0.18;
+	elseif ($quote['GSTadd'] === 'exclusive') $gstRate = $services ? 0.16 : (strtotime((string) $quote['quotedate']) < strtotime('2023-02-14') ? 0.17 : 0.18);
+	elseif ($quote['GSTadd'] !== 'inclusive' && $quote['GSTadd'] !== '') return null;
+	return round($base * (1 + $gstRate) + $base * (float) $quote['WHT'] / 100);
+}
+
+function spQuotationDetails($db, array $orderNos) {
+	$orderNos = array_values(array_unique(array_filter(array_map('strval', $orderNos), 'ctype_digit')));
+	if (!count($orderNos)) return array();
+	$in = implode(',', array_fill(0, count($orderNos), '?'));
+	$rows = spRows($db,
+		"SELECT so.orderno, so.salescaseref, DATE_FORMAT(so.orddate, '%Y-%m-%d') AS orddate, so.GSTadd, so.services, so.WHT, so.quotedate, v.base_value
+		 FROM salesorders so
+		 LEFT JOIN (SELECT d.orderno, SUM(d.unitprice * (1 - d.discountpercent) * d.quantity * o.quantity) AS base_value
+			FROM salesorderdetails d
+			INNER JOIN salesorderoptions o ON o.orderno = d.orderno AND o.lineno = d.orderlineno AND o.optionno = 0
+			WHERE d.lineoptionno = 0 AND d.orderno IN ($in)
+			GROUP BY d.orderno) v ON v.orderno = so.orderno
+		 WHERE so.quotation = 1 AND so.orderno IN ($in)",
+		array_merge($orderNos, $orderNos));
+	$details = array();
+	foreach ($rows as $row) {
+		$details[(string) $row['orderno']] = array('orderno' => $row['orderno'], 'salescaseref' => $row['salescaseref'], 'orddate' => $row['orddate'], 'value' => spQuotationGrandTotal($row));
+	}
+	return $details;
+}
+
+// created_at of the first version of each follow-up, following corrected_from_id back through edits.
+function spFollowupOriginalCreatedAt($db, array $rows) {
+	$known = array();
+	foreach ($rows as $row) $known[(string) $row['id']] = array($row['created_at'], $row['corrected_from_id']);
+	for ($depth = 0; $depth < 20; $depth++) {
+		$missing = array();
+		foreach ($known as $info) {
+			if ($info[1] !== null && !isset($known[(string) $info[1]])) $missing[(string) $info[1]] = true;
+		}
+		if (!count($missing)) break;
+		$ids = array_keys($missing);
+		foreach (spRows($db, 'SELECT id, created_at, corrected_from_id FROM sales_performance_followups WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids) as $parent) {
+			$known[(string) $parent['id']] = array($parent['created_at'], $parent['corrected_from_id']);
+		}
+		foreach ($ids as $id) if (!isset($known[$id])) $known[$id] = array(null, null);
+	}
+	$original = array();
+	foreach ($rows as $row) {
+		$id = (string) $row['id'];
+		for ($hops = 0; $known[$id][1] !== null && $hops < 50; $hops++) $id = (string) $known[$id][1];
+		$original[(string) $row['id']] = $known[$id][0];
+	}
+	return $original;
+}
+
+function spFollowupEditableUntil($originalCreatedAt) {
+	return $originalCreatedAt === null ? null : date('Y-m-d H:i:s', strtotime($originalCreatedAt) + 86400);
+}
+
 function spEventAttribution($db, $salesman, $businessDate = null) {
 	$codeRows = spRows($db, 'SELECT salesmancode FROM salesman WHERE salesmanname = ? LIMIT 1', array($salesman));
 	$salesmanCode = count($codeRows) ? $codeRows[0]['salesmancode'] : null;
@@ -1370,11 +1473,10 @@ $canCaptureEvents = userHasPermission($db, 'sales_performance_capture_events');
 $canAdminSetup = userHasPermission($db, 'sales_performance_admin') && $canViewCompany;
 $canApproveNamedScope = userHasPermission($db, 'sales_performance_scopes_approve') && $canAdminSetup;
 $canCreateRun = userHasPermission($db, 'sales_performance_create_run');
-// Activity is recorded by the salesperson who owns the case, whatever their wider view scope.
-// Managers and team leads still read and correct through their own scope; they never capture for others.
-$captureScopeCompany = false;
-$captureScopeTeams = false;
-$captureScopeSelf = true;
+// My Sales Activity follows the ERP case hierarchy: own cases, the members of any team the user leads,
+// salespeople granted in salescase_permissions, or every case for senior roles. Credit stays with the case owner.
+$captureSeeAll = in_array((string) (isset($_SESSION['AccessLevel']) ? $_SESSION['AccessLevel'] : ''), array('8', '10', '22'), true) || $canViewCompany;
+$captureSalesmen = spActivitySalesmen($db, $userId, $userName, $captureSeeAll);
 
 try {
 	if ($httpMethod === 'GET' && in_array($action, array('add_followup', 'void_followup', 'request_adjustment', 'request_adjustment_reversal', 'review_adjustment', 'capture_enquiry_event', 'correct_enquiry_event', 'void_enquiry_event', 'record_quote_issue', 'capture_po_receipt', 'correct_po_receipt', 'void_po_receipt', 'submit_coverage', 'save_team_membership', 'save_named_scope', 'approve_named_scope', 'save_calendar_override', 'preview_reference_observations', 'import_reference_observations', 'update_reference_verification', 'create_reconciliation', 'update_reconciliation', 'create_run'), true)) {
@@ -1393,81 +1495,158 @@ try {
 		if (!$actionReadiness['report_ready']) spRespond(503, array('status' => 'error', 'code' => 'schema_not_ready', 'message' => 'Sales Performance reporting setup is incomplete.', 'readiness' => $actionReadiness));
 	}
 	if ($action === 'my_activity') {
-		// Self-service feed for the salesperson's own activity page. Scope is the signed-in salesperson's own cases and entries, whatever their view scope.
+		// Feed for My Sales Activity: cases, quotations and entries within the user's case hierarchy, plus entries they recorded themselves.
 		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to record sales activity.'));
+		$filterFrom = isset($_GET['from']) && $_GET['from'] !== '' ? (string) $_GET['from'] : date('Y-m-d', strtotime('-60 days'));
+		$filterTo = isset($_GET['to']) && $_GET['to'] !== '' ? (string) $_GET['to'] : date('Y-m-d');
+		$filterCase = isset($_GET['case']) ? trim((string) $_GET['case']) : '';
+		$filterQuote = isset($_GET['quotation']) ? trim((string) $_GET['quotation']) : '';
+		if (!spValidDate($filterFrom) || !spValidDate($filterTo) || $filterFrom > $filterTo || strlen($filterCase) > 40 || ($filterQuote !== '' && !ctype_digit($filterQuote))) {
+			spRespond(400, array('status' => 'error', 'code' => 'invalid_filter', 'message' => 'Enter a valid date range, sales case and quotation number.'));
+		}
+		$filterQuoteCase = null;
+		if ($filterQuote !== '') {
+			$quoteCaseRows = spRows($db, 'SELECT salescaseref FROM salesorders WHERE orderno = ? AND quotation = 1 LIMIT 1', array($filterQuote));
+			$filterQuoteCase = count($quoteCaseRows) ? (string) $quoteCaseRows[0]['salescaseref'] : '';
+		}
+
+		$caseParams = array();
+		$caseScope = spSalesmanScopeSql('sc.salesman', $captureSalesmen, $caseParams);
 		$myCases = spRows($db,
-			"SELECT sc.salescaseref, sc.debtorno, sc.branchcode, sc.salescasedescription, dm.name AS customer_name, cb.brname AS branch_name
+			"SELECT sc.salescaseref, sc.salesman, sc.debtorno, sc.branchcode, sc.salescasedescription, dm.name AS customer_name, cb.brname AS branch_name,
+				DATE_FORMAT(sc.commencementdate, '%Y-%m-%d') AS commenced, sc.closed, sc.closingreason,
+				CASE WHEN YEAR(sc.closingdate) > 1900 THEN DATE_FORMAT(sc.closingdate, '%Y-%m-%d') END AS closed_date,
+				CASE WHEN YEAR(sc.podate) > 1900 THEN DATE_FORMAT(sc.podate, '%Y-%m-%d') END AS po_file_date,
+				(SELECT DATE_FORMAT(MIN(r.received_at), '%Y-%m-%d') FROM sales_performance_po_receipts r WHERE r.salescaseref = sc.salescaseref AND r.receipt_status = 'active') AS po_recorded_date
 			 FROM salescase sc
 			 LEFT JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno
 			 LEFT JOIN custbranch cb ON cb.debtorno = sc.debtorno AND cb.branchcode = sc.branchcode
-			 WHERE sc.salesman = ?
-			 ORDER BY sc.commencementdate DESC, sc.salescaseref DESC LIMIT 500",
-			array($userName));
+			 WHERE $caseScope
+			 ORDER BY sc.commencementdate DESC, sc.salescaseref DESC LIMIT 1000",
+			$caseParams);
+		foreach ($myCases as &$caseRow) {
+			// A closed case is closed whatever its PO history; otherwise an uploaded PO file or a recorded customer PO marks it PO received.
+			$caseRow['status'] = (string) $caseRow['closed'] === '1' ? 'closed' : (($caseRow['po_file_date'] !== null || $caseRow['po_recorded_date'] !== null) ? 'po_received' : 'open');
+		}
+		unset($caseRow);
+
+		$quoteParams = array();
+		$quoteScope = spSalesmanScopeSql('sc.salesman', $captureSalesmen, $quoteParams);
 		$myQuotations = spRows($db,
 			"SELECT so.orderno, so.salescaseref, DATE_FORMAT(so.orddate,'%Y-%m-%d') AS orddate
 			 FROM salesorders so
 			 INNER JOIN salescase sc ON sc.salescaseref = so.salescaseref
-			 WHERE sc.salesman = ? AND so.quotation = 1 AND so.orddate >= DATE_SUB(CURDATE(), INTERVAL 180 DAY)
+			 WHERE $quoteScope AND so.quotation = 1 AND so.orddate >= DATE_SUB(CURDATE(), INTERVAL 180 DAY)
 			 ORDER BY so.orderno DESC LIMIT 300",
-			array($userName));
+			$quoteParams);
+
+		$followupParams = array();
+		$followupWhere = '(' . spSalesmanScopeSql('f.salesman', $captureSalesmen, $followupParams) . ' OR COALESCE(f.entered_by_user_id, f.created_by) = ?)';
+		$followupParams[] = $userId;
+		$followupWhere .= ' AND f.activity_date BETWEEN ? AND ?';
+		array_push($followupParams, $filterFrom, $filterTo);
+		if ($filterCase !== '') { $followupWhere .= ' AND f.salescaseref = ?'; $followupParams[] = $filterCase; }
+		if ($filterQuote !== '') { $followupWhere .= ' AND f.quotation_orderno = ?'; $followupParams[] = $filterQuote; }
 		$myFollowups = spRows($db,
 			"SELECT f.id, DATE_FORMAT(COALESCE(f.actual_activity_at, CONCAT(f.activity_date, ' 00:00:00')), '%Y-%m-%d %H:%i') AS activity_at,
-				f.salescaseref, f.quotation_orderno, f.activity_type, f.outcome, f.next_action,
+				f.salescaseref, f.salesman AS owner, f.quotation_orderno, f.activity_type, f.outcome, f.next_action,
 				DATE_FORMAT(f.activity_date, '%Y-%m-%d') AS activity_date,
 				DATE_FORMAT(f.next_action_date, '%Y-%m-%d') AS next_action_date, f.notes,
-				f.entered_by_user_id, f.created_by,
-				DATE_FORMAT(f.voided_at, '%Y-%m-%d %H:%i') AS voided_at, f.void_reason,
-				EXISTS (SELECT 1 FROM sales_performance_followups c WHERE c.corrected_from_id = f.id) AS has_correction
+				DATE_FORMAT(f.voided_at, '%Y-%m-%d %H:%i') AS voided_at, f.void_reason, f.created_at, f.corrected_from_id,
+				COALESCE(f.entered_by_user_id, f.created_by) AS entered_by_user_id, COALESCE(eu.realname, f.entered_by_user_id, f.created_by) AS entered_by_name
 			 FROM sales_performance_followups f
-			 WHERE f.salesman = ? AND f.activity_date >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
+			 LEFT JOIN www_users eu ON eu.userid = COALESCE(f.entered_by_user_id, f.created_by)
+			 WHERE $followupWhere
+				AND NOT EXISTS (SELECT 1 FROM sales_performance_followups edited WHERE edited.corrected_from_id = f.id)
 			 ORDER BY f.actual_activity_at DESC, f.id DESC LIMIT 200",
-			array($userName));
-		foreach ($myFollowups as &$myFollowup) {
-			$enteredBy = (string) ($myFollowup['entered_by_user_id'] !== null ? $myFollowup['entered_by_user_id'] : $myFollowup['created_by']);
-			$myFollowup['can_edit'] = $myFollowup['voided_at'] === null && !(bool) $myFollowup['has_correction'] && $enteredBy === (string) $userId;
-			$myFollowup['has_correction'] = (bool) $myFollowup['has_correction'];
+			$followupParams);
+		$originalCreated = spFollowupOriginalCreatedAt($db, $myFollowups);
+		$dbNowRows = spRows($db, 'SELECT NOW() AS db_now', array());
+		$dbNow = strtotime($dbNowRows[0]['db_now']);
+		$quoteDetails = spQuotationDetails($db, array_map(function ($row) { return (string) $row['quotation_orderno']; }, $myFollowups));
+		foreach ($myFollowups as &$followup) {
+			$active = $followup['voided_at'] === null;
+			$editableUntil = spFollowupEditableUntil($originalCreated[(string) $followup['id']]);
+			$isReporter = (string) $followup['entered_by_user_id'] === (string) $userId;
+			$followup['quotation_value'] = isset($quoteDetails[(string) $followup['quotation_orderno']]) ? $quoteDetails[(string) $followup['quotation_orderno']]['value'] : null;
+			$followup['is_edited'] = $followup['corrected_from_id'] !== null;
+			// Minutes left rather than a clock time: created_at is on the database clock, which may not share PHP's timezone.
+			$followup['edit_minutes_left'] = $editableUntil === null ? 0 : max(0, (int) floor((strtotime($editableUntil) - $dbNow) / 60));
+			// Only the person who recorded a follow-up may edit (within 24 hours of the original entry) or void it.
+			$followup['can_edit'] = $active && $isReporter && $followup['edit_minutes_left'] > 0;
+			$followup['can_void'] = $active && $isReporter;
+			unset($followup['created_at'], $followup['corrected_from_id']);
 		}
-		unset($myFollowup);
+		unset($followup);
+
+		$enquiryParams = array();
+		$enquiryWhere = '(' . spSalesmanScopeSql('sc.salesman', $captureSalesmen, $enquiryParams) . ' OR e.entered_by_user_id = ?)';
+		$enquiryParams[] = $userId;
+		$enquiryWhere .= ' AND DATE(e.business_at) BETWEEN ? AND ?';
+		array_push($enquiryParams, $filterFrom, $filterTo);
+		if ($filterCase !== '') { $enquiryWhere .= ' AND e.salescaseref = ?'; $enquiryParams[] = $filterCase; }
+		if ($filterQuoteCase !== null) { $enquiryWhere .= ' AND e.salescaseref = ?'; $enquiryParams[] = $filterQuoteCase; }
 		$myEnquiryEvents = spRows($db,
-			"SELECT e.id, e.salescaseref, e.event_type, DATE_FORMAT(e.business_at, '%Y-%m-%d %H:%i') AS business_at,
-				e.response_code, e.reason_code, e.notes, e.evidence_reference,
-				EXISTS (SELECT 1 FROM sales_performance_enquiry_events v WHERE v.voids_event_id = e.id AND v.event_type = 'void') AS is_voided
+			"SELECT e.id, e.salescaseref, sc.salesman AS owner, e.event_type, DATE_FORMAT(e.business_at, '%Y-%m-%d %H:%i') AS business_at,
+				e.response_code, e.reason_code, e.notes, e.evidence_reference, e.corrects_event_id IS NOT NULL AS is_edited,
+				DATE_FORMAT(COALESCE(v.recorded_at, e.recorded_at), '%Y-%m-%d %H:%i') AS last_updated_at,
+				COALESCE(vu.realname, v.entered_by_user_id, eu.realname, e.entered_by_user_id) AS last_updated_by,
+				v.id IS NOT NULL AS is_voided
 			 FROM sales_performance_enquiry_events e
 			 INNER JOIN salescase sc ON sc.salescaseref = e.salescaseref
-			 WHERE sc.salesman = ? AND e.event_type <> 'void' AND e.business_at >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+			 LEFT JOIN www_users eu ON eu.userid = e.entered_by_user_id
+			 LEFT JOIN sales_performance_enquiry_events v ON v.id = (SELECT MAX(vv.id) FROM sales_performance_enquiry_events vv WHERE vv.voids_event_id = e.id AND vv.event_type = 'void')
+			 LEFT JOIN www_users vu ON vu.userid = v.entered_by_user_id
+			 WHERE $enquiryWhere AND e.event_type <> 'void'
+				AND NOT EXISTS (SELECT 1 FROM sales_performance_enquiry_events edited WHERE edited.corrects_event_id = e.id AND edited.event_type <> 'void')
 			 ORDER BY e.business_at DESC, e.id DESC LIMIT 200",
-			array($userName));
+			$enquiryParams);
+
+		$poParams = array();
+		$poWhere = '(' . spSalesmanScopeSql('sc.salesman', $captureSalesmen, $poParams) . ' OR r.entered_by_user_id = ?)';
+		$poParams[] = $userId;
+		$poWhere .= ' AND DATE(r.received_at) BETWEEN ? AND ?';
+		array_push($poParams, $filterFrom, $filterTo);
+		if ($filterCase !== '') { $poWhere .= ' AND r.salescaseref = ?'; $poParams[] = $filterCase; }
+		if ($filterQuote !== '') { $poWhere .= " AND EXISTS (SELECT 1 FROM sales_performance_po_bridges b WHERE b.receipt_id = r.id AND b.source_type = 'quotation' AND b.source_key = ?)"; $poParams[] = $filterQuote; }
 		$myPoReceipts = spRows($db,
-			"SELECT r.id, r.salescaseref, r.customer_reference_original AS customer_reference, DATE_FORMAT(r.received_at, '%Y-%m-%d %H:%i') AS received_at,
-				r.stated_amount, r.currency, r.receipt_status, r.void_reason
+			"SELECT r.id, r.salescaseref, sc.salesman AS owner, r.customer_reference_original AS customer_reference, DATE_FORMAT(r.received_at, '%Y-%m-%d %H:%i') AS received_at,
+				r.stated_amount, r.currency, r.receipt_status, r.void_reason, COALESCE(eu.realname, r.entered_by_user_id) AS entered_by_name
 			 FROM sales_performance_po_receipts r
 			 INNER JOIN salescase sc ON sc.salescaseref = r.salescaseref
-			 WHERE sc.salesman = ? AND r.received_at >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+			 LEFT JOIN www_users eu ON eu.userid = r.entered_by_user_id
+			 WHERE $poWhere
 			 ORDER BY r.received_at DESC, r.id DESC LIMIT 200",
-			array($userName));
-		spRespond(200, array('status' => 'success', 'salesperson' => $userName, 'cases' => $myCases, 'quotations' => $myQuotations,
+			$poParams);
+
+		spRespond(200, array('status' => 'success', 'salesperson' => $userName,
+			'scope' => $captureSalesmen === null ? 'all' : (count($captureSalesmen) > 1 ? 'team' : 'self'),
+			'filters' => array('from' => $filterFrom, 'to' => $filterTo, 'case' => $filterCase, 'quotation' => $filterQuote),
+			'cases' => $myCases, 'quotations' => $myQuotations,
 			'followups' => $myFollowups, 'enquiry_events' => $myEnquiryEvents, 'po_receipts' => $myPoReceipts));
 	}
 	if ($action === 'lookup_cases' || $action === 'lookup_quotations') {
-		// Type-ahead for the activity page. Results are limited to the signed-in salesperson's own cases (salesman match) and their quotations.
+		// Type-ahead for the activity page, limited to the cases and quotations in the user's activity scope (see spActivitySalesmen).
 		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to record sales activity.'));
 		$term = isset($_GET['q']) && is_string($_GET['q']) ? trim(substr($_GET['q'], 0, 60)) : '';
 		$like = '%' . addcslashes($term, '%_\\') . '%';
 		$limit = isset($_GET['limit']) && ctype_digit((string) $_GET['limit']) ? min(50, max(1, (int) $_GET['limit'])) : 20;
+		$lookupParams = array();
+		$lookupScope = spSalesmanScopeSql('sc.salesman', $captureSalesmen, $lookupParams);
 		if ($action === 'lookup_cases') {
 			$cases = spRows($db,
-				"SELECT sc.salescaseref, sc.debtorno, sc.branchcode, sc.salescasedescription, dm.name AS customer_name, cb.brname AS branch_name
+				"SELECT sc.salescaseref, sc.salesman, sc.debtorno, sc.branchcode, sc.salescasedescription, dm.name AS customer_name, cb.brname AS branch_name
 				 FROM salescase sc
 				 LEFT JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno
 				 LEFT JOIN custbranch cb ON cb.debtorno = sc.debtorno AND cb.branchcode = sc.branchcode
-				 WHERE sc.salesman = ? AND (sc.salescaseref LIKE ? OR dm.name LIKE ? OR sc.salescasedescription LIKE ?)
+				 WHERE $lookupScope AND (sc.salescaseref LIKE ? OR dm.name LIKE ? OR sc.salescasedescription LIKE ?)
 				 ORDER BY sc.commencementdate DESC, sc.salescaseref DESC LIMIT $limit",
-				array($userName, $like, $like, $like));
+				array_merge($lookupParams, array($like, $like, $like)));
 			spRespond(200, array('status' => 'success', 'cases' => $cases));
 		}
 		$caseFilter = isset($_GET['case']) && is_string($_GET['case']) ? trim(substr($_GET['case'], 0, 40)) : '';
-		$quoteWhere = 'sc.salesman = ? AND so.quotation = 1';
-		$quoteParams = array($userName);
+		$quoteWhere = $lookupScope . ' AND so.quotation = 1';
+		$quoteParams = $lookupParams;
 		if ($caseFilter !== '') {
 			$quoteWhere .= ' AND so.salescaseref = ?';
 			$quoteParams[] = $caseFilter;
@@ -1484,8 +1663,30 @@ try {
 			 WHERE $quoteWhere
 			 ORDER BY so.orderno DESC LIMIT $limit",
 			$quoteParams);
+		$quoteDetails = spQuotationDetails($db, array_map(function ($row) { return (string) $row['orderno']; }, $quotations));
+		foreach ($quotations as &$quotation) {
+			$quotation['value'] = isset($quoteDetails[(string) $quotation['orderno']]) ? $quoteDetails[(string) $quotation['orderno']]['value'] : null;
+		}
+		unset($quotation);
 		spRespond(200, array('status' => 'success', 'quotations' => $quotations));
 	}
+
+	if ($action === 'case_quotations') {
+		// Every quotation on one case, with the grand total printed on it, for the follow-up form.
+		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to record sales activity.'));
+		$caseRef = isset($_GET['salescaseref']) ? trim((string) $_GET['salescaseref']) : '';
+		$case = $caseRef === '' || strlen($caseRef) > 40 ? null : spCanCaptureCase($db, $caseRef, $captureSalesmen);
+		if ($case === null) spRespond(404, array('status' => 'error', 'message' => 'That sales case could not be found.'));
+		if ($case === false) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.'));
+		$orders = spRows($db, 'SELECT orderno FROM salesorders WHERE salescaseref = ? AND quotation = 1 ORDER BY orderno DESC LIMIT 200', array($caseRef));
+		$details = spQuotationDetails($db, array_map(function ($row) { return (string) $row['orderno']; }, $orders));
+		$caseQuotations = array();
+		foreach ($orders as $order) {
+			if (isset($details[(string) $order['orderno']])) $caseQuotations[] = $details[(string) $order['orderno']];
+		}
+		spRespond(200, array('status' => 'success', 'salescaseref' => $caseRef, 'quotations' => $caseQuotations));
+	}
+
 	if ($action === 'add_followup') {
 		spRequireFormToken();
 		if (!$canCaptureEvents) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'You do not have permission to capture reporting activity.'));
@@ -1513,7 +1714,7 @@ try {
 		}
 		$creditedName = $userName;
 		if ($caseRef !== '') {
-			$case = spCanAccessCase($db, $caseRef, $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf);
+			$case = spCanCaptureCase($db, $caseRef, $captureSalesmen);
 			if ($case === null) spRespond(400, array('status' => 'error', 'message' => 'That sales case could not be found.'));
 			if ($case === false) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.'));
 			$creditedName = $case['salesman'];
@@ -1530,7 +1731,7 @@ try {
 		if ($inCorrection) {
 			if (!mysqli_begin_transaction($db)) throw new Exception('Could not start the follow-up correction.');
 			try {
-				$parentRows = spRows($db, 'SELECT id, salesman, salescaseref, credited_salesman_code, actor_user_id, event_team_id, attribution_basis, entered_by_user_id, created_by, voided_at, voided_by, void_reason FROM sales_performance_followups WHERE id=? LIMIT 1 FOR UPDATE', array((string) $correctionId));
+				$parentRows = spRows($db, 'SELECT id, salesman, salescaseref, credited_salesman_code, actor_user_id, event_team_id, attribution_basis, entered_by_user_id, created_by, created_at, corrected_from_id, voided_at, voided_by, void_reason FROM sales_performance_followups WHERE id=? LIMIT 1 FOR UPDATE', array((string) $correctionId));
 				if (!count($parentRows)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'message' => 'The follow-up to correct was not found.')); }
 				$parent = $parentRows[0];
 				if ($parent['voided_at'] !== null) {
@@ -1552,11 +1753,16 @@ try {
 				if ($parent['salescaseref'] !== $caseRef) { mysqli_rollback($db); spRespond(409, array('status' => 'error', 'code' => 'followup_case_changed', 'message' => 'A correction must remain linked to the original sales case.')); }
 				$enteredByParent = (string) ($parent['entered_by_user_id'] !== null ? $parent['entered_by_user_id'] : $parent['created_by']);
 				if ($enteredByParent !== (string) $userId) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'Only the person who recorded this follow-up can edit it.')); }
+				// Edits are allowed for 24 hours from the first version of the follow-up, not from the latest edit.
+				$originalCreated = spFollowupOriginalCreatedAt($db, array($parent));
+				$editableUntil = spFollowupEditableUntil($originalCreated[(string) $parent['id']]);
+				$windowRows = $editableUntil === null ? array() : spRows($db, 'SELECT CAST(? AS DATETIME) >= NOW() AS open_window', array($editableUntil));
+				if (!count($windowRows) || (string) $windowRows[0]['open_window'] !== '1') { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'edit_window_closed', 'message' => 'A follow-up can only be edited within 24 hours of the original entry. Void it and record a new follow-up instead.')); }
 				$children = spRows($db, 'SELECT id FROM sales_performance_followups WHERE corrected_from_id=? LIMIT 1 FOR UPDATE', array((string) $correctionId));
 				if (count($children)) { mysqli_rollback($db); spRespond(409, array('status' => 'error', 'code' => 'followup_already_corrected', 'message' => 'A correction already exists for this follow-up. Correct the latest version instead.')); }
 				if ($caseRef !== '') {
 					$caseLock = spRows($db, 'SELECT salescaseref, salesman, debtorno, branchcode FROM salescase WHERE salescaseref=? LIMIT 1 FOR UPDATE', array($caseRef));
-					if (!count($caseLock) || !spCanAccessCaseRow($db, $caseLock[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'The sales case is outside your authorized reporting scope.')); }
+					if (!count($caseLock) || !spCanCaptureCaseRow($caseLock[0], $captureSalesmen)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'The sales case is outside your authorized reporting scope.')); }
 				}
 			} catch (Exception $e) {
 				mysqli_rollback($db);
@@ -1657,7 +1863,7 @@ try {
 		if ($eventType === 'company_decline' && $reason === '') spRespond(400, array('status' => 'error', 'code' => 'reason_required', 'message' => 'A company decline requires a reason.'));
 		if ($eventType === 'response' && $response === '') spRespond(400, array('status' => 'error', 'code' => 'response_type_required', 'message' => 'Choose the type of response that was made.'));
 		if ($eventType !== 'response') $response = '';
-		$case = spCanAccessCase($db, $caseRef, $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf);
+		$case = spCanCaptureCase($db, $caseRef, $captureSalesmen);
 		if ($case === null) spRespond(400, array('status' => 'error', 'message' => 'That sales case could not be found.'));
 		if ($case === false) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.'));
 		if (!mysqli_begin_transaction($db)) throw new Exception('Could not start the enquiry event.');
@@ -1677,7 +1883,7 @@ try {
 			$businessAt = $eventDate . ' ' . $eventTime . ':00';
 			$error = null;
 			if (count($caseLock) === 0) $error = array(400, 'case_missing', 'That sales case could not be found.');
-			elseif (!spCanAccessCaseRow($db, $caseLock[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) $error = array(403, 'forbidden', 'That case is outside your authorized reporting scope.');
+			elseif (!spCanCaptureCaseRow($caseLock[0], $captureSalesmen)) $error = array(403, 'forbidden', 'That case is outside your authorized reporting scope.');
 			elseif (count($latest) && $businessAt < $latest[0]['business_at']) $error = array(409, 'event_order', 'Enter events in actual chronological order for this case.');
 			elseif ($eventType === 'received' && count($latest)) $error = array(409, 'episode_exists', 'This case already has an enquiry episode. Record a reopen event before recording another receipt.');
 			elseif ($eventType === 'reopen' && (!count($latest) || !in_array($lastType, $terminalTypes, true))) $error = array(409, 'reopen_not_allowed', 'Reopen an enquiry only after a recorded terminal outcome.');
@@ -1735,7 +1941,7 @@ try {
 			if (!count($parentRows)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'code' => 'event_not_found', 'message' => 'That enquiry event could not be found.')); }
 			$parent = $parentRows[0];
 			if ((string) $parent['salescaseref'] !== $caseRef || (string) $parent['salescaseref'] !== (string) $referenceRows[0]['salescaseref'] || $parent['event_type'] === 'void') { mysqli_rollback($db); spRespond(409, array('status' => 'error', 'code' => 'event_link_mismatch', 'message' => 'A correction must stay linked to the selected enquiry event.')); }
-			if (!spCanAccessCaseRow($db, $caseRows[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'The sales case is outside your authorized reporting scope.')); }
+			if (!spCanCaptureCaseRow($caseRows[0], $captureSalesmen)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'The sales case is outside your authorized reporting scope.')); }
 			$enteredByParent = (string) $parent['entered_by_user_id'];
 			if ($enteredByParent !== (string) $userId && !$canViewCompany) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'Only the original reporter or a company reporting manager can correct this event.')); }
 			$attribution = array('salesman_code' => $parent['credited_salesman_code'], 'team_id' => $parent['event_team_id']);
@@ -1816,7 +2022,7 @@ try {
 			if (!count($parentRows) || $parentRows[0]['event_type'] === 'void') { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'code' => 'event_not_found', 'message' => 'That enquiry event could not be found.')); }
 			$parent = $parentRows[0];
 			if ((string) $parent['salescaseref'] !== (string) $referenceRows[0]['salescaseref']) { mysqli_rollback($db); spRespond(409, array('status' => 'error', 'code' => 'event_link_mismatch', 'message' => 'That enquiry event changed while the void request was being saved.')); }
-			if (!spCanAccessCaseRow($db, $caseRows[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'The sales case is outside your authorized reporting scope.')); }
+			if (!spCanCaptureCaseRow($caseRows[0], $captureSalesmen)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'The sales case is outside your authorized reporting scope.')); }
 			$expected = array('salescaseref' => $parent['salescaseref'], 'episode_no' => (string) $parent['episode_no'], 'event_type' => 'void',
 				'business_at' => $parent['business_at'], 'actor_user_id' => $userId, 'entered_by_user_id' => $userId,
 				'credited_salesman_code' => $parent['credited_salesman_code'], 'event_team_id' => $parent['event_team_id'],
@@ -1876,7 +2082,7 @@ try {
 		$expectedKind = $fact['is_revision'] ? 'revised' : 'issued';
 		if ($issueKind !== 'resent' && $issueKind !== $expectedKind) spRespond(400, array('status' => 'error', 'code' => 'issue_kind_mismatch', 'message' => 'Choose the issue type that matches the quotation revision marker.'));
 		if ($issueKind === 'resent' && $fact['is_revision']) $expectedKind = 'revised';
-		$case = spCanAccessCase($db, $fact['salescaseref'], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf);
+		$case = spCanCaptureCase($db, $fact['salescaseref'], $captureSalesmen);
 		if ($case === null) spRespond(400, array('status' => 'error', 'message' => 'The quotation case could not be found.'));
 		if ($case === false) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That quotation is outside your authorized reporting scope.'));
 		$canonicalFamily = spQuotationFamilyKey($db, $orderNo, isset($fact['revision_for']) ? $fact['revision_for'] : '');
@@ -1895,7 +2101,7 @@ try {
 			$canonicalFamily = spQuotationFamilyKey($db, $orderNo, isset($fact['revision_for']) ? $fact['revision_for'] : '');
 			$caseLock = spRows($db, 'SELECT salescaseref, salesman, debtorno, branchcode FROM salescase WHERE salescaseref=? FOR UPDATE', array($fact['salescaseref']));
 			if (!count($caseLock)) { mysqli_rollback($db); spRespond(400, array('status' => 'error', 'message' => 'The quotation case could not be found.')); }
-			if (!spCanAccessCaseRow($db, $caseLock[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That quotation is outside your authorized reporting scope.')); }
+			if (!spCanCaptureCaseRow($caseLock[0], $captureSalesmen)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That quotation is outside your authorized reporting scope.')); }
 			$fact['credited_salesperson'] = $caseLock[0]['salesman'];
 			$idempotent = spRows($db, 'SELECT id, orderno, entered_by_user_id FROM sales_performance_quotation_issues WHERE idempotency_key=? LIMIT 1 FOR UPDATE', array($key));
 			if (count($idempotent)) {
@@ -1953,7 +2159,7 @@ try {
 			|| !in_array($taxBasis, array('inclusive', 'exclusive', 'unknown'), true) || ($currency !== '' && !preg_match('/^[A-Z]{3}$/', $currency))) {
 			spRespond(400, array('status' => 'error', 'code' => 'invalid_receipt', 'message' => 'Enter a case, customer PO reference, actual receipt date and time, currency, tax basis and retry key.'));
 		}
-		$case = spCanAccessCase($db, $caseRef, $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf);
+		$case = spCanCaptureCase($db, $caseRef, $captureSalesmen);
 		if ($case === null) spRespond(400, array('status' => 'error', 'message' => 'That sales case could not be found.'));
 		if ($case === false) spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.'));
 		$amount = null;
@@ -1979,7 +2185,7 @@ try {
 		try {
 			$caseLock = spRows($db, 'SELECT salescaseref, salesman, debtorno, branchcode FROM salescase WHERE salescaseref=? FOR UPDATE', array($caseRef));
 			if (!count($caseLock)) { mysqli_rollback($db); spRespond(400, array('status' => 'error', 'message' => 'That sales case could not be found.')); }
-			if (!spCanAccessCaseRow($db, $caseLock[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.')); }
+			if (!spCanCaptureCaseRow($caseLock[0], $captureSalesmen)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.')); }
 			$case = $caseLock[0];
 			$receiptLockKey = hash('sha256', $case['debtorno'] . '|' . $case['branchcode'] . '|' . $normalizedRef);
 			spAcquireAdjustmentLock($db, 'po_receipt', $receiptLockKey);
@@ -2042,7 +2248,7 @@ try {
 		try {
 			$caseLock = spRows($db, 'SELECT salescaseref, salesman, debtorno, branchcode FROM salescase WHERE salescaseref=? FOR UPDATE', array($caseRef));
 			if (!count($caseLock)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'code' => 'case_missing', 'message' => 'That sales case could not be found.')); }
-			if (!spCanAccessCaseRow($db, $caseLock[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.')); }
+			if (!spCanCaptureCaseRow($caseLock[0], $captureSalesmen)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.')); }
 			$parentRows = spRows($db, 'SELECT * FROM sales_performance_po_receipts WHERE id=? LIMIT 1 FOR UPDATE', array($idText));
 			if (!count($parentRows)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'code' => 'receipt_not_found', 'message' => 'That customer PO receipt could not be found.')); }
 			$parent = $parentRows[0];
@@ -2101,7 +2307,7 @@ try {
 			if (!count($referenceRows)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'code' => 'receipt_not_found', 'message' => 'That customer PO receipt could not be found.')); }
 			$caseRows = spRows($db, 'SELECT salescaseref, salesman, debtorno, branchcode FROM salescase WHERE salescaseref=? LIMIT 1 FOR UPDATE', array($referenceRows[0]['salescaseref']));
 			if (!count($caseRows)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'code' => 'case_missing', 'message' => 'The sales case for this receipt no longer exists.')); }
-			if (!spCanAccessCaseRow($db, $caseRows[0], $userName, $userId, $captureScopeCompany, $captureScopeTeams, $captureScopeSelf)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.')); }
+			if (!spCanCaptureCaseRow($caseRows[0], $captureSalesmen)) { mysqli_rollback($db); spRespond(403, array('status' => 'error', 'code' => 'forbidden', 'message' => 'That case is outside your authorized reporting scope.')); }
 			$receiptRows = spRows($db, 'SELECT * FROM sales_performance_po_receipts WHERE id=? LIMIT 1 FOR UPDATE', array($idText));
 			if (!count($receiptRows)) { mysqli_rollback($db); spRespond(404, array('status' => 'error', 'code' => 'receipt_not_found', 'message' => 'That customer PO receipt could not be found.')); }
 			$receipt = $receiptRows[0];

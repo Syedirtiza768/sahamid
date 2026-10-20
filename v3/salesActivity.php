@@ -23,10 +23,11 @@ include_once('includes/sidebar.php');
 <div class="content-wrapper sp-page" id="my-activity-app"
 	 data-api-url="api/salesPerformanceReport.php"
 	 data-form-id="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>"
-	 data-now="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>">
+	 data-now="<?php echo htmlspecialchars($now, ENT_QUOTES, 'UTF-8'); ?>"
+	 data-quote-url="<?php echo htmlspecialchars($NewRootPath . 'PDFQuotation.php', ENT_QUOTES, 'UTF-8'); ?>">
 	<section class="content-header sp-header">
-		<h1>My Sales Activity <small>Record what you did on your own cases</small></h1>
-		<p>Each entry is credited to you and linked to a sales case you own. Your team’s totals come from everyone’s entries on the <a href="salesPerformanceReport.php">Sales Performance report</a>.</p>
+		<h1>My Sales Activity <small>Record what you did on your sales cases</small></h1>
+		<p>You can see and record on your own cases and, if you lead a team, your members’ cases. Each entry is credited to the case owner and shows who recorded it. Team totals are on the <a href="salesPerformanceReport.php">Sales Performance report</a>.</p>
 	</section>
 
 	<section class="content">
@@ -34,14 +35,28 @@ include_once('includes/sidebar.php');
 		<div id="ma-loading" class="sp-loading"><i class="fa fa-circle-o-notch fa-spin"></i> Loading your cases…</div>
 
 		<div id="ma-content" style="display:none">
-			<ul class="nav nav-tabs sp-tabs" role="tablist">
+			<div class="sp-card" id="ma-cases">
+				<div class="sp-card-heading"><div><h3>Sales cases</h3><p>A case moves to PO Received once a customer PO is uploaded on the case. Closed cases are listed separately.</p></div></div>
+				<ul class="nav nav-tabs sp-tabs" role="tablist">
+					<li class="active"><a href="#ma-cases-open" data-toggle="tab">Open <span class="badge" data-count="open">0</span></a></li>
+					<li><a href="#ma-cases-po" data-toggle="tab">PO Received <span class="badge" data-count="po_received">0</span></a></li>
+					<li><a href="#ma-cases-closed" data-toggle="tab">Closed Cases <span class="badge" data-count="closed">0</span></a></li>
+				</ul>
+				<div class="tab-content sp-tab-content">
+					<div class="tab-pane active" id="ma-cases-open"><div class="table-responsive ma-case-scroll"><table class="table table-striped sp-table" data-status="open"></table></div></div>
+					<div class="tab-pane" id="ma-cases-po"><div class="table-responsive ma-case-scroll"><table class="table table-striped sp-table" data-status="po_received"></table></div></div>
+					<div class="tab-pane" id="ma-cases-closed"><div class="table-responsive ma-case-scroll"><table class="table table-striped sp-table" data-status="closed"></table></div></div>
+				</div>
+			</div>
+
+			<ul class="nav nav-tabs sp-tabs" role="tablist" id="ma-form-tabs">
 				<li class="active"><a href="#ma-followup-tab" data-toggle="tab">Follow-up</a></li>
 			</ul>
 			<div class="tab-content sp-tab-content">
 
 				<div class="tab-pane active" id="ma-followup-tab">
 					<div class="sp-card">
-						<div class="sp-card-heading"><div><h3>Record a follow-up</h3><p>Calls, visits, emails and meetings. Leave the case blank for general activity that is not tied to a case. You can edit or void only the follow-ups you recorded.</p></div></div>
+						<div class="sp-card-heading"><div><h3>Record a follow-up</h3><p>Calls, visits, emails and meetings. Leave the case blank for general activity that is not tied to a case. Each save adds a new follow-up; earlier ones are kept. You can edit a follow-up you recorded for 24 hours after it was first saved, and void it at any time.</p></div></div>
 						<div id="ma-edit-banner" class="sp-assumption-note" style="display:none"></div>
 						<form id="ma-followup-form" class="sp-followup-form">
 							<input type="hidden" name="FormID" value="<?php echo htmlspecialchars($_SESSION['FormID'], ENT_QUOTES, 'UTF-8'); ?>">
@@ -60,6 +75,10 @@ include_once('includes/sidebar.php');
 								<label class="sp-followup-notes">Notes<textarea class="form-control" name="notes" maxlength="4000" rows="2" placeholder="Optional notes"></textarea></label>
 								<label class="sp-followup-notes ma-correction-only" style="display:none">Reason for the edit (required)<textarea class="form-control" name="correction_reason" maxlength="500" rows="2" placeholder="What was wrong with the original entry"></textarea></label>
 							</div>
+							<div id="ma-case-quotes" class="ma-case-quotes" style="display:none">
+								<h4 class="sp-subtable-title">Quotations on this case</h4>
+								<div class="table-responsive"><table class="table table-condensed sp-table"></table></div>
+							</div>
 							<div class="sp-form-actions"><button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Save follow-up</button> <button type="button" id="ma-cancel-edit" class="btn btn-default" style="display:none">Cancel edit</button><span class="ma-form-message" aria-live="polite"></span></div>
 						</form>
 					</div>
@@ -67,7 +86,14 @@ include_once('includes/sidebar.php');
 			</div>
 
 			<div class="sp-card" id="ma-history">
-				<div class="sp-card-heading"><div><h3>My recent entries</h3><p>Entries from the last 60 days. A voided entry stays in the audit history and no longer counts in reports.</p></div></div>
+				<div class="sp-card-heading"><div><h3>Recent entries</h3><p>Entries on cases you can see and entries you recorded. Shows the last 60 days unless you change the dates. A voided entry stays in the audit history and no longer counts in reports.</p></div></div>
+				<form id="ma-filter-form" class="sp-followup-fields ma-filter-fields">
+					<label>Sales case<select class="form-control ma-filter-case" name="case"></select></label>
+					<label>From<input class="form-control" type="date" name="from"></label>
+					<label>To<input class="form-control" type="date" name="to"></label>
+					<label>Quotation no.<input class="form-control" type="text" name="quotation" inputmode="numeric" pattern="[0-9]*" maxlength="12" placeholder="e.g. 51234"></label>
+					<div class="ma-filter-actions"><button type="submit" class="btn btn-default"><i class="fa fa-search"></i> Search</button> <button type="button" class="btn btn-link" id="ma-filter-reset">Reset</button></div>
+				</form>
 				<h4 class="sp-subtable-title">Follow-ups</h4>
 				<div class="table-responsive"><table class="table table-striped sp-table" id="ma-followup-table"></table></div>
 				<h4 class="sp-subtable-title">Enquiry events</h4>
