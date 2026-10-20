@@ -37,6 +37,26 @@ etc
 	return $myrow[0] + 1;
 }
 
+/* GetNextTransNo for use inside an open transaction. LOCK TABLES implicitly commits the
+caller's transaction, so this locks only the systypes row (InnoDB) until the caller
+commits or rolls back; a rollback also returns the number. */
+Function GetNextTransNoForUpdate ($TransType, &$db){
+
+	$SQL = "SELECT typeno FROM systypes WHERE typeid = '" . $TransType . "' FOR UPDATE";
+	$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': <BR>' . _('The next transaction number could not be retrieved from the database because');
+	$DbgMsg =  _('The following SQL to retrieve the transaction number was used');
+	$GetTransNoResult = DB_query($SQL,$db,$ErrMsg,$DbgMsg);
+
+	$myrow = DB_fetch_row($GetTransNoResult);
+
+	$SQL = "UPDATE systypes SET typeno = '" . ($myrow[0] + 1) . "' WHERE typeid = '" . $TransType . "'";
+	$ErrMsg = _('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The transaction number could not be incremented');
+	$DbgMsg =  _('The following SQL to increment the transaction number was used');
+	DB_query($SQL,$db,$ErrMsg,$DbgMsg);
+
+	return $myrow[0] + 1;
+}
+
 
 Function GetStockGLCode ($StockID, &$db){
 

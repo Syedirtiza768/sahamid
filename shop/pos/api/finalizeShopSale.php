@@ -3,6 +3,25 @@
 $PathPrefix = '../../../';
 include('../../../includes/session.inc');
 include('../../../includes/SQL_CommonFunctions.inc');
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$inventoryTransactionOpen = false;
+register_shutdown_function(function () use (&$inventoryTransactionOpen, $db) {
+    if ($inventoryTransactionOpen) {
+        @mysqli_rollback($db);
+    }
+});
+// Strict reporting turns any failed query into an exception: undo everything and answer in JSON.
+set_exception_handler(function ($e) use (&$inventoryTransactionOpen, $db) {
+    if ($inventoryTransactionOpen) {
+        @mysqli_rollback($db);
+        $inventoryTransactionOpen = false;
+    }
+    error_log('shop/pos/api/finalizeShopSale.php failed: ' . $e->getMessage());
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    echo json_encode(['status' => 'error', 'message' => 'The sale could not be saved and nothing was changed. Please try again.']);
+});
 
 if (!userHasPermission($db, 'finalize_shopsale')) {
 
@@ -27,8 +46,10 @@ if (!isset($_POST['orderno'])) {
 }
 
 $orderno = trim($_POST['orderno']);
+mysqli_begin_transaction($db);
+$inventoryTransactionOpen = true;
 
-$SQL = "SELECT * FROM shopsale WHERE orderno=$orderno AND complete=0";
+$SQL = "SELECT * FROM shopsale WHERE orderno=$orderno AND complete=0 FOR UPDATE";
 $res = mysqli_query($db, $SQL);
 
 if (mysqli_num_rows($res) != 1) {
@@ -160,7 +181,7 @@ while ($item = mysqli_fetch_assoc($res)) {
 
 	$SQL = "SELECT issued,dc FROM stockissuance 
 				WHERE stockid='" . $item['stockid'] . "'
-				AND salesperson='" . $salesman . "'";
+				AND salesperson='" . $salesman . "' FOR UPDATE";
 	$quantityRes = mysqli_fetch_assoc(mysqli_query($db, $SQL));
 
 	$issued = $quantityRes['issued'];
@@ -268,7 +289,7 @@ if ($shopSale['accounts'] == 0) {
 
 	if ($payment == "csv") {
 
-		$receiptno 	= GetNextTransNo(12, $db);
+		$receiptno 	= GetNextTransNoForUpdate(12, $db);
 		$advance 	= $totalValue;
 
 		$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd, reference,
@@ -364,7 +385,7 @@ if ($shopSale['accounts'] == 0) {
 
 		if ($advance > 0 and $advance != '') {
 
-			$receiptno = GetNextTransNo(12, $db);
+			$receiptno = GetNextTransNoForUpdate(12, $db);
 
 			$SQL = "INSERT INTO debtortrans (transno, type, debtorno, branchcode, trandate, inputdate, prd,
 									reference, tpe, rate, ovamount, ovdiscount, invtext, salesperson, chequefilepath,
@@ -441,6 +462,8 @@ if (count($failedSQL) > 0) {
 
 	$SQL = "UPDATE shopsale SET complete=1, accounts=1 WHERE orderno=$orderno";
 	DB_query($SQL, $db);
+mysqli_commit($db);
+$inventoryTransactionOpen = false;
 
 	echo json_encode(['status' => 'success']);
 }

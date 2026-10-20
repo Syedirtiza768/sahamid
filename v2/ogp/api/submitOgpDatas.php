@@ -1,6 +1,25 @@
 <?php
 include('../../config1.php');
 session_start();
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$inventoryTransactionOpen = false;
+register_shutdown_function(function () use (&$inventoryTransactionOpen, $conn) {
+    if ($inventoryTransactionOpen) {
+        @mysqli_rollback($conn);
+    }
+});
+// Strict reporting turns any failed query into an exception: undo everything and answer in JSON.
+set_exception_handler(function ($e) use (&$inventoryTransactionOpen, $conn) {
+    if ($inventoryTransactionOpen) {
+        @mysqli_rollback($conn);
+        $inventoryTransactionOpen = false;
+    }
+    error_log('v2/ogp/api/submitOgpDatas.php failed: ' . $e->getMessage());
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    echo json_encode(['status' => 'error', 'message' => 'The gate pass could not be saved and nothing was changed. Please try again.']);
+});
 
 $currentUser = $_SESSION['UsersRealName'];
 $ogp_type = $_POST['ogp_type'];
@@ -60,11 +79,13 @@ switch ($location_code) {
 }
 
 
+mysqli_begin_transaction($conn);
+$inventoryTransactionOpen = true;
 $RequestNo = GetNextTransNos(38, $conn);
 function GetNextTransNos($TransType, $db)
 {
 
-    $SQL = "SELECT typeno FROM systypes WHERE typeid = '" . $TransType . "'";
+    $SQL = "SELECT typeno FROM systypes WHERE typeid = '" . $TransType . "' FOR UPDATE";
     $GetTransNoResult = mysqli_query($db, $SQL);
 
     $myrow = mysqli_fetch_array($GetTransNoResult);
@@ -391,7 +412,7 @@ function FormatDateForSQL($DateEntry)
         return $Date_Array[2] . '-' . $Date_Array[0] . '-' . $Date_Array[1];
     }
 }
-echo $RequestNo;
+// The gate pass number is sent only after the commit below; the screen builds the print link from it.
 
 $deliveredto = "";
 if ($salesperson != "") {
@@ -696,6 +717,14 @@ if ($ogp_type == "l") {
 
 $i = 0;
 foreach ($items as $LineItems) {
+    $postedQuantity = (float) $LineItems['quantity'];
+    if ($postedQuantity <= 0) {
+        mysqli_rollback($conn);
+        $inventoryTransactionOpen = false;
+        http_response_code(422);
+        echo json_encode(['status' => 'error', 'message' => 'All inventory quantities must be greater than zero.']);
+        exit;
+    }
 
     $LineSQL = " INSERT INTO posdispatchitems (
         dispatchitemsid,
@@ -725,7 +754,7 @@ foreach ($items as $LineItems) {
     $SQL = "SELECT locstock.quantity
 						FROM locstock
 						WHERE locstock.stockid='" . $LineItems['Code'] . "'
-						AND loccode= '" . $_SESSION['UserStockLocation'] . "'";
+						AND loccode= '" . $_SESSION['UserStockLocation'] . "' FOR UPDATE";
 
     $ResultQ = mysqli_query($conn, $SQL);
     if (mysqli_num_rows($ResultQ) == 1) {
@@ -734,6 +763,13 @@ foreach ($items as $LineItems) {
     } else {
         // There must actually be some error this should never happen
         $QtyOnHandPrior = 0;
+    }
+    if (($ogp_type == 'l' || $ogp_type == 'd') && $postedQuantity > (float) $QtyOnHandPrior) {
+        mysqli_rollback($conn);
+        $inventoryTransactionOpen = false;
+        http_response_code(422);
+        echo json_encode(['status' => 'error', 'message' => 'Insufficient location stock for item ' . $LineItems['Code'] . '.']);
+        exit;
     }
 
     if ($ogp_type == 'd') {
@@ -877,5 +913,8 @@ foreach ($items as $LineItems) {
     }
     $i++;
 }
+mysqli_commit($conn);
+$inventoryTransactionOpen = false;
+echo $RequestNo;
 // echo $RequestNo;
 // echo $PeriodNo;

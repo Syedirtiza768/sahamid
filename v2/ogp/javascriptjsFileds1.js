@@ -849,6 +849,20 @@ function submitForm() {
             console.log(data);
             var PrintOGP = document.getElementById("PrintOGP");
             PrintOGP.href = "/sahamid/PDFOGP.php?RequestNo=" + data;
+        },
+        error: function (xhr) {
+            // Nothing was saved (the server rolled the gate pass back): say why and return to the items step.
+            var message = 'The OGP could not be saved and nothing was changed. Please try again.';
+            try {
+                var response = JSON.parse(xhr.responseText);
+                if (response.message) message = response.message;
+            } catch (e) {}
+            alert(message);
+            document.getElementById("PrintOGP").href = "#";
+            var steps = document.getElementsByClassName("step");
+            steps[currentTab].style.display = "none";
+            currentTab = currentTab - 1;
+            showTab(currentTab);
         }
     });
 }
