@@ -3,6 +3,7 @@
 /* $Id: StockMovements.php 5785 2012-12-29 04:47:42Z daintree $*/
 
 include('includes/session.inc');
+include_once('includes/InventoryMovementSemantics.inc');
 $Title = _('Stock Movements');
 /* webERP manual links before header.inc */
 $ViewTopic = "Inventory";
@@ -109,7 +110,7 @@ $tableheader = '<tr>
 					<th>' . _('Reference') . '</th>
 					<th>' . _('Price') . '</th>
 					<th>' . _('Discount') . '</th>
-					<th>' . _('New Qty') . '</th>
+					<th title="Location movements show location quantity on hand; shop and market-slip movements show their own balance scope.">' . _('Recorded Balance') . '</th>
 				</tr>';
 
 echo $tableheader;
@@ -160,6 +161,11 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 	}
 
 	$DisplayTranDate = ConvertSQLDate($myrow['trandate']);
+	$balanceMetadata = GetStockMovementBalanceMetadata($myrow['type']);
+	$recordedBalance = locale_number_format($myrow['newqoh'], $myrow['decimalplaces']);
+	if (!$balanceMetadata['is_location_qoh']) {
+		$recordedBalance = htmlspecialchars($balanceMetadata['label'], ENT_QUOTES, 'UTF-8') . ': ' . $recordedBalance;
+	}
 
 	if ($myrow['type'] == 10) { /*its a sales invoice allow link to show invoice it was sold on*/
 
@@ -195,7 +201,7 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 			$myrow['reference'],
 			locale_number_format($myrow['price'], $_SESSION['CompanyRecord']['decimalplaces']),
 			locale_number_format($myrow['discountpercent'] * 100, 2),
-			locale_number_format($myrow['newqoh'], $myrow['decimalplaces'])
+			$recordedBalance
 		);
 	} elseif ($myrow['type'] == 11) {
 
@@ -231,7 +237,7 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 			$myrow['reference'],
 			locale_number_format($myrow['price'], $_SESSION['CompanyRecord']['decimalplaces']),
 			locale_number_format($myrow['discountpercent'] * 100, 2),
-			locale_number_format($myrow['newqoh'], $myrow['decimalplaces'])
+			$recordedBalance
 		);
 	} elseif ($myrow['type'] == 510) {
 
@@ -265,7 +271,7 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 			$myrow['reference'],
 			locale_number_format($myrow['price'], $_SESSION['CompanyRecord']['decimalplaces']),
 			locale_number_format($myrow['discountpercent'] * 100, 2),
-			locale_number_format($myrow['newqoh'], $myrow['decimalplaces'])
+			$recordedBalance
 		);
 	} elseif ($myrow['type'] == 511) {
 
@@ -299,7 +305,7 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 			$myrow['reference'],
 			locale_number_format($myrow['price'], $_SESSION['CompanyRecord']['decimalplaces']),
 			locale_number_format($myrow['discountpercent'] * 100, 2),
-			locale_number_format($myrow['newqoh'], $myrow['decimalplaces'])
+			$recordedBalance
 		);
 	} elseif ($myrow['type'] == 512) {
 
@@ -333,7 +339,7 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 			$myrow['reference'],
 			locale_number_format($myrow['price'], $_SESSION['CompanyRecord']['decimalplaces']),
 			locale_number_format($myrow['discountpercent'] * 100, 2),
-			locale_number_format($myrow['newqoh'], $myrow['decimalplaces'])
+			$recordedBalance
 		);
 	} elseif ($myrow['type'] == 514) {
 
@@ -367,7 +373,7 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 			$myrow['reference'],
 			locale_number_format($myrow['price'], $_SESSION['CompanyRecord']['decimalplaces']),
 			locale_number_format($myrow['discountpercent'] * 100, 2),
-			locale_number_format($myrow['newqoh'], $myrow['decimalplaces'])
+			$recordedBalance
 		);
 	} else {
 
@@ -401,7 +407,7 @@ while ($myrow = DB_fetch_array($MovtsResult)) {
 			$myrow['reference'],
 			locale_number_format($myrow['price'], $_SESSION['CompanyRecord']['decimalplaces']),
 			locale_number_format($myrow['discountpercent'] * 100, 2),
-			locale_number_format($myrow['newqoh'], $myrow['decimalplaces'])
+			$recordedBalance
 		);
 	}
 	//end of page full new headings if
