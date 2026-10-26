@@ -1,7 +1,8 @@
 -- Select the PRODUCTION ERP database in your SQL client before loading this file.
 -- MariaDB 10.3+ / MySQL 5.7+. Run outside any existing transaction.
 -- This file installs narrowly scoped repair routines and first-state backups.
--- Its three default calls are previews: no voucher or stock row is changed.
+-- INSTALL ONLY: no procedure is executed while this file is imported.
+-- Older phpMyAdmin releases can fail when an import ends with CALL result sets.
 -- Back up the database, preview, then use the APPLY calls shown at the bottom.
 SET time_zone = '+05:00';
 
@@ -349,10 +350,12 @@ repair_block: BEGIN
 END$$
 DELIMITER ;
 
--- DEFAULT: preview only. Check result sets and any SIGNAL errors.
-CALL csvfix_9992_20261026(0);
-CALL csvfix_9996_20261026(0);
-CALL csvfix_10139_20261026(0,NULL);
+-- PREVIEW separately after installation. Check result sets and SIGNAL errors.
+-- Prefer the mysql client, or phpMyAdmin Database > Routines > Execute.
+-- Older phpMyAdmin SQL/import screens may report #2014 after a CALL has run.
+-- CALL csvfix_9992_20261026(0);
+-- CALL csvfix_9996_20261026(0);
+-- CALL csvfix_10139_20261026(0,NULL);
 
 -- APPLY individually after reviewing previews and taking a database backup:
 -- CALL csvfix_9992_20261026(1);

@@ -117,11 +117,22 @@ try:
         run('INSERT INTO periods(periodno,lastdate_in_period) SELECT COALESCE(MAX(periodno),0)+1,LAST_DAY(CURDATE()) FROM periods')
     seed()
     original=digest()
-    for statement in statements((ROOT/'corrections/repair_csv_10139_9992_9996_20261026.sql').read_text()):
+    installation=list(statements((ROOT/'corrections/repair_csv_10139_9992_9996_20261026.sql').read_text()))
+    assert not any(re.match(r'\s*CALL\b',s,re.I) for s in installation),'Installer must not execute procedures in phpMyAdmin import'
+    for statement in installation:
         run(statement)
     assert digest()==original,'Default preview modified operational data'
+    assert not run('SELECT * FROM csvfix_20261026_log'),'Installation wrote a repair log'
+    print('PASS: installation executes no procedures and preserves operational data')
+    for statement in statements((ROOT/'corrections/preview_csv_10139_9992_9996_20261026.sql').read_text()):
+        run(statement)
+    assert digest()==original,'Explicit previews modified operational data'
     assert not run('SELECT * FROM csvfix_20261026_log'),'Preview wrote a repair log'
-    print('PASS: SQL installs; all default previews preserve operational rows')
+    print('PASS: separate previews are drained correctly and preserve operational rows')
+    for statement in statements((ROOT/'corrections/check_csv_repairs_20261026.sql').read_text()):
+        run(statement)
+    assert digest()==original,'Read-only recovery checks modified operational data'
+    print('PASS: ordinary SELECT checks report installation and repair state')
 
     expect_error('CALL csvfix_10139_20261026(1,NULL)','Confirm the SPD')
     expect_error("CALL csvfix_10139_20261026(1,'9381SURGPRHDYNEZ402H')",'not one of the reviewed')

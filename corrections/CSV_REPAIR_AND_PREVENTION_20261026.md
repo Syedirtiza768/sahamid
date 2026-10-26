@@ -15,9 +15,14 @@ caller's permissions, not extra privileges inherited from their creator.
 1. Take a database backup and stop editing/finalizing these three vouchers while
    the repair runs. The procedures lock their headers and affected component,
    cart and accounting rows; not all legacy application writers use those locks.
-2. Load the SQL file. This creates first-state backup tables and repair routines.
-   Its default calls are **previews**, so no operational voucher/stock rows are
-   changed. DDL creates the supporting objects outside the repair transactions.
+2. Load the SQL file. This creates first-state backup tables and repair routines
+   only. No procedure executes during import and no operational voucher/stock
+   rows change. DDL creates the objects outside the repair transactions.
+   Then run previews separately with the mysql client using
+   `preview_csv_10139_9992_9996_20261026.sql`, or use phpMyAdmin's database-level
+   **Routines > Execute** interface with `apply_changes=0` for each repair.
+   Use SQL NULL for the unconfirmed 10139 stock-code parameter, not the text
+   string `NULL`. Older phpMyAdmin SQL/import screens can mishandle CALL results.
 3. Read every result set. A SIGNAL error means the current state differs from
    the reviewed case; that repair rolls back. Investigate the reported condition
    instead of removing its check. Each voucher has an independent transaction.
@@ -44,6 +49,8 @@ CALL csvfix_10139_20261026(1,'9381SURGPRHDY3402275');
    substitute `9381SURGPRHDY3N402275`. The procedures reject unrelated models,
    insufficient stock, unsupported allocations and unexpected posting counts.
    Do not substitute a matching description for evidence of the supplied code.
+   For older phpMyAdmin, use Routines > Execute for apply calls too, with
+   `apply_changes=1`; the SQL console can fail after the procedure has run.
 6. Refresh the internal prints. Run `inspect_csv_10139.sql` and check the repair
    log and backup tables:
 
@@ -59,6 +66,14 @@ GROUP BY transno,stockid;
 SELECT transno,id,ovamount,alloc,settled,reversed
 FROM debtortrans WHERE type=750 AND transno IN (9992,9996,10139);
 ```
+
+If phpMyAdmin displays `#2014 Commands out of sync`, `SET FOREIGN_KEY_CHECKS = ON`
+or `Undefined index: ORDER BY` after a CALL, do not infer that the transaction
+failed. Open a fresh phpMyAdmin page and use the ordinary SELECT statements in
+`check_csv_repairs_20261026.sql` to inspect the installed routines, committed log,
+and current operational state before deciding whether to call a repair again.
+The installer originally included three automatic preview calls; installations
+made using that older version may already be complete despite the UI error.
 
 ### What each correction does
 

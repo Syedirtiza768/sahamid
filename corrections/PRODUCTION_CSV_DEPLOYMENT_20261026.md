@@ -73,15 +73,38 @@ Or use the mysql client:
 mysql -u DBA_USER -p ERP_DATABASE < corrections/repair_csv_10139_9992_9996_20261026.sql
 ```
 
-Loading the file installs repair routines and backup tables and runs previews.
-Those preview calls make no operational voucher or inventory changes. Routine
+Loading the file installs repair routines and backup tables only; it does not
+execute any repair or preview. This avoids old phpMyAdmin import handlers which
+fail to consume CALL result sets. Routine
 installation requires CREATE ROUTINE, ALTER ROUTINE (for replacement), EXECUTE,
 CREATE TABLE, SELECT, INSERT, UPDATE and ALTER privileges. Routine execution uses
 the caller's existing privileges.
 
+After installation, run `preview_csv_10139_9992_9996_20261026.sql` with the mysql
+client, or use database-level **Routines > Execute** in phpMyAdmin for each
+repair, with `apply_changes=0`. For 10139's first preview, pass SQL NULL as the
+stock code. No operational data is changed by preview mode.
+
 Read all preview result sets. A SIGNAL means the current production state no
 longer matches the reviewed scenario; reconcile that condition before applying.
 Do not remove the guards to make a script run.
+
+### Recovery from the old phpMyAdmin CALL/import error
+
+`#2014 Commands out of sync`, an error on `SET FOREIGN_KEY_CHECKS = ON`, and
+`Undefined index: ORDER BY` notices can occur after a procedure has already run.
+The original installer ended with preview calls; reaching the last preview in
+that file suggests the routines were already installed, but verify explicitly.
+
+Open a fresh phpMyAdmin page, select the database (rather than the locstock
+table), and run `check_csv_repairs_20261026.sql`, one SELECT at a time if needed.
+The routine list confirms installation; the committed log and current component,
+stock and accounting rows establish whether an apply completed. Keep foreign-key
+checks enabled. Use the mysql client or Routines > Execute for later CALLs.
+
+If all three routines already exist and only previews ran, the original
+installation need not be repeated. For a fresh installation or reinstallation,
+use the revised installer which contains no executable CALL statements.
 
 ## 5. Apply each reviewed repair
 
@@ -111,6 +134,9 @@ CALL csvfix_10139_20261026(1,'9381SURGPRHDY3402275');
 If the dispatch confirms the newer reviewed matching code, substitute
 `9381SURGPRHDY3N402275`. An unsupported code/state requires reconciliation.
 Each voucher has an independent transaction and rolls back on an error.
+In older phpMyAdmin versions, use Routines > Execute with `apply_changes=1` for
+these apply calls as well, or use the mysql client; avoid its SQL/import CALL
+path if it produces the error described above.
 Do not reopen and ordinarily finalize the three vouchers to implement repairs.
 
 ## 6. Verify before reopening editing
