@@ -306,7 +306,7 @@
 																		stockmaster.stockid,
 																		stockmaster.description,
 																		stockmaster.units,
-																		stockmaster.materialcost as price,
+																		shopsalesitems.rate as price,
 																		stockmaster.mnfcode,
 																		stockmaster.mnfpno,
 																		shopsalesitems.id,

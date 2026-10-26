@@ -65,12 +65,26 @@ if (mysqli_num_rows($res) != 1) {
 
 $shopSale = mysqli_fetch_assoc($res);
 
-$SQL = "SELECT * 
+// A reopened header can still have its original stock and accounting postings.
+$SQL = "SELECT id FROM debtortrans
+        WHERE type=750 AND transno=$orderno AND reversed=0
+        LIMIT 1";
+$res = mysqli_query($db, $SQL);
+if (mysqli_num_rows($res) > 0) {
+
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'This sale has already been posted. Its existing posting must be reconciled before it can be changed.'
+    ]);
+    return;
+}
+
+$SQL = "SELECT shopsalelines.id
 			FROM shopsalelines 
 			LEFT OUTER JOIN shopsalesitems ON (shopsalesitems.orderno = shopsalelines.orderno
 				AND shopsalesitems.lineno = shopsalelines.id)
 			WHERE shopsalesitems.id IS NULL
-			AND shopsalesitems.orderno=$orderno";
+			AND shopsalelines.orderno=$orderno";
 $res = mysqli_query($db, $SQL);
 
 if (mysqli_num_rows($res) > 0) {

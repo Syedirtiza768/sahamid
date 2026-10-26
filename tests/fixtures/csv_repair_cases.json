@@ -1,0 +1,236 @@
+{
+  "shopsale": [
+    {
+      "id": 9940,
+      "orderno": 9992,
+      "orddate": "2026-09-02",
+      "payment": "csv",
+      "salesman": "Mazhar Iqbal",
+      "complete": 0,
+      "discount": 0.0,
+      "discountPKR": 0.0,
+      "accounts": 0
+    },
+    {
+      "id": 9944,
+      "orderno": 9996,
+      "orddate": "2026-09-03",
+      "payment": "csv",
+      "salesman": "Jalal Nasir",
+      "complete": 1,
+      "discount": 0.0,
+      "discountPKR": 0.0,
+      "accounts": 1
+    }
+  ],
+  "shopsalelines": [
+    {
+      "id": 25948,
+      "orderno": 9992,
+      "description": "Ultrafast Acting Semiconductor Fuse&lt;br&gt;Series: TYPOWER SILCU, 250A, 660V\nBussmann Eaton",
+      "notes": "170L4961",
+      "quantity": 4.0,
+      "price": 7000.0,
+      "uom": "each"
+    },
+    {
+      "id": 25957,
+      "orderno": 9996,
+      "description": "Pvc Flexible G-I Coted Pipe Size,1/2&quot; Grey China Flex",
+      "notes": "N/A",
+      "quantity": 24.0,
+      "price": 100.0,
+      "uom": "feet"
+    }
+  ],
+  "shopsalesitems": [
+    {
+      "id": 28169,
+      "orderno": 9996,
+      "lineno": 25957,
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "quantity": 0.03045,
+      "rate": 1.0,
+      "discountpercent": -328307.2249589491
+    }
+  ],
+  "stockissuance": [
+    {
+      "salesperson": "Mazhar Iqbal",
+      "stockid": "3802FUSE170L4961",
+      "issued": 0.0,
+      "returned": 0.0,
+      "dc": 4.0,
+      "stockissuanceindex": 66993,
+      "adjusted": 0
+    },
+    {
+      "salesperson": "Jalal Nasir",
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "issued": 6.5792,
+      "returned": 0.0,
+      "dc": 0.7308,
+      "stockissuanceindex": 69960,
+      "adjusted": 0
+    }
+  ],
+  "stockmoves": [
+    {
+      "stkmoveno": 811202,
+      "stockid": "3802FUSE170L4961",
+      "type": 750,
+      "transno": 9992,
+      "loccode": "SR",
+      "trandate": "2026-09-02",
+      "reference": "Delivered To csv (Cart: Mazhar Iqbal)",
+      "qty": 4.0,
+      "prd": 139,
+      "newqoh": 0.0,
+      "hidemovt": 0
+    },
+    {
+      "stkmoveno": 811519,
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "type": 511,
+      "transno": 274539,
+      "loccode": "SR",
+      "trandate": "2026-09-03",
+      "reference": "To Jalal Nasir",
+      "qty": 7.0,
+      "prd": 139,
+      "newqoh": 0.0,
+      "hidemovt": 0
+    },
+    {
+      "stkmoveno": 812083,
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "type": 750,
+      "transno": 9996,
+      "loccode": "SR",
+      "trandate": "2026-09-07",
+      "reference": "Delivered To csv (Cart: Jalal Nasir)",
+      "qty": 0.7308,
+      "prd": 139,
+      "newqoh": 6.5792,
+      "hidemovt": 0
+    }
+  ],
+  "ogpcsvref": [
+    {
+      "id": 15107,
+      "stockid": "3802FUSE170L4961",
+      "dispatchid": null,
+      "csv": "9992",
+      "salesman": "Mazhar Iqbal",
+      "quantity": "0.000000"
+    },
+    {
+      "id": 15108,
+      "stockid": "3802FUSE170L4961",
+      "dispatchid": null,
+      "csv": "9992",
+      "salesman": "Mazhar Iqbal",
+      "quantity": "0.000000"
+    },
+    {
+      "id": 15170,
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "dispatchid": "274539",
+      "csv": "9996",
+      "salesman": "Jalal Nasir",
+      "quantity": "0.000000"
+    },
+    {
+      "id": 15214,
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "dispatchid": null,
+      "csv": "9996",
+      "salesman": "Jalal Nasir",
+      "quantity": "6.000000"
+    }
+  ],
+  "debtortrans": [
+    {
+      "id": 61852,
+      "transno": 9992,
+      "type": 750,
+      "trandate": "2026-09-02 18:21:11",
+      "ovamount": 28000.0,
+      "alloc": 0.0,
+      "settled": 0,
+      "reversed": 0
+    },
+    {
+      "id": 61938,
+      "transno": 9996,
+      "type": 750,
+      "trandate": "2026-09-07 16:09:43",
+      "ovamount": 2400.0,
+      "alloc": 2400.0,
+      "settled": 1,
+      "reversed": 0
+    }
+  ],
+  "posdispatchitems": [
+    {
+      "stockid": "3802FUSE170L4961",
+      "quantity": 4.0,
+      "dispatchid": 262753,
+      "dispatchitemsid": 0
+    },
+    {
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "quantity": 7.31,
+      "dispatchid": 274539,
+      "dispatchitemsid": 0
+    }
+  ],
+  "posdispatch": [
+    {
+      "dispatchid": 262753,
+      "loccode": "SR",
+      "despatchdate": "2026-01-06",
+      "deliveredto": "Mazhar Iqbal"
+    },
+    {
+      "dispatchid": 274539,
+      "loccode": "SR",
+      "despatchdate": "2026-09-03",
+      "deliveredto": "Jalal Nasir"
+    }
+  ],
+  "stockmaster": [
+    {
+      "stockid": "3802FUSE170L4961",
+      "mnfpno": "170L4961",
+      "description": "Synthetic fuse fixture",
+      "units": "each",
+      "materialcost": 1,
+      "discontinued": 0
+    },
+    {
+      "stockid": "3111CONPIPGI-Flexible-Pipe-1/2-Inch",
+      "mnfpno": "GI-Flexible-Pipe-1/2-Inch",
+      "description": "Synthetic pipe fixture",
+      "units": "meters",
+      "materialcost": 1,
+      "discontinued": 0
+    },
+    {
+      "stockid": "9381SURGPRHDY3402275",
+      "mnfpno": "HDY3402275",
+      "description": "Synthetic obsolete SPD fixture",
+      "units": "each",
+      "materialcost": 7500,
+      "discontinued": 1
+    },
+    {
+      "stockid": "9381SURGPRHDY3N402275",
+      "mnfpno": "HDY3N402275",
+      "description": "Synthetic replacement SPD fixture",
+      "units": "each",
+      "materialcost": 0,
+      "discontinued": 0
+    }
+  ]
+}
