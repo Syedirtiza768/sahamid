@@ -151,7 +151,7 @@
         }
 
             $SQL = "UPDATE supptrans SET settled = '1' WHERE id = '" . $listId[$i] . "'
-                      AND (ovamount+ovgst-alloc)<0.9";
+                      AND (ovamount-alloc)<0.9";
 
 
         if(!mysqli_query($db,$SQL)){
@@ -192,7 +192,7 @@
     }
     if ($sum==$amount) {
         $SQL = "UPDATE supptrans SET settled = '1' WHERE id = '" . $transId . "'
-                          AND (((ovamount+ovgst))-alloc)<0.9";
+                          AND (ovamount-alloc)<0.9";
         if (!mysqli_query($db, $SQL)) {
 
             echo json_encode([
