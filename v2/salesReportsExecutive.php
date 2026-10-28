@@ -86,6 +86,8 @@ include_once('../v3/includes/sidebar.php');
 	.sx-kpi-grid.sx-six { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 	.sx-kpi-grid .sp-kpi { min-height: 104px; }
 	.sx-kpi-grid .sp-kpi.sx-warn { border-top-color: #dd4b39; }
+	.sx-kpi-period { font-size: 11px; line-height: 1.35; color: #7a8792; margin-top: 3px; }
+	.sx-kpi-period .fa { margin-right: 4px; }
 	.sx-calc { display: none; margin-top: 8px; padding-top: 7px; border-top: 1px dashed #dfe5ea; font-size: 11.5px; line-height: 1.45; color: #5f6d79; }
 	.sx-show-calc .sx-calc { display: block; }
 	.sx-card-calc { display: none; font-size: 12px; color: #5f6d79; background: #f6f8fa; border-radius: 6px; padding: 8px 10px; margin: -4px 0 10px; }
@@ -284,8 +286,18 @@ include_once('../v3/includes/sidebar.php');
 	function v(x) { return x == null ? null : (typeof x === 'object' ? x.v : x); }
 	function n(x) { return x == null ? null : x.n; }
 
-	function kpi(label, value, sub, calcKey, warn) {
+	var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+	function dayMon(d) { var p = String(d).substr(0, 10).split('-'); return parseInt(p[2], 10) + ' ' + MON[parseInt(p[1], 10) - 1]; }
+	function fullDate(d) { return dayMon(d) + ' ' + String(d).substr(0, 4); }
+	// "1 Oct – 28 Oct 2026", or "1 Dec 2025 – 28 Oct 2026" when the range crosses a year.
+	function span(a, b) {
+		return (String(a).substr(0, 4) === String(b).substr(0, 4) ? dayMon(a) : fullDate(a)) + ' – ' + fullDate(b);
+	}
+
+	// period: the exact dates (or "as of" date) the figure covers, shown under the label.
+	function kpi(label, value, sub, calcKey, warn, period) {
 		return '<div class="sp-kpi' + (warn ? ' sx-warn' : '') + '"><div class="sp-kpi-label">' + esc(label) + '</div>' +
+			(period ? '<div class="sx-kpi-period" title="' + esc(period) + '"><i class="fa fa-calendar-o"></i>' + esc(period) + '</div>' : '') +
 			'<div class="sp-kpi-count">' + value + '</div><div class="sp-kpi-value">' + sub + '</div>' +
 			(calcKey ? '<div class="sx-calc">' + esc(CALC[calcKey]) + '</div>' : '') + '</div>';
 	}
@@ -314,28 +326,33 @@ include_once('../v3/includes/sidebar.php');
 		el('sx-meta').innerHTML = esc(d.scope) + ' · ' + dmy(d.period.start) + ' to ' + dmy(d.period.end) +
 			' · read from the ERP at ' + esc(d.generatedAt) + (d.poReceiptsInstalled ? '' : ' · recorded POs not installed, PO received uses PO files only');
 
+		var P = span(d.period.start, d.period.end);            // the chosen dates
+		var T = 'As of ' + fullDate(d.generatedAt);             // current-position figures
+		var months = d.period.monthCount + ' month' + (d.period.monthCount === 1 ? '' : 's');
+
 		el('sx-kpi-sales').innerHTML = [
-			kpi('Sales target', rs(K.target), 'Annual ' + rs(K.annualTarget), 'target'),
-			kpi('Invoiced', rs(v(K.invoiced)), docs(K.invoiced, 'invoice'), 'invoiced'),
-			kpi('Target achieved', pct(K.achievement), 'Invoiced ÷ target', 'achievement', K.achievement != null && K.achievement < 0.7),
-			kpi('CRV', rs(v(K.crv)), docs(K.crv, 'shop sale'), 'crv'),
-			kpi('CSV', rs(v(K.csv)), docs(K.csv, 'shop sale'), 'csv'),
-			kpi('Shop sales total', rs(v(K.shop)), docs(K.shop, 'shop sale'), 'shop')
+			kpi('Sales target', rs(K.target), 'Annual ' + rs(K.annualTarget) + ' · ' + months, 'target', false, P),
+			kpi('Invoiced', rs(v(K.invoiced)), docs(K.invoiced, 'invoice'), 'invoiced', false, P),
+			kpi('Target achieved', pct(K.achievement), 'Invoiced ÷ target', 'achievement', K.achievement != null && K.achievement < 0.7, P),
+			kpi('CRV', rs(v(K.crv)), docs(K.crv, 'shop sale'), 'crv', false, P),
+			kpi('CSV', rs(v(K.csv)), docs(K.csv, 'shop sale'), 'csv', false, P),
+			kpi('Shop sales total', rs(v(K.shop)), docs(K.shop, 'shop sale'), 'shop', false, P)
 		].join('');
 
 		el('sx-kpi-orders').innerHTML = [
-			kpi('PO received', rs(v(K.poReceived)), docs(K.poReceived, 'case'), 'po'),
-			kpi('OC value', rs(v(K.oc)), docs(K.oc, 'OC'), 'oc'),
-			kpi('DC raised', rs(v(K.dcRaised)), docs(K.dcRaised, 'DC'), 'dc'),
-			kpi('Pending DC (today)', rs(v(K.pending)), K.pending == null ? 'not available' : num(K.pending.n) + ' DCs · ' + rs(K.pending.inPeriodV) + ' dated in period', 'pending'),
-			kpi('Invoice line value', rs(K.invoiceLine), 'Sales Main Dashboard measure', 'invoiceLine'),
-			kpi('Business volume', rs(K.businessVolume), 'Sales orders ' + rs(K.salesOrders), 'businessVolume')
+			kpi('PO received', rs(v(K.poReceived)), docs(K.poReceived, 'case'), 'po', false, P),
+			kpi('OC value', rs(v(K.oc)), docs(K.oc, 'OC'), 'oc', false, P),
+			kpi('DC raised', rs(v(K.dcRaised)), docs(K.dcRaised, 'DC'), 'dc', false, P),
+			kpi('Pending DC', rs(v(K.pending)), K.pending == null ? 'not available'
+				: num(K.pending.n) + ' DCs, all dates · ' + num(K.pending.inPeriodN) + ' DCs, ' + rs(K.pending.inPeriodV) + ' dated ' + P, 'pending', false, T),
+			kpi('Invoice line value', rs(K.invoiceLine), 'Sales Main Dashboard measure', 'invoiceLine', false, P),
+			kpi('Business volume', rs(K.businessVolume), 'Sales orders ' + rs(K.salesOrders), 'businessVolume', false, P)
 		].join('');
 
 		el('sx-kpi-today').innerHTML = [
-			kpi('Outstanding', rs(v(K.outstanding)), K.outstanding == null ? 'not available' : num(K.outstanding.n) + ' open invoices', 'outstanding'),
-			kpi('Overdue', rs(K.outstanding ? K.outstanding.overdueV : null), K.outstanding == null ? 'not available' : num(K.outstanding.overdueN) + ' invoices past due date', 'overdue', K.outstanding && K.outstanding.overdueV > 0),
-			kpi('Cart value', rs(K.cart), 'Issued to salespeople, at cost', 'cart')
+			kpi('Outstanding', rs(v(K.outstanding)), K.outstanding == null ? 'not available' : num(K.outstanding.n) + ' open invoices', 'outstanding', false, T),
+			kpi('Overdue', rs(K.outstanding ? K.outstanding.overdueV : null), K.outstanding == null ? 'not available' : num(K.outstanding.overdueN) + ' invoices past due date', 'overdue', K.outstanding && K.outstanding.overdueV > 0, T),
+			kpi('Cart value', rs(K.cart), 'Issued to salespeople, at cost', 'cart', false, T)
 		].join('');
 
 		renderTrend(d);
@@ -366,13 +383,14 @@ include_once('../v3/includes/sidebar.php');
 	function renderCases(d) {
 		var c = d.cases;
 		if (!c) { el('sx-kpi-cases').innerHTML = '<div class="sx-empty">Sales cases could not be read.</div>'; return; }
+		var O = 'Opened ' + span(d.period.start, d.period.end);
 		el('sx-kpi-cases').innerHTML = [
-			kpi('Cases opened', num(c.total), 'Started in the period', 'casesOpened'),
-			kpi('Quoted', rs(c.quotedV), num(c.quotedN) + ' cases with a quotation', 'quoted'),
-			kpi('PO received', rs(c.poOcV), num(c.poN) + ' cases · quoted ' + rs(c.poQuoteV), 'casesPo'),
-			kpi('Success ratio', pct(c.successValue), 'By count ' + pct(c.successCount), 'success'),
-			kpi('DC on these cases', rs(c.dcV), 'Any DC date', 'casesDc'),
-			kpi('Invoiced on these cases', rs(c.invV), 'Any invoice date', 'casesInv')
+			kpi('Cases opened', num(c.total), 'Started in the period', 'casesOpened', false, O),
+			kpi('Quoted', rs(c.quotedV), num(c.quotedN) + ' cases with a quotation', 'quoted', false, O),
+			kpi('PO received', rs(c.poOcV), num(c.poN) + ' cases · quoted ' + rs(c.poQuoteV), 'casesPo', false, O),
+			kpi('Success ratio', pct(c.successValue), 'By count ' + pct(c.successCount), 'success', false, O),
+			kpi('DC on these cases', rs(c.dcV), 'Any DC date, as of ' + fullDate(d.generatedAt), 'casesDc', false, O),
+			kpi('Invoiced on these cases', rs(c.invV), 'Any invoice date, as of ' + fullDate(d.generatedAt), 'casesInv', false, O)
 		].join('');
 		var totalQ = c.status.reduce(function (s, x) { return s + x.v; }, 0);
 		table('sx-status', [{ t: 'Result' }, { t: 'Cases', num: 1 }, { t: 'Quotation value', num: 1 }, { t: 'Share of value', num: 1 }],
