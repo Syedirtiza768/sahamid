@@ -55,6 +55,7 @@ class ReportRegistry
 			array('crv_payments_due', 'CRV Payments Due', 'v2/paymentsDueCRV.php'),
 			array('top_items_shopsale', 'Top Items Shopsale', 'v2/topItemsShopsale.php'),
 			array('top_items_invoices', 'Top Items Invoices', 'v2/topItemsInvoices.php'),
+			array('csv_crv_items_list', 'CSV CRV Items List', 'csvcrvitemsfilter.php'),
 			array('scm_report', 'SCM Report', 'v2/scmreport.php'),
 			array('salesperson_daily_activity', 'Salesperson daily activity report', 'v2/salespersondailyactivityreport.php'),
 			array('cross_sectional_stock_analysis', 'Cross-sectional Stock Analysis', 'v2/crosssection.php'),

@@ -1,6 +1,11 @@
 <?php
 
 include('includes/session.inc');
+	if(!userHasPermission($db, 'dc_items_filter')) {
+
+			header("Location: /sahamid/v2/reportLinks.php");
+			exit;
+		}
 ?>
 <?php
 /* $Id: header.inc 6310 2013-08-29 10:42:50Z daintree $ */
@@ -52,8 +57,21 @@ include('includes/session.inc');
 	$_SESSION['customer']=$_POST['customer'];
 	$_SESSION['salesperson']=$_POST['salesperson'];
 
-	$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+	// $db is opened by includes/session.inc
 	
+	// Validate the POST filters and escape them before they reach the query
+	if (!isset($_POST['startdate']) OR !isset($_POST['enddate'])) {
+		header("Location: dcitemsfilter.php");
+		exit;
+	}
+	if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['startdate']) OR !preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['enddate'])) {
+		die('Enter a valid start and end date.');
+	}
+	$startdate = mysqli_real_escape_string($db, $_POST['startdate']);
+	$enddate = mysqli_real_escape_string($db, $_POST['enddate']);
+	$customer = mysqli_real_escape_string($db, isset($_POST['customer']) ? $_POST['customer'] : '');
+	$salesperson = mysqli_real_escape_string($db, isset($_POST['salesperson']) ? $_POST['salesperson'] : '');
+
 	$SQL = 'SELECT dcdetails.orderno,stockmaster.stockid,stockmaster.mnfCode,stockmaster.mnfpno,
 		stockmaster.description,manufacturers.manufacturers_name,(dcdetails.quantity*dcoptions.quantity) as qty ,
 		stockmaster.materialcost as listprice, dcdetails.discountpercent,
@@ -75,9 +93,9 @@ include('includes/session.inc');
 		 WHERE dcdetails.lineoptionno = 0 
 		 AND invoice.returned != 1
 		 and dcoptions.optionno = 0 
-		 AND dcs.orddate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
-		 AND salescase.salesman LIKE "%'.$_POST['salesperson'].'%"
-		 AND debtorsmaster.name LIKE "%'.$_POST['customer'].'%"
+		 AND dcs.orddate BETWEEN "'.$startdate.'" AND "'.$enddate.'"
+		 AND salescase.salesman LIKE "%'.$salesperson.'%"
+		 AND debtorsmaster.name LIKE "%'.$customer.'%"
 		 GROUP BY stockmaster.stockid,dcdetails.dcdetailsindex,invoice.groupid
 		 ORDER BY dcdetails.orderno';
 
@@ -309,9 +327,9 @@ echo '</head>';
 	
 
 echo '<h4>Filters</h4>'.
-'<table border=1><tr><td colspan="2">Between: '.	$_POST['startdate'].' AND '. $_POST['enddate'].'</td></tr>'.
+'<table border=1><tr><td colspan="2">Between: '.	htmlspecialchars($startdate).' AND '. htmlspecialchars($enddate).'</td></tr>'.
 
-'<tr><td>Customer: '.$_POST['customer'].'</td><td> SalesPerson: '. $_POST['salesperson'].'</td></tr></table>';	
+'<tr><td>Customer: '.htmlspecialchars($customer).'</td><td> SalesPerson: '. htmlspecialchars($salesperson).'</td></tr></table>';	
 
 
 ?>

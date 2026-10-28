@@ -79,6 +79,7 @@
 		'OGP Items List'			=> '../ogpitemsfilter.php',
 		'IGP Items List'			=> '../igpitemsfilter.php',
 		'DC Items List'				=> '../dcitemsfilter.php',
+		'CSV CRV Items List'		=> '../csvcrvitemsfilter.php',
         'GRB Items List'				=> '../grbitemsfilter.php',
 		'My Reorder Item Requests'	=> '../reorder/reorderRequest.php?existing',
 		'All Reorder Item Requests'	=> '../reorder/reorderRequestAll.php',

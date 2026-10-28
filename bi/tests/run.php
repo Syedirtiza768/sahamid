@@ -61,7 +61,7 @@ checkCondition(isset($invoiceDefinition['id'], $invoiceDefinition['status'], $in
 checkCondition(count($invoiceDefinition['lineage']) > 0 && count($invoiceDefinition['caveats']) > 0, 'catalog definitions expose source lineage and caveats');
 
 $reportRegistry = new ReportRegistry();
-checkCondition(count($reportRegistry->all()) === 88, 'BI report library catalogs the 81 current hub entries, five sidebar-only reports, and two additional BI-native reports');
+checkCondition(count($reportRegistry->all()) === 89, 'BI report library catalogs the 82 current hub entries, five sidebar-only reports, and two additional BI-native reports');
 checkCondition($reportRegistry->get('menu.reorder_level_ps')->getTitle() === 'Reorder Level PS', 'duplicate source key is represented once using the PHP-rendered report entry');
 checkCondition($reportRegistry->get('menu.expense_listing')->getStatus() === 'enhanced' && $reportRegistry->get('menu.expense_listing')->getBiRoute() === 'v2/bi/expenses.php', 'expense listing points to the enhanced expense workspace');
 checkCondition($reportRegistry->get('bi.invoice_value')->getStatus() === 'enhanced' && $reportRegistry->get('bi.invoice_value')->getBiRoute() === 'v2/bi/invoice.php', 'invoice value points to the governed invoice workspace');
