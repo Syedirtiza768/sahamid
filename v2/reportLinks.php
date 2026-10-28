@@ -59,7 +59,11 @@
         'pending Orders'				=> '../reports/pending/pendingorders.php',
         'Sale Teams Group'				=> '../v2/salesTeamGroup.php'
 	];
-	
+	// Directors only for now ('*' holders pass too); same check as the page and the sidebar link.
+	if (userHasPermission($db, 'directorreports')) {
+		$links['Sales'] = ['Sales Executive Report' => '../v2/salesReportsExecutive.php'] + $links['Sales'];
+	}
+
 	$links['Inventory'] = [
 		'Inventory Item Movements'  => '../StockMovements.php',
 		'Price List' 				=> '../pricelist.php',

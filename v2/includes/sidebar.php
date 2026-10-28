@@ -843,6 +843,13 @@
         </a>
       </li>
       <?php } ?>
+      <?php if (userHasPermission($db, 'directorreports')) { ?>
+      <li class="<?php ecif($active == "sales_executive", "active") ?>">
+        <a href="<?php echo $NewRootPath; ?>v2/salesReportsExecutive.php">
+          <i class="fa fa-line-chart"></i> <span>Sales Executive Report</span>
+        </a>
+      </li>
+      <?php } ?>
       <li class="treeview <?php ecif($active == "reports", "active") ?>">
         <a href="<?php echo $NewRootPath; ?>v2/reportLinks.php">
           <i class="fa fa-file-text"></i> <span>Reports</span>

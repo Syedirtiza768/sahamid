@@ -241,11 +241,9 @@ If `dc_invoiced_part` is material, Business Volume overstates by that amount.
 
 ---
 
-## 8. Prototype
+## 8. Live report
 
-A working prototype of the target UI is in `v2/salesReportsExecutive.html`. It is a static page with inline CSS and JavaScript, and it has no external dependencies. It uses **illustrative data only**. Every number on the page is invented and labelled as such. It demonstrates the layout, the basis toggle, the definition tooltips, the funnel, the pipeline and the drill-down table. It does not connect to the database.
-
-Do not put real figures into the prototype until the metric dictionary in §7 is agreed and the service layer exists. The page is served without authentication if the web server serves static files in `v2/`, so keep it free of real data.
+The static prototype has been replaced by a live page, `v2/salesReportsExecutive.php`, described in §15.
 
 ---
 
@@ -375,3 +373,61 @@ Skipped: files without a `<?php` tag or with a `namespace` or `declare` line. No
 - A test script under PHP 7.3 connected to MariaDB 10.3 using the constants from inside a function and a class.
 - `config.php` loads and defines the constants.
 - A tracked-file search finds no literal outside `backup/`.
+
+
+---
+
+## 15. Live Sales Executive Report (2026-10-28)
+
+`v2/salesReportsExecutive.php`, with its data layer in `v2/includes/salesExecutiveData.php`, replaces the static prototype. It reads ERP data directly. There is no cohort or flow wording: each figure is labelled with the document date it uses, and "today" figures are the current position.
+
+**Look and feel.** The page uses the v3 shell (header, sidebar, footer) and the `sp-*` components from the Sales Performance report, with Highcharts and DataTables as loaded by the shell.
+
+**Access.** Only users with `directorreports` can open the page, and `*` holders pass that check too. The data endpoint returns 403 to everyone else. The sidebar item (in both the v2 and v3 sidebars) and the Reports hub link are shown to the same users only. Run `migrations/sales_executive_report.sql` once, so the hub can list the page.
+
+**Contents.**
+
+- *Sales in the period:* target, invoiced, achievement, CRV, CSV, shop sales.
+- *Orders and delivery:* PO received, OC, DC raised, pending DC, invoice line value, business volume (and sales orders).
+- *Receivables and stock (today):* outstanding, overdue, cart.
+- *Charts and tables:* a monthly chart; sales cases opened in the period (results, success ratio, enquiry-to-invoice funnel); salesperson results; pending DC ageing; cases needing attention; brands, self vs other brand, top items; and a searchable, exportable case list.
+- *How calculated:* a toggle that shows each figure's rule.
+
+**Which ERP report each figure follows.**
+
+| Figure | Rule (same as) |
+|---|---|
+| Invoiced | Posted amount, `debtortrans` type 10 not reversed (SalesPerson Monthly Invoices) |
+| CRV / CSV / Shop sales | `debtortrans` type 750 not reversed, complete shop sales; payment code compared case-insensitively (SalesPerson Monthly CRV) |
+| Pending DC | Not invoiced, grouped, couriered or GRB'd; first option only (Pending DC List) |
+| Outstanding | Unsettled, unreversed postings on a case and invoice group, less GST/WHT withheld (Outstanding Invoices) |
+| Quotation / OC / DC | First option only (Sales Data Analysis); latest *quotation* (`quotation = 1`) per case |
+| PO received | PO file on the case, else first active recorded PO receipt (My Sales Activity) |
+| Invoice line value | unit price × (1 − discount) × qty × option qty (Sales Main Dashboard), same invoices as Invoiced |
+
+**Accuracy fixes found while building it.**
+
+- Branches are matched on `(branchcode, debtorno)`, the real key. Matching on `branchcode` alone double-counts when two customers share a branch code.
+- `ocs`, `dcs` and `invoice` are reduced to one row per document number before lines are summed (`ocs` is keyed by order number and PO number).
+- Invoices whose posting was reversed are excluded from both invoice measures.
+- The latest quotation ignores confirmed sales orders, which also live in `salesorders`.
+- A query that fails shows "—" and a warning, never a silent zero. Only complete results are cached.
+
+**Sales Main Dashboard aligned.** The same fixes were applied to `v2/salesMainDashboard.php`:
+
+- branch key;
+- reversed invoices;
+- the Pending DC List rule for DCs dated in range;
+- the Outstanding Invoices rule;
+- counting each OC once;
+- case-insensitive CRV/CSV.
+
+Its cache key is now `salesMainDash-v3`. Two differences remain by design. The dashboard's target tile is the annual target. Its cart value is limited to the viewer's cart access, while the new page shows all salespeople.
+
+**Verification.** The test ran PHP 7.3 and MariaDB 10.3 with the real schema and a seed that exercises each trap (shared branch code, duplicated OC row, quotation revision, extra option line, later sales order, returned / in-progress / reversed invoices, invoiced / grouped / pending DCs, a recorded PO, a PO without a quotation).
+
+- 204 figures matched hand-worked values, for all salespeople and for one salesperson.
+- The dashboard and the report agree on all 10 shared figures.
+- The page was checked visually at desktop size.
+- The permissions were checked for directors, `*` holders and a sales-dashboard-only user.
+- Not run against production data.

@@ -90,7 +90,7 @@ function poReceivedValue($db, $startDate, $endDate, $smanName) {
 	$ocByCase = "SELECT ocs.salescaseref, SUM(ocdetails.unitprice * (1 - ocdetails.discountpercent) * ocdetails.quantity * ocoptions.quantity) v
 			FROM ocdetails
 			INNER JOIN ocoptions ON (ocdetails.orderno = ocoptions.orderno AND ocdetails.orderlineno = ocoptions.lineno)
-			INNER JOIN ocs ON ocs.orderno = ocdetails.orderno
+			INNER JOIN (SELECT orderno, MIN(salescaseref) salescaseref FROM ocs GROUP BY orderno) ocs ON ocs.orderno = ocdetails.orderno
 			WHERE ocdetails.lineoptionno = 0 AND ocoptions.optionno = 0
 			GROUP BY ocs.salescaseref";
 	$smanWhere = $smanName ? " AND sc.salesman = '" . esc($db, $smanName) . "'" : "";
@@ -173,9 +173,10 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 			AND invoicedetails.invoicelineno = invoiceoptions.invoicelineno
 			AND invoicedetails.invoiceoptionno = invoiceoptions.invoiceoptionno)"
 		. ($smanName ? "
-		INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode
+		INNER JOIN custbranch ON invoice.branchcode = custbranch.branchcode AND invoice.debtorno = custbranch.debtorno
 		INNER JOIN salesman   ON salesman.salesmancode = custbranch.salesman" : "");
-	$INV_WHERE = "WHERE invoice.returned = 0 AND invoice.inprogress = 0";
+	$INV_WHERE = "WHERE invoice.returned = 0 AND invoice.inprogress = 0
+		AND EXISTS (SELECT 1 FROM debtortrans pt WHERE pt.type = 10 AND pt.transno = invoice.invoiceno AND pt.reversed = 0)";
 
 	/* ---- time buckets ---- */
 	$perYearBuckets = ($resolution === 'yearly') ? 1 : (($resolution === 'quarterly') ? 4 : 12);
@@ -201,14 +202,20 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 	$kInvoice = array_sum($monthInvoice);
 
 	/* ---- bucketed pending DC ---- */
+	// Same rule as the Pending DC List: DC not invoiced, grouped for invoice, couriered or returned (GRB),
+	// first option only. Each DC number counted once. Bucketed by DC date within the range.
 	$monthDC = array_fill_keys(array_keys($months), 0.0);
-	foreach (rowsQ($db, "SELECT " . bucketExpr('dcs.orddate', $resolution) . " ym,
-			SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * GREATEST(dcdetails.quantity - dcdetails.qtyinvoiced, 0) * dcoptions.quantity) v
-			FROM dcdetails
-			INNER JOIN dcoptions ON (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno AND dcdetails.lineoptionno = dcoptions.optionno)
-			INNER JOIN dcs       ON dcs.orderno = dcdetails.orderno
-			LEFT  JOIN salescase ON salescase.salescaseref = dcs.salescaseref
-			WHERE dcs.orddate BETWEEN '$startDate' AND '$endDate'"
+	foreach (rowsQ($db, "SELECT " . bucketExpr('d.orddate', $resolution) . " ym,
+			SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * dcdetails.quantity * dcoptions.quantity) v
+			FROM (SELECT orderno, MIN(salescaseref) salescaseref, MIN(orddate) orddate FROM dcs
+				WHERE courierslipdate = '0000-00-00 00:00:00' AND invoicedate = '0000-00-00 00:00:00'
+				AND grbdate = '0000-00-00 00:00:00' AND invoicegroupid IS NULL GROUP BY orderno) d
+			INNER JOIN dcdetails ON dcdetails.orderno = d.orderno
+			INNER JOIN dcoptions ON (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno)
+			INNER JOIN salescase ON salescase.salescaseref = d.salescaseref
+			INNER JOIN debtorsmaster ON debtorsmaster.debtorno = salescase.debtorno
+			WHERE dcdetails.lineoptionno = 0 AND dcoptions.optionno = 0
+			AND d.orddate BETWEEN '$startDate' AND '$endDate'"
 			. ($smanName ? " AND salescase.salesman = '" . esc($db, $smanName) . "' " : "") . "
 			GROUP BY ym") as $r) {
 		if (isset($monthDC[$r['ym']])) $monthDC[$r['ym']] = (float)$r['v'];
@@ -248,15 +255,15 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 
 	// 5) CRV / 6) CSV / 11) Shop DC — one grouped scan of shop sales (debtortrans type 750).
 	$kCRV = $kCSV = $kShopDC = 0.0;
-	foreach (rowsQ($db, "SELECT shopsale.payment p, SUM(debtortrans.ovamount) v
+	foreach (rowsQ($db, "SELECT LOWER(shopsale.payment) p, SUM(debtortrans.ovamount) v
 			FROM shopsale
 			INNER JOIN debtortrans ON (debtortrans.type = 750 AND debtortrans.transno = shopsale.orderno AND debtortrans.reversed = 0)"
 			. ($smanName ? "
-			INNER JOIN custbranch ON shopsale.branchcode = custbranch.branchcode
+			INNER JOIN custbranch ON shopsale.branchcode = custbranch.branchcode AND shopsale.debtorno = custbranch.debtorno
 			INNER JOIN salesman   ON custbranch.salesman = salesman.salesmancode" : "") . "
 			WHERE shopsale.complete = 1
 			AND shopsale.orddate BETWEEN '$startDate' AND '$endDate' $smWhere
-			GROUP BY shopsale.payment") as $r) {
+			GROUP BY LOWER(shopsale.payment)") as $r) {
 		$v = (float)$r['v'];
 		$kShopDC += $v;
 		if ($r['p'] === 'crv') $kCRV = $v;
@@ -268,24 +275,17 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 						  WHEN GSTwithhold = 0 AND WHT = 1 THEN ovamount - alloc - WHTamt
 						  WHEN GSTwithhold = 1 AND WHT = 0 THEN ovamount - alloc - GSTamt
 						  ELSE ovamount - alloc - GSTamt - WHTamt END)";
-	if ($smanName) {
-		// Attribute each debtor to one branch's salesman via a single grouped derived table
-		// (replaces a correlated per-row MAX() subquery).
-		$kOutstanding = scalarQ($db, "SELECT $OUT_BAL
-			FROM debtortrans
-			INNER JOIN invoice       ON invoice.invoiceno = debtortrans.transno
-			INNER JOIN debtorsmaster ON debtorsmaster.debtorno = debtortrans.debtorno
-			INNER JOIN (SELECT debtorno, MAX(branchcode) branchcode FROM custbranch GROUP BY debtorno) pb
-				ON pb.debtorno = debtorsmaster.debtorno
-			INNER JOIN custbranch ON (custbranch.branchcode = pb.branchcode AND custbranch.debtorno = pb.debtorno)
-			INNER JOIN salesman   ON salesman.salesmancode = custbranch.salesman
-			WHERE debtortrans.type = 10 AND debtortrans.settled = 0 AND debtortrans.reversed = 0 $smWhere");
-	} else {
-		$kOutstanding = scalarQ($db, "SELECT $OUT_BAL
-			FROM debtortrans
-			INNER JOIN invoice ON invoice.invoiceno = debtortrans.transno
-			WHERE debtortrans.type = 10 AND debtortrans.settled = 0 AND debtortrans.reversed = 0");
-	}
+	// Same rule as Outstanding Invoices: unsettled, unreversed type-10 postings on invoices that belong
+	// to a sales case and an invoice group, credited to the salesperson on the sales case.
+	$kOutstanding = scalarQ($db, "SELECT $OUT_BAL
+		FROM debtorsmaster
+		INNER JOIN invoice ON invoice.debtorno = debtorsmaster.debtorno AND invoice.returned = 0
+		INNER JOIN salescase ON invoice.salescaseref = salescase.salescaseref
+		INNER JOIN dcgroups ON dcgroups.id = invoice.groupid
+		INNER JOIN debtortrans ON debtortrans.transno = invoice.invoiceno AND debtortrans.type = 10
+			AND debtortrans.reversed = 0 AND debtortrans.settled = 0"
+		. ($smanName ? " WHERE salescase.salesman = '" . esc($db, $smanName) . "'" : ""));
+
 
 	// 12) Cart Value — issued stock value, scoped to the user's cart access.
 	$kCart = scalarQ($db, "SELECT SUM(stockissuance.issued * stockmaster.materialcost * (1 - stockmaster.discount))
@@ -401,7 +401,7 @@ if (isset($_GET['data'])) {
 	header('Content-Type: application/json; charset=utf-8');
 
 	// v2: payloads cached before the PO and pending-DC definition change must not be served.
-	$cacheKey = 'salesMainDash-v2-' . $selType . '-' . $resolution . '-' . $range;
+	$cacheKey = 'salesMainDash-v3-' . $selType . '-' . $resolution . '-' . $range;
 	$noCache  = isset($_GET['nocache']);
 
 	if (!$noCache) {
@@ -433,23 +433,23 @@ $userInitial = strtoupper(substr($userReal, 0, 1));
 /* How each figure is calculated. Shown by the "How calculated" toggle; keep in step with computeDashboard(). */
 $calcKpis = [
 	'Basis: target, not date-based. Formula: one salesperson = salesman.target; overall = SUM(target) of current salespeople. Not prorated for the selected range. Source: salesman.',
-	'Basis: flow, invoice date. Formula: sum of unitprice × (1 − discount) × invoice quantity × invoice option quantity, for invoices with returned = 0 and inprogress = 0 dated in range. Source: invoice, invoicedetails, invoiceoptions.',
-	'Basis: flow, DC order date, net of invoicing. Formula: sum of unitprice × (1 − discount) × max(DC quantity − qtyinvoiced, 0) × DC option quantity. A DC leaves this figure as it is invoiced. Source: dcs, dcdetails (qtyinvoiced), dcoptions.',
+	'Basis: flow, invoice date. Formula: sum of unitprice × (1 − discount) × invoice quantity × invoice option quantity, for invoices with returned = 0 and inprogress = 0 dated in range, whose posting (debtortrans type 10) was not reversed. Source: invoice, invoicedetails, invoiceoptions.',
+	'Basis: DCs dated in range that are still pending. Same rule as the Pending DC List: not invoiced, grouped for invoice, couriered or returned (GRB). Formula: sum of unitprice × (1 − discount) × quantity × option quantity, first option only. Source: dcs, dcdetails, dcoptions.',
 	'Basis: flow, date the customer PO was received. A case has a PO when its PO file is uploaded (salescase.podate) or an active PO receipt is recorded; the date is the PO file date, else the first receipt. Formula: sum of OC value of those cases (ocdetails × ocoptions). Source: salescase, sales_performance_po_receipts, ocs.',
 	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales with payment = CRV. Source: shopsale, debtortrans.',
 	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales with payment = CSV. Source: shopsale, debtortrans.',
-	'Basis: current balance, not date-filtered. Formula: sum of open invoice balances (debtortrans type 10, not settled, not reversed) less GST and WHT withheld. Source: debtortrans, invoice, debtorsmaster, custbranch.',
+	'Basis: current balance, not date-filtered. Same rule as Outstanding Invoices: unsettled, unreversed invoice postings on a sales case and an invoice group, less GST and WHT withheld; credited to the case salesperson. Source: debtortrans, invoice, salescase, dcgroups.',
 	'Basis: flow, sales-order date. Formula: sum of salesorderdetails unitprice × (1 − discount) × quantity where salesorders.quotation = 0 and orddate is in range. Source: salesorders, salesorderdetails.',
-	'Basis: composite. Formula: Total Invoice Value + Total Shop DC + Total Pending DC (net). The three parts use different dates. Not yet approved in the BI metric registry.',
+	'Basis: composite. Formula: Total Invoice Value + Total Shop DC + Total Pending DC (pending DCs dated in range). The three parts use different dates. Not yet approved in the BI metric registry.',
 	'Basis: flow. Formula: equal to Total Invoice Value. Not yet approved in the BI metric registry.',
 	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales, all payment types. Source: shopsale, debtortrans.',
 	'Basis: current allocation, not date-filtered. Formula: sum of issued quantity × material cost × (1 − stock discount) for stock issued to the salesperson, mbflag B or M. Source: stockissuance, stockmaster.',
 ];
 $calcCharts = [
-	'cBar' => 'Per period bucket: Sales = Total Invoice Value for the bucket; Target = annual target ÷ number of buckets; Pending DC = net pending DC by DC date.',
+	'cBar' => 'Per period bucket: Sales = Total Invoice Value for the bucket; Target = annual target ÷ number of buckets; Pending DC = pending DCs (Pending DC List rule) by DC date.',
 	'cPoP' => 'Invoice value for the current range against the same buckets one year earlier (invoice date + 1 year).',
 	'cScore' => 'Running total of invoice value against running total of target. Above the dotted line means ahead of target.',
-	'cVolume' => 'Invoiced + Shop DC + Cart + Pending DC (net). The slices use different dates and bases, so the shares are indicative.',
+	'cVolume' => 'Invoiced + Shop DC + Cart + Pending DC (Pending DC List rule). The slices use different dates and bases, so the shares are indicative.',
 	'cBrand' => 'Invoice value by manufacturer (manufacturers_name), top six. The rest are left out of the pie.',
 	'cSelf' => 'Invoice value split by stockmaster.mbflag: M = Self Brand, B = Other Brand, anything else = Unspecified.',
 ];
