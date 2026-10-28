@@ -408,18 +408,23 @@ if (isset($_GET['data'])) {
 		$hit = rowsQ($db, "SELECT value FROM cache
 			WHERE unique_key = '" . esc($db, $cacheKey) . "'
 			AND refreshed_at > DATE_SUB(NOW(), INTERVAL " . DASH_CACHE_TTL_MINUTES . " MINUTE) LIMIT 1");
-		if ($hit) { echo $hit[0]['value']; exit; }
+		// Serve a cached copy only if it is whole: the column can cut a value off.
+		if ($hit && json_decode($hit[0]['value']) !== null) { echo $hit[0]['value']; exit; }
 	}
 
 	$payload = computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolution, $range, $startDate, $endDate);
 	$payload['cachedAt'] = date('Y-m-d H:i:s');
 	// JSON_INVALID_UTF8_SUBSTITUTE guards against a stray non-UTF8 byte in a
-	// product description blanking the whole response.
-	$json = json_encode($payload, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
+	// product description blanking the whole response. Unicode stays escaped (\uXXXX) so the
+	// value is plain ASCII: the cache column is latin1 and would alter other characters.
+	$json = json_encode($payload, JSON_INVALID_UTF8_SUBSTITUTE);
 
-	@mysqli_query($db, "INSERT INTO cache (unique_key, value, refreshed_at)
-		VALUES ('" . esc($db, $cacheKey) . "', '" . esc($db, $json) . "', NOW())
-		ON DUPLICATE KEY UPDATE value = VALUES(value), refreshed_at = VALUES(refreshed_at)");
+	// The cache column is TEXT (64 KB); a longer value would be cut off, so it is not stored.
+	if ($json !== false && strlen($json) <= 65535) {
+		@mysqli_query($db, "INSERT INTO cache (unique_key, value, refreshed_at)
+			VALUES ('" . esc($db, $cacheKey) . "', '" . esc($db, $json) . "', NOW())
+			ON DUPLICATE KEY UPDATE value = VALUES(value), refreshed_at = VALUES(refreshed_at)");
+	}
 
 	echo $json;
 	exit;

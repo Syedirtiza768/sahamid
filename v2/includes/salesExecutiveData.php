@@ -22,6 +22,7 @@
  */
 
 const SX_ZERO_DT = '0000-00-00 00:00:00';
+const SX_CASE_COLS = ['case', 'client', 'salesperson', 'opened', 'quoteNo', 'quote', 'status', 'po', 'poSource', 'oc', 'dc', 'invoiced'];
 
 function sxEsc($db, $v) { return mysqli_real_escape_string($db, (string)$v); }
 
@@ -443,7 +444,11 @@ function sxCompute($db, $P, $S) {
 				: round($invoiceLine + $shop['v'] + $pending['inPeriodV'], 2),
 		],
 		'cases' => $cases,
-		'caseList' => $caseList,
+		// One row of values per case, with the field names once: the list can run to thousands of cases.
+		'caseList' => ['cols' => SX_CASE_COLS, 'rows' => array_map(function ($c) {
+			return [$c['case'], $c['client'], $c['salesperson'], $c['opened'], $c['quoteNo'], round($c['quote'], 2),
+				$c['status'], $c['po'], $c['poSource'], round($c['oc'], 2), round($c['dc'], 2), round($c['invoiced'], 2)];
+		}, $caseList)],
 		'anomalies' => $anomalies,
 		'stale' => array_slice($stale, 0, 15),
 		'staleCount' => count($stale),
@@ -458,4 +463,45 @@ function sxCompute($db, $P, $S) {
 		'poReceiptsInstalled' => $hasRc,
 		'errors' => $GLOBALS['sxErrors'],
 	];
+}
+
+/* ---------------------------------------------------------------- cache storage
+ * The shared `cache` table stores `value` as TEXT (64 KB) in latin1. A large or non-latin1
+ * payload written as-is is silently cut off or altered, so payloads are gzip-compressed and
+ * base64-encoded (plain ASCII), written only when they fit the column, and checked on read.
+ */
+
+/**
+ * Cache table to use: the report's own table (MEDIUMTEXT, created by
+ * migrations/sales_executive_report.sql) when it exists, else the shared `cache` table.
+ */
+function sxCacheTable($db) {
+	static $table = null;
+	if ($table === null) $table = sxHasTable($db, 'sales_executive_cache') ? 'sales_executive_cache' : 'cache';
+	return $table;
+}
+
+/** Largest value the cache column can hold, read from the table itself; 0 when unknown. */
+function sxCacheCapacity($db) {
+	$r = @mysqli_query($db, "SHOW COLUMNS FROM `" . sxCacheTable($db) . "` LIKE 'value'");
+	$row = $r ? mysqli_fetch_assoc($r) : null;
+	$type = strtolower((string)($row['Type'] ?? ''));
+	if (strpos($type, 'longtext') === 0) return 4294967295;
+	if (strpos($type, 'mediumtext') === 0) return 16777215;
+	if (strpos($type, 'text') === 0) return 65535;
+	return 0;
+}
+
+/** Compressed, ASCII-only form of a JSON payload, or null when compression is unavailable. */
+function sxCachePack($json) {
+	return function_exists('gzcompress') ? 'gz1:' . base64_encode(gzcompress($json, 6)) : null;
+}
+
+/** The JSON inside a stored value, or null when it is missing, foreign or damaged. */
+function sxCacheUnpack($stored) {
+	if (!is_string($stored) || strncmp($stored, 'gz1:', 4) !== 0 || !function_exists('gzuncompress')) return null;
+	$raw = base64_decode(substr($stored, 4), true);
+	$json = $raw === false ? false : @gzuncompress($raw);
+	if (!is_string($json) || json_decode($json) === null) return null;
+	return $json;
 }

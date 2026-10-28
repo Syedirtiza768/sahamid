@@ -431,3 +431,15 @@ Its cache key is now `salesMainDash-v3`. Two differences remain by design. The d
 - The page was checked visually at desktop size.
 - The permissions were checked for directors, `*` holders and a sales-dashboard-only user.
 - Not run against production data.
+
+
+### Cache fix (2026-10-28, after the first deployment)
+
+On the live server the page failed with "Unterminated string in JSON at position 65535". The shared `cache` table stores `value` as `TEXT` (65,535 bytes) in `latin1`. The first load stored the year's JSON, which was larger than that, and MySQL silently cut it off. Every later load then served the truncated copy. The `latin1` column would also have altered non-latin1 characters in client names.
+
+- The report now stores compressed, base64-encoded JSON, which is plain ASCII. It stores it only when it fits the column, read from the table itself, and serves a cached copy only if it unpacks to valid JSON. The cache key is now `salesExec-v2`, so the broken v1 rows are never read again.
+- The case list is sent as rows of values with the field names given once.
+- `migrations/sales_executive_report.sql` now also creates `sales_executive_cache` (`MEDIUMTEXT`, ASCII). Without it the page still works, but a large year is recalculated on every load.
+- The Sales Main Dashboard validates cached JSON before serving it, keeps its JSON ASCII-only (escaped Unicode), and does not store values over 64 KB.
+
+**Verified** in the harness with 10,008 cases, a 1.13 MB payload. Without the migration, every response was complete and nothing was cached. With it, the copy cached in the new table (143,548 bytes) matched the fresh response byte for byte. A non-latin1 client name came through intact, and the 204 accuracy checks still pass.

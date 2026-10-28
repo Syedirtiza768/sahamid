@@ -41,19 +41,28 @@ $S = sxSalesperson($db, $_GET['sp'] ?? 'all');
 /* ======================================================= JSON data endpoint */
 if (isset($_GET['data'])) {
 	header('Content-Type: application/json; charset=utf-8');
-	$cacheKey = 'salesExec-v1-' . md5(json_encode([$P['start'], $P['end'], $S ? $S['code'] : 'all', date('Y-m-d')]));
+	// v2: v1 stored raw JSON, which the 64 KB TEXT column cut off; those rows are never read again.
+	$cacheKey = 'salesExec-v2-' . md5(json_encode([$P['start'], $P['end'], $S ? $S['code'] : 'all', date('Y-m-d')]));
 	if (!isset($_GET['nocache'])) {
-		$hit = @mysqli_query($db, "SELECT value FROM cache WHERE unique_key = '" . sxEsc($db, $cacheKey) . "'
+		$hit = @mysqli_query($db, "SELECT value FROM `" . sxCacheTable($db) . "` WHERE unique_key = '" . sxEsc($db, $cacheKey) . "'
 			AND refreshed_at > DATE_SUB(NOW(), INTERVAL " . SX_CACHE_MINUTES . " MINUTE) LIMIT 1");
-		if ($hit && ($row = mysqli_fetch_assoc($hit))) { echo $row['value']; exit; }
+		$cached = ($hit && ($row = mysqli_fetch_assoc($hit))) ? sxCacheUnpack($row['value']) : null;
+		if ($cached !== null) { echo $cached; exit; }
 	}
 	$payload = sxCompute($db, $P, $S);
 	$payload['generatedAt'] = date('Y-m-d H:i:s');
 	$json = json_encode($payload, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
-	// Only a complete result is cached, so a failed query is retried on the next load.
-	if (empty($payload['errors'])) {
-		@mysqli_query($db, "INSERT INTO cache (unique_key, value, refreshed_at)
-			VALUES ('" . sxEsc($db, $cacheKey) . "', '" . sxEsc($db, $json) . "', NOW())
+	if ($json === false) {
+		http_response_code(500);
+		echo json_encode(['error' => 'The report data could not be encoded.']);
+		exit;
+	}
+	// Only a complete result is cached (a failed query is retried next time), and only when the
+	// packed value fits the cache column; otherwise the report is simply recalculated each load.
+	$packed = empty($payload['errors']) ? sxCachePack($json) : null;
+	if ($packed !== null && strlen($packed) <= sxCacheCapacity($db)) {
+		@mysqli_query($db, "INSERT INTO `" . sxCacheTable($db) . "` (unique_key, value, refreshed_at)
+			VALUES ('" . sxEsc($db, $cacheKey) . "', '" . sxEsc($db, $packed) . "', NOW())
 			ON DUPLICATE KEY UPDATE value = VALUES(value), refreshed_at = VALUES(refreshed_at)");
 	}
 	echo $json;
@@ -492,6 +501,12 @@ include_once('../v3/includes/sidebar.php');
 		fetch('salesReportsExecutive.php?' + query(nocache), { credentials: 'same-origin' })
 			.then(function (r) { if (!r.ok) throw new Error('The server answered ' + r.status + '.'); return r.json(); })
 			.then(function (d) {
+				if (d.error) throw new Error(d.error);
+				// The case list arrives as rows of values with the field names once; rebuild objects.
+				if (d.caseList && d.caseList.cols) {
+					var cols = d.caseList.cols;
+					d.caseList = d.caseList.rows.map(function (r) { var o = {}; cols.forEach(function (c, i) { o[c] = r[i]; }); return o; });
+				}
 				el('sx-loading').style.display = 'none';
 				el('sx-content').style.display = '';
 				if (d.errors && d.errors.length) {
