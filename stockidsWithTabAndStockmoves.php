@@ -1,5 +1,6 @@
 <?php
-	$db=mysqli_connect("localhost","irtiza","netetech321","sahamid");
+include_once __DIR__ . '/db_config.php';
+	$db=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,"sahamid");
 
 	$sql="SELECT DISTINCT (stockmaster.stockid) as stockid FROM stockmaster INNER JOIN stockmoves ON stockmaster.stockid=stockmoves.stockid WHERE stockmaster.stockid LIKE '%\t%'";	
 	$result=mysqli_query($db,$sql);

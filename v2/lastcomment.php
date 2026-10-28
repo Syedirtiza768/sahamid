@@ -16,6 +16,7 @@
     }
 </style>
 <?php
+include_once __DIR__ . '/../db_config.php';
 
 
 //include('includes/session.inc');
@@ -32,7 +33,7 @@ echo "
 
 
 ";
-$conn = mysqli_connect(getenv('DB_HOST') ?: 'localhost','irtiza', 'netetech321', 'sahamid');
+$conn = mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD, 'sahamid');
 $sql = 'SELECT * FROM `reversedAllocationHistoryComments` 
 where reversedAllocationHistoryID = "'.$_GET['revid'].'"';
 $result = mysqli_query($conn,$sql);

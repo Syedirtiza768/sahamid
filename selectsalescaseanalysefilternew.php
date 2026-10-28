@@ -1,6 +1,11 @@
 <?php
 
 include('includes/session.inc');
+// Sales Data Analysis is restricted to the same slug as the Director Reports hub.
+if (!userHasPermission($db, 'directorreports')) {
+	header("Location: /sahamid/v2/reportLinks.php");
+	exit;
+}
 ?>
 <?php
 /* $Id: header.inc 6310 2013-08-29 10:42:50Z daintree $ */

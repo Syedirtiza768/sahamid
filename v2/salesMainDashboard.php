@@ -80,6 +80,46 @@ function bucketLabel($ts, $res) {
 	return date('M', $ts);
 }
 
+/**
+ * PO Received Value: OC value of cases with a customer PO, dated by the day the PO was
+ * received (PO file upload on the case, else the first active recorded PO receipt).
+ * This is the PO-received rule used by My Sales Activity and the sales-performance
+ * screens. Falls back to the PO-file rule when sales_performance_po_receipts is absent.
+ */
+function poReceivedValue($db, $startDate, $endDate, $smanName) {
+	$ocByCase = "SELECT ocs.salescaseref, SUM(ocdetails.unitprice * (1 - ocdetails.discountpercent) * ocdetails.quantity * ocoptions.quantity) v
+			FROM ocdetails
+			INNER JOIN ocoptions ON (ocdetails.orderno = ocoptions.orderno AND ocdetails.orderlineno = ocoptions.lineno)
+			INNER JOIN ocs ON ocs.orderno = ocdetails.orderno
+			WHERE ocdetails.lineoptionno = 0 AND ocoptions.optionno = 0
+			GROUP BY ocs.salescaseref";
+	$smanWhere = $smanName ? " AND sc.salesman = '" . esc($db, $smanName) . "'" : "";
+	$withReceipts = "SELECT SUM(ov.v)
+		FROM (
+			SELECT sc.salescaseref, DATE(COALESCE(NULLIF(sc.podate, '0000-00-00 00:00:00'), rc.first_received)) pd
+			FROM salescase sc
+			LEFT JOIN (SELECT salescaseref, MIN(received_at) first_received
+				FROM sales_performance_po_receipts WHERE receipt_status = 'active' GROUP BY salescaseref) rc
+				ON rc.salescaseref = sc.salescaseref
+			WHERE (sc.podate <> '0000-00-00 00:00:00' OR rc.first_received IS NOT NULL) $smanWhere
+		) po
+		INNER JOIN ($ocByCase) ov ON ov.salescaseref = po.salescaseref
+		WHERE po.pd BETWEEN '$startDate' AND '$endDate'";
+	$podateOnly = "SELECT SUM(ov.v)
+		FROM (
+			SELECT sc.salescaseref, DATE(sc.podate) pd
+			FROM salescase sc
+			WHERE sc.podate <> '0000-00-00 00:00:00' $smanWhere
+		) po
+		INNER JOIN ($ocByCase) ov ON ov.salescaseref = po.salescaseref
+		WHERE po.pd BETWEEN '$startDate' AND '$endDate'";
+	$res = @mysqli_query($db, $withReceipts);
+	if (!$res) $res = @mysqli_query($db, $podateOnly);
+	if (!$res) return 0.0;
+	$row = mysqli_fetch_row($res);
+	return $row ? (float)$row[0] : 0.0;
+}
+
 /* ------------------------------------------------------- access & filters */
 // "Full view" = sees overall sales + can filter by salesman. Access is already
 // restricted to 'sales_dashboard' (and '*') holders above, and all of them should
@@ -163,9 +203,9 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 	/* ---- bucketed pending DC ---- */
 	$monthDC = array_fill_keys(array_keys($months), 0.0);
 	foreach (rowsQ($db, "SELECT " . bucketExpr('dcs.orddate', $resolution) . " ym,
-			SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * dcdetails.quantity * dcoptions.quantity) v
+			SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * GREATEST(dcdetails.quantity - dcdetails.qtyinvoiced, 0) * dcoptions.quantity) v
 			FROM dcdetails
-			INNER JOIN dcoptions ON (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno)
+			INNER JOIN dcoptions ON (dcdetails.orderno = dcoptions.orderno AND dcdetails.orderlineno = dcoptions.lineno AND dcdetails.lineoptionno = dcoptions.optionno)
 			INNER JOIN dcs       ON dcs.orderno = dcdetails.orderno
 			LEFT  JOIN salescase ON salescase.salescaseref = dcs.salescaseref
 			WHERE dcs.orddate BETWEEN '$startDate' AND '$endDate'"
@@ -194,18 +234,17 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 		$kTarget = scalarQ($db, "SELECT SUM(target) FROM salesman WHERE `current` = 1");
 	}
 
-	// 4) PO Values + 8) Total OC Value — one scan of salesorders (PO is a subset of OC).  @NEW
+	// 8) Total OC Value (sales orders). PO Received is a customer-PO measure (see poReceivedValue), not
+	// salesorders.poplaced, which marks a supplier purchase order placed in SelectSalesOrder.php.
 	$so = rowsQ($db, "SELECT
-			SUM(salesorderdetails.unitprice * (1 - salesorderdetails.discountpercent) * salesorderdetails.quantity) oc,
-			SUM(CASE WHEN salesorders.poplaced = 1
-				THEN salesorderdetails.unitprice * (1 - salesorderdetails.discountpercent) * salesorderdetails.quantity ELSE 0 END) po
+			SUM(salesorderdetails.unitprice * (1 - salesorderdetails.discountpercent) * salesorderdetails.quantity) oc
 		FROM salesorders
 		INNER JOIN salesorderdetails ON salesorderdetails.orderno = salesorders.orderno
 		WHERE salesorders.quotation = 0
 		AND salesorders.orddate BETWEEN '$startDate' AND '$endDate'"
 		. ($smanCode ? " AND salesorders.salesperson = '" . esc($db, $smanCode) . "' " : ""));
 	$kOC = (float)($so[0]['oc'] ?? 0);
-	$kPO = (float)($so[0]['po'] ?? 0);
+	$kPO = poReceivedValue($db, $startDate, $endDate, $smanName);
 
 	// 5) CRV / 6) CSV / 11) Shop DC — one grouped scan of shop sales (debtortrans type 750).
 	$kCRV = $kCSV = $kShopDC = 0.0;
@@ -331,7 +370,7 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 			['Total Sales Target',    round($kTarget)],
 			['Total Invoice Value',   round($kInvoice)],
 			['Total Pending DC Value', round($kPendingDC)],
-			['PO Values',             round($kPO)],
+			['PO Received Value',     round($kPO)],
 			['CRV',                   round($kCRV)],
 			['CSV',                   round($kCSV)],
 			['Outstanding',           round($kOutstanding)],
@@ -361,7 +400,8 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 if (isset($_GET['data'])) {
 	header('Content-Type: application/json; charset=utf-8');
 
-	$cacheKey = 'salesMainDash-' . $selType . '-' . $resolution . '-' . $range;
+	// v2: payloads cached before the PO and pending-DC definition change must not be served.
+	$cacheKey = 'salesMainDash-v2-' . $selType . '-' . $resolution . '-' . $range;
 	$noCache  = isset($_GET['nocache']);
 
 	if (!$noCache) {
@@ -389,6 +429,30 @@ if (isset($_GET['data'])) {
 $salesmen = rowsQ($db, "SELECT salesmancode, salesmanname FROM salesman WHERE `current` = 1 ORDER BY salesmanname");
 $userReal = $_SESSION['UsersRealName'] ?? ($_SESSION['UserID'] ?? 'User');
 $userInitial = strtoupper(substr($userReal, 0, 1));
+
+/* How each figure is calculated. Shown by the "How calculated" toggle; keep in step with computeDashboard(). */
+$calcKpis = [
+	'Basis: target, not date-based. Formula: one salesperson = salesman.target; overall = SUM(target) of current salespeople. Not prorated for the selected range. Source: salesman.',
+	'Basis: flow, invoice date. Formula: sum of unitprice × (1 − discount) × invoice quantity × invoice option quantity, for invoices with returned = 0 and inprogress = 0 dated in range. Source: invoice, invoicedetails, invoiceoptions.',
+	'Basis: flow, DC order date, net of invoicing. Formula: sum of unitprice × (1 − discount) × max(DC quantity − qtyinvoiced, 0) × DC option quantity. A DC leaves this figure as it is invoiced. Source: dcs, dcdetails (qtyinvoiced), dcoptions.',
+	'Basis: flow, date the customer PO was received. A case has a PO when its PO file is uploaded (salescase.podate) or an active PO receipt is recorded; the date is the PO file date, else the first receipt. Formula: sum of OC value of those cases (ocdetails × ocoptions). Source: salescase, sales_performance_po_receipts, ocs.',
+	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales with payment = CRV. Source: shopsale, debtortrans.',
+	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales with payment = CSV. Source: shopsale, debtortrans.',
+	'Basis: current balance, not date-filtered. Formula: sum of open invoice balances (debtortrans type 10, not settled, not reversed) less GST and WHT withheld. Source: debtortrans, invoice, debtorsmaster, custbranch.',
+	'Basis: flow, sales-order date. Formula: sum of salesorderdetails unitprice × (1 − discount) × quantity where salesorders.quotation = 0 and orddate is in range. Source: salesorders, salesorderdetails.',
+	'Basis: composite. Formula: Total Invoice Value + Total Shop DC + Total Pending DC (net). The three parts use different dates. Not yet approved in the BI metric registry.',
+	'Basis: flow. Formula: equal to Total Invoice Value. Not yet approved in the BI metric registry.',
+	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales, all payment types. Source: shopsale, debtortrans.',
+	'Basis: current allocation, not date-filtered. Formula: sum of issued quantity × material cost × (1 − stock discount) for stock issued to the salesperson, mbflag B or M. Source: stockissuance, stockmaster.',
+];
+$calcCharts = [
+	'cBar' => 'Per period bucket: Sales = Total Invoice Value for the bucket; Target = annual target ÷ number of buckets; Pending DC = net pending DC by DC date.',
+	'cPoP' => 'Invoice value for the current range against the same buckets one year earlier (invoice date + 1 year).',
+	'cScore' => 'Running total of invoice value against running total of target. Above the dotted line means ahead of target.',
+	'cVolume' => 'Invoiced + Shop DC + Cart + Pending DC (net). The slices use different dates and bases, so the shares are indicative.',
+	'cBrand' => 'Invoice value by manufacturer (manufacturers_name), top six. The rest are left out of the pie.',
+	'cSelf' => 'Invoice value split by stockmaster.mbflag: M = Self Brand, B = Other Brand, anything else = Unspecified.',
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -461,6 +525,11 @@ $userInitial = strtoupper(substr($userReal, 0, 1));
 		table.sd-table td.num, table.sd-table th.num { text-align: right; }
 		.sd-empty, .sd-loading { color: #aaa; font-size: 13px; padding: 24px 0; text-align: center; }
 
+		/* how-calculated toggle */
+		.k-calc, .c-calc { display: none; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #dcdcdc; font-size: 12px; line-height: 1.45; color: #555; text-align: left; }
+		.sd-calc-on .k-calc, .sd-calc-on .c-calc { display: block; }
+		.sd-refresh[aria-pressed="true"] { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+
 		/* skeleton shimmer */
 		@keyframes sk { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
 		.sk { color: transparent !important; border-radius: 5px; background: #eee; background-image: linear-gradient(90deg, #eee, #f5f5f5, #eee); background-size: 200px 100%; background-repeat: no-repeat; animation: sk 1.2s ease-in-out infinite; display: inline-block; min-height: 1em; min-width: 90px; }
@@ -505,7 +574,8 @@ $userInitial = strtoupper(substr($userReal, 0, 1));
 				<h1 class="sd-page-title">SALES MAIN DASHBOARD</h1>
 				<div class="sd-meta">
 					<span id="sdUpdated"></span>
-					<button type="button" class="sd-refresh" id="sdRefresh"><i class="fa fa-refresh"></i> Refresh</button>
+					<button type="button" class="sd-refresh" id="sdCalc" aria-pressed="false" title="Show how each value is calculated"><i class="fa fa-calculator"></i> How calculated</button>
+						<button type="button" class="sd-refresh" id="sdRefresh"><i class="fa fa-refresh"></i> Refresh</button>
 				</div>
 			</div>
 
@@ -540,22 +610,23 @@ $userInitial = strtoupper(substr($userReal, 0, 1));
 
 				<div class="sd-kpis" id="sdKpis">
 					<?php
-					$kpiTitles = ['Total Sales Target', 'Total Invoice Value', 'Total Pending DC Value', 'PO Values', 'CRV', 'CSV', 'Outstanding', 'Total OC Value', 'Total Business Volume', 'Total Proper Sale', 'Shop DC', 'Cart Value'];
+					$kpiTitles = ['Total Sales Target', 'Total Invoice Value', 'Total Pending DC Value', 'PO Received Value', 'CRV', 'CSV', 'Outstanding', 'Total OC Value', 'Total Business Volume', 'Total Proper Sale', 'Shop DC', 'Cart Value'];
 					foreach ($kpiTitles as $i => $t) {
-						echo '<div class="sd-kpi"><div class="k-title">' . htmlspecialchars($t) . '</div><div class="k-value" data-k="' . $i . '"><span class="sk">&nbsp;</span></div></div>';
+						echo '<div class="sd-kpi"><div class="k-title">' . htmlspecialchars($t) . '</div><div class="k-value" data-k="' . $i . '"><span class="sk">&nbsp;</span></div><div class="k-calc">' . htmlspecialchars($calcKpis[$i]) . '</div></div>';
 					}
 					?>
 				</div>
 
 				<div class="sd-charts">
-					<div class="sd-chart-card"><h4>Sales vs Target vs Pending DC</h4><div id="cBar" class="sd-chart sk"></div></div>
-					<div class="sd-chart-card"><h4>Period over Period Chart</h4><div id="cPoP" class="sd-chart sk"></div></div>
-					<div class="sd-chart-card"><h4>Score Curve</h4><div id="cScore" class="sd-chart sk"></div></div>
-					<div class="sd-chart-card"><h4>Business Volume Breakup</h4><div id="cVolume" class="sd-chart sk"></div></div>
-					<div class="sd-chart-card"><h4>Brand Wise Sales Breakup</h4><div id="cBrand" class="sd-chart sk"></div></div>
-					<div class="sd-chart-card"><h4>Self Brand Sales Breakup</h4><div id="cSelf" class="sd-chart sk"></div></div>
+					<div class="sd-chart-card"><h4>Sales vs Target vs Pending DC</h4><p class="c-calc"><?php echo htmlspecialchars($calcCharts['cBar']); ?></p><div id="cBar" class="sd-chart sk"></div></div>
+					<div class="sd-chart-card"><h4>Period over Period Chart</h4><p class="c-calc"><?php echo htmlspecialchars($calcCharts['cPoP']); ?></p><div id="cPoP" class="sd-chart sk"></div></div>
+					<div class="sd-chart-card"><h4>Score Curve</h4><p class="c-calc"><?php echo htmlspecialchars($calcCharts['cScore']); ?></p><div id="cScore" class="sd-chart sk"></div></div>
+					<div class="sd-chart-card"><h4>Business Volume Breakup</h4><p class="c-calc"><?php echo htmlspecialchars($calcCharts['cVolume']); ?></p><div id="cVolume" class="sd-chart sk"></div></div>
+					<div class="sd-chart-card"><h4>Brand Wise Sales Breakup</h4><p class="c-calc"><?php echo htmlspecialchars($calcCharts['cBrand']); ?></p><div id="cBrand" class="sd-chart sk"></div></div>
+					<div class="sd-chart-card"><h4>Self Brand Sales Breakup</h4><p class="c-calc"><?php echo htmlspecialchars($calcCharts['cSelf']); ?></p><div id="cSelf" class="sd-chart sk"></div></div>
 					<div class="sd-chart-card full">
 						<h4>Top Items</h4>
+							<p class="c-calc">Top ten stock codes by invoice value in range. Qty = sum of invoice quantity × option quantity.</p>
 						<div id="sdTable"><div class="sd-loading">Loading…</div></div>
 					</div>
 				</div>
@@ -663,6 +734,10 @@ $userInitial = strtoupper(substr($userReal, 0, 1));
 
 		['fType', 'fResolution', 'fRange'].forEach(function (id) { document.getElementById(id).addEventListener('change', function () { load(false); }); });
 		document.getElementById('sdRefresh').addEventListener('click', function () { load(true); });
+			document.getElementById('sdCalc').addEventListener('click', function () {
+				var on = document.body.classList.toggle('sd-calc-on');
+				this.setAttribute('aria-pressed', String(on));
+			});
 		load(false);
 	</script>
 </body>

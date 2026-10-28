@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/db_config.php';
 
 include('includes/session.inc');
 ?>
@@ -52,7 +53,7 @@ include('includes/session.inc');
 	$_SESSION['customer']=$_POST['customer'];
 	$_SESSION['salesperson']=$_POST['salesperson'];
 
-	$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+	$db=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 	
 echo	$SQL = 'SELECT dcs.orderno as dcno,dcs.orddate as date,dcs.salescaseref,debtorsmaster.name as client,
 			salescase.salesman,debtorsmaster.dba,dcs.invoicegroupid,SUM(dcdetails.unitprice* (1 - dcdetails.discountpercent)*dcdetails.quantity*dcoptions.quantity

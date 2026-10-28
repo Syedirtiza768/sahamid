@@ -1,6 +1,11 @@
 <?php
 
 include('includes/session.inc');
+// Sales Data Analysis is restricted to the same slug as the Director Reports hub.
+if (!userHasPermission($db, 'directorreports')) {
+	header("Location: /sahamid/v2/reportLinks.php");
+	exit;
+}
 ?>
 <?php
 /* $Id: header.inc 6310 2013-08-29 10:42:50Z daintree $ */
@@ -45,7 +50,15 @@ include('includes/session.inc');
 	echo '<link href="' . $RootPath . '/css/'. $_SESSION['Theme'] .'/foundation.css" rel="stylesheet" type="text/css" />';
 	
 	echo '<script type="text/javascript" src = "'.$RootPath.'/javascripts/MiscFunctions.js"></script>';
-		$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+		$db=mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
+	// PO Received date: the PO file date on the case, else the first active customer PO receipt
+	// (the rule used by My Sales Activity and the sales-performance screens). Falls back to the PO file
+	// alone when sales_performance_po_receipts is not installed.
+	$hasPoReceipts = mysqli_num_rows(mysqli_query($db, "SHOW TABLES LIKE 'sales_performance_po_receipts'")) > 0;
+	$poEff = $hasPoReceipts
+		? "COALESCE(NULLIF(salescase.podate,'0000-00-00 00:00:00'),(SELECT MIN(r.received_at) FROM sales_performance_po_receipts r WHERE r.salescaseref = salescase.salescaseref AND r.receipt_status = 'active'))"
+		: "NULLIF(salescase.podate,'0000-00-00 00:00:00')";
+
 //echo $_POST['filtertype'];
 		$SQL = '
 		CREATE TABLE IF NOT EXISTS `salescasereporting'.$_SESSION['UserID'].'` (
@@ -131,7 +144,7 @@ SELECT * FROM salescase
 INNER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno
 
 WHERE
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
 ';
@@ -146,11 +159,11 @@ if($_POST['filtertype']=='date')
 $SQL = '
 
 
-SELECT distinct salescase.salescaseindex, salescase.salescaseref,salescase.podate FROM dc 
+SELECT distinct salescase.salescaseindex, salescase.salescaseref,'.$poEff.' AS podate FROM dc 
 right outer join salescase on dc.salescaseref=salescase.salescaseref 
 INNER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno
 
-WHERE salescase.podate!="0000-00-00 00:00:00"
+WHERE '.$poEff.' IS NOT NULL
  AND
 `commencementdate` BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
@@ -171,13 +184,13 @@ else if($_POST['filtertype']=='podate'){
 $SQL = '
 
 
-SELECT distinct salescase.salescaseindex, salescase.salescaseref,salescase.podate FROM dc 
+SELECT distinct salescase.salescaseindex, salescase.salescaseref,'.$poEff.' AS podate FROM dc 
 right outer join salescase on dc.salescaseref=salescase.salescaseref 
 INNER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno
 
-WHERE salescase.podate!="0000-00-00 00:00:00"
+WHERE '.$poEff.' IS NOT NULL
  AND
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
 
@@ -229,7 +242,7 @@ SELECT  COUNT(*) as quotecount,
  quotationvalue'.$_SESSION['UserID'].'.salescaseref = salescase.salescaseref
  LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
  WHERE
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
  
@@ -278,7 +291,7 @@ SELECT COUNT(*) as quotecount,
  LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
  WHERE
  
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
  
@@ -322,7 +335,7 @@ SELECT COUNT(*) as quotecount,
  LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
  WHERE
  
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
  
@@ -366,7 +379,7 @@ SELECT COUNT(*) as quotecount,
  LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
  WHERE
  
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
  
@@ -390,7 +403,7 @@ SELECT COUNT(*) as quotecount,
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
  
-AND salescase.closingreason = "" AND salescase.podate = "0000-00-00 00:00:00"
+AND salescase.closingreason = "" AND '.$poEff.' IS NULL
 AND quotationvalue'.$_SESSION['UserID'].'.value>0
 ';
 $totalpipelinevalue=mysqli_query($db,$SQL);
@@ -405,11 +418,11 @@ SELECT COUNT(*) as quotecount,
  LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
  WHERE
  
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
  
-AND salescase.closingreason = "" AND salescase.podate = "0000-00-00 00:00:00"
+AND salescase.closingreason = "" AND '.$poEff.' IS NULL
 AND quotationvalue'.$_SESSION['UserID'].'.value>0
 ';
 $totalpipelinevalue=mysqli_query($db,$SQL);
@@ -427,7 +440,7 @@ SELECT COUNT(*) as quotecount,
  quotationvalue'.$_SESSION['UserID'].'.salescaseref = salescase.salescaseref
  LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
  WHERE
- salescase.podate!= "0000-00-00 00:00:00" AND
+ '.$poEff.' IS NOT NULL AND
 `commencementdate` BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
@@ -449,8 +462,8 @@ SELECT COUNT(*) as quotecount,
  quotationvalue'.$_SESSION['UserID'].'.salescaseref = salescase.salescaseref
  LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno 
  WHERE
- salescase.podate!= "0000-00-00 00:00:00" AND
-salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+ '.$poEff.' IS NOT NULL AND
+'.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
  
@@ -471,7 +484,7 @@ INSERT INTO `salescasereporting'.$_SESSION['UserID'].'`(`salescaseindex`, salesc
  dclink, commentcode, quotationvalue,closingreason)
 SELECT `salescaseindex`, salescase.salescaseref, `salescasedescription`,
  `salesman`, `name`, salescase.`branchcode`, `commencementdate`,  `enquiryfile`,
- `enquirydate`,enquiryvalue, `lastquotationdate`, salesorders.orderno,  `pofile`, salescase.`podate`,
+ `enquirydate`,enquiryvalue, `lastquotationdate`, salesorders.orderno,  `pofile`, '.$poEff.',
  `ocdocumentfile`, `ocdocumentdate`, dispatchid, commentcode, quotationvalue'.$_SESSION['UserID'].'.value,closingreason
  FROM salescase LEFT OUTER JOIN dc ON salescase.salescaseref = dc.salescaseref
 	
@@ -530,7 +543,7 @@ INSERT INTO `salescasereporting'.$_SESSION['UserID'].'`(`salescaseindex`, salesc
  dclink, commentcode, quotationvalue,closingreason)
 SELECT `salescaseindex`, salescase.salescaseref, `salescasedescription`,
  `salesman`, `name`, salescase.`branchcode`, `commencementdate`,  `enquiryfile`,
- `enquirydate`,enquiryvalue, `lastquotationdate`, salesorders.orderno,  `pofile`, salescase.`podate`,
+ `enquirydate`,enquiryvalue, `lastquotationdate`, salesorders.orderno,  `pofile`, '.$poEff.',
  `ocdocumentfile`, `ocdocumentdate`, dispatchid, commentcode, quotationvalue'.$_SESSION['UserID'].'.value,closingreason
  FROM salescase LEFT OUTER JOIN dc ON salescase.salescaseref = dc.salescaseref
 	
@@ -568,7 +581,7 @@ SELECT `salescaseindex`, salescase.salescaseref, `salescasedescription`,
         )
 		
 		
-		AND salescase.podate BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
+		AND '.$poEff.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 
 AND `name`LIKE"%'.$_POST['customer'].'%" AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
 '

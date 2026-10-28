@@ -1,8 +1,9 @@
 <?php
+include_once __DIR__ . '/../db_config.php';
 // Database connection
 $db_host = 'localhost';
 $db_username = 'irtiza';
-$db_password = 'netetech321';
+$db_password = SAHAMID_DB_PASSWORD;
 $db_name = 'sahamid';
 
 $conn = mysqli_connect($db_host, $db_username, $db_password, $db_name);

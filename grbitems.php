@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/db_config.php';
 
 include('includes/session.inc');
 ?>
@@ -52,7 +53,7 @@ include('includes/session.inc');
 	$_SESSION['customer']=$_POST['customer'];
 	$_SESSION['salesperson']=$_POST['salesperson'];
 
-	$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+	$db=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 	
     	$SQL = 'SELECT grbdetails.orderno as grbno,dcs.orderno as dcno,stockmaster.stockid,stockmaster.mnfCode,stockmaster.mnfpno,
 		stockmaster.description,manufacturers.manufacturers_name,(grbdetails.quantity) as qty,    

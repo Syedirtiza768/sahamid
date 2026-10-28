@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../db_config.php';
 
 include('includes/session.inc');
 
@@ -19,7 +20,7 @@ echo "
 
 
 ";
-$conn = mysqli_connect('localhost','irtiza','netetech321','sahamid');
+$conn = mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
  $sql = 'SELECT salesorders.orderno,salescase.salesman,debtortype.typename,debtorsmaster.name, 
 discountpercent, unitprice*(1-discountpercent) as price,salesorderdetails.quantity*salesorderoptions.quantity as quantity, orddate FROM `salesorderdetails`
  inner join salesorders on salesorders.orderno = salesorderdetails.orderno inner join salescase on

@@ -19,8 +19,15 @@
  */
 
 // DB table to use
-session_start();
-include ('includes/MiscFunctions.php');
+include('includes/session.inc');
+include_once('includes/MiscFunctions.php');
+// Same slug as the Sales Data Analysis pages that feed this table.
+if (!userHasPermission($db, 'directorreports')) {
+	header('Content-Type: application/json; charset=utf-8');
+	http_response_code(403);
+	echo json_encode(array('error' => 'forbidden'));
+	exit;
+}
 $table = 'salescasereporting'.$_SESSION['UserID'].'';
 
 // Table's primary key
@@ -61,7 +68,7 @@ $columns = array(
 		
 	'formatter' => function( $d, $row ) {
 		
-			$conn = mysqli_connect('localhost','root','','sahamid');
+			$conn = mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
 			$sql = 'SELECT * FROM `salescase` INNER JOIN salesorders ON 
 			salesorders.salescaseref=salescase.salescaseref INNER JOIN salesorderdetails
 			ON salesorders.orderno=salesorderdetails.orderno
@@ -95,7 +102,7 @@ $columns = array(
 	array( 'db' => 'salescaseref',     'dt' => 8 ,//quotation status
 	
 	'formatter' => function( $d, $row ) {
-		$conn = mysqli_connect('localhost','root','','sahamid');
+		$conn = mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
 		$sqlR = 'SELECT salescase.closingreason as closingreason,
 				salescase.podate,
 				quotationvalue'.$_SESSION['UserID'].'.value
@@ -134,7 +141,7 @@ OR $rowR['closingreason']=="any other reason"
 	),
 	array( 'db' => 'commentcode',  'dt' => 9,
 		'formatter' => function( $d, $row ) {
-			$conn = mysqli_connect('localhost','root','','sahamid');
+			$conn = mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
 			$sql = 'SELECT * FROM `salescasecomments` INNER JOIN salescase ON 
 			salescasecomments.salescaseref=salescase.salescaseref 
 			where 
@@ -181,7 +188,7 @@ OR $rowR['closingreason']=="any other reason"
 		'db'        => 'salescaseref',
 		'dt'        => 12,
 		'formatter' => function( $d, $row ) {
-			$conn = mysqli_connect('localhost','root','','sahamid');
+			$conn = mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
 $sql = "SELECT quotationvalue".$_SESSION['UserID'].".value as value FROM quotationvalue".$_SESSION['UserID']."
 INNER JOIN salescase on
  quotationvalue".$_SESSION['UserID'].".salescaseref = salescase.salescaseref
@@ -202,7 +209,7 @@ INNER JOIN salescase on
 		'db'        => 'salescaseref',
 		'dt'        => 13,
 		'formatter' => function( $d, $row ) {
-			$conn = mysqli_connect('localhost','root','','sahamid');
+			$conn = mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
 	$sql = 'SELECT * FROM dc
 			where 
 			salescaseref= "'.$d.'"';
@@ -220,7 +227,7 @@ INNER JOIN salescase on
 		'db'        => 'salescaseref',
 		'dt'        => 14,
 		'formatter' => function( $d, $row ) {
-			$conn = mysqli_connect('localhost','root','','sahamid');
+			$conn = mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
 	$sql = 'SELECT * FROM dc
 			where 
 			salescaseref= "'.$d.'"';
@@ -236,7 +243,7 @@ INNER JOIN salescase on
 	
 		array( 'db' => 'commentcode',  'dt' => 15,
 		'formatter' => function( $d, $row ) {
-			$conn = mysqli_connect('localhost','root','','sahamid');
+			$conn = mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
 			$sql = 'SELECT * FROM `salescasecomments` INNER JOIN salescase ON 
 			salescasecomments.salescaseref=salescase.salescaseref 
 			where 
@@ -262,10 +269,10 @@ INNER JOIN salescase on
 
 // SQL server connection information
 $sql_details = array(
-	'user' => 'irtiza',
-	'pass' => 'netetech321',
-	'db'   => 'sahamid',
-	'host' => 'localhost'
+	'user' => $DBUser,
+	'pass' => $DBPassword,
+	'db'   => $_SESSION['DatabaseName'],
+	'host' => $host
 );
 
 

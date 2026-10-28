@@ -18,14 +18,18 @@ for ($i = 0; $i -lt 30; $i++) {
 if (-not $ready) { throw "MariaDB did not start within 60 seconds." }
 Write-Host "      MariaDB is ready."
 
+# Database password comes from the environment (DB_PASSWORD), never from this file.
+$DbPassword = $env:DB_PASSWORD
+if (-not $DbPassword) { throw 'Set the DB_PASSWORD environment variable before running this script.' }
+
 # ── Initialize database (first run only) ────────────────────────────────────
 if (-not (Test-Path $INIT_FLAG)) {
     Write-Host "[2/4] First run: creating database and user..."
     & 'C:\xampp\mysql\bin\mysql.exe' -u root -e @"
 CREATE DATABASE IF NOT EXISTS ``sahamid`` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 CREATE DATABASE IF NOT EXISTS ``sah_saherp`` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-CREATE USER IF NOT EXISTS 'irtiza'@'%' IDENTIFIED BY 'netetech321';
-CREATE USER IF NOT EXISTS 'irtiza'@'localhost' IDENTIFIED BY 'netetech321';
+CREATE USER IF NOT EXISTS 'irtiza'@'%' IDENTIFIED BY '$DbPassword';
+CREATE USER IF NOT EXISTS 'irtiza'@'localhost' IDENTIFIED BY '$DbPassword';
 GRANT ALL PRIVILEGES ON ``sahamid``.* TO 'irtiza'@'%';
 GRANT ALL PRIVILEGES ON ``sahamid``.* TO 'irtiza'@'localhost';
 GRANT ALL PRIVILEGES ON ``sah_saherp``.* TO 'irtiza'@'%';
@@ -34,11 +38,11 @@ FLUSH PRIVILEGES;
 "@
 
     Write-Host "      Importing structure (sahamid_structure.sql)..."
-    & 'C:\xampp\mysql\bin\mysql.exe' -u irtiza '-pnetetech321' sahamid `
+    & 'C:\xampp\mysql\bin\mysql.exe' -u irtiza "-p$DbPassword" sahamid `
         -e "source C:/docker/sahamid_structure.sql;"
 
     Write-Host "      Importing data (sahamid_data.sql) - this may take several minutes..."
-    & 'C:\xampp\mysql\bin\mysql.exe' -u irtiza '-pnetetech321' sahamid `
+    & 'C:\xampp\mysql\bin\mysql.exe' -u irtiza "-p$DbPassword" sahamid `
         -e "source C:/docker/sahamid_data.sql;"
 
     New-Item -Path $INIT_FLAG -ItemType File | Out-Null

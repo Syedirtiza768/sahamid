@@ -1,6 +1,7 @@
-<?php 
+<?php
+include_once __DIR__ . '/db_config.php'; 
 
-	$db = mysqli_connect('localhost','irtiza','netetech321','sahamid');
+	$db = mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 	
 	$newStorePostfix 	= "PS";
 	$newLocationName	= "Offset";

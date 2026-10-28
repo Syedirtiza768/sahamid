@@ -1,11 +1,12 @@
 <?php
+include_once __DIR__ . '/../db_config.php';
 /**
  * Created by PhpStorm.
  * User: dell
  * Date: 8/28/2019
  * Time: 12:00 PM
  */
-$conn=mysqli_connect(getenv('DB_HOST') ?: 'localhost','irtiza','netetech321','sahamid');
+$conn=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 $SQL="CREATE VIEW psis AS SELECT stockmaster.stockid,loccode,MIN(newqoh) as newqoh 
         FROM stockmaster LEFT OUTER JOIN stockmoves ON stockmaster.stockid=stockmoves.stockid  WHERE trandate='2018-09-02'
         AND loccode IN ('HO','MT','SR')  GROUP BY stockid,loccode";

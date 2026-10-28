@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/db_config.php';
 
 /* $Id: WWW_Users.php 6467 2013-12-02 03:19:37Z exsonqu $*/
 include('includes/DefineSalesCaseClass.php');
@@ -2201,7 +2202,7 @@ echo '<tr>
 /*end of if customer selected  and entering SalesCase header*/
 
 		
-$conn=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+$conn=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 	echo '<form name="remarks"  action="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?salescaseref=' . $salescaseref.'" method="post">';
 	echo '<input type="hidden" name="FormID" value="' . $_SESSION['FormID'] . '" />';
 $k=0; //row colour counter

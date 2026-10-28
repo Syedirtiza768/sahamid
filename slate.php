@@ -1,11 +1,12 @@
 <?php
+include_once __DIR__ . '/db_config.php';
 /**
  * Created by PhpStorm.
  * User: dell
  * Date: 1/27/2020
  * Time: 12:01 PM
  */
-$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+$db=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 $SQL="SELECT * FROM salescase_permissions";
 $res=mysqli_query($db,$SQL);
 while ($row=mysqli_fetch_assoc($res))

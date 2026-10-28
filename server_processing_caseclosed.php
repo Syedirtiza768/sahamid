@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/db_config.php';
 
 /*
  * DataTables example server-side processing script.
@@ -147,7 +148,7 @@ $columns = array(
 // SQL server connection information
 $sql_details = array(
 	'user' => 'irtiza',
-	'pass' => 'netetech321',
+	'pass' => SAHAMID_DB_PASSWORD,
 	'db'   => 'sahamid',
 	'host' => 'localhost'
 );

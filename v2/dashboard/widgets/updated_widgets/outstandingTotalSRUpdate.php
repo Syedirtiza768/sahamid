@@ -1,7 +1,8 @@
 <?php
+include_once __DIR__ . '/../../../../db_config.php';
 if (!isset($db)) {
     session_start();
-    $db = mysqli_connect(getenv('DB_HOST') ?: 'localhost', 'irtiza', 'netetech321', 'sahamid');
+    $db = mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD, 'sahamid');
 }
 
 if (!isset($_SESSION['UserID'])) {

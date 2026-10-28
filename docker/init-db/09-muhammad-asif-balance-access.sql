@@ -16,7 +16,7 @@
 -- without changing his global role. Idempotent and non-destructive.
 --
 -- Run on production once (or import via phpMyAdmin):
---   docker exec -i sahamid-db sh -c 'mysql -uirtiza -pnetetech321 sahamid' < docker/init-db/09-muhammad-asif-balance-access.sql
+--   docker exec -i sahamid-db sh -c 'mysql -uirtiza -p<DB_PASSWORD> sahamid' < docker/init-db/09-muhammad-asif-balance-access.sql
 -- ---------------------------------------------------------------------------
 
 INSERT INTO user_permission (userid, permission)

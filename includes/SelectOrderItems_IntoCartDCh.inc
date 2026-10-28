@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../db_config.php';
 
 /* $Id: SelectOrderItems_IntoCart.inc 6067 2013-07-10 02:04:22Z tehonu $*/
 
@@ -203,7 +204,7 @@ if ($AlreadyOnThisOrder!=1){
 
 
 			if ($WithinCreditLimit == true){
-$conn=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+$conn=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 
 			$sqllistprice='select materialcost from stockmaster where stockid = "'.$NewItem.'"';
 				$sqllistpriceresult=DB_query($sqllistprice,$db);

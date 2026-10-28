@@ -1,4 +1,5 @@
-<?php 
+<?php
+include_once __DIR__ . '/../../db_config.php'; 
 $table = "permissions";
 $primaryKey = "id";
 $columns = array(
@@ -9,7 +10,7 @@ $columns = array(
 );
 	$conn = array(
 		'user' => 'irtiza',
-		'pass' => 'netetech321',
+		'pass' => SAHAMID_DB_PASSWORD,
 		'db' => 'sahamid',
 		'host' => 'localhost'
 	);

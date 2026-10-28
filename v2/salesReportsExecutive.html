@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales Performance Report | Prototype</title>
+<style>
+:root {
+  --bg: #EFEFEF; --surface: #FFFFFF; --ink: #1F2328; --muted: #5B6470; --line: #E3E6EA;
+  --blue: #2E79F6; --purple: #3C3160; --green: #1F8F5F; --amber: #A86A12; --red: #B42323; --grey: #9AA3AD;
+  --focus: #0B5CD5; --banner: #FFF4D6; --banner-ink: #5C3D00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418; --surface: #1A1F26; --ink: #E8ECF1; --muted: #9AA6B2; --line: #2A313B;
+    --blue: #6AA4FF; --purple: #A99BE0; --green: #4CC38A; --amber: #F0B35A; --red: #FF7B7B; --grey: #6B7480;
+    --focus: #8FBAFF; --banner: #3A2E10; --banner-ink: #F6D98B;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --surface: #1A1F26; --ink: #E8ECF1; --muted: #9AA6B2; --line: #2A313B;
+  --blue: #6AA4FF; --purple: #A99BE0; --green: #4CC38A; --amber: #F0B35A; --red: #FF7B7B; --grey: #6B7480;
+  --focus: #8FBAFF; --banner: #3A2E10; --banner-ink: #F6D98B;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; min-height: 100vh; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+header.top { position: sticky; top: 0; z-index: 5; background: var(--purple); color: #fff; }
+header.top .bar { max-width: 1280px; margin: 0 auto; padding: 14px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+header.top h1 { font-size: 16px; letter-spacing: .4px; margin: 0; font-weight: 700; text-transform: uppercase; }
+header.top .meta { margin-left: auto; font-size: 12px; opacity: .85; }
+
+main { max-width: 1280px; margin: 0 auto; padding: 16px; }
+.banner { background: var(--banner); color: var(--banner-ink); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+
+.controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.ctl { display: flex; align-items: center; gap: 8px; }
+.ctl > span { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 10px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 7px 12px; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--blue); color: #fff; font-weight: 600; }
+.ctl.right { margin-left: auto; }
+
+.tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.tile .lbl { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.tile .val { font-size: 24px; font-weight: 700; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+.tile .sub { color: var(--muted); font-size: 12px; }
+.tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-top: 6px; }
+.tag.flow { border-color: var(--blue); color: var(--blue); }
+.tag.cohort { border-color: var(--purple); color: var(--purple); }
+.up { color: var(--green); } .down { color: var(--red); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.card h2 { font-size: 14px; margin: 0 0 4px; }
+.card .hint { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+
+.funnel-step { display: grid; grid-template-columns: 110px 1fr 120px; gap: 10px; align-items: center; margin: 8px 0; }
+.funnel-step .name { font-size: 13px; color: var(--muted); }
+.funnel-step .bar { height: 26px; border-radius: 6px; background: var(--blue); opacity: .9; display: flex; align-items: center; padding-left: 8px; color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; min-width: 4px; }
+.funnel-step .amt { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.conv { color: var(--muted); font-size: 12px; margin: -4px 0 4px 120px; }
+
+.stack { display: flex; height: 28px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+.stack > div { height: 100%; }
+.legend { display: grid; grid-template-columns: 1fr auto auto; gap: 6px 12px; margin-top: 12px; font-size: 13px; }
+.legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.legend .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .3px; position: sticky; top: 0; background: var(--surface); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-wrap { max-height: 420px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+
+.pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 12px; border: 1px solid currentColor; white-space: nowrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 11px; cursor: pointer; color: var(--muted); font-size: 12px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.search { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 10px; min-width: 220px; }
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.toolbar .count { margin-left: auto; color: var(--muted); font-size: 12px; }
+
+ul.exc { list-style: none; margin: 0; padding: 0; }
+ul.exc li { border-bottom: 1px solid var(--line); padding: 9px 0; display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
+ul.exc li:last-child { border-bottom: 0; }
+.empty { color: var(--muted); padding: 18px 0; text-align: center; }
+
+details.dict { margin-top: 12px; }
+details.dict summary { cursor: pointer; font-weight: 600; color: var(--blue); padding: 6px 0; }
+
+/* how-calculated toggle */
+.calc { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 12px; line-height: 1.45; color: var(--muted); }
+body.calc-on .calc { display: block; }
+
+@media (max-width: 1100px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 760px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .ctl.right { margin-left: 0; }
+  .funnel-step { grid-template-columns: 90px 1fr 96px; }
+  .conv { margin-left: 100px; }
+  header.top .meta { display: none; }
+  .search { min-width: 0; width: 100%; }
+}
+@media (max-width: 480px) { .tiles { grid-template-columns: 1fr; } .tile .val { font-size: 22px; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <h1>Sales Performance Report</h1>
+    <div class="meta">Prototype · v2 · layout and definitions only</div>
+  </div>
+</header>
+
+<main>
+  <div class="banner" role="note"><strong>Illustrative data.</strong> Every figure on this page is generated for layout review and does not come from the ERP. Definitions are proposed in <code>v2/sales-reports-analysis.md</code> §7.</div>
+
+  <section class="controls" aria-label="Report controls">
+    <div class="ctl">
+      <span>Basis</span>
+      <div class="seg" role="group" aria-label="Headline basis">
+        <button type="button" data-basis="cohort" aria-pressed="true">Cohort</button>
+        <button type="button" data-basis="flow" aria-pressed="false">Flow</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span>Period</span>
+      <select id="period" aria-label="Period">
+        <option value="ytd">Jan – Oct 2026</option>
+        <option value="q3" selected>Q3 2026 (Jul – Sep)</option>
+        <option value="last6">Last 6 months (May – Oct)</option>
+        <option value="oct">October 2026</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <span>Salesperson</span>
+      <select id="rep" aria-label="Salesperson"></select>
+    </div>
+    <div class="ctl">
+      <button type="button" class="chip" id="calcToggle" aria-pressed="false">How calculated</button>
+    </div>
+    <div class="ctl right">
+      <span>Freshness</span>
+      <span class="sub" style="color:var(--muted)">Computed for this view · cache 15 min (proposed)</span>
+    </div>
+  </section>
+
+  <section class="tiles" id="tiles" aria-label="Headline metrics"></section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Cohort funnel</h2>
+      <div class="hint">Cases that commenced in the period, followed through quote, PO and delivery.</div>
+      <div id="funnel"></div>
+    </div>
+    <div class="card">
+      <h2>Monthly invoicing vs target</h2>
+      <div class="hint">Flow: invoices by invoice date. Target is annual ÷ 12 per month.</div>
+      <div id="trend"></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Pipeline by status</h2>
+      <div class="hint">Quote value of cases commenced in the period. Each case has exactly one status.</div>
+      <div id="pipeline"></div>
+    </div>
+    <div class="card">
+      <h2>Exceptions</h2>
+      <div class="hint">Items that need a decision, not just a read.</div>
+      <div id="exceptions"></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom:12px">
+    <h2>Team scorecard</h2>
+    <div class="hint">Sorted by target attainment. Attainment uses flow; win rate uses cohort.</div>
+    <div class="table-wrap"><table id="board"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>Case drill-down</h2>
+    <div class="hint">Sales cases commenced in the period, filtered by the salesperson above.</div>
+    <div class="toolbar">
+      <input class="search" id="q" type="search" placeholder="Search case or client" aria-label="Search cases">
+    </div>
+    <div class="chips" role="group" aria-label="Filter by status" id="chips"></div>
+    <div class="table-wrap">
+      <table id="cases">
+        <thead><tr>
+          <th>Case</th><th>Client</th><th>Salesperson</th><th>Commenced</th>
+          <th class="num">Quote</th><th>Status</th><th class="num">PO value</th><th class="num">DC value</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="toolbar"><span class="count" id="count"></span></div>
+
+    <details class="dict">
+      <summary>Metric dictionary (how each value is calculated)</summary>
+      <table>
+        <thead><tr><th>Metric</th><th>Basis</th><th>Formula</th></tr></thead>
+        <tbody>
+          <tr><td>Invoiced</td><td><span class="tag flow">Flow</span></td><td>Σ invoice value dated in the period, <code>returned = 0</code>, <code>inprogress = 0</code></td></tr>
+          <tr><td>Target attainment</td><td><span class="tag flow">Flow</span></td><td>Invoiced ÷ (annual target × months in period ÷ 12)</td></tr>
+          <tr><td>Quoted pipeline</td><td><span class="tag cohort">Cohort</span></td><td>Σ latest quote value of cases with status <em>In Pipeline</em></td></tr>
+          <tr><td>PO value (cohort)</td><td><span class="tag cohort">Cohort</span></td><td>Σ OC value of cases commenced in the period that have a PO</td></tr>
+          <tr><td>PO value (flow)</td><td><span class="tag flow">Flow</span></td><td>Σ OC value of cases whose PO date falls in the period, whenever commenced</td></tr>
+          <tr><td>Win rate (value)</td><td><span class="tag cohort">Cohort</span></td><td>Σ quote value of cases with a PO ÷ Σ quote value of all cases with a quote, same cohort</td></tr>
+          <tr><td>Status precedence</td><td>—</td><td>PO → Lost → Cancelled → Out of scope → In Pipeline. One status per case, so the buckets add up.</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---- illustrative data (deterministic) -------------------------------------
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  var rand = rng(20261028);
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+  var REPS = [
+    { code: 'A', name: 'Rep A', target: 60e6 },
+    { code: 'B', name: 'Rep B', target: 50e6 },
+    { code: 'C', name: 'Rep C', target: 45e6 },
+    { code: 'D', name: 'Rep D', target: 40e6 }
+  ];
+  var STATUSES = ['PO', 'In Pipeline', 'Lost', 'Cancelled', 'Out of scope'];
+  var COLORS = { 'PO': 'var(--green)', 'In Pipeline': 'var(--blue)', 'Lost': 'var(--red)', 'Cancelled': 'var(--amber)', 'Out of scope': 'var(--grey)' };
+
+  var cases = [];
+  for (var i = 0; i < 56; i++) {
+    var rep = REPS[Math.floor(rand() * REPS.length)];
+    var cm = 1 + Math.floor(rand() * 10);           // commencement month 1..10
+    var quote = Math.round((2 + rand() * 28) * 1e5);  // Rs 0.2M .. 3M
+    var r = rand(), status;
+    if (r < 0.36) status = 'PO';
+    else if (r < 0.66) status = 'In Pipeline';
+    else if (r < 0.80) status = 'Lost';
+    else if (r < 0.90) status = 'Cancelled';
+    else status = 'Out of scope';
+    var c = { ref: 'SC-26-' + String(i + 1).padStart(3, '0'), client: 'Client ' + String(i + 1).padStart(2, '0'),
+              rep: rep.code, cm: cm, quote: quote, status: status, po: null, oc: 0, dc: 0, anomaly: false };
+    if (status === 'PO') {
+      c.po = Math.min(10, cm + Math.floor(rand() * 3));
+      c.oc = Math.round(quote * (0.9 + rand() * 0.15));
+      c.dc = cm <= 9 && rand() < 0.7 ? Math.round(c.oc * (0.4 + rand() * 0.6)) : 0;
+    }
+    if (status === 'Lost' || status === 'Cancelled' || status === 'Out of scope') c.reason = status;
+    cases.push(c);
+  }
+  // Two cases with a PO but no quotation (an anomaly the reports already flag).
+  cases.push({ ref: 'SC-26-057', client: 'Client 57', rep: 'B', cm: 4, quote: 0, status: 'PO', po: 6, oc: 3200000, dc: 0, anomaly: true });
+  cases.push({ ref: 'SC-26-058', client: 'Client 58', rep: 'D', cm: 7, quote: 0, status: 'PO', po: 9, oc: 1150000, dc: 800000, anomaly: true });
+
+  // Monthly invoicing per rep (flow).
+  var invoice = {};
+  REPS.forEach(function (r) {
+    invoice[r.code] = MONTHS.map(function (_, m) { return Math.round((r.target / 12) * (0.6 + rand() * 0.8)); });
+  });
+
+  // ---- state -------------------------------------------------------------------
+  var state = { basis: 'cohort', period: 'q3', rep: 'all', status: 'all', q: '' };
+  var PERIODS = { ytd: [1, 10], q3: [7, 9], last6: [5, 10], oct: [10, 10] };
+
+  // ---- helpers -----------------------------------------------------------------
+  function fmtM(v) { return 'Rs ' + (v / 1e6).toFixed(1) + 'M'; }
+  function fmtN(v) { return v.toLocaleString('en-US'); }
+  function pct(v) { return isFinite(v) ? (v * 100).toFixed(1) + '%' : '—'; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function inRange(m, range) { return m >= range[0] && m <= range[1]; }
+  function repMatch(c) { return state.rep === 'all' || c.rep === state.rep; }
+  function repObj(code) { return REPS.filter(function (r) { return r.code === code; })[0]; }
+
+  // ---- metrics -----------------------------------------------------------------
+  function compute() {
+    var range = PERIODS[state.period];
+    var months = range[1] - range[0] + 1;
+    var inPeriodCases = cases.filter(function (c) { return inRange(c.cm, range) && repMatch(c); });
+
+    var quoted = 0, quotedCount = 0, winQuote = 0, pipeline = 0, lost = 0, cancelled = 0;
+    inPeriodCases.forEach(function (c) {
+      if (c.quote > 0) { quoted += c.quote; quotedCount++; if (c.status === 'PO') winQuote += c.quote; }
+      if (c.status === 'In Pipeline') pipeline += c.quote;
+      if (c.status === 'Lost') lost += c.quote;
+      if (c.status === 'Cancelled') cancelled += c.quote;
+    });
+
+    var poCases = state.basis === 'cohort'
+      ? inPeriodCases.filter(function (c) { return c.po; })
+      : cases.filter(function (c) { return c.po && inRange(c.po, range) && repMatch(c); });
+    var poValue = poCases.reduce(function (s, c) { return s + c.oc; }, 0);
+
+    var invoiced = 0, target = 0;
+    REPS.forEach(function (r) {
+      if (state.rep !== 'all' && state.rep !== r.code) return;
+      target += r.target * months / 12;
+      for (var m = range[0]; m <= range[1]; m++) invoiced += invoice[r.code][m - 1];
+    });
+
+    return {
+      range: range, months: months, cases: inPeriodCases, quoted: quoted, quotedCount: quotedCount,
+      winRate: quoted ? winQuote / quoted : NaN, pipeline: pipeline, lost: lost, cancelled: cancelled,
+      poValue: poValue, poCount: poCases.length, invoiced: invoiced, target: target,
+      attainment: target ? invoiced / target : NaN
+    };
+  }
+
+  // ---- renderers ---------------------------------------------------------------
+  function renderControls() {
+    var sel = document.getElementById('rep');
+    if (!sel.options.length) {
+      sel.add(new Option('All salespersons', 'all'));
+      REPS.forEach(function (r) { sel.add(new Option(r.name, r.code)); });
+    }
+    sel.value = state.rep;
+    document.querySelectorAll('[data-basis]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-basis') === state.basis));
+    });
+  }
+
+  function tile(label, value, sub, basis, formula) {
+    return '<div class="tile"><div class="lbl">' + esc(label) + '</div><div class="val">' + value + '</div>' +
+      '<div class="sub">' + sub + '</div><span class="tag ' + basis.toLowerCase() + '">' + basis + '</span><div class="calc">' + formula + '</div></div>';
+  }
+
+  function renderTiles(m) {
+    var poLabel = state.basis === 'cohort' ? 'PO value (commenced in period)' : 'PO value (PO date in period)';
+    var html = [
+      tile('Invoiced', fmtM(m.invoiced), 'Target ' + fmtM(m.target) + ' for the period', 'Flow', 'Σ invoice value dated in the period, returned = 0 and inprogress = 0.'),
+      tile('Target attainment', pct(m.attainment), 'Invoiced ÷ prorated target', 'Flow', 'Invoiced ÷ (annual target × months in period ÷ 12).'),
+      tile(poLabel, fmtM(m.poValue), fmtN(m.poCount) + ' cases with a PO', state.basis === 'cohort' ? 'Cohort' : 'Flow', state.basis === 'cohort' ? 'Σ OC value of cases commenced in the period that have a customer PO.' : 'Σ OC value of cases whose PO was received in the period, whenever commenced.'),
+      tile('Quoted pipeline', fmtM(m.pipeline), 'Latest quotes still open', 'Cohort', 'Σ latest quote value of cases commenced in the period with status In Pipeline.'),
+      tile('Win rate (value)', pct(m.winRate), fmtN(m.quotedCount) + ' quoted cases, ' + fmtM(m.quoted) + ' quoted', 'Cohort', 'Σ quote value of cases with a PO ÷ Σ quote value of all quoted cases, same cohort.')
+    ];
+    document.getElementById('tiles').innerHTML = html.join('');
+  }
+
+  function renderFunnel(m) {
+    var c = m.cases;
+    var commenced = c.length;
+    var quoted = c.filter(function (x) { return x.quote > 0; });
+    var po = c.filter(function (x) { return x.po; });
+    var dc = po.filter(function (x) { return x.dc > 0; });
+    var quotedVal = quoted.reduce(function (s, x) { return s + x.quote; }, 0);
+    var poVal = po.reduce(function (s, x) { return s + x.oc; }, 0);
+    var dcVal = dc.reduce(function (s, x) { return s + x.dc; }, 0);
+    var stages = [
+      { name: 'Commenced', n: commenced, v: null },
+      { name: 'Quoted', n: quoted.length, v: quotedVal },
+      { name: 'PO', n: po.length, v: poVal },
+      { name: 'DC raised', n: dc.length, v: dcVal }
+    ];
+    var max = Math.max.apply(null, stages.map(function (s) { return s.n; })) || 1;
+    var html = '';
+    stages.forEach(function (s, idx) {
+      if (idx > 0) {
+        var prev = stages[idx - 1].n;
+        html += '<div class="conv">' + (prev ? pct(s.n / prev) : '—') + ' of previous stage</div>';
+      }
+      html += '<div class="funnel-step"><div class="name">' + s.name + ' (' + s.n + ')</div>' +
+        '<div><div class="bar" style="width:' + Math.max(4, (s.n / max) * 100) + '%">' + s.n + '</div></div>' +
+        '<div class="amt">' + (s.v === null ? '—' : fmtM(s.v)) + '</div></div>';
+    });
+    document.getElementById('funnel').innerHTML = html;
+  }
+
+  function renderTrend(m) {
+    var W = 560, H = 230, pad = { l: 46, r: 12, t: 12, b: 28 };
+    var range = m.range;
+    var vals = [], tgts = [];
+    for (var mo = range[0]; mo <= range[1]; mo++) {
+      var sum = 0, t = 0;
+      REPS.forEach(function (r) {
+        if (state.rep !== 'all' && state.rep !== r.code) return;
+        sum += invoice[r.code][mo - 1];
+        t += r.target / 12;
+      });
+      vals.push(sum); tgts.push(t);
+    }
+    var top = Math.max.apply(null, vals.concat(tgts)) * 1.1 || 1;
+    var iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    var bw = iw / vals.length;
+    var y = function (v) { return pad.t + ih - (v / top) * ih; };
+    var svg = ['<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Monthly invoiced against target">'];
+    for (var g = 0; g <= 4; g++) {
+      var gv = top * g / 4;
+      svg.push('<line x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + y(gv) + '" y2="' + y(gv) + '" stroke="var(--line)"/>');
+      svg.push('<text x="' + (pad.l - 6) + '" y="' + (y(gv) + 4) + '" text-anchor="end" font-size="10" fill="var(--muted)">' + (gv / 1e6).toFixed(0) + 'M</text>');
+    }
+    vals.forEach(function (v, idx) {
+      var x = pad.l + idx * bw + bw * 0.18;
+      svg.push('<rect x="' + x + '" y="' + y(v) + '" width="' + (bw * 0.64) + '" height="' + (pad.t + ih - y(v)) + '" rx="3" fill="var(--blue)"><title>' + MONTHS[range[0] - 1 + idx] + ': ' + fmtM(v) + '</title></rect>');
+      svg.push('<text x="' + (pad.l + idx * bw + bw / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)">' + MONTHS[range[0] - 1 + idx] + '</text>');
+    });
+    var pts = tgts.map(function (t, idx) { return (pad.l + idx * bw + bw / 2) + ',' + y(t); }).join(' ');
+    svg.push('<polyline points="' + pts + '" fill="none" stroke="var(--ink)" stroke-dasharray="4 4" stroke-width="2"/>');
+    svg.push('</svg>');
+    svg.push('<div class="legend" style="grid-template-columns:auto auto">' +
+      '<div><span class="sw" style="background:var(--blue)"></span>Invoiced (flow)</div>' +
+      '<div><span class="sw" style="background:var(--ink)"></span>Target (dashed)</div></div>');
+    document.getElementById('trend').innerHTML = svg.join('');
+  }
+
+  function renderPipeline(m) {
+    var totals = {};
+    STATUSES.forEach(function (s) { totals[s] = 0; });
+    var counts = {};
+    STATUSES.forEach(function (s) { counts[s] = 0; });
+    m.cases.forEach(function (c) { totals[c.status] += c.quote; counts[c.status]++; });
+    var sum = STATUSES.reduce(function (s, k) { return s + totals[k]; }, 0);
+    if (!sum) { document.getElementById('pipeline').innerHTML = '<div class="empty">No quoted cases in this view.</div>'; return; }
+    var bar = STATUSES.map(function (s) {
+      return totals[s] ? '<div style="width:' + (totals[s] / sum * 100) + '%;background:' + COLORS[s] + '" title="' + s + '"></div>' : '';
+    }).join('');
+    var legend = STATUSES.map(function (s) {
+      return '<div><span class="sw" style="background:' + COLORS[s] + '"></span>' + s + ' <span style="color:var(--muted)">(' + counts[s] + ')</span></div>' +
+        '<div class="num">' + fmtM(totals[s]) + '</div><div class="num" style="color:var(--muted)">' + pct(totals[s] / sum) + '</div>';
+    }).join('');
+    document.getElementById('pipeline').innerHTML = '<div class="stack">' + bar + '</div><div class="legend">' + legend + '</div>';
+  }
+
+  function renderExceptions(m) {
+    var items = [];
+    cases.forEach(function (c) {
+      if (!inRange(c.cm, m.range) && !(c.po && inRange(c.po, m.range))) return;
+      if (!repMatch(c)) return;
+      if (c.anomaly) items.push({ t: c.ref + ' · ' + c.client, d: 'PO recorded without a quotation', tone: 'var(--red)' });
+    });
+    cases.forEach(function (c) {
+      if (!inRange(c.cm, m.range) || !repMatch(c)) return;
+      if (c.status === 'In Pipeline' && c.cm <= 7) items.push({ t: c.ref + ' · ' + c.client, d: 'Open quote, commenced before August', tone: 'var(--amber)' });
+    });
+    var html = items.length
+      ? '<ul class="exc">' + items.slice(0, 8).map(function (x) {
+          return '<li><span>' + esc(x.t) + '</span><span class="pill" style="color:' + x.tone + '">' + esc(x.d) + '</span></li>';
+        }).join('') + '</ul>' + (items.length > 8 ? '<div class="hint" style="margin-top:8px">+' + (items.length - 8) + ' more</div>' : '')
+      : '<div class="empty">No exceptions for this view.</div>';
+    document.getElementById('exceptions').innerHTML = html;
+  }
+
+  function renderBoard(m) {
+    var rows = REPS.filter(function (r) { return state.rep === 'all' || state.rep === r.code; }).map(function (r) {
+      var range = m.range, inv = 0, tgt = r.target * m.months / 12;
+      for (var mo = range[0]; mo <= range[1]; mo++) inv += invoice[r.code][mo - 1];
+      var mine = cases.filter(function (c) { return c.rep === r.code && inRange(c.cm, range); });
+      var q = 0, w = 0, pipe = 0;
+      mine.forEach(function (c) {
+        if (c.quote > 0) { q += c.quote; if (c.status === 'PO') w += c.quote; }
+        if (c.status === 'In Pipeline') pipe += c.quote;
+      });
+      return { name: r.name, target: tgt, inv: inv, att: inv / tgt, q: q, win: q ? w / q : NaN, pipe: pipe };
+    }).sort(function (a, b) { return b.att - a.att; });
+    var head = '<thead><tr><th>Salesperson</th><th class="num">Target</th><th class="num">Invoiced</th><th class="num">Attainment</th><th class="num">Quoted</th><th class="num">Win rate</th><th class="num">Pipeline</th></tr></thead>';
+    var body = '<tbody>' + rows.map(function (r) {
+      var cls = r.att >= 1 ? 'up' : (r.att < 0.7 ? 'down' : '');
+      return '<tr><td>' + esc(r.name) + '</td><td class="num">' + fmtM(r.target) + '</td><td class="num">' + fmtM(r.inv) +
+        '</td><td class="num ' + cls + '">' + pct(r.att) + '</td><td class="num">' + fmtM(r.q) + '</td><td class="num">' + pct(r.win) +
+        '</td><td class="num">' + fmtM(r.pipe) + '</td></tr>';
+    }).join('') + '</tbody>';
+    document.getElementById('board').innerHTML = head + body;
+  }
+
+  function renderChips() {
+    var opts = ['all'].concat(STATUSES).concat(['Anomaly']);
+    document.getElementById('chips').innerHTML = opts.map(function (s) {
+      var label = s === 'all' ? 'All' : s;
+      return '<button type="button" class="chip" data-status="' + s + '" aria-pressed="' + (state.status === s) + '">' + label + '</button>';
+    }).join('');
+  }
+
+  function renderCases(m) {
+    var q = state.q.trim().toLowerCase();
+    var list = m.cases.filter(function (c) {
+      if (state.status === 'Anomaly' && !c.anomaly) return false;
+      if (state.status !== 'all' && state.status !== 'Anomaly' && c.status !== state.status) return false;
+      if (q && (c.ref + ' ' + c.client).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    }).sort(function (a, b) { return b.quote - a.quote; });
+    var body = list.map(function (c) {
+      var color = COLORS[c.status] || 'var(--muted)';
+      var cm = MONTHS[c.cm - 1];
+      return '<tr><td>' + esc(c.ref) + (c.anomaly ? ' <span class="pill" style="color:var(--red)">Anomaly</span>' : '') + '</td>' +
+        '<td>' + esc(c.client) + '</td><td>' + esc(repObj(c.rep).name) + '</td><td>' + cm + ' 2026</td>' +
+        '<td class="num">' + (c.quote ? fmtM(c.quote) : '—') + '</td>' +
+        '<td><span class="pill" style="color:' + color + '">' + esc(c.status) + '</span></td>' +
+        '<td class="num">' + (c.oc ? fmtM(c.oc) : '—') + '</td><td class="num">' + (c.dc ? fmtM(c.dc) : '—') + '</td></tr>';
+    }).join('');
+    document.getElementById('cases').tBodies[0].innerHTML = body || '<tr><td colspan="8" class="empty">No cases match these filters.</td></tr>';
+    document.getElementById('count').textContent = list.length + ' of ' + m.cases.length + ' cases';
+  }
+
+  function render() {
+    renderControls();
+    renderChips();
+    var m = compute();
+    renderTiles(m);
+    renderFunnel(m);
+    renderTrend(m);
+    renderPipeline(m);
+    renderExceptions(m);
+    renderBoard(m);
+    renderCases(m);
+  }
+
+  // ---- events ------------------------------------------------------------------
+  document.querySelectorAll('[data-basis]').forEach(function (b) {
+    b.addEventListener('click', function () { state.basis = b.getAttribute('data-basis'); render(); });
+  });
+  document.getElementById('period').addEventListener('change', function (e) { state.period = e.target.value; render(); });
+  document.getElementById('rep').addEventListener('change', function (e) { state.rep = e.target.value; render(); });
+  document.getElementById('q').addEventListener('input', function (e) { state.q = e.target.value; render(); });
+  document.getElementById('chips').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-status]');
+    if (!t) return;
+    state.status = t.getAttribute('data-status');
+    render();
+  });
+
+  document.getElementById('calcToggle').addEventListener('click', function () {
+    var on = document.body.classList.toggle('calc-on');
+    this.setAttribute('aria-pressed', String(on));
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

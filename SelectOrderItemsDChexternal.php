@@ -2,6 +2,7 @@
 
 
 <?php
+include_once __DIR__ . '/db_config.php';
 /* $Id: SelectOrderItemsDCh.php 6549 2014-01-24 20:32:31Z daintree $*/
 
 include('includes/DefineDChCartClass.php');
@@ -1382,7 +1383,7 @@ window.location.assign("'.$RootPath.'/SelectOrderItemsDCh.php?ModifyOrderNumber=
 		   $quantity =$_POST['quantity' . $linecounter."_".$optioncounter];
 		     $optiontext= html_entity_decode($optiontext);
 	     $optiontext= html_entity_decode($optiontext);
-			 $conn=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+			 $conn=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 $SQL = "SELECT salesman from salescase where salescaseref='".$_SESSION['salescaseref']."'";
 		$result = DB_query($SQL,$db);
 		$rowsp=DB_fetch_array($result);	

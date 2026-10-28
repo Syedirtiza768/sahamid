@@ -28,7 +28,7 @@ services:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: sahamid
       MYSQL_USER: irtiza
-      MYSQL_PASSWORD: netetech321
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in a .env file beside docker-compose.yml}
     volumes:
       - sahamid-dbdata:/var/lib/mysql
       - ./docker/init-db/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql

@@ -1,9 +1,10 @@
 <?php
+include_once __DIR__ . '/../../db_config.php';
 
 session_start();
 $fname = 'cheque';
 //need to update the database  accordingly and replicate it to cdr
-$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
+$db=mysqli_connect(SAHAMID_DB_HOST, SAHAMID_DB_USER, SAHAMID_DB_PASSWORD,'sahamid');
 if (isset($_FILES[$fname]) AND $_FILES[$fname]['name'] !='') {
 
     $result	= $_FILES['cheque']['error'];

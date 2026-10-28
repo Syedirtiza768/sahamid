@@ -1,7 +1,8 @@
 <?php
+include_once __DIR__ . '/../../db_config.php';
 $db_host = 'localhost';
 $db_username = 'irtiza';
-$db_password = 'netetech321';
+$db_password = SAHAMID_DB_PASSWORD;
 $db_name = 'sahamid';
 
 //Create connection and select DB

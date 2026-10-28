@@ -10,7 +10,7 @@
 -- Idempotent and non-destructive — safe to run more than once.
 --
 -- Run on production once:
---   docker exec -i sahamid-db sh -c 'mysql -uirtiza -pnetetech321 sahamid' < docker/init-db/08-sales-dashboard-permission.sql
+--   docker exec -i sahamid-db sh -c 'mysql -uirtiza -p<DB_PASSWORD> sahamid' < docker/init-db/08-sales-dashboard-permission.sql
 --   (or import via phpMyAdmin)
 -- ---------------------------------------------------------------------------
 

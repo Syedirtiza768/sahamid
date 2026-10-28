@@ -12,13 +12,11 @@ $AllowDemoMode = FALSE;
 // Connection information for the database
 // $host is the computer ip address or name where the database is located
 // In Docker, DB_HOST env var points to the database container
-$host = getenv('DB_HOST') ?: 'localhost';
+include_once __DIR__ . '/db_config.php';
 
 // assuming that the web server is also the sql server
 $DBType = 'mysqli';
 //assuming that the web server is also the sql server
-$DBUser = 'irtiza';
-$DBPassword = 'netetech321';
 // The timezone of the business - this allows the possibility of having;
 date_default_timezone_set('Asia/Karachi');
 putenv('TZ=Asia/Karachi');

@@ -1,6 +1,11 @@
 <?php
 
 include('includes/session.inc');
+// Sales Data Analysis is restricted to the same slug as the Director Reports hub.
+if (!userHasPermission($db, 'directorreports')) {
+	header("Location: /sahamid/v2/reportLinks.php");
+	exit;
+}
 ?>
 <?php
 /* $Id: header.inc 6310 2013-08-29 10:42:50Z daintree $ */
@@ -53,14 +58,21 @@ include('includes/session.inc');
 	$_SESSION['salesperson']=$_POST['salesperson'];
 	$_SESSION['filtertype']=$_POST['filtertype'];	
 	
+	//DB Connection
+	$db=mysqli_connect($host, $DBUser, $DBPassword, $_SESSION['DatabaseName']);
+	// PO Received date: the PO file date on the case, else the first active customer PO receipt
+	// (the rule used by My Sales Activity and the sales-performance screens). Falls back to the PO file
+	// alone when sales_performance_po_receipts is not installed.
+	$hasPoReceipts = mysqli_num_rows(mysqli_query($db, "SHOW TABLES LIKE 'sales_performance_po_receipts'")) > 0;
+	$poEff = $hasPoReceipts
+		? "COALESCE(NULLIF(salescase.podate,'0000-00-00 00:00:00'),(SELECT MIN(r.received_at) FROM sales_performance_po_receipts r WHERE r.salescaseref = salescase.salescaseref AND r.receipt_status = 'active'))"
+		: "NULLIF(salescase.podate,'0000-00-00 00:00:00')";
 	//Filter Type
 	if($_POST['filtertype'] == "date")
 		$filterType = "commencementdate";
 	else if($_POST['filtertype'] == "podate")
-		$filterType = "salescase.podate";	
+		$filterType = $poEff;	
 	
-	//DB Connection
-	$db=mysqli_connect('localhost','irtiza','netetech321','sahamid');
 		
 	//Quotation Values
 	$SQL = 'SELECT salesorders.salescaseref, salesorderdetails.orderno,
@@ -115,7 +127,7 @@ include('includes/session.inc');
 		$dcValues[$row['salescaseref']][] = $row;
 
 	//Sales Cases
-	$SQL = 'SELECT * FROM salescase
+	$SQL = 'SELECT *, '.$poEff.' AS po_effective FROM salescase
 		LEFT OUTER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno
 		WHERE '.$filterType.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 		AND `name`LIKE"%'.$_POST['customer'].'%" 
@@ -125,17 +137,20 @@ include('includes/session.inc');
 	
 	$salesCases = [];
 
-	while($row = mysqli_fetch_assoc($result))
+	while($row = mysqli_fetch_assoc($result)) {
+		// PO Received date (see $poEff); status, PO value and PO date below read this value.
+		$row['podate'] = $row['po_effective'] !== null ? $row['po_effective'] : '0000-00-00 00:00:00';
 		$salesCases[] = $row;
+	}
 	
 	//Total Cases
 	$totalCasesCount = count($salesCases);
 
 	//Total Anomaly Cases
-	$SQL = 'SELECT distinct salescase.salescaseindex, salescase.salescaseref,salescase.podate FROM dc 
+	$SQL = 'SELECT distinct salescase.salescaseindex, salescase.salescaseref,'.$poEff.' AS podate FROM dc 
 		right outer join salescase on dc.salescaseref=salescase.salescaseref 
 		INNER JOIN debtorsmaster ON salescase.debtorno = debtorsmaster.debtorno
-		WHERE salescase.podate!="0000-00-00 00:00:00"
+		WHERE '.$poEff.' IS NOT NULL
 		AND '.$filterType.' BETWEEN "'.$_POST['startdate'].'" AND "'.$_POST['enddate'].'"
 		AND `name`LIKE"%'.$_POST['customer'].'%" 
 		AND `salesman`LIKE"%'.$_POST['salesperson'].'%" 
@@ -312,7 +327,7 @@ include('includes/session.inc');
 			
 		}
 		
-		if($ocValue != null && $ocValue != ""){
+		if($ocValue != null && $ocValue != "" && $salesCase['podate'] != "0000-00-00 00:00:00"){
 			
 			
 			foreach($ocValue as $val){
@@ -710,9 +725,12 @@ echo "<tr><td><h3 align='left'> Total Value of Quotations in Pipeline </h3></td>
 <td><h3>Rs.".locale_number_format($totalPipelineValue['value'],0)."
 </h3></td><td><h3>Count.".$totalPipelineValue['quoteCount']."
 </h3></td></tr>";
+// A ratio needs a non-empty quotation base; with none in the window it shows as n/a.
+$ratioValue = $totalQuotationValue['value'] > 0 ? locale_number_format($totalPOValue['value'] / $totalQuotationValue['value'], 2) : 'n/a';
+$ratioCount = $totalQuotationValue['quoteCount'] > 0 ? locale_number_format($totalPOValue['quoteCount'] / $totalQuotationValue['quoteCount'], 2) : 'n/a';
 echo "<tr><td><h3 align='left'> Success Ratio (OC/Q) </h3></td>
-<td><h3>In terms of Value: ".locale_number_format($totalPOValue['value']/$totalQuotationValue['value'],2)."
-</h3></td><td><h3>In terms of Count: ".locale_number_format($totalPOValue['quoteCount']/$totalQuotationValue['quoteCount'],2)."
+<td><h3>In terms of Value: ".$ratioValue."
+</h3></td><td><h3>In terms of Count: ".$ratioCount."
 </h3></td></tr>";
 echo '</table>';
 echo '<a href="brandwisesales.php" target="_blank"><h3>Brandwise Sales</h3></a><table border="4">';
