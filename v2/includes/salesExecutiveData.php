@@ -87,6 +87,24 @@ function sxHasTable($db, $table) {
 	return $r && mysqli_num_rows($r) > 0;
 }
 
+/**
+ * DC numbers already listed in a DC group (dcgroups.dcnos, comma-separated), as a lookup set
+ * keyed by DC number. Such DCs are on their way to an invoice, so they are not pending.
+ * Shared by the Pending DC List, this report and the Sales Main Dashboard. Null on failure.
+ */
+function sxGroupedDcNumbers($db) {
+	$r = @mysqli_query($db, "SELECT dcnos FROM dcgroups WHERE dcnos IS NOT NULL AND dcnos <> ''");
+	if (!$r) return null;
+	$set = [];
+	while ($row = mysqli_fetch_row($r)) {
+		foreach (explode(',', (string)$row[0]) as $no) {
+			$no = trim($no);
+			if ($no !== '') $set[$no] = true;
+		}
+	}
+	return $set;
+}
+
 /** Bucket rows into a status, using the Sales Data Analysis closing reasons. */
 function sxCaseStatus($poDate, $hasQuote, $quote, $reason) {
 	$r = strtolower((string)$reason);
@@ -236,6 +254,9 @@ function sxCompute($db, $P, $S) {
 	}
 
 	/* ---------------------------------------------------------------- pending DC today (Pending DC List rule) */
+	// DCs listed in a DC group are excluded too: without that list the pending figure is not reliable.
+	$grouped = sxGroupedDcNumbers($db);
+	if ($grouped === null) $GLOBALS['sxErrors'][] = ['figure' => 'DC groups', 'error' => mysqli_error($db)];
 	$pendRows = sxRows($db, "SELECT d.orderno dcno, MIN(d.orddate) orddate, MIN(d.salescaseref) salescaseref,
 			MIN(sc.salesman) salesman, MIN(dm.name) client, SUM($DC_LINE) v,
 			CASE WHEN MIN(d.gst) LIKE '%inclusive%' THEN SUM($DC_LINE) * 0.83 ELSE SUM($DC_LINE) END vx
@@ -248,12 +269,14 @@ function sxCompute($db, $P, $S) {
 		INNER JOIN debtorsmaster dm ON dm.debtorno = sc.debtorno
 		WHERE dd.lineoptionno = 0 AND dop.optionno = 0 $nameF
 		GROUP BY d.orderno", 'Pending DC');
+	if ($grouped === null) $pendRows = null;
 	$pending = $pendRows === null ? null : ['n' => 0, 'v' => 0.0, 'vExcl' => 0.0, 'inPeriodN' => 0, 'inPeriodV' => 0.0];
 	$ageing = ['0–30 days' => ['n' => 0, 'v' => 0.0], '31–60 days' => ['n' => 0, 'v' => 0.0],
 		'61–90 days' => ['n' => 0, 'v' => 0.0], 'Over 90 days' => ['n' => 0, 'v' => 0.0]];
 	$oldPending = [];
 	$pendByName = [];
 	foreach ((array)$pendRows as $r) {
+		if (isset($grouped[(string)$r['dcno']])) continue;
 		$v = (float)$r['v'];
 		$pending['n']++; $pending['v'] += $v; $pending['vExcl'] += (float)$r['vx'];
 		if ($r['orddate'] >= $s && $r['orddate'] <= $e) { $pending['inPeriodN']++; $pending['inPeriodV'] += $v; }

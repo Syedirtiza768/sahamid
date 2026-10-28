@@ -443,3 +443,16 @@ On the live server the page failed with "Unterminated string in JSON at position
 - The Sales Main Dashboard validates cached JSON before serving it, keeps its JSON ASCII-only (escaped Unicode), and does not store values over 64 KB.
 
 **Verified** in the harness with 10,008 cases, a 1.13 MB payload. Without the migration, every response was complete and nothing was cached. With it, the copy cached in the new table (143,548 bytes) matched the fresh response byte for byte. A non-latin1 client name came through intact, and the 204 accuracy checks still pass.
+
+
+### Pending DC List fixes (2026-10-28)
+
+`v2/pendingDCs.php` had three faults, all now fixed.
+
+- **Grouped DCs were never excluded.** After its query, the page tried to drop DCs listed in `dcgroups.dcnos`, but it built a list of arrays and searched it for a single DC number, so nothing ever matched. It now builds a lookup set of grouped DC numbers with `sxGroupedDcNumbers()` in `v2/includes/salesExecutiveData.php`. The same helper is now applied to the Sales Executive Report and the Sales Main Dashboard, so all three exclude grouped DCs. If the group list can't be read, the report shows pending DC as unavailable rather than overstating it.
+- **Dates did nothing for non-admins.** Users without `*` saw every pending DC whatever dates they entered, and admins got nothing unless both dates were filled in. From and To are now optional, apply to everyone, and can be used on their own.
+- **SQL injection.** The dates went into the SQL as raw text. They are now accepted only as real dates (anything else returns a clear error), and salesperson names are escaped. The stray trailing space after the user's own name is gone.
+
+Unchanged: the pending test itself (no courier slip, invoice, GRB or invoice group), base line and option only, the ×0.83 exclusive-GST figure, and visibility (own cases plus `salescase_permissions` grants, or everything for `*`). Cache keys are bumped (`salesExec-v3`, `salesMainDash-v4`).
+
+**Verified in the harness:** a DC listed in a DC group dropped out of all three pages. The admin and non-admin views, with and without dates and with only one date, returned the expected DCs. The injection attempt and malformed dates were rejected. A non-admin with no grants saw nothing, and users without `pending_dcs` were still redirected. The 204 report checks pass with the updated expectations, and the dashboard still agrees with the report.

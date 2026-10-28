@@ -41,8 +41,8 @@ $S = sxSalesperson($db, $_GET['sp'] ?? 'all');
 /* ======================================================= JSON data endpoint */
 if (isset($_GET['data'])) {
 	header('Content-Type: application/json; charset=utf-8');
-	// v2: v1 stored raw JSON, which the 64 KB TEXT column cut off; those rows are never read again.
-	$cacheKey = 'salesExec-v2-' . md5(json_encode([$P['start'], $P['end'], $S ? $S['code'] : 'all', date('Y-m-d')]));
+	// v3: v1 stored raw JSON, which the 64 KB TEXT column cut off; v2 still counted grouped DCs as pending.
+	$cacheKey = 'salesExec-v3-' . md5(json_encode([$P['start'], $P['end'], $S ? $S['code'] : 'all', date('Y-m-d')]));
 	if (!isset($_GET['nocache'])) {
 		$hit = @mysqli_query($db, "SELECT value FROM `" . sxCacheTable($db) . "` WHERE unique_key = '" . sxEsc($db, $cacheKey) . "'
 			AND refreshed_at > DATE_SUB(NOW(), INTERVAL " . SX_CACHE_MINUTES . " MINUTE) LIMIT 1");
@@ -260,7 +260,7 @@ include_once('../v3/includes/sidebar.php');
 		po: 'Sales cases whose customer PO arrived in the period: PO file uploaded on the case, or a PO recorded in My Sales Activity if there is no file. Value is the OC value of those cases.',
 		oc: 'Order confirmations dated in the period, first option only (as in Sales Data Analysis).',
 		dc: 'Delivery challans dated in the period, first option only.',
-		pending: 'DCs not yet invoiced, grouped for invoice, couriered or returned (GRB), whatever their date. Same as the Pending DC List.',
+		pending: 'DCs not yet invoiced, grouped for invoice, couriered or returned (GRB), and not listed in a DC group, whatever their date. Same as the Pending DC List.',
 		salesOrders: 'Sales orders (not quotations) dated in the period. Shown as "Total OC Value" on the Sales Main Dashboard.',
 		outstanding: 'Unsettled invoice balances less GST and WHT withheld, for invoices on a sales case and an invoice group. Same as Outstanding Invoices.',
 		overdue: 'The part of outstanding where the invoice due date has passed.',

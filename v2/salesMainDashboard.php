@@ -25,6 +25,7 @@
 $active = "salesdashboard";
 $AllowAnyone = true;
 include_once("config.php"); // -> ../includes/session.inc : $db, $_SESSION, helpers, $NewRootPath, $salesPersonsToSwitch
+include_once(__DIR__ . '/includes/salesExecutiveData.php'); // sxGroupedDcNumbers(): same pending-DC rule as the Pending DC List
 
 // Access control: gated on the dedicated 'sales_dashboard' permission slug.
 // userHasPermission() also returns true for holders of '*' (admins), so admins pass
@@ -203,9 +204,10 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 
 	/* ---- bucketed pending DC ---- */
 	// Same rule as the Pending DC List: DC not invoiced, grouped for invoice, couriered or returned (GRB),
-	// first option only. Each DC number counted once. Bucketed by DC date within the range.
+	// not listed in a DC group, first option only. Each DC number counted once, bucketed by DC date.
 	$monthDC = array_fill_keys(array_keys($months), 0.0);
-	foreach (rowsQ($db, "SELECT " . bucketExpr('d.orddate', $resolution) . " ym,
+	$groupedDCs = sxGroupedDcNumbers($db) ?: [];
+	foreach (rowsQ($db, "SELECT d.orderno dcno, MIN(d.orddate) orddate,
 			SUM(dcdetails.unitprice * (1 - dcdetails.discountpercent) * dcdetails.quantity * dcoptions.quantity) v
 			FROM (SELECT orderno, MIN(salescaseref) salescaseref, MIN(orddate) orddate FROM dcs
 				WHERE courierslipdate = '0000-00-00 00:00:00' AND invoicedate = '0000-00-00 00:00:00'
@@ -217,8 +219,10 @@ function computeDashboard($db, $isAdmin, $smanName, $smanCode, $smWhere, $resolu
 			WHERE dcdetails.lineoptionno = 0 AND dcoptions.optionno = 0
 			AND d.orddate BETWEEN '$startDate' AND '$endDate'"
 			. ($smanName ? " AND salescase.salesman = '" . esc($db, $smanName) . "' " : "") . "
-			GROUP BY ym") as $r) {
-		if (isset($monthDC[$r['ym']])) $monthDC[$r['ym']] = (float)$r['v'];
+			GROUP BY d.orderno") as $r) {
+		if (isset($groupedDCs[(string)$r['dcno']])) continue;
+		$k = bucketKey(strtotime($r['orddate']), $resolution);
+		if (isset($monthDC[$k])) $monthDC[$k] += (float)$r['v'];
 	}
 	$kPendingDC = array_sum($monthDC);
 
@@ -401,7 +405,7 @@ if (isset($_GET['data'])) {
 	header('Content-Type: application/json; charset=utf-8');
 
 	// v2: payloads cached before the PO and pending-DC definition change must not be served.
-	$cacheKey = 'salesMainDash-v3-' . $selType . '-' . $resolution . '-' . $range;
+	$cacheKey = 'salesMainDash-v4-' . $selType . '-' . $resolution . '-' . $range;
 	$noCache  = isset($_GET['nocache']);
 
 	if (!$noCache) {
@@ -439,7 +443,7 @@ $userInitial = strtoupper(substr($userReal, 0, 1));
 $calcKpis = [
 	'Basis: target, not date-based. Formula: one salesperson = salesman.target; overall = SUM(target) of current salespeople. Not prorated for the selected range. Source: salesman.',
 	'Basis: flow, invoice date. Formula: sum of unitprice × (1 − discount) × invoice quantity × invoice option quantity, for invoices with returned = 0 and inprogress = 0 dated in range, whose posting (debtortrans type 10) was not reversed. Source: invoice, invoicedetails, invoiceoptions.',
-	'Basis: DCs dated in range that are still pending. Same rule as the Pending DC List: not invoiced, grouped for invoice, couriered or returned (GRB). Formula: sum of unitprice × (1 − discount) × quantity × option quantity, first option only. Source: dcs, dcdetails, dcoptions.',
+	'Basis: DCs dated in range that are still pending. Same rule as the Pending DC List: not invoiced, grouped for invoice, couriered or returned (GRB), and not listed in a DC group. Formula: sum of unitprice × (1 − discount) × quantity × option quantity, first option only. Source: dcs, dcdetails, dcoptions.',
 	'Basis: flow, date the customer PO was received. A case has a PO when its PO file is uploaded (salescase.podate) or an active PO receipt is recorded; the date is the PO file date, else the first receipt. Formula: sum of OC value of those cases (ocdetails × ocoptions). Source: salescase, sales_performance_po_receipts, ocs.',
 	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales with payment = CRV. Source: shopsale, debtortrans.',
 	'Basis: flow, shop-sale date. Formula: sum of debtortrans.ovamount (type 750, not reversed) for complete shop sales with payment = CSV. Source: shopsale, debtortrans.',
