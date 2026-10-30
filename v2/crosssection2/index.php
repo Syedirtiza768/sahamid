@@ -343,58 +343,9 @@ if (isset($_POST['to'])) {
         return $map;
     };
 
-    // Aligned with itemsReport/index.php pricing method
-    function calculatePriceForStock($parchinos, $requested_qty)
-    {
-        if ($requested_qty <= 0 || empty($parchinos)) {
-            return [
-                'total_bpitems_price' => 0,
-                'weighted_unit_price' => 0,
-                'total_quantity' => 0
-            ];
-        }
-
-        $remaining_qty = $requested_qty;
-        $total_allocated_qty = 0;
-        $total_weighted_price = 0;
-
-        foreach ($parchinos as $parchino) {
-            if ($remaining_qty <= 0) break;
-
-            $available_qty = (float)$parchino['quantity'];
-
-            // Use adjust_unit_price if available and > 0, otherwise use original price
-            $unit_price = (float)($parchino['adjust_unit_price'] ?? 0);
-            if ($unit_price <= 0) {
-                $unit_price = (float)$parchino['price'];
-            }
-
-            // Apply landing factor exactly like itemsReport
-            $landing_factor = (float)($parchino['landing_factor'] ?? 1);
-            if ($landing_factor <= 0) {
-                $landing_factor = 1;
-            }
-            $effective_price = $unit_price * $landing_factor;
-
-            $allocated_qty = min($available_qty, $remaining_qty);
-            if ($allocated_qty > 0) {
-                $allocated_price = $allocated_qty * $effective_price;
-                $total_weighted_price += $allocated_price;
-                $total_allocated_qty += $allocated_qty;
-                $remaining_qty -= $allocated_qty;
-            }
-        }
-
-        $weighted_unit_price = $total_allocated_qty > 0
-            ? $total_weighted_price / $total_allocated_qty
-            : 0;
-
-        return [
-            'total_bpitems_price' => round($total_weighted_price, 2),
-            'weighted_unit_price' => round($weighted_unit_price, 2),
-            'total_quantity' => round($total_allocated_qty, 2)
-        ];
-    }
+    // Cost-lot pricing is shared with itemsReport so both reports value stock the same way:
+    // zero-cost lots are skipped and the newest BP item price covers any unpriced remainder.
+    require_once __DIR__ . '/../../itemsReport/report_helpers.php';
 
     /** Snapshot dates: From, each calendar month-start strictly after From until <= To, and To (unique, sorted). */
     function crosssection_valuation_timeline_dates(DateTime $from, DateTime $to): array
@@ -625,6 +576,9 @@ if (isset($_POST['to'])) {
         $currentTotalQtyByStockid[$qtyRow['stockid']] = (float)$qtyRow['total_qty'];
     }
 
+    // Newest BP item price per SKU; covers on-hand qty the cost lots cannot price (same as itemsReport).
+    $fallbackPrices = getReportFallbackPrices($db);
+
     // ═══════════════════════════════════════════════════════════
     // STEP 5: Fetch tmp_report and compute final values in PHP
     // ═══════════════════════════════════════════════════════════
@@ -636,10 +590,17 @@ if (isset($_POST['to'])) {
         $closeQty = (float)$item['qohB'];
         $sid      = $item['stockid'];
 
-        // Weighted unit price from igp_parchi using the exact same quantity basis as itemsReport.
+        // Landed unit cost from igp_parchi using the exact same quantity basis as itemsReport.
+        // total_bpitems_price already carries each lot's landing factor, so it is not applied again.
         $qtyForPrice = $currentTotalQtyByStockid[$sid] ?? 0;
-        $priceData = calculatePriceForStock($parchinoData[$sid] ?? [], $qtyForPrice);
-        $unitPrice = (float)$priceData['weighted_unit_price'];
+        $priceData = calculatePriceForStock(
+            $parchinoData[$sid] ?? [],
+            $qtyForPrice,
+            $fallbackPrices[$sid]['price'] ?? 0
+        );
+        $landedUnitPrice = ($qtyForPrice > 0 && (float)$priceData['total_quantity'] > 0)
+            ? (float)$priceData['total_bpitems_price'] / $qtyForPrice
+            : 0;
 
         // Pickup per-SKU landing factor exactly from latest igp_parchi row,
         // same source used by itemsReport frontend payload.
@@ -666,24 +627,23 @@ if (isset($_POST['to'])) {
             }
         }
 
-        // Match itemsReport/frontend.php valuation fallback:
-        // weighted_unit_price first, else adjust_unit_price.
-        $effectiveUnitForValuation = $unitPrice > 0 ? $unitPrice : $latestAdjust;
+        // Match itemsReport "Adj. Price": landed lot cost (total / qty) when the on-hand qty is priced,
+        // else the latest adjust price × landing factor.
+        // Example:
+        // - lots 10 @ 0 (skipped), 10 @ 17,343.50, 2 @ 16,517.50  => 206,470 / 12 = 17,205.83
+        // - adjust 4945.50, factor 1.4                             => 6923.70
+        $unitPriceCost = $landedUnitPrice > 0 ? $landedUnitPrice : $latestAdjust * $latestLandingFactor;
 
         $item['adjust_unit_price'] = $latestAdjust;
         $item['landing_factor']    = $latestLandingFactor;
-        // Match itemsReport "Adj. Price": (weighted unit price if present, else adjust price) × landing factor.
-        // Example:
-        // - weighted 1391.60, factor 1.4  => 1948.24
-        // - adjust   4945.50, factor 1.4  => 6923.70
-        $unitPriceCost = $effectiveUnitForValuation * $latestLandingFactor;
         $item['unitPriceCost']     = round($unitPriceCost, 2);
-        $item['totalAmountFrom']   = round($openQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
-        $item['totalAmountTo']     = round($closeQty * $effectiveUnitForValuation * $latestLandingFactor, 2);
+        $item['totalAmountFrom']   = round($openQty * $unitPriceCost, 2);
+        $item['totalAmountTo']     = round($closeQty * $unitPriceCost, 2);
 
+        // unitPriceCost is already landed; 'landing' stays 1 so snapshot line values are qty × unit cost.
         $skuMeta[$sid] = [
-            'effective' => (float)$effectiveUnitForValuation,
-            'landing'   => (float)$latestLandingFactor,
+            'effective' => (float)$unitPriceCost,
+            'landing'   => 1.0,
         ];
 
         if ($action === 'search') {
