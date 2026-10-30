@@ -62,11 +62,37 @@ class SalesPerformanceExporter
 
 		$this->csvRow($stream, array());
 		$this->csvRow($stream, array('Weekly activity'));
-		$this->csvRow($stream, array('Week starting', 'Metric', 'Count', 'Raw value PKR', 'Net value PKR', 'Normalized value PKR', 'Value status', 'Unknown normalized values'));
-		foreach ($this->arrayValue($report, array('current', 'weekly')) as $week) {
+		$this->csvRow($stream, array('Week starting', 'Reporting coverage', 'Metric', 'Count', 'Raw value PKR', 'Net value PKR', 'Normalized value PKR', 'Value status', 'Unknown normalized values'));
+		$currentPeriod = $this->arrayValue($report, array('current'));
+		$currentInsights = $this->periodInsights($currentPeriod);
+		foreach ($this->arrayValue($currentPeriod, array('weekly')) as $week) {
 			foreach ($this->metricKeys() as $key => $label) {
 				$m = isset($week['metrics'][$key]) ? $week['metrics'][$key] : array();
-				$this->csvRow($stream, array($week['week_start'], $label, $this->value($m, 'count'), $this->value($m, 'raw_value'), $this->value($m, 'net_value'), $this->value($m, 'normalized_value'), $this->value($m, 'value_status'), $this->value($m, 'normalized_unknown_count')));
+				$this->csvRow($stream, array($week['week_start'], $this->weekCoverageText($currentInsights, $week['week_start']), $label, $this->value($m, 'count'), $this->value($m, 'raw_value'), $this->value($m, 'net_value'), $this->value($m, 'normalized_value'), $this->value($m, 'value_status'), $this->value($m, 'normalized_unknown_count')));
+			}
+		}
+		$cumulative = $this->cumulativeRows($report);
+		$this->csvRow($stream, array());
+		$this->csvRow($stream, array('Cumulative reported activity'));
+		$this->csvRow($stream, $cumulative['headers']);
+		foreach ($cumulative['rows'] as $row) $this->csvRow($stream, $row);
+		$insights = $this->insights($report);
+		$this->csvRow($stream, array());
+		$this->csvRow($stream, array('Weekly statistical baseline'));
+		$this->csvRow($stream, array('Baseline rule', isset($insights['baseline_rule']) ? $insights['baseline_rule'] : ''));
+		$this->csvRow($stream, array('Measure', 'Weeks', 'Mean', 'Median', 'Population standard deviation', 'Latest complete week', 'Latest value', 'Z-score', 'Position'));
+		foreach ($this->arrayValue($insights, array('weekly_statistics')) as $stat) {
+			$this->csvRow($stream, array($this->value($stat, 'label'), $this->value($stat, 'observations'), $this->value($stat, 'mean'), $this->value($stat, 'median'), $this->value($stat, 'population_sd'), $this->value($stat, 'latest_week_start'), $this->value($stat, 'latest'), $this->value($stat, 'z_score'), $this->value($stat, 'position')));
+		}
+		$this->csvRow($stream, array());
+		$this->csvRow($stream, array('Weekday statistical baseline'));
+		$weekStarts = $this->arrayValue($insights, array('complete_week_starts'));
+		$this->csvRow($stream, array_merge(array('Measure', 'Weekday'), $weekStarts, array('Weeks', 'Mean', 'Median', 'Population standard deviation', 'Latest value', 'Z-score', 'Position')));
+		foreach ($this->arrayValue($insights, array('weekday_statistics')) as $metricRows) {
+			foreach ($metricRows as $stat) {
+				$row = array($this->value($stat, 'label'), $this->value($stat, 'weekday_label'));
+				foreach ($weekStarts as $weekStart) $row[] = isset($stat['values'][$weekStart]) ? $stat['values'][$weekStart] : null;
+				$this->csvRow($stream, array_merge($row, array($this->value($stat, 'observations'), $this->value($stat, 'mean'), $this->value($stat, 'median'), $this->value($stat, 'population_sd'), $this->value($stat, 'latest'), $this->value($stat, 'z_score'), $this->value($stat, 'position'))));
 			}
 		}
 
@@ -123,6 +149,8 @@ class SalesPerformanceExporter
 		$this->buildCoverageSheet($book->getActiveSheet(), $report);
 		$this->buildDailySheet($book->createSheet(), $report);
 		$this->buildWeeklySheet($book->createSheet(), $report);
+		$this->buildCumulativeSheet($book->createSheet(), $report);
+		$this->buildInsightsSheet($book->createSheet(), $report);
 		$this->buildTeamSheet($book->createSheet(), $report);
 		$this->buildMonthSheet($book->createSheet(), $report);
 		$this->buildAdjustmentSheet($book->createSheet(), $report);
@@ -201,18 +229,66 @@ class SalesPerformanceExporter
 	private function buildWeeklySheet($sheet, array $report)
 	{
 		$sheet->setTitle('Weekly');
-		$headers = array('Week starting', 'Period', 'Metric', 'Count', 'Raw amount PKR', 'Net amount PKR', 'Normalized amount PKR', 'Value status', 'Unknown normalized count');
+		$headers = array('Week starting', 'Period', 'Reporting coverage', 'Metric', 'Count', 'Raw amount PKR', 'Net amount PKR', 'Normalized amount PKR', 'Value status', 'Unknown normalized count');
 		$rows = array();
 		foreach (array('current' => 'Current', 'comparison' => 'Comparison') as $periodKey => $periodLabel) {
-			foreach ($this->arrayValue($report, array($periodKey, 'weekly')) as $week) {
+			$period = $this->arrayValue($report, array($periodKey));
+			$periodInsights = $this->periodInsights($period);
+			foreach ($this->arrayValue($period, array('weekly')) as $week) {
 				foreach ($this->metricKeys() as $key => $label) {
 					$m = isset($week['metrics'][$key]) ? $week['metrics'][$key] : array();
-					$rows[] = array($week['week_start'], $periodLabel, $label, $this->value($m, 'count'), $this->value($m, 'raw_value'), $this->value($m, 'net_value'), $this->value($m, 'normalized_value'), $this->value($m, 'value_status'), $this->value($m, 'normalized_unknown_count'));
+					$rows[] = array($week['week_start'], $periodLabel, $this->weekCoverageText($periodInsights, $week['week_start']), $label, $this->value($m, 'count'), $this->value($m, 'raw_value'), $this->value($m, 'net_value'), $this->value($m, 'normalized_value'), $this->value($m, 'value_status'), $this->value($m, 'normalized_unknown_count'));
 				}
 			}
 		}
 		$this->table($sheet, $headers, $rows);
-		$this->widths($sheet, array(15, 16, 25, 12, 19, 19, 23, 16, 24));
+		$this->widths($sheet, array(15, 16, 34, 25, 12, 19, 19, 23, 16, 24));
+	}
+
+	private function buildInsightsSheet($sheet, array $report)
+	{
+		$sheet->setTitle('Benchmarks');
+		$insights = $this->insights($report);
+		$sheet->setCellValue('A1', 'Statistical baseline');
+		$sheet->mergeCells('A1:I1');
+		$this->title($sheet, 'A1:I1');
+		$sheet->setCellValue('A2', isset($insights['baseline_rule']) ? $insights['baseline_rule'] : '');
+		$sheet->mergeCells('A2:I2');
+		$sheet->getStyle('A2:I2')->getAlignment()->setWrapText(true);
+		$weeklyRows = array();
+		foreach ($this->arrayValue($insights, array('weekly_statistics')) as $stat) {
+			$weeklyRows[] = array($this->value($stat, 'label'), $this->value($stat, 'observations'), $this->value($stat, 'mean'), $this->value($stat, 'median'), $this->value($stat, 'population_sd'), $this->value($stat, 'latest_week_start'), $this->value($stat, 'latest'), $this->value($stat, 'z_score'), $this->value($stat, 'position'));
+		}
+		$this->table($sheet, array('Measure', 'Weeks', 'Mean', 'Median', 'Population SD', 'Latest complete week', 'Latest value', 'Z-score', 'Position'), $weeklyRows, 4);
+
+		$weekStarts = $this->arrayValue($insights, array('complete_week_starts'));
+		$weekdayHeaders = array_merge(array('Measure', 'Weekday'), $weekStarts, array('Weeks', 'Mean', 'Median', 'Population SD', 'Latest value', 'Z-score', 'Position'));
+		$weekdayRows = array();
+		foreach ($this->arrayValue($insights, array('weekday_statistics')) as $metricRows) {
+			foreach ($metricRows as $stat) {
+				$row = array($this->value($stat, 'label'), $this->value($stat, 'weekday_label'));
+				foreach ($weekStarts as $weekStart) $row[] = isset($stat['values'][$weekStart]) ? $stat['values'][$weekStart] : null;
+				$weekdayRows[] = array_merge($row, array($this->value($stat, 'observations'), $this->value($stat, 'mean'), $this->value($stat, 'median'), $this->value($stat, 'population_sd'), $this->value($stat, 'latest'), $this->value($stat, 'z_score'), $this->value($stat, 'position')));
+			}
+		}
+		$weekdayTitleRow = max(6, count($weeklyRows) + 6);
+		$lastWeekdayColumn = $this->column(count($weekdayHeaders));
+		$sheet->setCellValue('A' . $weekdayTitleRow, 'Weekday comparison');
+		$sheet->mergeCells('A' . $weekdayTitleRow . ':' . $lastWeekdayColumn . $weekdayTitleRow);
+		$this->section($sheet, 'A' . $weekdayTitleRow . ':' . $lastWeekdayColumn . $weekdayTitleRow);
+		$this->table($sheet, $weekdayHeaders, $weekdayRows, $weekdayTitleRow + 1);
+		$sheet->getColumnDimension('A')->setWidth(36);
+		$sheet->getColumnDimension('B')->setWidth(15);
+		for ($column = 3; $column <= count($weekdayHeaders); $column++) $sheet->getColumnDimension($this->column($column))->setWidth(19);
+		$sheet->freezePane('C5');
+	}
+
+	private function buildCumulativeSheet($sheet, array $report)
+	{
+		$sheet->setTitle('Cumulative');
+		$cumulative = $this->cumulativeRows($report);
+		$this->table($sheet, $cumulative['headers'], $cumulative['rows']);
+		$this->widths($sheet, array(16, 28, 20, 22, 18, 24, 21, 18, 25, 21, 18, 18, 24, 18));
 	}
 
 	private function buildTeamSheet($sheet, array $report)
@@ -385,6 +461,14 @@ class SalesPerformanceExporter
 
 		$pdf->AddPage('L', 'A4');
 		$pdf->SetFont('helvetica', '', 8);
+		$insights = $this->insights($report);
+		$html = '<h2>Statistical baselines</h2><p>' . $this->html(isset($insights['baseline_rule']) ? $insights['baseline_rule'] : '') . '</p>';
+		$html .= $this->pdfWeeklyStatisticsTable($insights);
+		$html .= '<br><h3>Weekday baselines</h3>' . $this->pdfWeekdayStatisticsTable($insights);
+		$pdf->writeHTML($html, true, false, true, false, '');
+
+		$pdf->AddPage('L', 'A4');
+		$pdf->SetFont('helvetica', '', 8);
 		$html = '<h2>Frozen supporting records</h2><p>Captured events and ERP proxy records are shown at their saved source grain. Blank amounts mean a report-currency value was unavailable.</p>' . $this->pdfFactsTable($facts);
 		$pdf->writeHTML($html, true, false, true, false, '');
 
@@ -404,12 +488,13 @@ class SalesPerformanceExporter
 
 	private function pdfComparisonTable(array $report)
 	{
-		$head = array('Metric', 'Current count', 'Current raw PKR', 'Current net PKR', 'Current normalized PKR', 'Compare count', 'Compare normalized PKR', 'Current status');
+		$head = array('Metric', 'Current count', 'Current raw PKR', 'Current net PKR', 'Current reported PKR', 'Value basis', 'Compare count', 'Compare reported PKR', 'Current status');
 		$rows = array();
 		foreach ($this->metricKeys() as $key => $label) {
 			$current = isset($report['current']['metrics'][$key]) ? $report['current']['metrics'][$key] : array();
 			$comparison = isset($report['comparison']['metrics'][$key]) ? $report['comparison']['metrics'][$key] : array();
-			$rows[] = array($label, $this->value($current, 'count'), $this->value($current, 'raw_value'), $this->value($current, 'net_value'), $this->value($current, 'normalized_value'), $this->value($comparison, 'count'), $this->value($comparison, 'normalized_value'), $this->value($current, 'value_status'));
+			$valueField = $key === 'purchase_orders' ? 'net_value' : 'normalized_value';
+			$rows[] = array($label, $this->value($current, 'count'), $this->value($current, 'raw_value'), $this->value($current, 'net_value'), $this->value($current, $valueField), $key === 'purchase_orders' ? 'Net' : 'Normalized', $this->value($comparison, 'count'), $this->value($comparison, $valueField), $this->value($current, 'value_status'));
 		}
 		return $this->pdfTable($head, $rows);
 	}
@@ -417,13 +502,16 @@ class SalesPerformanceExporter
 	private function pdfWeeklyTable(array $report)
 	{
 		$rows = array();
+		$currentPeriod = $this->arrayValue($report, array('current'));
+		$currentInsights = $this->periodInsights($currentPeriod);
 		foreach ($this->arrayValue($report, array('current', 'weekly')) as $week) {
 			foreach (array('quotations', 'revised_quotations', 'purchase_orders', 'order_confirmations', 'delivery_challans') as $key) {
 				$m = isset($week['metrics'][$key]) ? $week['metrics'][$key] : array();
-				$rows[] = array($week['week_start'], $this->metricKeys()[$key], $this->value($m, 'count'), $this->value($m, 'raw_value'), $this->value($m, 'normalized_value'), $this->value($m, 'value_status'));
+				$valueField = $key === 'purchase_orders' ? 'net_value' : 'normalized_value';
+				$rows[] = array($week['week_start'], $this->weekCoverageText($currentInsights, $week['week_start']), $this->metricKeys()[$key], $this->value($m, 'count'), $this->value($m, 'raw_value'), $this->value($m, $valueField), $key === 'purchase_orders' ? 'Net' : 'Normalized', $this->value($m, 'value_status'));
 			}
 		}
-		return $this->pdfTable(array('Week', 'Separate measure', 'Count', 'Raw PKR', 'Normalized PKR', 'Status'), $rows);
+		return $this->pdfTable(array('Week', 'Coverage', 'Separate measure', 'Count', 'Raw PKR', 'Reported PKR', 'Value basis', 'Status'), $rows);
 	}
 
 	private function pdfStageAnalysisTable(array $report, array $metricKeys)
@@ -445,40 +533,51 @@ class SalesPerformanceExporter
 		$rows = array();
 		foreach ($this->arrayValue($report, array('current', 'daily')) as $day) {
 			$m = isset($day['metrics']) ? $day['metrics'] : array();
-			$rows[] = array($day['date'], $day['coverage_status'], $this->value(isset($m['quotations']) ? $m['quotations'] : array(), 'count'), $this->value(isset($m['quotations']) ? $m['quotations'] : array(), 'normalized_value'), $this->value(isset($m['purchase_orders']) ? $m['purchase_orders'] : array(), 'count'), $this->value(isset($m['purchase_orders']) ? $m['purchase_orders'] : array(), 'normalized_value'), $this->value(isset($m['delivery_challans']) ? $m['delivery_challans'] : array(), 'count'), $this->value(isset($m['delivery_challans']) ? $m['delivery_challans'] : array(), 'normalized_value'));
+			$rows[] = array($day['date'], $day['coverage_status'],
+				$this->value(isset($m['quotations']) ? $m['quotations'] : array(), 'count'), $this->value(isset($m['quotations']) ? $m['quotations'] : array(), 'normalized_value'),
+				$this->value(isset($m['purchase_orders']) ? $m['purchase_orders'] : array(), 'count'), $this->value(isset($m['purchase_orders']) ? $m['purchase_orders'] : array(), 'net_value'),
+				$this->value(isset($m['order_confirmations']) ? $m['order_confirmations'] : array(), 'count'), $this->value(isset($m['order_confirmations']) ? $m['order_confirmations'] : array(), 'normalized_value'),
+				$this->value(isset($m['delivery_challans']) ? $m['delivery_challans'] : array(), 'count'), $this->value(isset($m['delivery_challans']) ? $m['delivery_challans'] : array(), 'normalized_value'));
 		}
-		return $this->pdfTable(array('Date', 'Coverage', 'Quotes', 'Quote PKR', 'PO receipts', 'PO PKR', 'DCs', 'DC PKR'), $rows);
+		return $this->pdfTable(array('Date', 'Coverage', 'Quotes', 'Quote PKR', 'Customer PO receipts', 'PO net PKR', 'OCs (proxy)', 'OC PKR', 'DCs', 'DC PKR'), $rows);
 	}
 
 	private function pdfTeamTable(array $report)
 	{
 		$rows = array();
 		foreach ($this->arrayValue($report, array('current', 'teams')) as $team) {
-			foreach (array('quotations', 'purchase_orders', 'delivery_challans') as $key) {
+			foreach (array('quotations', 'purchase_orders', 'order_confirmations', 'delivery_challans') as $key) {
 				$m = isset($team['metrics'][$key]) ? $team['metrics'][$key] : array();
-				$rows[] = array($team['name'], $this->metricKeys()[$key], $this->value($m, 'count'), $this->value($m, 'normalized_value'), $this->value($m, 'value_status'));
+				$valueField = $key === 'purchase_orders' ? 'net_value' : 'normalized_value';
+				$rows[] = array($team['name'], $this->metricKeys()[$key], $this->value($m, 'count'), $this->value($m, $valueField), $key === 'purchase_orders' ? 'Net' : 'Normalized', $this->value($m, 'value_status'));
 			}
 		}
-		return $this->pdfTable(array('Team', 'Separate measure', 'Count', 'Normalized PKR', 'Status'), $rows);
+		return $this->pdfTable(array('Team', 'Separate measure', 'Count', 'Reported PKR', 'Value basis', 'Status'), $rows);
 	}
 
 	private function pdfCumulativeTable(array $report)
 	{
-		$keys = array('quotations' => 'Quotations', 'purchase_orders' => 'Customer PO receipts', 'delivery_challans' => 'Delivery challans');
+		$keys = array(
+			'quotations' => array('value_field' => 'normalized_value', 'unknown_field' => 'normalized_unknown_count'),
+			'purchase_orders' => array('value_field' => 'net_value', 'unknown_field' => 'net_unknown_count'),
+			'order_confirmations' => array('value_field' => 'normalized_value', 'unknown_field' => 'normalized_unknown_count'),
+			'delivery_challans' => array('value_field' => 'normalized_value', 'unknown_field' => 'normalized_unknown_count')
+		);
 		$state = array();
-		foreach ($keys as $key => $label) $state[$key] = array('count' => 0, 'known_count' => 0, 'unknown_count' => 0, 'amount' => '0.00');
+		foreach ($keys as $key => $definition) $state[$key] = array('count' => 0, 'known_count' => 0, 'unknown_count' => 0, 'amount' => '0.00');
 		$rows = array();
 		foreach ($this->arrayValue($report, array('current', 'daily')) as $day) {
 			$row = array($day['date'], isset($day['coverage_status']) ? $day['coverage_status'] : 'unknown');
-			foreach ($keys as $key => $label) {
+			foreach ($keys as $key => $definition) {
 				$m = isset($day['metrics'][$key]) ? $day['metrics'][$key] : array();
 				$count = isset($m['count']) ? (int) $m['count'] : 0;
-				$unknown = isset($m['normalized_unknown_count']) ? (int) $m['normalized_unknown_count'] : 0;
+				$unknown = isset($m[$definition['unknown_field']]) ? (int) $m[$definition['unknown_field']] : 0;
 				$status = isset($m['value_status']) ? $m['value_status'] : 'complete';
 				$state[$key]['count'] += $count;
 				$state[$key]['unknown_count'] += $unknown;
-				if ($status !== 'unavailable' && isset($m['normalized_value']) && $m['normalized_value'] !== null) {
-					$state[$key]['amount'] = DecimalAmount::add($state[$key]['amount'], (string) $m['normalized_value']);
+				$valueField = $definition['value_field'];
+				if ($status !== 'unavailable' && isset($m[$valueField]) && $m[$valueField] !== null) {
+					$state[$key]['amount'] = DecimalAmount::add($state[$key]['amount'], (string) $m[$valueField]);
 					$state[$key]['known_count'] += max(0, $count - $unknown);
 				} elseif ($unknown === 0 && $count > 0) {
 					$state[$key]['unknown_count'] += $count;
@@ -490,7 +589,80 @@ class SalesPerformanceExporter
 			}
 			$rows[] = $row;
 		}
-		return $this->pdfTable(array('Date', 'Coverage', 'Quotes count', 'Quotes normalized PKR', 'Quotes status', 'PO receipts count', 'PO normalized PKR', 'PO status', 'DC count', 'DC normalized PKR', 'DC status'), $rows);
+		return $this->pdfTable(array('Date', 'Coverage', 'Quotes count', 'Quotes normalized PKR', 'Quotes status', 'Customer PO receipts', 'PO net PKR', 'PO status', 'OCs (proxy)', 'OC normalized PKR', 'OC status', 'DC count', 'DC normalized PKR', 'DC status'), $rows);
+	}
+
+	private function cumulativeRows(array $report)
+	{
+		$definitions = array(
+			'quotations' => array('value_field' => 'normalized_value', 'unknown_field' => 'normalized_unknown_count'),
+			'purchase_orders' => array('value_field' => 'net_value', 'unknown_field' => 'net_unknown_count'),
+			'order_confirmations' => array('value_field' => 'normalized_value', 'unknown_field' => 'normalized_unknown_count'),
+			'delivery_challans' => array('value_field' => 'normalized_value', 'unknown_field' => 'normalized_unknown_count')
+		);
+		$state = array();
+		foreach ($definitions as $key => $definition) $state[$key] = array('count' => 0, 'known_count' => 0, 'unknown_count' => 0, 'amount' => '0.00');
+		$coverageByWeek = $this->arrayValue($this->insights($report), array('week_coverage'));
+		$rows = array();
+		foreach ($this->arrayValue($report, array('current', 'weekly')) as $week) {
+			$weekStart = isset($week['week_start']) ? (string) $week['week_start'] : '';
+			$coverage = isset($coverageByWeek[$weekStart]) ? $coverageByWeek[$weekStart] : array();
+			$coverageText = isset($coverage['coverage_status']) ? str_replace('_', ' ', $coverage['coverage_status']) : 'unknown';
+			if (isset($coverage['planned_workdays'])) $coverageText .= ' (' . (isset($coverage['complete_workdays']) ? $coverage['complete_workdays'] : 0) . '/' . $coverage['planned_workdays'] . ' workdays complete)';
+			$row = array($weekStart, $coverageText);
+			foreach ($definitions as $key => $definition) {
+				$metric = isset($week['metrics'][$key]) ? $week['metrics'][$key] : array();
+				$count = isset($metric['count']) ? (int) $metric['count'] : 0;
+				$unknown = isset($metric[$definition['unknown_field']]) ? (int) $metric[$definition['unknown_field']] : 0;
+				$valueField = $definition['value_field'];
+				$status = isset($metric['value_status']) ? $metric['value_status'] : 'complete';
+				$hasAmount = $status !== 'unavailable' && isset($metric[$valueField]) && $metric[$valueField] !== null;
+				if (!$hasAmount && $count > 0 && $unknown === 0) $unknown = $count;
+				$state[$key]['count'] += $count;
+				$state[$key]['unknown_count'] += $unknown;
+				if ($hasAmount) {
+					$state[$key]['amount'] = DecimalAmount::add($state[$key]['amount'], (string) $metric[$valueField]);
+					$state[$key]['known_count'] += max(0, $count - $unknown);
+				}
+				$cumulativeStatus = $state[$key]['unknown_count'] === 0 ? 'complete' : ($state[$key]['known_count'] > 0 ? 'partial' : 'unavailable');
+				$row[] = $state[$key]['count'];
+				$row[] = $cumulativeStatus === 'unavailable' ? null : $state[$key]['amount'];
+				$row[] = $cumulativeStatus . ($state[$key]['unknown_count'] > 0 ? ' (' . $state[$key]['unknown_count'] . ' unknown)' : '');
+			}
+			$rows[] = $row;
+		}
+		return array(
+			'headers' => array('Week starting', 'Reporting coverage', 'Quotes cumulative count', 'Quote cumulative normalized PKR', 'Quote value status', 'Customer PO cumulative count', 'PO cumulative net PKR', 'PO value status', 'OC proxy cumulative count', 'OC proxy cumulative normalized PKR', 'OC value status', 'DC cumulative count', 'DC cumulative normalized PKR', 'DC value status'),
+			'rows' => $rows
+		);
+	}
+
+	private function pdfWeeklyStatisticsTable(array $insights)
+	{
+		$rows = array();
+		foreach ($this->arrayValue($insights, array('weekly_statistics')) as $stat) {
+			$type = $this->value($stat, 'type');
+			$rows[] = array($this->value($stat, 'label'), $this->value($stat, 'observations'),
+				$this->insightValue($this->value($stat, 'mean'), $type), $this->insightValue($this->value($stat, 'median'), $type),
+				$this->insightValue($this->value($stat, 'population_sd'), $type), $this->value($stat, 'latest_week_start'),
+				$this->insightValue($this->value($stat, 'latest'), $type), $this->insightZScore($this->value($stat, 'z_score')), $this->value($stat, 'position'));
+		}
+		return $this->pdfTable(array('Measure', 'Weeks', 'Mean', 'Median', 'Population SD', 'Latest complete week', 'Latest', 'Z-score', 'Position'), $rows);
+	}
+
+	private function pdfWeekdayStatisticsTable(array $insights)
+	{
+		$rows = array();
+		foreach ($this->arrayValue($insights, array('weekday_statistics')) as $metricRows) {
+			foreach ($metricRows as $stat) {
+				$type = $this->value($stat, 'type');
+				$rows[] = array($this->value($stat, 'label'), $this->value($stat, 'weekday_label'), $this->value($stat, 'observations'),
+					$this->insightValue($this->value($stat, 'mean'), $type), $this->insightValue($this->value($stat, 'median'), $type),
+					$this->insightValue($this->value($stat, 'population_sd'), $type), $this->insightValue($this->value($stat, 'latest'), $type),
+					$this->insightZScore($this->value($stat, 'z_score')), $this->value($stat, 'position'));
+			}
+		}
+		return $this->pdfTable(array('Measure', 'Weekday', 'Weeks', 'Mean', 'Median', 'Population SD', 'Latest', 'Z-score', 'Position'), $rows);
 	}
 
 	private function pdfFactsTable(array $facts)
@@ -545,6 +717,45 @@ class SalesPerformanceExporter
 	private function value(array $row, $key)
 	{
 		return array_key_exists($key, $row) ? $row[$key] : null;
+	}
+
+	private function insights(array $report)
+	{
+		$current = $this->arrayValue($report, array('current'));
+		return $this->periodInsights($current);
+	}
+
+	private function periodInsights(array $period)
+	{
+		if (isset($period['insights']) && is_array($period['insights'])) return $period['insights'];
+		return \SAHamid\BI\Commercial\SalesPerformanceInsights::build($period);
+	}
+
+	private function weekCoverageText(array $insights, $weekStart)
+	{
+		$coverageByWeek = $this->arrayValue($insights, array('week_coverage'));
+		if (!isset($coverageByWeek[$weekStart])) return 'Coverage unknown';
+		$coverage = $coverageByWeek[$weekStart];
+		$status = isset($coverage['coverage_status']) ? str_replace('_', ' ', $coverage['coverage_status']) : 'unknown';
+		if ($status === 'after cutoff' || $status === 'no planned workdays') return $status;
+		if (isset($coverage['planned_workdays'])) {
+			$status .= ' (' . (isset($coverage['complete_workdays']) ? $coverage['complete_workdays'] : 0) . '/' . $coverage['planned_workdays'] . ' workdays complete)';
+		}
+		return $status;
+	}
+
+	private function insightValue($value, $type)
+	{
+		if ($value === null || $value === '') return 'N/A';
+		$formatted = number_format((float) $value, 2, '.', ',');
+		return $type === 'money' ? 'PKR ' . $formatted : $formatted;
+	}
+
+	private function insightZScore($value)
+	{
+		if ($value === null || $value === '') return 'N/A';
+		$score = (float) $value;
+		return ($score > 0 ? '+' : '') . number_format($score, 2, '.', ',');
 	}
 
 	private function arrayValue(array $row, array $path)
@@ -628,7 +839,8 @@ class SalesPerformanceExporter
 	private function isNumericColumn($header)
 	{
 		$header = strtolower((string) $header);
-		return strpos($header, 'count') !== false || strpos($header, 'amount') !== false || strpos($header, 'value') !== false || $header === 'id';
+		return strpos($header, 'count') !== false || strpos($header, 'amount') !== false || strpos($header, 'value') !== false || $header === 'id'
+			|| in_array($header, array('weeks', 'mean', 'median', 'population sd', 'z-score', 'latest'), true);
 	}
 
 	private function setText($sheet, $cell, $value)

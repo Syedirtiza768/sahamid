@@ -754,7 +754,7 @@ function spLoadPeriod($db, $from, $to, $salespeople, $teamRows, $teamBySalesman,
 	foreach ($people as $person) $peopleList[] = $person;
 	usort($peopleList, function($a, $b) { return strcasecmp($a['name'], $b['name']); });
 
-	return array(
+	$periodResult = array(
 		'from' => $from,
 		'to' => $to,
 		'as_of' => $asOf,
@@ -766,6 +766,8 @@ function spLoadPeriod($db, $from, $to, $salespeople, $teamRows, $teamBySalesman,
 		'salespeople' => $peopleList,
 		'calendar' => $calendar
 	);
+	$periodResult['insights'] = \SAHamid\BI\Commercial\SalesPerformanceInsights::build($periodResult);
+	return $periodResult;
 }
 
 function spBuildTeam($key, $id, $name, $from, $to, $teamDaily, $teamWeekly, $teamWeekdays, $calendar, $followupStart) {
@@ -3123,6 +3125,9 @@ try {
 		}
 		$payload = json_decode($runs[0]['totals_text'], true);
 		if (!is_array($payload)) throw new Exception('The frozen report data could not be read.');
+		if (isset($payload['current']) && is_array($payload['current']) && !isset($payload['current']['insights'])) {
+			$payload['current']['insights'] = \SAHamid\BI\Commercial\SalesPerformanceInsights::build($payload['current']);
+		}
 		$payload['frozen_run'] = array('run_key' => $runs[0]['run_key'], 'content_hash' => $runs[0]['content_hash'], 'state' => 'ready', 'integrity_status' => $integrityStatus, 'frozen_at' => $runs[0]['ready_at']);
 		$mayReviewAdjustments = $canViewCompany && ($canManageAdjustments || $canApproveAdjustments);
 		if (!$mayReviewAdjustments) {

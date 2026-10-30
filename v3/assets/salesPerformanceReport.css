@@ -302,6 +302,23 @@
 	width: 100%;
 }
 
+.sp-benchmark-summary {
+	margin: 0 0 10px;
+}
+
+.sp-benchmark-note {
+	margin: 0;
+	padding: 10px 12px;
+	border-left: 3px solid #3c8dbc;
+	background: #f4f8fb;
+	color: #53616d;
+	font-size: 12px;
+}
+
+.sp-wide-table {
+	min-width: 980px;
+}
+
 .sp-matrix-heading {
 	align-items: center;
 }

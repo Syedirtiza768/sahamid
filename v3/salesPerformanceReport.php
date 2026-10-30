@@ -1,6 +1,6 @@
 <?php
 $active = 'reports';
-$title = 'Sales Performance Report';
+$title = 'Commercial Performance Report';
 include_once('config.php');
 date_default_timezone_set('Asia/Karachi');
 
@@ -93,8 +93,8 @@ include_once('includes/sidebar.php');
 	 data-can-manage-adjustments="<?php echo $canManageAdjustments ? '1' : '0'; ?>"
 	 data-can-approve-adjustments="<?php echo $canApproveAdjustments ? '1' : '0'; ?>">
 	<section class="content-header sp-header">
-		<h1>Sales Performance <small>Month, week and team reporting</small></h1>
-		<p>Review activity counts and values across selected periods. Raw values and approved normalized values are shown separately.</p>
+		<h1>Commercial Performance <small>Month, week, team and baseline reporting</small></h1>
+		<p>Review activity counts and values across selected periods. Raw values and approved normalized values are shown separately; customer PO receipts and ERP order confirmations are reported as separate measures.</p>
 	</section>
 
 	<section class="content">
@@ -165,6 +165,7 @@ include_once('includes/sidebar.php');
 				<li class="active"><a href="#sp-month-view" data-toggle="tab">Month View</a></li>
 				<li><a href="#sp-week-view" data-toggle="tab">Weekly Overview</a></li>
 				<li><a href="#sp-team-view" data-toggle="tab">Team Comparison</a></li>
+				<li><a href="#sp-baseline-view" data-toggle="tab">Cumulative &amp; Benchmarks</a></li>
 			</ul>
 			<div class="tab-content sp-tab-content">
 				<div class="tab-pane active" id="sp-month-view">
@@ -178,14 +179,14 @@ include_once('includes/sidebar.php');
 						<div class="table-responsive"><table class="table table-striped sp-table" id="sp-period-table"></table></div>
 					</div>
 					<div class="sp-card">
-						<div class="sp-card-heading"><div><h3>Daily activity trend</h3><p>ERP document values are shown as provisional source totals; OC activity remains a purchase-order proxy.</p></div></div>
+						<div class="sp-card-heading"><div><h3>Daily activity trend</h3><p>Quotation, order-confirmation proxy and delivery-challan values are normalized PKR. Customer PO receipts use net PKR.</p></div></div>
 						<div id="sp-month-chart" class="sp-chart"></div>
 					</div>
 				</div>
 
 				<div class="tab-pane" id="sp-week-view">
 					<div class="sp-card">
-						<div class="sp-card-heading"><div><h3>Weekly activity</h3><p>Weeks are grouped Monday through Sunday. Incomplete weeks remain visible.</p></div></div>
+						<div class="sp-card-heading"><div><h3>Weekly activity</h3><p>Weeks are grouped Monday through Sunday. Incomplete weeks remain visible; week-over-week value changes compare fully covered weeks. PO value is net, while other document values use normalized PKR.</p></div></div>
 						<div id="sp-week-chart" class="sp-chart"></div>
 						<div class="table-responsive"><table class="table table-striped sp-table" id="sp-week-table"></table></div>
 					</div>
@@ -201,18 +202,49 @@ include_once('includes/sidebar.php');
 					</div>
 					<div class="sp-card">
 				<div class="sp-card-heading sp-matrix-heading">
-					<div><h3>Weekday comparison</h3><p>Future dates, days after the selected cutoff, and dates outside the selected period are labeled.</p></div>
+					<div><h3>Weekday comparison</h3><p>Future dates, days after the selected cutoff, and dates outside the selected period are labeled. Customer PO receipts and order confirmations (proxy) are separate.</p></div>
 							<div class="sp-matrix-controls">
 								<label>Team<select id="sp-matrix-team" class="form-control"></select></label>
 								<label>Measure<select id="sp-matrix-metric" class="form-control">
-									<option value="quotations">Quotations</option><option value="revised_quotations">Revised quotations</option><option value="purchase_orders">POs</option><option value="delivery_challans">DCs</option><option value="followups">Follow-ups</option>
+									<option value="quotations">Quotations</option><option value="revised_quotations">Revised quotations</option><option value="purchase_orders">Customer PO receipts</option><option value="order_confirmations">Order confirmations (proxy)</option><option value="delivery_challans">DCs</option><option value="followups">Follow-ups</option>
 								</select></label>
-								<label>Display<select id="sp-matrix-value" class="form-control"><option value="normalized_value">Normalized value</option><option value="raw_value">Raw value</option><option value="count">Count</option></select></label>
+								<label>Display<select id="sp-matrix-value" class="form-control"><option value="normalized_value">Reported value</option><option value="raw_value">Raw value</option><option value="count">Count</option></select></label>
 							</div>
 						</div>
 						<div class="table-responsive" id="sp-team-matrix"></div>
 					</div>
 				</div>
+
+			<div class="tab-pane" id="sp-baseline-view">
+				<div class="sp-card">
+					<div class="sp-card-heading"><div><h3>Cumulative reported values</h3><p>Cumulative totals follow the selected date range. Each week shows its coverage; incomplete source values remain identified and do not become zero.</p></div></div>
+					<div id="sp-cumulative-chart" class="sp-chart"></div>
+					<div class="table-responsive"><table class="table table-striped sp-table" id="sp-cumulative-table"></table></div>
+				</div>
+				<div class="sp-card">
+					<div class="sp-card-heading"><div><h3>Weekly statistical baseline</h3><p>Mean, median and population standard deviation use only full Monday–Saturday weeks with complete submitted coverage. Partial or unreported days are excluded, not treated as zero. Admins can load source-PDF figures as unverified reference observations below for reconciliation.</p></div></div>
+					<div id="sp-benchmark-summary" class="sp-benchmark-summary" aria-live="polite"></div>
+					<div class="table-responsive"><table class="table table-striped sp-table" id="sp-weekly-benchmark-table"></table></div>
+				</div>
+				<div class="sp-card">
+					<div class="sp-card-heading sp-matrix-heading">
+						<div><h3>Weekday baseline</h3><p>Compare each weekday across the fully covered weeks in this report scope.</p></div>
+						<div class="sp-matrix-controls"><label>Measure<select id="sp-baseline-metric" class="form-control">
+							<option value="quotations.normalized_value">Quotation value (normalized)</option>
+							<option value="quotations.count">Quotation count</option>
+							<option value="purchase_orders.net_value">Customer PO net value</option>
+							<option value="purchase_orders.count">Customer PO receipts</option>
+							<option value="order_confirmations.normalized_value">Order confirmation value (proxy)</option>
+							<option value="order_confirmations.count">Order confirmations (proxy)</option>
+							<option value="delivery_challans.normalized_value">DC value (normalized)</option>
+							<option value="delivery_challans.count">DC count</option>
+							<option value="enquiries.count">Enquiries</option>
+							<option value="followups.count">Follow-ups</option>
+						</select></label></div>
+					</div>
+					<div class="table-responsive"><table class="table table-striped sp-table sp-wide-table" id="sp-weekday-benchmark-table"></table></div>
+				</div>
+			</div>
 			</div>
 
 			<div class="sp-card" id="sp-followup-card">
@@ -305,7 +337,7 @@ include_once('includes/sidebar.php');
 						<label>Evidence location<input class="form-control" type="text" name="evidence_location" maxlength="120" required placeholder="PDF page, workbook tab or file reference"></label>
 					</div>
 					<label>Observation CSV<textarea class="form-control" name="observations_csv" rows="8" maxlength="200000" required spellcheck="false" placeholder="observation_key,period_from,period_through,cutoff_at,granularity,scope_key,team_name,salesperson_name,metric_key,observed_count,observed_value,value_basis,value_currency,denominator,notes&#10;W39-quote-total,2026-09-21,2026-09-26,,weekly,erp_company,,,quotations,70,535850000.00,raw,PKR,,Transcribed; verify against source"></textarea></label>
-					<p class="text-muted">Use metric keys shown by the report (for example <code>quotations</code>). Counts and values may be blank. Value basis is raw, net or normalized; imported rows always remain marked transcribed_unverified.</p>
+					<p class="text-muted">Use metric keys shown by the report (for example <code>quotations</code>, <code>purchase_orders</code> or <code>order_confirmations</code>). Confirm the source definition before importing: customer PO receipts and the legacy order-confirmation proxy are separate measures. Counts and values may be blank. Value basis is raw, net or normalized; imported rows remain marked transcribed_unverified.</p>
 					<div class="sp-form-actions"><button id="sp-reference-preview-button" type="submit" class="btn btn-default">Preview CSV</button><button id="sp-reference-import" type="button" class="btn btn-primary" disabled>Import reviewed rows</button><span id="sp-reference-import-message" aria-live="polite"></span></div>
 				</form>
 				<div id="sp-reference-preview" class="sp-reference-preview" aria-live="polite"></div>

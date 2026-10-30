@@ -21,7 +21,7 @@
 		quotations: 'Initial quotations',
 		revised_quotations: 'Revised quotations',
 		purchase_orders: 'Customer PO receipts',
-		order_confirmations: 'OCs (proxy)',
+		order_confirmations: 'Order confirmations (proxy)',
 		delivery_challans: 'Delivery challans',
 		followups: 'Follow-ups',
 		enquiry_responses: 'Enquiry responses',
@@ -103,7 +103,8 @@
 	function valuePerDayText(period, key, field) {
 		var item = metric(period, key);
 		if (!number(period.reporting_days)) return '—';
-		if (item.value_status === 'unavailable' || number(item.normalized_unknown_count) > 0 || number(item.net_unknown_count) > 0) return 'Unavailable';
+		var unknownField = field === 'raw_value' ? 'raw_unknown_count' : (field === 'net_value' ? 'net_unknown_count' : 'normalized_unknown_count');
+		if (item.value_status === 'unavailable' || number(item[unknownField]) > 0) return 'Unavailable';
 		return formatMoney(number(item[field]) / number(period.reporting_days));
 	}
 
@@ -113,8 +114,18 @@
 		return formatMoney(number(item.normalized_value) / days);
 	}
 
+	function itemPerDayFieldText(item, days, field, unknownField) {
+		if (!days) return '—';
+		if (!item || item.value_status === 'unavailable' || number(item[unknownField]) > 0) return 'Unavailable';
+		return formatMoney(number(item[field]) / days);
+	}
+
 	function chartAmount(item) {
 		return item.value_status === 'unavailable' || number(item.normalized_unknown_count) > 0 ? null : number(item.normalized_value);
+	}
+
+	function chartFieldAmount(item, field, unknownField) {
+		return !item || item.value_status === 'unavailable' || number(item[unknownField]) > 0 ? null : number(item[field]);
 	}
 
 	function pctChange(current, previous) {
@@ -218,7 +229,7 @@
 	}
 
 	function renderDaily() {
-		var html = '<thead><tr><th>Date</th><th>Weekday</th><th>Enquiries</th><th>Unanswered</th><th>Responses</th><th>Company regrets</th><th>Initial quotes</th><th>Initial quote net</th><th>Revisions</th><th>Revision net</th><th>Follow-ups</th><th>Customer POs</th><th>OCs (proxy)</th><th>DCs</th><th>Coverage</th></tr></thead><tbody>';
+		var html = '<thead><tr><th>Date</th><th>Weekday</th><th>Enquiries</th><th>Unanswered</th><th>Responses</th><th>Company regrets</th><th>Initial quotes</th><th>Initial quote net</th><th>Revisions</th><th>Revision net</th><th>Follow-ups</th><th>Customer PO receipts</th><th>Order confirmations (proxy)</th><th>DCs</th><th>Coverage</th></tr></thead><tbody>';
 		$.each(reportData.current.daily || [], function (_, day) {
 			var m = day.metrics;
 			var state = (day.coverage_status || 'not_submitted').replace(/_/g, ' ');
@@ -240,25 +251,27 @@
 			['enquiries', 'Enquiries'], ['quotations', 'Initial quotations'], ['revised_quotations', 'Revised quotations'],
 			['followups', 'Follow-ups'], ['purchase_orders', 'Customer PO receipts'], ['order_confirmations', 'OCs (proxy)'], ['delivery_challans', 'Delivery challans']
 		];
-		var html = '<thead><tr><th>Activity</th><th>Current count</th><th>Current value (raw)</th><th>Current value (normalized)</th><th>Average value / record</th><th>Count / reporting day</th><th>Value / reporting day</th><th>Comparison count</th><th>Comparison normalized value</th><th>Comparison value / reporting day</th><th>Total value change</th><th>Rate change</th></tr></thead><tbody>';
+		var html = '<thead><tr><th>Activity</th><th>Current count</th><th>Current value (raw)</th><th>Current value (net / normalized)</th><th>Average value / record</th><th>Count / reporting day</th><th>Value / reporting day</th><th>Comparison count</th><th>Comparison value (net / normalized)</th><th>Comparison value / reporting day</th><th>Total value change</th><th>Rate change</th></tr></thead><tbody>';
 		$.each(rows, function (_, row) {
 			var current = metric(reportData.current, row[0]);
 			var previous = metric(reportData.comparison, row[0]);
-			var valueChange = current.value_status === 'unavailable' || previous.value_status === 'unavailable' || current.normalized_unknown_count > 0 || previous.normalized_unknown_count > 0 ? '—' : pctChange(current.normalized_value, previous.normalized_value);
-			var currentRate = perDay(reportData.current, row[0], 'normalized_value');
-			var previousRate = perDay(reportData.comparison, row[0], 'normalized_value');
-			var valueUnknown = current.value_status === 'unavailable' || previous.value_status === 'unavailable' || number(current.normalized_unknown_count) > 0 || number(previous.normalized_unknown_count) > 0;
+			var valueField = row[0] === 'purchase_orders' ? 'net_value' : 'normalized_value';
+			var unknownField = row[0] === 'purchase_orders' ? 'net_unknown_count' : 'normalized_unknown_count';
+			var valueChange = current.value_status === 'unavailable' || previous.value_status === 'unavailable' || current[unknownField] > 0 || previous[unknownField] > 0 ? '—' : pctChange(current[valueField], previous[valueField]);
+			var currentRate = perDay(reportData.current, row[0], valueField);
+			var previousRate = perDay(reportData.comparison, row[0], valueField);
+			var valueUnknown = current.value_status === 'unavailable' || previous.value_status === 'unavailable' || number(current[unknownField]) > 0 || number(previous[unknownField]) > 0;
 			var rateChange = valueUnknown ? '—' : pctChange(currentRate, previousRate);
-			var valueCell = row[0] === 'followups' ? '—' : amountText(current, 'normalized_value');
+			var valueCell = row[0] === 'followups' ? '—' : amountText(current, valueField);
 			var rawCell = row[0] === 'followups' ? '—' : amountText(current, 'raw_value');
-			var compareCell = row[0] === 'followups' ? '—' : amountText(previous, 'normalized_value');
-			var averageCell = row[0] === 'followups' || !number(current.count) || current.net_unknown_count > 0 || current.normalized_unknown_count > 0 ? '—' : formatMoney(current.normalized_value / number(current.count));
+			var compareCell = row[0] === 'followups' ? '—' : amountText(previous, valueField);
+			var averageCell = row[0] === 'followups' || !number(current.count) || current[unknownField] > 0 ? '—' : formatMoney(current[valueField] / number(current.count));
 			html += '<tr><th>' + escapeHtml(row[1]) + '</th><td class="text-right">' + formatNumber(current.count) + '</td>' +
 				'<td class="text-right">' + rawCell + '</td><td class="text-right">' + valueCell + '</td><td class="text-right">' + averageCell + '</td>' +
 				'<td class="text-right">' + (number(reportData.current.reporting_days) ? perDay(reportData.current, row[0], 'count').toFixed(2) : '—') + '</td>' +
-				'<td class="text-right">' + (row[0] === 'followups' ? '—' : valuePerDayText(reportData.current, row[0], 'normalized_value')) + '</td>' +
+				'<td class="text-right">' + (row[0] === 'followups' ? '—' : valuePerDayText(reportData.current, row[0], valueField)) + '</td>' +
 				'<td class="text-right">' + formatNumber(previous.count) + '</td><td class="text-right">' + compareCell + '</td>' +
-				'<td class="text-right">' + (row[0] === 'followups' ? '—' : valuePerDayText(reportData.comparison, row[0], 'normalized_value')) + '</td>' +
+				'<td class="text-right">' + (row[0] === 'followups' ? '—' : valuePerDayText(reportData.comparison, row[0], valueField)) + '</td>' +
 				'<td class="text-right">' + (row[0] === 'followups' ? '—' : escapeHtml(valueChange)) + '</td>' +
 				'<td class="text-right">' + (row[0] === 'followups' ? '—' : escapeHtml(rateChange)) + '</td></tr>';
 		});
@@ -270,21 +283,22 @@
 		var dates = reportData.current.daily || [];
 		var categories = dates.map(function (item) { return item.date; });
 		var series = [
-			{ key: 'quotations', name: 'Quotations' },
-			{ key: 'purchase_orders', name: 'POs' },
-			{ key: 'delivery_challans', name: 'Delivery challans' }
+			{ key: 'quotations', name: 'Quotations', field: 'normalized_value', unknown: 'normalized_unknown_count' },
+			{ key: 'purchase_orders', name: 'Customer PO receipts', field: 'net_value', unknown: 'net_unknown_count' },
+			{ key: 'order_confirmations', name: 'Order confirmations (proxy)', field: 'normalized_value', unknown: 'normalized_unknown_count' },
+			{ key: 'delivery_challans', name: 'Delivery challans', field: 'normalized_value', unknown: 'normalized_unknown_count' }
 		];
 		if (window.Highcharts) {
 			Highcharts.chart('sp-month-chart', {
 				chart: { type: 'spline', backgroundColor: 'transparent' },
 				title: { text: null },
 				xAxis: { categories: categories, labels: { rotation: -35 } },
-				yAxis: { min: 0, title: { text: 'PKR (normalized)' } },
+				yAxis: { min: 0, title: { text: 'Reported PKR' } },
 				tooltip: { shared: true, valuePrefix: 'PKR ', valueDecimals: 0 },
 				legend: { enabled: true },
 				credits: { enabled: false },
 				series: series.map(function (entry) {
-				return { name: entry.name, data: dates.map(function (day) { var item = day.metrics[entry.key]; return day.date > reportData.current.as_of || item.value_status === 'unavailable' || number(item.normalized_unknown_count) > 0 ? null : number(item.normalized_value); }) };
+				return { name: entry.name, data: dates.map(function (day) { var item = day.metrics[entry.key]; return day.date > reportData.current.as_of ? null : chartFieldAmount(item, entry.field, entry.unknown); }) };
 				})
 			});
 		} else {
@@ -294,16 +308,26 @@
 
 	function renderWeekly() {
 		var weeks = reportData.current.weekly || [];
-		var html = '<thead><tr><th>Week starting</th><th>Enquiries</th><th>Quotations</th><th>Quote value (raw)</th><th>Quote value (normalized)</th><th>Revisions</th><th>Follow-ups</th><th>Customer POs</th><th>Customer PO net value</th><th>OCs (proxy)</th><th>OC value (proxy)</th><th>DC count</th><th>DC value (normalized)</th></tr></thead><tbody>';
-		$.each(weeks, function (_, week) {
+		var asOf = String(reportData.current.as_of || reportData.current.to || '');
+		var coverageByWeek = reportData.current.insights && reportData.current.insights.week_coverage ? reportData.current.insights.week_coverage : {};
+		var html = '<thead><tr><th>Week starting</th><th>Coverage</th><th>Enquiries</th><th>Quotations</th><th>Quote value (raw)</th><th>Quote value (normalized)</th><th>Quote change</th><th>Revisions</th><th>Follow-ups</th><th>Customer PO receipts</th><th>Customer PO net value</th><th>PO change</th><th>Order confirmations (proxy)</th><th>OC value (proxy)</th><th>DC count</th><th>DC value (normalized)</th><th>DC change</th></tr></thead><tbody>';
+		$.each(weeks, function (index, week) {
 			var m = week.metrics;
-			html += '<tr><th>' + escapeHtml(week.week_start) + '</th><td class="text-right">' + formatNumber(m.enquiries.count) + '</td>' +
+			var previousWeek = index > 0 ? weeks[index - 1] : null;
+			var previousMetrics = previousWeek ? previousWeek.metrics : null;
+			var currentCoverage = coverageByWeek[week.week_start];
+			var previousCoverage = previousWeek ? coverageByWeek[previousWeek.week_start] : null;
+			var currentComplete = currentCoverage && currentCoverage.coverage_status === 'complete';
+			var previousComplete = previousCoverage && previousCoverage.coverage_status === 'complete';
+			html += '<tr><th>' + escapeHtml(week.week_start) + '</th><td>' + escapeHtml(coverageText(currentCoverage)) + '</td><td class="text-right">' + formatNumber(m.enquiries.count) + '</td>' +
 				'<td class="text-right">' + formatNumber(m.quotations.count) + '</td><td class="text-right">' + formatMoney(m.quotations.raw_value) + '</td>' +
-				'<td class="text-right">' + formatMoney(m.quotations.normalized_value) + '</td><td class="text-right">' + formatNumber(m.revised_quotations.count) + '</td>' +
+				'<td class="text-right">' + formatMoney(m.quotations.normalized_value) + '</td><td class="text-right">' + escapeHtml(weeklyValueChange(m.quotations, previousMetrics && previousMetrics.quotations, currentComplete, previousComplete, 'normalized_value', 'normalized_unknown_count')) + '</td>' +
+				'<td class="text-right">' + formatNumber(m.revised_quotations.count) + '</td>' +
 				'<td class="text-right">' + formatNumber(m.followups.count) + '</td><td class="text-right">' + formatNumber(m.purchase_orders.count) + '</td>' +
-				'<td class="text-right">' + amountText(m.purchase_orders, 'net_value') + '</td><td class="text-right">' + formatNumber(m.order_confirmations.count) + '</td>' +
+				'<td class="text-right">' + amountText(m.purchase_orders, 'net_value') + '</td><td class="text-right">' + escapeHtml(weeklyValueChange(m.purchase_orders, previousMetrics && previousMetrics.purchase_orders, currentComplete, previousComplete, 'net_value', 'net_unknown_count')) + '</td>' +
+				'<td class="text-right">' + formatNumber(m.order_confirmations.count) + '</td>' +
 				'<td class="text-right">' + amountText(m.order_confirmations, 'normalized_value') + '</td><td class="text-right">' + formatNumber(m.delivery_challans.count) + '</td>' +
-				'<td class="text-right">' + formatMoney(m.delivery_challans.normalized_value) + '</td></tr>';
+				'<td class="text-right">' + formatMoney(m.delivery_challans.normalized_value) + '</td><td class="text-right">' + escapeHtml(weeklyValueChange(m.delivery_challans, previousMetrics && previousMetrics.delivery_challans, currentComplete, previousComplete, 'normalized_value', 'normalized_unknown_count')) + '</td></tr>';
 		});
 		html += '</tbody>';
 		$('#sp-week-table').html(html);
@@ -311,23 +335,185 @@
 			Highcharts.chart('sp-week-chart', {
 				chart: { type: 'column', backgroundColor: 'transparent' }, title: { text: null },
 				xAxis: { categories: weeks.map(function (week) { return week.week_start; }) },
-				yAxis: { min: 0, title: { text: 'PKR (normalized)' } },
+				yAxis: { min: 0, title: { text: 'Reported PKR' } },
 				tooltip: { shared: true, valuePrefix: 'PKR ', valueDecimals: 0 },
 				credits: { enabled: false },
 				series: [
-					{ name: 'Quotations', data: weeks.map(function (w) { return chartAmount(w.metrics.quotations); }) },
-					{ name: 'Customer POs', data: weeks.map(function (w) { return chartAmount(w.metrics.purchase_orders); }) },
-					{ name: 'Delivery challans', data: weeks.map(function (w) { return chartAmount(w.metrics.delivery_challans); }) }
+					{ name: 'Quotations', data: weeks.map(function (w) { return asOf && w.week_start > asOf ? null : chartAmount(w.metrics.quotations); }) },
+					{ name: 'Customer PO receipts', data: weeks.map(function (w) { return asOf && w.week_start > asOf ? null : chartFieldAmount(w.metrics.purchase_orders, 'net_value', 'net_unknown_count'); }) },
+					{ name: 'Order confirmations (proxy)', data: weeks.map(function (w) { return asOf && w.week_start > asOf ? null : chartAmount(w.metrics.order_confirmations); }) },
+					{ name: 'Delivery challans', data: weeks.map(function (w) { return asOf && w.week_start > asOf ? null : chartAmount(w.metrics.delivery_challans); }) }
 				]
 			});
 		}
 	}
 
+	function insightValueText(item, field) {
+		if (item === null || typeof item === 'undefined') return '—';
+		if (field === 'money') return formatMoney(item);
+		var formatted = formatDecimal(number(item).toFixed(2));
+		return formatted.replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+	}
+
+	function weeklyValueChange(current, previous, currentComplete, previousComplete, field, unknownField) {
+		if (!current || !previous || !currentComplete || !previousComplete || current.value_status === 'unavailable' || previous.value_status === 'unavailable'
+			|| number(current[unknownField]) > 0 || number(previous[unknownField]) > 0) return '—';
+		return pctChange(current[field], previous[field]);
+	}
+
+	function zScoreText(value) {
+		if (value === null || typeof value === 'undefined' || !isFinite(Number(value))) return 'N/A';
+		var score = Number(value);
+		return (score > 0 ? '+' : '') + score.toFixed(2);
+	}
+
+	function coverageText(coverage) {
+		if (!coverage) return 'Coverage unavailable';
+		var ratio = formatNumber(coverage.complete_workdays) + '/' + formatNumber(coverage.planned_workdays) + ' workdays complete';
+		if (coverage.coverage_status === 'complete') return 'Complete · ' + ratio;
+		if (coverage.coverage_status === 'after_cutoff') return 'After cutoff';
+		if (coverage.coverage_status === 'partial_period') return 'Partial date range · ' + ratio;
+		if (coverage.coverage_status === 'no_planned_workdays') return 'No planned workdays';
+		var periodNote = coverage.partial_date_range ? ' · partial date range' : '';
+		return String(coverage.coverage_status || 'unknown').replace(/_/g, ' ') + periodNote + ' · ' + ratio;
+	}
+
+	function renderCumulativeAndBenchmarks() {
+		var period = reportData && reportData.current ? reportData.current : {};
+		var insights = period.insights || {};
+		var weeks = period.weekly || [];
+		var coverageByWeek = insights.week_coverage || {};
+		var seriesDefinitions = [
+			{ key: 'quotations', field: 'normalized_value', unknown: 'normalized_unknown_count', name: 'Quotation value (normalized)' },
+			{ key: 'purchase_orders', field: 'net_value', unknown: 'net_unknown_count', name: 'Customer PO net value' },
+			{ key: 'order_confirmations', field: 'normalized_value', unknown: 'normalized_unknown_count', name: 'Order confirmation value (proxy)' },
+			{ key: 'delivery_challans', field: 'normalized_value', unknown: 'normalized_unknown_count', name: 'DC value (normalized)' }
+		];
+		var running = {};
+		var chartCanContinue = {};
+		$.each(seriesDefinitions, function (_, definition) {
+			running[definition.key] = { amount: 0, unknown: 0, known: 0, count: 0, incompleteCoverage: false };
+			chartCanContinue[definition.key] = true;
+		});
+
+		var html = '<thead><tr><th>Week starting</th><th>Reporting coverage</th>' +
+			'<th>Quotes (cumulative)</th><th>Quotation value (cumulative)</th>' +
+			'<th>Customer PO receipts (cumulative)</th><th>Customer PO net value (cumulative)</th>' +
+			'<th>OCs proxy (cumulative)</th><th>OC proxy value (cumulative)</th>' +
+			'<th>DCs (cumulative)</th><th>DC value (cumulative)</th></tr></thead><tbody>';
+		var chartSeries = seriesDefinitions.map(function (definition) {
+			return { name: definition.name, data: [] };
+		});
+		$.each(weeks, function (_, week) {
+			var coverage = coverageByWeek[week.week_start];
+			var coverageState = coverage && coverage.coverage_status ? coverage.coverage_status : 'unknown';
+			var asOf = String(period.as_of || period.to || '');
+			var quote = week.metrics.quotations || {};
+			var po = week.metrics.purchase_orders || {};
+			var oc = week.metrics.order_confirmations || {};
+			var dc = week.metrics.delivery_challans || {};
+			var values = { quotations: quote, purchase_orders: po, order_confirmations: oc, delivery_challans: dc };
+			var row = '<tr><th>' + escapeHtml(week.week_start) + '</th><td>' + escapeHtml(coverageText(coverage)) + '</td>';
+			$.each(seriesDefinitions, function (index, definition) {
+				var item = values[definition.key] || {};
+				var state = running[definition.key];
+				var count = number(item.count);
+				var unknown = number(item[definition.unknown]);
+				var hasAmount = item[definition.field] !== null && typeof item[definition.field] !== 'undefined' && item.value_status !== 'unavailable';
+				if (!hasAmount && count > 0 && unknown === 0) unknown = count;
+				if (hasAmount) {
+					state.amount += number(item[definition.field]);
+					state.known += Math.max(0, count - unknown);
+				}
+				state.unknown += unknown;
+				state.count += count;
+				if (coverageState === 'partial' || coverageState === 'unresolved' || coverageState === 'not_submitted' || coverageState === 'coverage_unknown') state.incompleteCoverage = true;
+				var amountStatus = state.unknown === 0 ? formatMoney(state.amount)
+					: (state.known > 0 ? formatMoney(state.amount) + ' · partial (' + formatNumber(state.unknown) + ' unknown)'
+						: 'Unavailable (' + formatNumber(state.unknown) + ' unknown)');
+				var countStatus = formatNumber(state.count) + (state.incompleteCoverage ? ' · coverage incomplete' : '');
+				row += '<td class="text-right">' + escapeHtml(countStatus) + '</td><td class="text-right">' + escapeHtml(amountStatus) + '</td>';
+				var usableCoverage = coverageState === 'complete' || coverageState === 'partial_period';
+				var weekStartsByCutoff = !asOf || week.week_start <= asOf;
+				if (chartCanContinue[definition.key] && usableCoverage && weekStartsByCutoff && unknown === 0 && hasAmount) {
+					chartSeries[index].data.push(state.amount);
+				} else {
+					chartCanContinue[definition.key] = false;
+					chartSeries[index].data.push(null);
+				}
+			});
+			html += row + '</tr>';
+		});
+		if (!weeks.length) html += '<tr><td colspan="10" class="text-muted">No weekly data is available for this period.</td></tr>';
+		html += '</tbody>';
+		$('#sp-cumulative-table').html(html);
+		if (window.Highcharts) {
+			Highcharts.chart('sp-cumulative-chart', {
+				chart: { type: 'spline', backgroundColor: 'transparent' }, title: { text: null },
+				xAxis: { categories: weeks.map(function (week) { return week.week_start; }) },
+				yAxis: { min: 0, title: { text: 'Cumulative reported PKR' } },
+				tooltip: { shared: true, valuePrefix: 'PKR ', valueDecimals: 0 }, credits: { enabled: false },
+				series: chartSeries
+			});
+		} else {
+			$('#sp-cumulative-chart').text('Chart library unavailable. Use the cumulative table below.');
+		}
+
+		var completeWeeks = insights.complete_week_starts || [];
+		var latestWeek = insights.latest_complete_week || null;
+		var note = completeWeeks.length
+			? completeWeeks.length + ' complete week' + (completeWeeks.length === 1 ? '' : 's') + ' in the baseline; latest complete week starts ' + latestWeek + '.'
+			: 'No full Monday–Saturday week has complete submitted coverage in this selection. Submit or review reporting coverage before using a statistical baseline.';
+		$('#sp-benchmark-summary').html('<p class="sp-benchmark-note">' + escapeHtml(note) + '</p>');
+		var statistics = insights.weekly_statistics || [];
+		var benchmarkHtml = '<thead><tr><th>Measure</th><th>Weeks</th><th>Mean</th><th>Median</th><th>Population SD</th><th>Latest complete week</th><th>Z-score</th><th>Position</th></tr></thead><tbody>';
+		$.each(statistics, function (_, stat) {
+			var type = stat.type === 'money' ? 'money' : 'count';
+			benchmarkHtml += '<tr><th>' + escapeHtml(stat.label) + '</th><td class="text-right">' + escapeHtml(formatNumber(stat.observations)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(insightValueText(stat.mean, type)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(insightValueText(stat.median, type)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(insightValueText(stat.population_sd, type)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(insightValueText(stat.latest, type)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(zScoreText(stat.z_score)) + '</td><td>' + escapeHtml(stat.position || 'Unavailable') + '</td></tr>';
+		});
+		if (!statistics.length) benchmarkHtml += '<tr><td colspan="8" class="text-muted">No benchmark data is available.</td></tr>';
+		benchmarkHtml += '</tbody>';
+		$('#sp-weekly-benchmark-table').html(benchmarkHtml);
+		renderWeekdayBenchmark();
+	}
+
+	function renderWeekdayBenchmark() {
+		if (!reportData || !reportData.current) return;
+		var insights = reportData.current.insights || {};
+		var metricId = $('#sp-baseline-metric').val() || 'quotations.normalized_value';
+		var rows = insights.weekday_statistics && insights.weekday_statistics[metricId] ? insights.weekday_statistics[metricId] : [];
+		var weekStarts = insights.complete_week_starts || [];
+		var statType = metricId.indexOf('.count') >= 0 ? 'count' : 'money';
+		var html = '<thead><tr><th>Weekday</th>';
+		$.each(weekStarts, function (_, weekStart) { html += '<th class="text-right">' + escapeHtml(weekStart) + '</th>'; });
+		html += '<th>Weeks</th><th>Mean</th><th>Median</th><th>Population SD</th><th>Latest Z-score</th></tr></thead><tbody>';
+		$.each(rows, function (_, row) {
+			html += '<tr><th>' + escapeHtml(row.weekday_label) + '</th>';
+			$.each(weekStarts, function (_, weekStart) {
+				var value = row.values && Object.prototype.hasOwnProperty.call(row.values, weekStart) ? row.values[weekStart] : null;
+				html += '<td class="text-right">' + escapeHtml(insightValueText(value, statType)) + '</td>';
+			});
+			html += '<td class="text-right">' + escapeHtml(formatNumber(row.observations)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(insightValueText(row.mean, statType)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(insightValueText(row.median, statType)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(insightValueText(row.population_sd, statType)) + '</td>' +
+				'<td class="text-right">' + escapeHtml(zScoreText(row.z_score)) + '</td></tr>';
+		});
+		if (!rows.length || !weekStarts.length) html += '<tr><td colspan="12" class="text-muted">No fully covered weeks are available for weekday comparisons.</td></tr>';
+		html += '</tbody>';
+		$('#sp-weekday-benchmark-table').html(html);
+	}
+
 	function renderTeams() {
 		var teams = reportData.current.teams || [];
-		var html = '<thead><tr><th>Team</th><th>Enquiries</th><th>Quotations</th><th>Quote value (raw)</th><th>Quote value (normalized)</th><th>Quote share</th><th>Revised quotes</th><th>Follow-ups</th><th>PO count</th><th>PO value (normalized)</th><th>PO / reporting day</th><th>PO share</th><th>DC count</th><th>DC value (normalized)</th><th>DC / reporting day</th><th>DC share</th></tr></thead><tbody>';
+		var html = '<thead><tr><th>Team</th><th>Enquiries</th><th>Quotations</th><th>Quote value (raw)</th><th>Quote value (normalized)</th><th>Quote share</th><th>Revised quotes</th><th>Follow-ups</th><th>Customer PO receipts</th><th>Customer PO net value</th><th>PO net / reporting day</th><th>PO share</th><th>Order confirmations (proxy)</th><th>OC value (proxy)</th><th>DC count</th><th>DC value (normalized)</th><th>DC / reporting day</th><th>DC share</th></tr></thead><tbody>';
 		var visibleTeams = teams.filter(function (team) {
-			return team.id !== 0 || number(team.metrics.enquiries.count) + number(team.metrics.quotations.count) + number(team.metrics.purchase_orders.count) + number(team.metrics.delivery_challans.count) + number(team.metrics.followups.count) > 0;
+			return team.id !== 0 || number(team.metrics.enquiries.count) + number(team.metrics.quotations.count) + number(team.metrics.purchase_orders.count) + number(team.metrics.order_confirmations.count) + number(team.metrics.delivery_challans.count) + number(team.metrics.followups.count) > 0;
 		});
 		$.each(visibleTeams, function (_, team) {
 			var m = team.metrics;
@@ -335,32 +521,34 @@
 			var poTotal = reportData.current.metrics.purchase_orders;
 			var dcTotal = reportData.current.metrics.delivery_challans;
 			var quoteShare = quoteTotal.value_status === 'unavailable' || quoteTotal.normalized_unknown_count > 0 ? '—' : (number(quoteTotal.normalized_value) ? (number(m.quotations.normalized_value) / number(quoteTotal.normalized_value) * 100).toFixed(1) + '%' : '—');
-			var poShare = poTotal.value_status === 'unavailable' || poTotal.normalized_unknown_count > 0 ? '—' : (number(poTotal.normalized_value) ? (number(m.purchase_orders.normalized_value) / number(poTotal.normalized_value) * 100).toFixed(1) + '%' : '—');
+			var poShare = poTotal.value_status === 'unavailable' || poTotal.net_unknown_count > 0 ? '—' : (number(poTotal.net_value) ? (number(m.purchase_orders.net_value) / number(poTotal.net_value) * 100).toFixed(1) + '%' : '—');
 			var dcShare = dcTotal.value_status === 'unavailable' || dcTotal.normalized_unknown_count > 0 ? '—' : (number(dcTotal.normalized_value) ? (number(m.delivery_challans.normalized_value) / number(dcTotal.normalized_value) * 100).toFixed(1) + '%' : '—');
 			var days = number(reportData.current.reporting_days);
 			html += '<tr><th>' + escapeHtml(team.name) + '</th><td class="text-right">' + formatNumber(m.enquiries.count) + '</td>' +
 				'<td class="text-right">' + formatNumber(m.quotations.count) + '</td><td class="text-right">' + amountText(m.quotations, 'raw_value') + '</td>' +
 				'<td class="text-right">' + amountText(m.quotations, 'normalized_value') + '</td><td class="text-right">' + quoteShare + '</td>' +
 				'<td class="text-right">' + formatNumber(m.revised_quotations.count) + '</td><td class="text-right">' + formatNumber(m.followups.count) + '</td>' +
-				'<td class="text-right">' + formatNumber(m.purchase_orders.count) + '</td><td class="text-right">' + amountText(m.purchase_orders, 'normalized_value') + '</td>' +
-				'<td class="text-right">' + itemPerDayText(m.purchase_orders, days) + '</td><td class="text-right">' + poShare + '</td>' +
+				'<td class="text-right">' + formatNumber(m.purchase_orders.count) + '</td><td class="text-right">' + amountText(m.purchase_orders, 'net_value') + '</td>' +
+				'<td class="text-right">' + itemPerDayFieldText(m.purchase_orders, days, 'net_value', 'net_unknown_count') + '</td><td class="text-right">' + poShare + '</td>' +
+				'<td class="text-right">' + formatNumber(m.order_confirmations.count) + '</td><td class="text-right">' + amountText(m.order_confirmations, 'normalized_value') + '</td>' +
 				'<td class="text-right">' + formatNumber(m.delivery_challans.count) + '</td><td class="text-right">' + amountText(m.delivery_challans, 'normalized_value') + '</td>' +
 				'<td class="text-right">' + itemPerDayText(m.delivery_challans, days) + '</td><td class="text-right">' + dcShare + '</td></tr>';
 		});
 		html += '</tbody>';
 		$('#sp-team-table').html(html);
-		var weekHtml = '<thead><tr><th>Week starting</th><th>Team</th><th>Quotes</th><th>Quote value (normalized)</th><th>Revisions</th><th>POs</th><th>PO value (normalized)</th><th>DCs</th><th>DC value (normalized)</th></tr></thead><tbody>';
+		var weekHtml = '<thead><tr><th>Week starting</th><th>Team</th><th>Quotes</th><th>Quote value (normalized)</th><th>Revisions</th><th>Customer PO receipts</th><th>Customer PO net value</th><th>Order confirmations (proxy)</th><th>OC value (proxy)</th><th>DCs</th><th>DC value (normalized)</th></tr></thead><tbody>';
 		var weekRowCount = 0;
 		$.each(visibleTeams, function (_, team) {
 			$.each(team.weeks || [], function (_, week) {
 				var m = week.metrics;
-				var activity = number(m.quotations.count) + number(m.revised_quotations.count) + number(m.purchase_orders.count) + number(m.delivery_challans.count) + number(m.followups.count) + number(m.enquiries.count);
+				var activity = number(m.quotations.count) + number(m.revised_quotations.count) + number(m.purchase_orders.count) + number(m.order_confirmations.count) + number(m.delivery_challans.count) + number(m.followups.count) + number(m.enquiries.count);
 				if (!activity) return;
 				weekRowCount++;
 				weekHtml += '<tr><td>' + escapeHtml(week.week_start) + '</td><th>' + escapeHtml(team.name) + '</th>' +
 					'<td class="text-right">' + formatNumber(m.quotations.count) + '</td><td class="text-right">' + amountText(m.quotations, 'normalized_value') + '</td>' +
 					'<td class="text-right">' + formatNumber(m.revised_quotations.count) + '</td><td class="text-right">' + formatNumber(m.purchase_orders.count) + '</td>' +
-					'<td class="text-right">' + amountText(m.purchase_orders, 'normalized_value') + '</td><td class="text-right">' + formatNumber(m.delivery_challans.count) + '</td>' +
+					'<td class="text-right">' + amountText(m.purchase_orders, 'net_value') + '</td><td class="text-right">' + formatNumber(m.order_confirmations.count) + '</td>' +
+					'<td class="text-right">' + amountText(m.order_confirmations, 'normalized_value') + '</td><td class="text-right">' + formatNumber(m.delivery_challans.count) + '</td>' +
 					'<td class="text-right">' + amountText(m.delivery_challans, 'normalized_value') + '</td></tr>';
 			});
 		});
@@ -371,12 +559,13 @@
 			Highcharts.chart('sp-team-chart', {
 				chart: { type: 'bar', backgroundColor: 'transparent' }, title: { text: null },
 				xAxis: { categories: visibleTeams.map(function (team) { return team.name; }) },
-				yAxis: { min: 0, title: { text: 'PKR (normalized)' } },
+				yAxis: { min: 0, title: { text: 'Reported PKR' } },
 				tooltip: { shared: true, valuePrefix: 'PKR ', valueDecimals: 0 },
 				credits: { enabled: false },
 				series: [
 					{ name: 'Quotations', data: visibleTeams.map(function (t) { return chartAmount(t.metrics.quotations); }) },
-					{ name: 'Customer POs', data: visibleTeams.map(function (t) { return chartAmount(t.metrics.purchase_orders); }) },
+					{ name: 'Customer PO receipts', data: visibleTeams.map(function (t) { return chartFieldAmount(t.metrics.purchase_orders, 'net_value', 'net_unknown_count'); }) },
+					{ name: 'Order confirmations (proxy)', data: visibleTeams.map(function (t) { return chartAmount(t.metrics.order_confirmations); }) },
 					{ name: 'Delivery challans', data: visibleTeams.map(function (t) { return chartAmount(t.metrics.delivery_challans); }) }
 				]
 			});
@@ -404,8 +593,9 @@
 			return;
 		}
 		var key = $('#sp-matrix-metric').val();
-		var field = $('#sp-matrix-value').val();
-		var fieldLabel = field === 'count' ? 'Count' : (field === 'raw_value' ? 'Raw value' : 'Normalized value');
+		var selectedField = $('#sp-matrix-value').val();
+		var field = key === 'purchase_orders' && selectedField === 'normalized_value' ? 'net_value' : selectedField;
+		var fieldLabel = selectedField === 'count' ? 'Count' : (selectedField === 'raw_value' ? 'Raw value' : (key === 'purchase_orders' ? 'Net value' : 'Normalized value'));
 		var html = '<table class="sp-matrix"><thead><tr><th>Week</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th></tr></thead><tbody>';
 		$.each(selectedTeam.weeks || [], function (_, week) {
 			html += '<tr><th class="sp-week-label">Week of ' + escapeHtml(week.week_start) + '</th>';
@@ -422,8 +612,9 @@
 				else if (state === 'outside_period') text = 'Outside period';
 				else if (state === 'not_captured') text = 'Not captured';
 				else {
-			var value = number(day.metrics[key][field]);
-			text = field === 'count' ? formatNumber(value) : (day.metrics[key].value_status === 'unavailable' || day.metrics[key].normalized_unknown_count > 0 ? 'Unavailable' : formatMoney(value));
+					var value = number(day.metrics[key][field]);
+					var unknownField = field === 'raw_value' ? 'raw_unknown_count' : (key === 'purchase_orders' ? 'net_unknown_count' : 'normalized_unknown_count');
+					text = field === 'count' ? formatNumber(value) : (day.metrics[key].value_status === 'unavailable' || number(day.metrics[key][unknownField]) > 0 ? 'Unavailable' : formatMoney(value));
 				}
 				html += '<td class="state-' + escapeHtml(state) + '" title="' + escapeHtml(day.date + ' · ' + metricLabels[key] + ' · ' + fieldLabel) + '">' + escapeHtml(text) + '</td>';
 			}
@@ -831,6 +1022,7 @@
 		renderMonthChart();
 		renderWeekly();
 		renderTeams();
+		renderCumulativeAndBenchmarks();
 		renderFollowups();
 		renderEnquiryEvents();
 		renderPoReceipts();
@@ -1093,6 +1285,7 @@
 	$('#sp-export-pdf').on('click', function () { exportCurrentRun('pdf'); });
 	$('#sp-load-run').on('click', loadFrozenRun);
 	$('#sp-matrix-team, #sp-matrix-metric, #sp-matrix-value').on('change', renderMatrix);
+	$('#sp-baseline-metric').on('change', renderWeekdayBenchmark);
 	$('a[data-toggle="tab"]').on('shown.bs.tab', function () {
 		if (window.Highcharts) {
 			$.each(Highcharts.charts, function (_, chart) { if (chart) chart.reflow(); });
