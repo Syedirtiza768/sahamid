@@ -26,45 +26,124 @@ include('includes/session.inc');
 	}
 	$channelSQL = ($channel === '') ? "UPPER(shopsale.payment) IN ('CRV','CSV')" : "UPPER(shopsale.payment) = '" . $channel . "'";
 
-	$customer = mysqli_real_escape_string($db, isset($_POST['customer']) ? $_POST['customer'] : '');
-	$salesperson = mysqli_real_escape_string($db, isset($_POST['salesperson']) ? $_POST['salesperson'] : '');
+	$customerInput = isset($_POST['customer']) ? trim($_POST['customer']) : '';
+	$salespersonInput = isset($_POST['salesperson']) ? trim($_POST['salesperson']) : '';
+	$customer = mysqli_real_escape_string($db, $customerInput);
+	$salesperson = mysqli_real_escape_string($db, $salespersonInput);
 
 	// One row per shop-sale component (shopsalesitems) per selling line (shopsalelines).
-	// Quantities and subtotals follow topItemsShopsale.php; they are component measures,
-	// not the posted shop-sale total (see docs/BI_RECONCILIATION_SHOP_SALES.md).
-	$SQL = "SELECT shopsale.orderno,
+	// Lines with no component are listed too, so every sold line appears once or more.
+	// Component Subtotal uses the rate saved on the component; Line Sale Value is what the
+	// customer was charged for the line after header discounts, which is what the edit
+	// screen's internal discount is meant to make the components add up to
+	// (see docs/BI_RECONCILIATION_SHOP_SALES.md).
+	// shopsalesitems has no index on orderno/lineno, so components are joined to their line
+	// by the line's primary key, and lines without components are added in a second query.
+	$lineColumns = "shopsale.orderno,
 		UPPER(shopsale.payment) AS channel,
 		shopsale.orddate,
 		shopsale.due,
 		shopsale.salesman,
+		shopsale.discount AS headerdiscount,
+		shopsale.discountPKR AS headerdiscountpkr,
 		debtorsmaster.name AS customer,
+		ordertotals.gross AS ordergross,
+		shopsalelines.id AS lineid,
+		shopsalelines.description AS linedescription,
+		shopsalelines.quantity AS lineqty,
+		shopsalelines.price AS lineprice,
+		linecomponents.unitsubtotal,
+		linecomponents.unsaveddiscount";
+
+	$headerJoins = "INNER JOIN shopsale ON shopsale.orderno = shopsalelines.orderno
+		INNER JOIN debtorsmaster ON debtorsmaster.debtorno = shopsale.debtorno
+		INNER JOIN (SELECT orderno, SUM(quantity * price) AS gross
+			FROM shopsalelines
+			GROUP BY orderno) AS ordertotals ON ordertotals.orderno = shopsale.orderno
+		LEFT JOIN (SELECT orderno, lineno,
+				SUM(quantity * rate * (1 - discountpercent / 100)) AS unitsubtotal,
+				SUM(rate <= 1 AND discountpercent = 0) AS unsaveddiscount
+			FROM shopsalesitems
+			GROUP BY orderno, lineno) AS linecomponents ON (linecomponents.orderno = shopsalelines.orderno AND linecomponents.lineno = shopsalelines.id)";
+
+	$filterSQL = "WHERE shopsale.complete = 1
+		AND " . $channelSQL . "
+		AND shopsale.orddate BETWEEN '" . mysqli_real_escape_string($db, $startdate) . "' AND '" . mysqli_real_escape_string($db, $enddate) . "'
+		AND debtorsmaster.name LIKE '%" . $customer . "%'
+		AND shopsale.salesman LIKE '%" . $salesperson . "%'";
+
+	$SQL = "SELECT " . $lineColumns . ",
+		shopsalesitems.id AS componentid,
+		shopsalesitems.rate,
+		shopsalesitems.discountpercent,
 		stockmaster.stockid,
 		stockmaster.mnfCode,
 		stockmaster.mnfpno,
 		stockmaster.description,
 		manufacturers.manufacturers_name,
-		stockmaster.materialcost AS listprice,
+		stockmaster.materialcost AS catalogcost,
 		(shopsalesitems.quantity * shopsalelines.quantity) AS qty,
-		shopsalesitems.discountpercent,
 		(shopsalesitems.quantity * shopsalesitems.rate * (1 - shopsalesitems.discountpercent / 100) * shopsalelines.quantity) AS subtotal
 		FROM shopsalesitems
 		INNER JOIN shopsalelines ON (shopsalelines.orderno = shopsalesitems.orderno AND shopsalelines.id = shopsalesitems.lineno)
-		INNER JOIN shopsale ON shopsale.orderno = shopsalesitems.orderno
-		INNER JOIN stockmaster ON stockmaster.stockid = shopsalesitems.stockid
+		" . $headerJoins . "
+		LEFT JOIN stockmaster ON stockmaster.stockid = shopsalesitems.stockid
 		LEFT JOIN manufacturers ON manufacturers.manufacturers_id = stockmaster.brand
-		INNER JOIN debtorsmaster ON debtorsmaster.debtorno = shopsale.debtorno
-		WHERE shopsale.complete = 1
-		AND " . $channelSQL . "
-		AND shopsale.orddate BETWEEN '" . mysqli_real_escape_string($db, $startdate) . "' AND '" . mysqli_real_escape_string($db, $enddate) . "'
-		AND debtorsmaster.name LIKE '%" . $customer . "%'
-		AND shopsale.salesman LIKE '%" . $salesperson . "%'
-		ORDER BY shopsale.orderno, shopsalesitems.lineno, shopsalesitems.id";
+		" . $filterSQL . "
+		UNION ALL
+		SELECT " . $lineColumns . ",
+		NULL AS componentid, NULL AS rate, NULL AS discountpercent,
+		NULL AS stockid, NULL AS mnfCode, NULL AS mnfpno, NULL AS description,
+		NULL AS manufacturers_name, NULL AS catalogcost, NULL AS qty, NULL AS subtotal
+		FROM shopsalelines
+		" . $headerJoins . "
+		" . $filterSQL . "
+		AND linecomponents.lineno IS NULL
+		ORDER BY orderno, lineid, componentid";
 
 	$result = mysqli_query($db, $SQL) or die('Could not load CSV / CRV items.');
 
+	// A line passes when its components add up to its sale value within PKR 1
+	$checkTolerance = 1;
+	$checkLabels = array(
+		'ok'          => 'OK',
+		'unattached'  => 'No component attached',
+		'unsaved'     => 'Cost 0 or 1.00, discount not saved',
+		'above'       => 'Components above sale',
+		'below'       => 'Components below sale'
+	);
+
 	$data = [];
 	$subtotalTotal = 0;
+	$saleTotal = 0;
+	$lineChecks = array_fill_keys(array_keys($checkLabels), 0);
+	$seenLines = [];
 	while($row = mysqli_fetch_assoc($result)){
+		// Spread header discounts over lines in proportion to their value, as the edit screen does
+		$netFactor = ($row['ordergross'] != 0)
+			? ($row['ordergross'] * (1 - $row['headerdiscount'] / 100) - $row['headerdiscountpkr']) / $row['ordergross']
+			: 1;
+		$row['linesale'] = $row['lineqty'] * $row['lineprice'] * $netFactor;
+
+		if ($row['unitsubtotal'] === null) {
+			$row['check'] = 'unattached';
+		} else {
+			$difference = $row['unitsubtotal'] * $row['lineqty'] - $row['linesale'];
+			if (abs($difference) <= $checkTolerance) {
+				$row['check'] = 'ok';
+			} elseif ($row['unsaveddiscount'] > 0) {
+				$row['check'] = 'unsaved';
+			} else {
+				$row['check'] = ($difference > 0) ? 'above' : 'below';
+			}
+		}
+
+		if (!isset($seenLines[$row['lineid']])) {
+			$seenLines[$row['lineid']] = true;
+			$saleTotal += $row['linesale'];
+			$lineChecks[$row['check']]++;
+		}
+
 		$data[] = $row;
 		$subtotalTotal += $row['subtotal'];
 	}
@@ -173,11 +252,23 @@ include('includes/session.inc');
 
 	echo '<h4>Filters</h4>'.
 	'<table border=1><tr><td colspan="2">Between: '.htmlspecialchars($startdate).' AND '.htmlspecialchars($enddate).'</td></tr>'.
-	'<tr><td>Channel: '.htmlspecialchars($channelLabel).'</td><td>Customer: '.htmlspecialchars($customer).'</td></tr>'.
-	'<tr><td colspan="2">SalesPerson: '.htmlspecialchars($salesperson).'</td></tr></table>';
+	'<tr><td>Channel: '.htmlspecialchars($channelLabel).'</td><td>Customer: '.htmlspecialchars($customerInput).'</td></tr>'.
+	'<tr><td colspan="2">SalesPerson: '.htmlspecialchars($salespersonInput).'</td></tr></table>';
 
-	echo '<p>Rows: '.count($data).' &nbsp; Component Subtotal (rates): '.number_format($subtotalTotal, 2).'</p>';
-	echo '<p><small>Catalogue Cost is the stock master cost today. Component Subtotal uses the rate copied from the stock master when the item was attached. Neither is the posted shop-sale amount.</small></p>';
+	echo '<p>Rows: '.count($data).' &nbsp; Lines: '.count($seenLines).
+		' &nbsp; Line Sale Value: '.number_format($saleTotal, 2).
+		' &nbsp; Component Subtotal: '.number_format($subtotalTotal, 2).'</p>';
+
+	echo '<table border=1><tr><th>Line Check</th><th>Lines</th></tr>';
+	foreach ($checkLabels as $checkKey => $checkLabel) {
+		echo '<tr><td>'.htmlspecialchars($checkLabel).'</td><td>'.$lineChecks[$checkKey].'</td></tr>';
+	}
+	echo '</table>';
+
+	echo '<p><small>Line Sale Value is the line quantity times its sale price, less its share of the header discount; it repeats on every component row of the line, so total it once per line. '.
+		'Saved Rate is the component rate copied from the stock master when the item was attached; Catalogue Cost is the stock master cost today. '.
+		'Component Subtotal uses the saved rate and discount. Line Check compares the components of each line with its sale value. '.
+		'Totals above cover all rows, not the table search.</small></p>';
 
 ?>
 	<table id="example" class="display" cellspacing="0" width="100%">
@@ -186,15 +277,21 @@ include('includes/session.inc');
 						<th>Sno.</th>
 						<th>Channel</th>
 						<th>Order #</th>
+						<th>Line Description</th>
+						<th>Line Qty</th>
+						<th>Sale Price</th>
+						<th>Line Sale Value</th>
 						<th>Stock ID</th>
 						<th>MNF Code</th>
 						<th>MNF #</th>
 						<th>Description</th>
 						<th>MNF Name</th>
 						<th>Quantity</th>
+						<th>Saved Rate</th>
 						<th>Catalogue Cost</th>
 						<th>Discount %</th>
 						<th>Component Subtotal</th>
+						<th>Line Check</th>
 						<th>Client</th>
 						<th>Salesman</th>
 						<th>Order Date</th>
@@ -208,16 +305,24 @@ include('includes/session.inc');
 						echo '<tr>';
 						echo '<td>'.$count++.'</td>';
 						echo '<td>'.htmlspecialchars($row['channel']).'</td>';
+						$hasComponent = ($row['componentid'] !== null);
 						echo '<td>'.htmlspecialchars($row['orderno']).'</td>';
+						echo '<td>'.htmlspecialchars($row['linedescription']).'</td>';
+						echo '<td>'.htmlspecialchars($row['lineqty']).'</td>';
+						echo '<td>'.number_format($row['lineprice'], 2, '.', '').'</td>';
+						echo '<td>'.number_format($row['linesale'], 2, '.', '').'</td>';
 						echo '<td>'.htmlspecialchars($row['stockid']).'</td>';
 						echo '<td>'.htmlspecialchars($row['mnfCode']).'</td>';
 						echo '<td>'.htmlspecialchars($row['mnfpno']).'</td>';
 						echo '<td>'.htmlspecialchars($row['description']).'</td>';
 						echo '<td>'.htmlspecialchars($row['manufacturers_name']).'</td>';
 						echo '<td>'.htmlspecialchars($row['qty']).'</td>';
-						echo '<td>'.htmlspecialchars($row['listprice']).'</td>';
-						echo '<td>'.htmlspecialchars($row['discountpercent']).'</td>';
-						echo '<td>'.number_format($row['subtotal'], 2, '.', '').'</td>';
+						echo '<td>'.($hasComponent ? number_format($row['rate'], 2, '.', '') : '').'</td>';
+						echo '<td>'.($hasComponent ? number_format($row['catalogcost'], 2, '.', '') : '').'</td>';
+						echo '<td>'.($hasComponent ? number_format($row['discountpercent'], 2, '.', '') : '').'</td>';
+						echo '<td>'.($hasComponent ? number_format($row['subtotal'], 2, '.', '') : '').'</td>';
+						$checkStyle = ($row['check'] === 'ok') ? '' : ' style="color:#b00020;font-weight:bold"';
+						echo '<td'.$checkStyle.'>'.htmlspecialchars($checkLabels[$row['check']]).'</td>';
 						echo '<td>'.htmlspecialchars($row['customer']).'</td>';
 						echo '<td>'.htmlspecialchars($row['salesman']).'</td>';
 						echo '<td>'.htmlspecialchars($row['orddate']).'</td>';
@@ -231,15 +336,21 @@ include('includes/session.inc');
 						<th>Sno.</th>
 						<th>Channel</th>
 						<th>Order #</th>
+						<th>Line Description</th>
+						<th>Line Qty</th>
+						<th>Sale Price</th>
+						<th>Line Sale Value</th>
 						<th>Stock ID</th>
 						<th>MNF Code</th>
 						<th>MNF #</th>
 						<th>Description</th>
 						<th>MNF Name</th>
 						<th>Quantity</th>
+						<th>Saved Rate</th>
 						<th>Catalogue Cost</th>
 						<th>Discount %</th>
 						<th>Component Subtotal</th>
+						<th>Line Check</th>
 						<th>Client</th>
 						<th>Salesman</th>
 						<th>Order Date</th>
