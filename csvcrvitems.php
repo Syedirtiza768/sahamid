@@ -176,8 +176,8 @@ include('includes/session.inc');
 	'<tr><td>Channel: '.htmlspecialchars($channelLabel).'</td><td>Customer: '.htmlspecialchars($customer).'</td></tr>'.
 	'<tr><td colspan="2">SalesPerson: '.htmlspecialchars($salesperson).'</td></tr></table>';
 
-	echo '<p>Rows: '.count($data).' &nbsp; Sub Total (component rates): '.number_format($subtotalTotal, 2).'</p>';
-	echo '<p><small>Sub Total is calculated from component rates in shopsalesitems. It is not the posted shop-sale amount.</small></p>';
+	echo '<p>Rows: '.count($data).' &nbsp; Component Subtotal (rates): '.number_format($subtotalTotal, 2).'</p>';
+	echo '<p><small>Catalogue Cost is the stock master cost today. Component Subtotal uses the rate copied from the stock master when the item was attached. Neither is the posted shop-sale amount.</small></p>';
 
 ?>
 	<table id="example" class="display" cellspacing="0" width="100%">
@@ -192,9 +192,9 @@ include('includes/session.inc');
 						<th>Description</th>
 						<th>MNF Name</th>
 						<th>Quantity</th>
-						<th>List Price</th>
+						<th>Catalogue Cost</th>
 						<th>Discount %</th>
-						<th>Sub Total</th>
+						<th>Component Subtotal</th>
 						<th>Client</th>
 						<th>Salesman</th>
 						<th>Order Date</th>
@@ -237,9 +237,9 @@ include('includes/session.inc');
 						<th>Description</th>
 						<th>MNF Name</th>
 						<th>Quantity</th>
-						<th>List Price</th>
+						<th>Catalogue Cost</th>
 						<th>Discount %</th>
-						<th>Sub Total</th>
+						<th>Component Subtotal</th>
 						<th>Client</th>
 						<th>Salesman</th>
 						<th>Order Date</th>
