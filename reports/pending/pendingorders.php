@@ -297,10 +297,10 @@
                     <?php
                     if(!userHasPermission($db,"director_special")){
                         echo '
-					"lengthMenu": [[10, 25, 50], [10, 25, 50]],
+					"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
 					dom: "Bflrtip",
 					buttons: [
-			            
+				            { extend: "csvHtml5", text: "Download CSV", exportOptions: { modifier: { page: "all" } } }
 			        ],';
                     }
                     else {
@@ -309,7 +309,7 @@
 					dom: "Bflrtip",
 					buttons: [
 			            "excelHtml5",
-			            "csvHtml5",
+				            { extend: "csvHtml5", text: "Download CSV", exportOptions: { modifier: { page: "all" } } },
 			        ],';
                     }
 					?>
