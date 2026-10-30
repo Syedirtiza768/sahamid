@@ -43,12 +43,12 @@
 			WHERE stockmaster.stockid = '$stockid'";
 	$res = mysqli_query($db, $SQL);
 	$item = mysqli_fetch_assoc($res);
-	if($item['price'] <= 1){
+	if($item['price'] == 0){
 
     echo json_encode([
 
         'status' => 'error',
-        'message' => 'Item Without Price (cost is 0 or the 1.00 placeholder). Set the stock master cost first.',
+        'message' => 'Item Without Price',
         'SQL' => $SQL
 
     ]);
