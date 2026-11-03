@@ -9,6 +9,10 @@
         header('Location: ' . $_SERVER['HTTP_REFERER']);
         return;
     }
+
+    // userHasPermission also grants access to users with the global "*" permission.
+    $canViewFinancialColumns = userHasPermission($db, 'director_special');
+
 	if(isset($_GET['json'])) {
         $SQL = "SELECT ocs.salescaseref,ocdetails.stkcode,stockmaster.mnfpno,manufacturers.manufacturers_name, 
               stockmaster.description,salescase.podate, DATEDIFF(CURRENT_DATE,salescase.podate) AS age,
@@ -119,10 +123,119 @@
 
         }
 
+        $purchaseUnitPrices = [];
+        $sellingUnitPrices = [];
+        if ($canViewFinancialColumns && count($responseout) > 0) {
+            require_once __DIR__ . '/../../itemsReport/report_helpers.php';
+
+            $stockIds = [];
+            $salescaseRefs = [];
+            foreach ($responseout as $row) {
+                if ((float)$row['sumQtyPO'] <= (float)$row['sumQtyDC']) {
+                    continue;
+                }
+                $stockIds[$row['stkcode']] = $row['stkcode'];
+                $salescaseRefs[$row['salescaseref']] = $row['salescaseref'];
+            }
+
+            if (count($stockIds) > 0) {
+                $stockIdsSql = "'" . implode("','", array_map(function ($id) use ($db) {
+                    return mysqli_real_escape_string($db, $id);
+                }, array_values($stockIds))) . "'";
+
+                // Match Cross-sectional Stock Analysis / Items List: price current
+                // on-hand stock from newest landed IGP cost lots, then use the
+                // latest adjusted price when no lot cost can value the stock.
+                $parchinoData = [];
+                $SQL = "SELECT stockid, quantity, price, adjust_unit_price, landing_factor
+                        FROM igp_parchi
+                        WHERE stockid IN ($stockIdsSql)
+                        ORDER BY stockid, pdate DESC, id DESC";
+                $res = mysqli_query($db, $SQL);
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $parchinoData[$row['stockid']][] = [
+                        'quantity' => (float)$row['quantity'],
+                        'price' => (float)$row['price'],
+                        'adjust_unit_price' => (float)($row['adjust_unit_price'] ?? 0),
+                        'landing_factor' => (float)($row['landing_factor'] ?? 1)
+                    ];
+                }
+
+                $currentQuantities = [];
+                $SQL = "SELECT stockid, SUM(quantity) AS total_qty
+                        FROM locstock
+                        WHERE stockid IN ($stockIdsSql)
+                        GROUP BY stockid";
+                $res = mysqli_query($db, $SQL);
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $currentQuantities[$row['stockid']] = (float)$row['total_qty'];
+                }
+
+                $fallbackPrices = getReportFallbackPrices($db, $stockIdsSql);
+                foreach (array_values($stockIds) as $stockid) {
+                    $currentQty = $currentQuantities[$stockid] ?? 0;
+                    $priceData = calculatePriceForStock(
+                        $parchinoData[$stockid] ?? [],
+                        $currentQty,
+                        $fallbackPrices[$stockid]['price'] ?? 0
+                    );
+                    $landedUnitPrice = ($currentQty > 0 && (float)$priceData['total_quantity'] > 0)
+                        ? (float)$priceData['total_bpitems_price'] / $currentQty
+                        : 0;
+
+                    $latestAdjust = 0;
+                    $latestLandingFactor = 1;
+                    if (!empty($parchinoData[$stockid])) {
+                        $latestAdjust = (float)($parchinoData[$stockid][0]['adjust_unit_price'] ?? 0);
+                        $latestLandingFactor = (float)($parchinoData[$stockid][0]['landing_factor'] ?? 1);
+                    }
+                    if ($latestLandingFactor <= 0) {
+                        foreach ($parchinoData[$stockid] ?? [] as $parchino) {
+                            $candidateFactor = (float)($parchino['landing_factor'] ?? 0);
+                            if ($candidateFactor > 0) {
+                                $latestLandingFactor = $candidateFactor;
+                                break;
+                            }
+                        }
+                        if ($latestLandingFactor <= 0) {
+                            $latestLandingFactor = 1;
+                        }
+                    }
+
+                    $unitPrice = $landedUnitPrice > 0
+                        ? $landedUnitPrice
+                        : $latestAdjust * $latestLandingFactor;
+                    $purchaseUnitPrices[$stockid] = $unitPrice > 0 ? round($unitPrice, 2) : null;
+                }
+            }
+
+            if (count($salescaseRefs) > 0 && count($stockIds) > 0) {
+                $salescaseRefsSql = "'" . implode("','", array_map(function ($id) use ($db) {
+                    return mysqli_real_escape_string($db, $id);
+                }, array_values($salescaseRefs))) . "'";
+
+                // Salescase item analysis uses the average OC unit price and
+                // average discount for each salescase/item pair (its "OC Net").
+                $SQL = "SELECT ocs.salescaseref, ocdetails.stkcode,
+                               AVG(ocdetails.unitprice) AS avg_unit_price,
+                               AVG(ocdetails.discountpercent) AS avg_discount
+                        FROM ocs
+                        INNER JOIN ocdetails ON ocs.orderno = ocdetails.orderno
+                        WHERE ocs.salescaseref IN ($salescaseRefsSql)
+                          AND ocdetails.stkcode IN ($stockIdsSql)
+                        GROUP BY ocs.salescaseref, ocdetails.stkcode";
+                $res = mysqli_query($db, $SQL);
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $sellingUnitPrices[$row['salescaseref']][$row['stkcode']] =
+                        (float)$row['avg_unit_price'] * (1 - (float)$row['avg_discount']);
+                }
+            }
+        }
+
         foreach($responseout as $key=>$resp) {
             if ($resp['sumQtyPO']<=$resp['sumQtyDC'])
                 continue;
-            $output[] = [
+            $outputRow = [
                 0 => "<a target='_blank' href='../../salescase/salescaseview.php?salescaseref=".$resp['salescaseref']."'>".$resp['salescaseref']."</a>",
                 1 => $resp['stkcode'],
                 2 => $resp['mnfpno'],
@@ -138,6 +251,25 @@
                 12 => $resp['salesman']
 
             ];
+
+            if ($canViewFinancialColumns) {
+                $pendingQty = max(0, (float)$resp['sumQtyPO'] - (float)$resp['sumQtyDC']);
+                $purchaseUnitPrice = $purchaseUnitPrices[$resp['stkcode']] ?? null;
+                $sellingUnitPrice = $sellingUnitPrices[$resp['salescaseref']][$resp['stkcode']] ?? null;
+                $purchaseTotal = $purchaseUnitPrice === null ? null : round($pendingQty * $purchaseUnitPrice, 2);
+                $sellingTotal = $sellingUnitPrice === null ? null : round($pendingQty * $sellingUnitPrice, 2);
+                $margin = ($purchaseTotal === null || $sellingTotal === null)
+                    ? null
+                    : round($sellingTotal - $purchaseTotal, 2);
+
+                $outputRow[13] = $purchaseUnitPrice;
+                $outputRow[14] = $purchaseTotal;
+                $outputRow[15] = $sellingUnitPrice === null ? null : round($sellingUnitPrice, 2);
+                $outputRow[16] = $sellingTotal;
+                $outputRow[17] = $margin;
+            }
+
+            $output[] = $outputRow;
         }
             echo json_encode($output);
             return;
@@ -242,6 +374,13 @@
                     <th>Location</th>
                     <th>Customer</th>
                     <th>SalesPerson</th>
+					<?php if ($canViewFinancialColumns) { ?>
+						<th>Unit Purchase Price</th>
+						<th>Total Purchase Price</th>
+						<th>Unit Selling Price</th>
+						<th>Total Selling Price</th>
+						<th>Margin</th>
+					<?php } ?>
 				</tr>
 			</thead>
 			<tbody>
@@ -249,6 +388,7 @@
 			<tfoot>
 				<tr>
                     <th>salescase</th>
+                    <th>stock code</th>
                     <th>itemPno</th>
                     <th>itemBrand</th>
                     <th>Description</th>
@@ -260,6 +400,13 @@
                     <th>Location</th>
                     <th>Customer</th>
                     <th>SalesPerson</th>
+					<?php if ($canViewFinancialColumns) { ?>
+						<th>Unit Purchase Price</th>
+						<th>Total Purchase Price</th>
+						<th>Unit Selling Price</th>
+						<th>Total Selling Price</th>
+						<th>Margin</th>
+					<?php } ?>
 				</tr>
 			</tfoot>
 		</table>
@@ -295,7 +442,7 @@
 						{ "sClass": "textLeft", "aTargets": [ 1 ] }
 					],
                     <?php
-                    if(!userHasPermission($db,"director_special")){
+					if(!$canViewFinancialColumns){
                         echo '
 					"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
 					dom: "Bflrtip",
