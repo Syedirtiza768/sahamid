@@ -60,6 +60,19 @@ if (isset($_POST['to'])) {
         return $r;
     }
 
+    require_once __DIR__ . '/key_schema.php';
+    // unicode_ci can treat distinct source IDs (including invisible characters) as equal.
+    // Copy key types/collations from the source while keeping descriptive text utf8mb4.
+    $stockIdDefinition = crosssection_key_column_definition(DB_fetch_array(
+        run_sql("SHOW FULL COLUMNS FROM stockmaster LIKE 'stockid'", $db)
+    ));
+    $moveStockIdDefinition = crosssection_key_column_definition(DB_fetch_array(
+        run_sql("SHOW FULL COLUMNS FROM stockmoves LIKE 'stockid'", $db)
+    ));
+    $moveLocationDefinition = crosssection_key_column_definition(DB_fetch_array(
+        run_sql("SHOW FULL COLUMNS FROM stockmoves LIKE 'loccode'", $db)
+    ));
+
     /** IB form sheet rows keyed by YYYY-MM-DD (month-start), within report range. */
     function crosssection_ib_form_by_date($conn, $fromYmd, $toYmd) {
         $fromEsc = mysqli_real_escape_string($conn, $fromYmd);
@@ -190,9 +203,10 @@ if (isset($_POST['to'])) {
         return ['byDate' => $out, 'cache' => $stats];
     }
 
-    run_sql("CREATE TABLE IF NOT EXISTS crosssection_qoh_snapshot_cache (
+    // The old cache may have merged different stock IDs under unicode_ci; rebuild separately.
+    run_sql("CREATE TABLE IF NOT EXISTS crosssection_qoh_snapshot_cache_v2 (
         snapshot_date DATE NOT NULL,
-        stockid VARCHAR(50) NOT NULL,
+        stockid $stockIdDefinition,
         qoh DECIMAL(20,4) NOT NULL,
         computed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (snapshot_date, stockid),
@@ -207,7 +221,7 @@ if (isset($_POST['to'])) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
 
     /** @return array<string,float>|null Full map for all $stockIds, or null if cache incomplete */
-    $load_qoh_snapshot_from_cache = function (string $dateSqlEscaped, array $stockIds) use ($db, $run_sql) {
+    $load_qoh_snapshot_from_cache = function (string $dateSqlEscaped, array $stockIds) use ($db) {
         if ($stockIds === []) {
             return [];
         }
@@ -219,7 +233,7 @@ if (isset($_POST['to'])) {
             }
             $inSql = implode(',', $parts);
             $res = run_sql(
-                "SELECT stockid, qoh FROM crosssection_qoh_snapshot_cache
+                "SELECT stockid, qoh FROM crosssection_qoh_snapshot_cache_v2
                   WHERE snapshot_date = '$dateSqlEscaped' AND stockid IN ($inSql)",
                 $db
             );
@@ -237,7 +251,7 @@ if (isset($_POST['to'])) {
     };
 
     /** @param array<string,float> $qohByStockid */
-    $save_qoh_snapshot_to_cache = function (string $dateSqlEscaped, array $qohByStockid) use ($db, $run_sql) {
+    $save_qoh_snapshot_to_cache = function (string $dateSqlEscaped, array $qohByStockid) use ($db) {
         if ($qohByStockid === []) {
             return;
         }
@@ -248,7 +262,7 @@ if (isset($_POST['to'])) {
                 $vals[] = "('$dateSqlEscaped', '$sidE', " . (float) $q . ", NOW())";
             }
             run_sql(
-                "INSERT INTO crosssection_qoh_snapshot_cache (snapshot_date, stockid, qoh, computed_at)
+                "INSERT INTO crosssection_qoh_snapshot_cache_v2 (snapshot_date, stockid, qoh, computed_at)
                  VALUES " . implode(',', $vals) . "
                  ON DUPLICATE KEY UPDATE qoh = VALUES(qoh), computed_at = NOW()",
                 $db
@@ -257,12 +271,12 @@ if (isset($_POST['to'])) {
     };
 
     /** Apply per-stock QOH to tmp_report.qohA or .qohB in one join update. */
-    $apply_qoh_map_to_tmp_report_column = function (string $column, array $qohByStockid) use ($db, $run_sql) {
+    $apply_qoh_map_to_tmp_report_column = function (string $column, array $qohByStockid) use ($db, $stockIdDefinition) {
         if (!in_array($column, ['qohA', 'qohB'], true) || $qohByStockid === []) {
             return;
         }
         run_sql("CREATE TEMPORARY TABLE tmp_qoh_apply (
-            stockid VARCHAR(50) NOT NULL PRIMARY KEY,
+            stockid $stockIdDefinition PRIMARY KEY,
             qoh DECIMAL(20,4) NOT NULL
         ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
         foreach (array_chunk($qohByStockid, 400, true) as $chunk) {
@@ -278,12 +292,13 @@ if (isset($_POST['to'])) {
 
     /**
      * QOH per stockid at end of a calendar date (same rules as opening/closing moves).
-     * With $stockIdsForFullSnapshot, reads/writes crosssection_qoh_snapshot_cache so any report or timeline
+     * With $stockIdsForFullSnapshot, reads/writes crosssection_qoh_snapshot_cache_v2 so any report or timeline
      * can reuse the same date without rescanning stockmoves.
      */
     $qoh_at_date = function (string $dateSqlEscaped, array $stockIdsForFullSnapshot = null) use (
         $db,
-        $run_sql,
+        $moveStockIdDefinition,
+        $moveLocationDefinition,
         $forceQohCacheRefresh,
         $load_qoh_snapshot_from_cache,
         $save_qoh_snapshot_to_cache
@@ -298,8 +313,8 @@ if (isset($_POST['to'])) {
         }
 
         run_sql("CREATE TEMPORARY TABLE tmp_snap_moves (
-            stockid VARCHAR(50) NOT NULL,
-            loccode VARCHAR(10) NOT NULL,
+            stockid $moveStockIdDefinition,
+            loccode $moveLocationDefinition,
             stkmoveno INT NOT NULL,
             PRIMARY KEY (stockid, loccode)
         ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
@@ -402,7 +417,7 @@ if (isset($_POST['to'])) {
     // STEP 1: Create temp table with all stock items in one shot
     // ═══════════════════════════════════════════════════════════
     run_sql("CREATE TEMPORARY TABLE tmp_report (
-        stockid VARCHAR(50) NOT NULL PRIMARY KEY,
+        stockid $stockIdDefinition PRIMARY KEY,
         mnfCode VARCHAR(50),
         mnfpno VARCHAR(50),
         description VARCHAR(255),
@@ -448,8 +463,8 @@ if (isset($_POST['to'])) {
     }
     if (!$openingFromCache) {
         run_sql("CREATE TEMPORARY TABLE tmp_open_moves (
-            stockid VARCHAR(50) NOT NULL,
-            loccode VARCHAR(10) NOT NULL,
+            stockid $moveStockIdDefinition,
+            loccode $moveLocationDefinition,
             stkmoveno INT NOT NULL,
             PRIMARY KEY (stockid, loccode)
         ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
@@ -503,8 +518,8 @@ if (isset($_POST['to'])) {
     }
     if (!$closingFromCache) {
         run_sql("CREATE TEMPORARY TABLE tmp_close_moves (
-            stockid VARCHAR(50) NOT NULL,
-            loccode VARCHAR(10) NOT NULL,
+            stockid $moveStockIdDefinition,
+            loccode $moveLocationDefinition,
             stkmoveno INT NOT NULL,
             PRIMARY KEY (stockid, loccode)
         ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", $db);
@@ -1801,8 +1816,8 @@ $(document).ready(function() {
         var seen = Object.create(null);
         var out = [];
         for (var i = 0; i < rows.length; i++) {
-            var raw = rows[i] && rows[i].stockid != null ? String(rows[i].stockid) : '';
-            var key = raw !== '' ? raw.toLowerCase() : '';
+            // The server preserves the source ID; only remove exact duplicate rows here.
+            var key = rows[i] && rows[i].stockid != null ? String(rows[i].stockid) : '';
             if (key !== '' && seen[key]) {
                 continue;
             }
