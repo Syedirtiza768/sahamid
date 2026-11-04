@@ -235,7 +235,7 @@ while ($rowData = mysqli_fetch_assoc($ressData)) {
 			},
 			success: function(data) {
 				var data = JSON.parse(data);
-				var res = data;
+				var res = data.chart || data;
 
 				Highcharts.chart('totaloutstandingcontcrv', {
 					chart: {

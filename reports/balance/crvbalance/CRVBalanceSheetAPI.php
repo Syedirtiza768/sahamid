@@ -1,9 +1,23 @@
 <?php
 
+	$AllowAnyone = true;
 	$PathPrefix='../../../';
 
 	include('../../../includes/session.inc');
 	include('../../../includes/SQL_CommonFunctions.inc');
+
+	$location = isset($_GET['location']) ? trim($_GET['location']) : '';
+	$canViewSrBalance = $location === 'SR' && userHasPermission($db, 'CRVBalanceSheetSRAll');
+	$canViewAllSalesmen = userHasPermission($db, 'executive_listing') || $canViewSrBalance;
+	if (!userHasPermission($db, 'CRV_Balance_Sheet') &&
+		!userHasPermission($db, 'executive_listing') &&
+		!$canViewSrBalance) {
+		http_response_code(403);
+		echo json_encode([]);
+		return;
+	}
+	$locationFilter = mysqli_real_escape_string($db, $location);
+	$currentSalesman = mysqli_real_escape_string($db, isset($_SESSION['UsersRealName']) ? $_SESSION['UsersRealName'] : '');
 
 	$SQL = 'SELECT shopsale.salesman as salesmanname,debtorsmaster.debtorno,debtorsmaster.name,
 				SUM(ovamount-alloc) AS 30daysdue 
@@ -14,11 +28,11 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if(!userHasPermission($db, "executive_listing")) {
-                $SQL .= ' AND shopsale.salesman ="' . $_SESSION['UsersRealName'] . '"';
+            if (!$canViewAllSalesmen) {
+                $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
             }
-	if(isset($_GET['location']) && $_GET['location'] != ""){
-		$SQL .=	' AND debtortrans.debtorno LIKE "%'.$_GET['location'].'%"';
+	if ($location !== '') {
+		$SQL .=	' AND debtortrans.debtorno LIKE "%'.$locationFilter.'%"';
 	}
 
 	$SQL .=	' AND DATEDIFF( "'.date('Y/m/d').'",shopsale.orddate) >= 30 
@@ -46,12 +60,12 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if(!userHasPermission($db, "executive_listing")) {
-                $SQL .= ' AND shopsale.salesman ="' . $_SESSION['UsersRealName'] . '"';
+            if (!$canViewAllSalesmen) {
+                $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
             }
 			
-			if(isset($_GET['location']) && $_GET['location'] != ""){
-				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$_GET['location'].'%"';
+			if ($location !== '') {
+				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$locationFilter.'%"';
 			}
 
 			$SQL .= ' AND DATEDIFF( "'.date('Y/m/d').'",shopsale.orddate) >= 60 
@@ -83,12 +97,12 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if(!userHasPermission($db, "executive_listing")) {
-                $SQL .= ' AND shopsale.salesman ="' . $_SESSION['UsersRealName'] . '"';
+            if (!$canViewAllSalesmen) {
+                $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
             }
 
-			if(isset($_GET['location']) && $_GET['location'] != ""){
-				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$_GET['location'].'%"';
+			if ($location !== '') {
+				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$locationFilter.'%"';
 			}
 
 			$SQL .= ' AND DATEDIFF( "'.date('Y/m/d').'",shopsale.orddate) >= 90 
@@ -120,11 +134,11 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if(!userHasPermission($db, "executive_listing")) {
-                $SQL .= ' AND shopsale.salesman ="' . $_SESSION['UsersRealName'] . '"';
+            if (!$canViewAllSalesmen) {
+                $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
             }
-			if(isset($_GET['location']) && $_GET['location'] != ""){
-				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$_GET['location'].'%"';
+			if ($location !== '') {
+				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$locationFilter.'%"';
 			}
 
 			$SQL .= ' AND DATEDIFF( "'.date('Y/m/d').'",shopsale.orddate) >= 120
@@ -155,11 +169,11 @@
 			WHERE debtortrans.type=750 
 			AND debtortrans.settled=0 
 			AND shopsale.payment="crv"';
-            if(!userHasPermission($db, "executive_listing")) {
-                $SQL .= ' AND shopsale.salesman ="' . $_SESSION['UsersRealName'] . '"';
+            if (!$canViewAllSalesmen) {
+                $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
             }
-			if(isset($_GET['location']) && $_GET['location'] != ""){
-				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$_GET['location'].'%"';
+			if ($location !== '') {
+				$SQL .=	' AND debtortrans.debtorno LIKE "%'.$locationFilter.'%"';
 			}
 
 			$SQL .= ' GROUP BY debtortrans.debtorno'; 

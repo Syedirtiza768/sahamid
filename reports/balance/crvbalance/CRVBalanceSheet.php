@@ -1,16 +1,21 @@
 <?php 
 	
+	$AllowAnyone = true;
 	$PathPrefix='../../../';
 
 	include('../../../includes/session.inc');
 	include('../../../includes/SQL_CommonFunctions.inc');
 
-		if(!userHasPermission($db, 'CRV_Balance_Sheet')) {
+	$location = isset($_GET['location']) ? trim($_GET['location']) : '';
+	$canViewSrBalance = $location === 'SR' && userHasPermission($db, 'CRVBalanceSheetSRAll');
 
-			
-			header("Location: /sahamid/v2/reportLinks.php");
-			exit;
-		}
+	if (!userHasPermission($db, 'CRV_Balance_Sheet') &&
+		!userHasPermission($db, 'executive_listing') &&
+		!$canViewSrBalance) {
+
+		header("Location: /sahamid/v2/reportLinks.php");
+		exit;
+	}
 
 	/*if(isset($_GET['location']) && $_GET['location'] == 'SR'){
 		if(!userHasPermission($db, 'CustomerBalanceSheetSR')) {
@@ -107,7 +112,7 @@
   				
   			</tbody>
             <?php
-            if(!userHasPermission($db, "executive_listing")) {
+            if(!userHasPermission($db, "executive_listing") && !$canViewSrBalance) {
 
                 echo'<tfoot hidden>';}
             else
@@ -217,7 +222,7 @@
 				
 				$.ajax({
 					type: 'GET',
-					url: "<?php echo $RootPath; ?>"+"/CRVBalanceSheetAPI.php"+"?location=<?php echo $_GET['location']; ?>",
+					url: <?php echo json_encode($RootPath . '/CRVBalanceSheetAPI.php'); ?> + '?location=' + encodeURIComponent(<?php echo json_encode($location); ?>),
 					dataType: "json",
 					success: function(response) { 
 						datatable.rows.add(response).draw(false);
@@ -229,7 +234,7 @@
 				
 				/*$.ajax({
 					type: 'GET',
-					url: "<?php echo $RootPath; ?>"+"/TotalCustBalanceAPI.php"+"?location=<?php echo $_GET['location']; ?>",
+					url: "<?php echo $RootPath; ?>"+"/TotalCustBalanceAPI.php"+"?location=<?php echo rawurlencode($location); ?>",
 					dataType: "json",
 					success: function(response) { 
 						$("#totalBalance").html(response.totalBalance);

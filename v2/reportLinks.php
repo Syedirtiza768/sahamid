@@ -180,8 +180,10 @@
 						foreach($values as $name => $link){ 
 							$ScriptNameArray = explode('?', substr($link,1));
 			            	$ScriptNameArray = explode('/',$ScriptNameArray[0]);
-							$PageSecurity = $_SESSION['PageSecurityArray'][$ScriptNameArray[count($ScriptNameArray)-1]];
-							if ((in_array($PageSecurity, $_SESSION['AllowedPageSecurityTokens']))){
+				            	$scriptName = $ScriptNameArray[count($ScriptNameArray)-1];
+				            	$PageSecurity = isset($_SESSION['PageSecurityArray'][$scriptName]) ? $_SESSION['PageSecurityArray'][$scriptName] : null;
+				            	$canOpenScopedCrvSrBalance = $name === 'CRV Total Outstanding SR' && userHasPermission($db, 'CRVBalanceSheetSRAll');
+							if (($PageSecurity !== null && in_array($PageSecurity, $_SESSION['AllowedPageSecurityTokens'])) || $canOpenScopedCrvSrBalance){
 					?>
 						
 						<div class="col-md-3 linkabcd">
