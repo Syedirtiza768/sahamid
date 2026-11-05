@@ -62,7 +62,7 @@
             view: ['overview', 'explore', 'coverage'].indexOf(view) >= 0 ? view : 'overview',
             preset: p.get('preset') || (p.has('start') ? 'custom' : 'ytd'), start: p.get('start') || '', end: p.get('end') || '',
             comparison: p.get('comparison') || 'yoy', comparison_start: p.get('comparison_start') || '', comparison_end: p.get('comparison_end') || '',
-            dataset: p.get('dataset') || '', group_by: p.get('group_by') || '', search: p.get('search') || '',
+            dataset: p.get('dataset') || '', month: validDate(p.get('month') || '') ? p.get('month') : '', group_by: p.get('group_by') || '', search: p.get('search') || '',
             sort: p.get('sort') || 'date', direction: p.get('direction') === 'asc' ? 'asc' : 'desc', page: Math.max(1, parseInt(p.get('page'), 10) || 1),
             page_size: [25, 50, 100].indexOf(Number(p.get('page_size'))) >= 0 ? Number(p.get('page_size')) : 50, filters: filters
         };
@@ -83,6 +83,12 @@
         var p = new URLSearchParams();
         p.set('action', action);
         ['preset', 'start', 'end', 'comparison', 'comparison_start', 'comparison_end'].forEach(function (key) { if (state[key]) { p.set(key, state[key]); } });
+        if ((action === 'explore' || action === 'export') && state.month) {
+            var monthStart = state.month, monthLast = iso(new Date(Date.UTC(dateUTC(state.month).getUTCFullYear(), dateUTC(state.month).getUTCMonth() + 1, 0)));
+            p.set('preset', 'custom'); p.set('start', monthStart < state.start ? state.start : monthStart); p.set('end', monthLast > state.end ? state.end : monthLast);
+            p.delete('comparison_start'); p.delete('comparison_end');
+            p.set('comparison', state.comparison === 'custom' ? 'yoy' : state.comparison);
+        }
         if (action === 'explore' || action === 'export') {
             ['dataset', 'group_by', 'search', 'sort', 'direction', 'page', 'page_size'].forEach(function (key) { if (state[key] !== '') { p.set(key, state[key]); } });
             if (Object.keys(state.filters).length) { p.set('filters', JSON.stringify(state.filters)); }
@@ -97,14 +103,16 @@
             });
         });
     }
-    function useMetadata(metadata) {
+    function useMetadata(metadata, keepPeriod) {
         metadata = metadata || {};
         var period = metadata.period || {};
-        if (period.start) { state.start = period.start; }
-        if (period.end) { state.end = period.end; }
-        if (period.comparison_start) { state.comparison_start = period.comparison_start; }
-        if (period.comparison_end) { state.comparison_end = period.comparison_end; }
-        if (period.comparison === 'none') { state.comparison_start = ''; state.comparison_end = ''; }
+        if (!keepPeriod) {
+            if (period.start) { state.start = period.start; }
+            if (period.end) { state.end = period.end; }
+            if (period.comparison_start) { state.comparison_start = period.comparison_start; }
+            if (period.comparison_end) { state.comparison_end = period.comparison_end; }
+            if (period.comparison === 'none') { state.comparison_start = ''; state.comparison_end = ''; }
+        }
         if (period.fiscal_start_month) { fiscalStart = Number(period.fiscal_start_month); }
         if (period.today) { config.today = period.today; }
         periodDays = period.days; comparisonDays = period.comparison_days;
@@ -114,6 +122,15 @@
         $('dirStatus').textContent = 'Live source refreshed' + (isNumber(metadata.server_ms) ? ' · ' + number(metadata.server_ms, 0) + ' ms server time' : '') + ' · ' + (state.view === 'explore' ? 'Investigation filters applied' : 'Company overview');
         syncControls();
     }
+    function updateChip() {
+        var select = $('dirPreset'), option = select.options[select.selectedIndex];
+        var label = state.preset === 'custom' ? 'Custom dates' : (option ? option.text : '');
+        var range = state.start && state.end ? showDate(state.start) + ' – ' + showDate(state.end) : 'Resolving dates';
+        var compare = state.comparison === 'none' ? 'no comparison' : (comparisonLabels[state.comparison] || 'vs comparison period');
+        $('dirPeriodChipText').textContent = label + ' · ' + range + ' · ' + compare;
+    }
+    function closePopover() { $('dirFilters').hidden = true; $('dirPeriodChip').setAttribute('aria-expanded', 'false'); }
+    function submitFilters() { $('dirFilters').dispatchEvent(new Event('submit', { cancelable: true })); }
     function syncControls() {
         ['preset', 'start', 'end', 'comparison', 'comparison_start', 'comparison_end'].forEach(function (key) { var id = { preset: 'dirPreset', start: 'dirStart', end: 'dirEnd', comparison: 'dirComparison', comparison_start: 'dirComparisonStart', comparison_end: 'dirComparisonEnd' }[key]; $(id).value = state[key] || ''; });
         $('dirCustomStartWrap').hidden = state.comparison !== 'custom';
@@ -124,8 +141,9 @@
         var current = state.start && state.end ? showDate(state.start) + ' – ' + showDate(state.end) : 'Resolving dates';
         var comparison = state.comparison === 'none' ? 'No comparison' : (state.comparison_start && state.comparison_end ? 'Compared with ' + showDate(state.comparison_start) + ' – ' + showDate(state.comparison_end) : 'Resolving comparison');
         $('dirPeriodContext').textContent = current + ' · ' + comparison + (isNumber(periodDays) ? ' · ' + periodDays + ' days' + (isNumber(comparisonDays) ? ' versus ' + comparisonDays + ' days' : '') : '') + ' · Fiscal year begins ' + new Date(Date.UTC(2000, fiscalStart - 1, 1)).toLocaleString(undefined, { month: 'long', timeZone: 'UTC' }) + '. ' + (state.view === 'explore' ? 'Investigation filters apply to the selected measure.' : 'Overview covers the authorized company. Current snapshots use today’s balances.');
+        updateChip();
         var dimensions = dimsFor(metricById(state.dataset));
-        $('dirChips').innerHTML = state.view === 'explore' ? Object.keys(state.filters).map(function (key) { return '<button class="dir-chip" type="button" data-remove-filter="' + esc(key) + '" title="Remove this filter">' + esc(dimensions[key] || key) + ': ' + esc(state.filters[key]) + ' ×</button>'; }).join('') : '';
+        $('dirChips').innerHTML = (state.view === 'explore' && state.month ? '<button class="dir-chip" type="button" data-remove-month="1" title="Back to the whole period">Month: ' + esc(monthLabel(state.month)) + ' ×</button>' : '') + (state.view === 'explore' ? Object.keys(state.filters).map(function (key) { return '<button class="dir-chip" type="button" data-remove-filter="' + esc(key) + '" title="Remove this filter">' + esc(dimensions[key] || key) + ': ' + esc(state.filters[key]) + ' ×</button>'; }).join('') : '');
         ['overview', 'explore', 'coverage'].forEach(function (view) { document.querySelector('[data-view="' + view + '"]').classList.toggle('is-active', state.view === view); $('dir' + view.charAt(0).toUpperCase() + view.slice(1)).hidden = state.view !== view; });
     }
     function sectionFor(metric) {
@@ -238,38 +256,74 @@
         renderRows(data, m, dimensions);
     }
     function trendPeriod(row) { return String(row.period || row.period_start || '').slice(0, 10); }
+    var trendTips = [];
+    function monthLastDay(first) { var d = dateUTC(first); return iso(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0))); }
+    function partialMonth(first, rangeStart, rangeEnd) { return validDate(first) && validDate(rangeStart || '') && validDate(rangeEnd || '') && (first < rangeStart || monthLastDay(first) > rangeEnd); }
     function renderTrend(data, metric) {
-        var current = data.trend || [], previous = data.comparison_trend || [];
+        var current = data.trend || [], previous = data.comparison_trend || [], per = (data.metadata || {}).period || {};
         if (isSnapshot(metric)) {
             $('dirTrend').innerHTML = '<div class="dir-snapshot-note">This is a live snapshot of the current records.<br>Historical balances require retained snapshots or a validated reconstruction. The selected date range does not turn current allocations or quantities into past balances.</div>';
             $('dirTrendTable').innerHTML = ''; return;
         }
         if (!current.length && !previous.length) { $('dirTrend').innerHTML = '<div class="dir-placeholder">No activity was returned for these periods.</div>'; $('dirTrendTable').innerHTML = ''; return; }
-        var length = Math.max(current.length, previous.length), values = [];
+        var length = Math.max(current.length, previous.length), values = [], anyPartial = false, unitText = unit(metric);
         current.concat(previous).forEach(function (r) { if (isNumber(r.value)) { values.push(Number(r.value)); } });
         var maximum = Math.max.apply(null, [0].concat(values)), minimum = Math.min.apply(null, [0].concat(values));
         if (maximum === minimum) { maximum = minimum + 1; }
-        var width = 650, height = 255, left = 55, right = 10, top = 22, bottom = 40, plotHeight = height - top - bottom, plotWidth = width - left - right;
+        var width = 650, height = 265, left = 62, right = 10, top = 22, bottom = 44, plotHeight = height - top - bottom, plotWidth = width - left - right;
         var y = function (v) { return top + (maximum - v) / (maximum - minimum) * plotHeight; }, zero = y(0), segment = plotWidth / length;
-        var svg = '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Monthly source values. Blue is current; gray is comparison. Select a month to investigate."><title>Current and comparison monthly values</title>';
-        for (var g = 0; g <= 4; g++) { var tick = minimum + (maximum - minimum) * g / 4, ty = y(tick); svg += '<line class="dir-chart-grid" x1="' + left + '" x2="' + (width - right) + '" y1="' + ty + '" y2="' + ty + '"></line><text class="dir-chart-label" x="' + (left - 8) + '" y="' + (ty + 3) + '" text-anchor="end">' + esc(shortNumber(tick)) + '</text>'; }
-        var rows = [];
+        var svg = '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Monthly source values. Blue is current; gray is comparison. Hatched bars are partial months. Select a month to investigate."><title>Current and comparison monthly values</title><defs><pattern id="dirHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#dbe7f5"/><rect width="2.5" height="6" fill="#3574ba"/></pattern><pattern id="dirHatchComparison" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#eef3f9"/><rect width="2.5" height="6" fill="#aebfd3"/></pattern></defs>';
+        for (var g = 0; g <= 4; g++) { var tick = minimum + (maximum - minimum) * g / 4, ty = y(tick); svg += '<line class="dir-chart-grid" x1="' + left + '" x2="' + (width - right) + '" y1="' + ty + '" y2="' + ty + '"></line><text class="dir-chart-label" x="' + (left - 8) + '" y="' + (ty + 4) + '" text-anchor="end">' + esc(shortNumber(tick)) + '</text>'; }
+        var rows = []; trendTips = [];
         for (var i = 0; i < length; i++) {
-            var c = current[i], p = previous[i], period = c ? trendPeriod(c) : '', cp = p ? trendPeriod(p) : '', center = left + segment * (i + .5), barWidth = Math.min(18, segment * .28);
-            var tip = (period ? showDate(period) : 'No current month') + ': ' + (c ? number(c.value) : 'unavailable') + '; comparison ' + (cp ? showDate(cp) : 'unavailable') + ': ' + (p ? number(p.value) : 'unavailable');
-            svg += '<g class="dir-chart-month"' + (period ? ' tabindex="0" role="button" data-month="' + esc(period) + '" aria-label="' + esc(tip + '. Investigate this month') + '"' : '') + '><title>' + esc(tip) + '</title>';
-            if (p && isNumber(p.value)) { var py = y(Number(p.value)); svg += '<rect class="dir-chart-comparison" x="' + (center - barWidth - 2) + '" y="' + Math.min(py, zero) + '" width="' + barWidth + '" height="' + Math.abs(zero - py) + '" rx="2"></rect>'; }
-            if (c && isNumber(c.value)) { var cy = y(Number(c.value)); svg += '<rect class="dir-chart-current" x="' + (center + 2) + '" y="' + Math.min(cy, zero) + '" width="' + barWidth + '" height="' + Math.abs(zero - cy) + '" rx="2"></rect>'; }
+            var c = current[i], p = previous[i], period = c ? trendPeriod(c) : '', cp = p ? trendPeriod(p) : '', center = left + segment * (i + .5), barWidth = Math.min(20, segment * .3);
+            var cPartial = c && partialMonth(period, per.start || state.start, per.end || state.end), pPartial = p && partialMonth(cp, per.comparison_start || state.comparison_start, per.comparison_end || state.comparison_end);
+            anyPartial = anyPartial || cPartial || pPartial;
+            var tip = '<strong>' + esc(period ? monthLabel(period) : 'No current month') + (cPartial ? ' (partial month)' : '') + '</strong><br>Current: ' + (c && isNumber(c.value) ? esc(number(c.value)) + ' ' + esc(unitText) : 'unavailable');
+            if (p) {
+                tip += '<br>Comparison, ' + esc(monthLabel(cp)) + (pPartial ? ' (partial month)' : '') + ': ' + (isNumber(p.value) ? esc(number(p.value)) + ' ' + esc(unitText) : 'unavailable');
+                if (c && isNumber(c.value) && isNumber(p.value)) { var d = Number(c.value) - Number(p.value); tip += '<br>Change: ' + esc((d > 0 ? '+' : '') + number(d)) + (Number(p.value) !== 0 ? ' (' + esc((d > 0 ? '+' : '') + number(d / Math.abs(Number(p.value)) * 100, 1)) + '%)' : ' (no percentage baseline)'); }
+            }
+            trendTips.push(tip);
+            var plain = tip.replace(/<br>/g, '. ').replace(/<[^>]+>/g, '');
+            svg += '<g class="dir-chart-month" data-tip="' + i + '"' + (period ? ' tabindex="0" role="button" data-month="' + esc(period) + '" aria-label="' + esc(plain + '. Investigate this month') + '"' : '') + '>';
+            if (p && isNumber(p.value)) { var py = y(Number(p.value)); svg += '<rect class="dir-chart-comparison' + (pPartial ? ' dir-chart-partial-comparison' : '') + '"' + (pPartial ? ' fill="url(#dirHatchComparison)"' : '') + ' x="' + (center - barWidth - 2) + '" y="' + Math.min(py, zero) + '" width="' + barWidth + '" height="' + Math.abs(zero - py) + '" rx="2"></rect>'; }
+            if (c && isNumber(c.value)) { var cy = y(Number(c.value)); svg += '<rect class="dir-chart-current' + (cPartial ? ' dir-chart-partial' : '') + '"' + (cPartial ? ' fill="url(#dirHatch)"' : '') + ' x="' + (center + 2) + '" y="' + Math.min(cy, zero) + '" width="' + barWidth + '" height="' + Math.abs(zero - cy) + '" rx="2"></rect>'; }
             svg += '<rect x="' + (center - segment * .45) + '" y="' + top + '" width="' + (segment * .9) + '" height="' + plotHeight + '" fill="transparent"></rect>';
-            if (i % Math.max(1, Math.ceil(length / 8)) === 0 || length < 10) { svg += '<text class="dir-chart-label" x="' + center + '" y="' + (height - 18) + '" text-anchor="middle">' + esc(monthLabel(period || cp)) + '</text>'; }
+            if (i % Math.max(1, Math.ceil(length / 8)) === 0 || length < 10) { svg += '<text class="dir-chart-label" x="' + center + '" y="' + (height - 20) + '" text-anchor="middle">' + esc(monthLabel(period || cp)) + (cPartial ? '*' : '') + '</text>'; }
             svg += '</g>';
             rows.push('<tr><td>' + (period ? '<button type="button" class="dir-chip" data-month="' + esc(period) + '">' + esc(monthLabel(period)) + '</button>' : 'Unavailable') + '</td><td class="dir-number">' + (c ? esc(number(c.value)) : '—') + '</td><td>' + esc(cp ? monthLabel(cp) : '—') + '</td><td class="dir-number">' + (p ? esc(number(p.value)) : '—') + '</td></tr>');
         }
-        $('dirTrend').innerHTML = svg + '</svg>';
+        $('dirTrend').innerHTML = svg + '</svg>' + (anyPartial ? '<p class="dir-chart-note">* Hatched bars are partial months: the period does not cover the whole calendar month, so they are not comparable with a full month.</p>' : '') + '<div id="dirTip" class="dir-tip" role="tooltip" hidden></div>';
         $('dirTrendTable').innerHTML = '<table class="dir-table"><thead><tr><th>Month</th><th class="dir-number">Current</th><th>Comparison month</th><th class="dir-number">Comparison</th></tr></thead><tbody>' + rows.join('') + '</tbody></table>';
+    }
+    function showTip(target, x, y) {
+        var tip = $('dirTip'), box = $('dirTrend').getBoundingClientRect(); if (!tip || !target) { return; }
+        tip.innerHTML = trendTips[Number(target.getAttribute('data-tip'))] || ''; tip.hidden = false;
+        tip.style.left = Math.max(0, Math.min(box.width - tip.offsetWidth, x - box.left + 12)) + 'px'; tip.style.top = Math.max(0, y - box.top - tip.offsetHeight - 10) + 'px';
+    }
+    function hideTip() { var tip = $('dirTip'); if (tip) { tip.hidden = true; } }
+    function signed(v) { return (Number(v) > 0 ? '+' : '') + shortNumber(v); }
+    function renderContributors(rows, metric, summary) {
+        var inc = rows.filter(function (r) { return Number(r.delta) > 0; }).sort(function (a, b) { return b.delta - a.delta; });
+        var dec = rows.filter(function (r) { return Number(r.delta) < 0; }).sort(function (a, b) { return a.delta - b.delta; });
+        var max = Math.max.apply(null, [1].concat(inc.concat(dec).map(function (r) { return Math.abs(Number(r.delta)); }))), shown = [], total = Number(summary.delta);
+        function side(list, title, up) {
+            var top = list.slice(0, 10), rest = list.slice(10), restSum = rest.reduce(function (s, r) { return s + Number(r.delta); }, 0);
+            var good = metric.polarity ? (up === (Number(metric.polarity) > 0)) : null, cls = good === null ? 'is-neutral' : (good ? 'is-good' : 'is-bad');
+            return '<div class="dir-contrib-col"><h4>' + title + ' <small>' + list.length + '</small></h4>' + (top.length ? top.map(function (r) {
+                var index = shown.length; shown.push(r); var label = r.label || r.key || 'Unassigned', share = total !== 0 ? Number(r.delta) / total * 100 : null;
+                return '<button type="button" class="dir-breakdown-row" data-breakdown="' + index + '"' + (r.key === null ? ' disabled' : '') + ' aria-label="' + (r.key === null ? 'Aggregate of ' : 'Filter ') + esc(label) + '"><span class="dir-breakdown-row-head"><span class="dir-breakdown-label">' + esc(label) + '</span><strong class="dir-contrib-delta ' + cls + '" title="' + esc(number(r.delta)) + '">' + esc(signed(r.delta)) + '</strong></span><span class="dir-breakdown-bar"><i class="' + cls + '" style="width:' + Math.max(2, Math.min(100, Math.abs(Number(r.delta)) / max * 100)) + '%"></i></span><small>Now ' + esc(shortNumber(r.value)) + (share !== null ? ' · ' + esc(number(share, 1)) + '% of the total change' : '') + ' · ' + esc(number(r.rows, 0)) + ' rows</small></button>';
+            }).join('') : '<p class="dir-muted">None</p>') + (rest.length ? '<div class="dir-contrib-other"><span>Other (' + rest.length + ')</span><strong>' + esc(signed(restSum)) + '</strong></div>' : '') + '</div>';
+        }
+        var html = '<div class="dir-contrib">' + side(inc, 'Increases', true) + side(dec, 'Decreases', false) + '</div>';
+        var sum = rows.reduce(function (s, r) { return s + Number(r.delta); }, 0), gap = total - sum;
+        $('dirBreakdown').innerHTML = html + '<div class="dir-contrib-total">Total change ' + esc(signed(total)) + ' = increases ' + esc(signed(inc.reduce(function (s, r) { return s + Number(r.delta); }, 0))) + ' + decreases ' + esc(signed(dec.reduce(function (s, r) { return s + Number(r.delta); }, 0))) + (Math.abs(gap) > Math.max(0.01, Math.abs(total) * 1e-6) ? ' · ' + esc(signed(gap)) + ' is not attributed to a group' : '') + '. Choose a group to filter the records.</div>';
+        $('dirBreakdown')._rows = shown;
     }
     function renderBreakdown(data, metric) {
         var rows = (data.breakdown || []).slice(), compare = state.comparison !== 'none' && !isSnapshot(metric);
+        if (compare && rows.length && rows.every(function (r) { return isNumber(r.delta); }) && isNumber((data.summary || {}).delta)) { return renderContributors(rows, metric, data.summary); }
         rows.sort(function (a, b) { return compare && isNumber(a.delta) && isNumber(b.delta) ? Math.abs(Number(b.delta)) - Math.abs(Number(a.delta)) : Math.abs(Number(b.value) || 0) - Math.abs(Number(a.value) || 0); });
         var max = Math.max.apply(null, [1].concat(rows.map(function (r) { return Math.abs(Number(r.value) || 0); })));
         var rendered = rows.slice(0, 15);
@@ -305,7 +359,7 @@
     function investigate(id, filters, groupBy) {
         var m = metricById(id); if (m && m.components && m.components.length) { id = m.components[0].id; m = metricById(id); }
         if (!canInvestigate(m)) { return; }
-        if (state.dataset !== id) { state.filters = {}; state.group_by = ''; state.search = ''; }
+        if (state.dataset !== id) { state.filters = {}; state.group_by = ''; state.search = ''; state.month = ''; }
         state.dataset = id; state.view = 'explore'; state.page = 1;
         if (filters) { Object.keys(filters).forEach(function (key) { if (own(dimsFor(m), key)) { state.filters[key] = String(filters[key]); } }); }
         if (groupBy && own(dimsFor(m), groupBy)) { state.group_by = groupBy; }
@@ -320,7 +374,7 @@
             if (run !== requestNumber) { return; }
             if (state.view === 'explore' && state.dataset) {
                 if (!canInvestigate(metricById(state.dataset))) { throw new Error('This measure is unavailable or outside your current access. Choose an available measure from the overview.'); }
-                return api('explore', signal).then(function (data) { if (run !== requestNumber) { return; } renderExploration(data); useMetadata(data.metadata); });
+                return api('explore', signal).then(function (data) { if (run !== requestNumber) { return; } renderExploration(data); useMetadata(data.metadata, !!state.month); });
             }
             if (state.view === 'explore') { $('dirInvestigationEmpty').hidden = false; $('dirInvestigation').hidden = true; }
         }).then(function () {
@@ -340,7 +394,7 @@
         state.comparison = $('dirComparison').value; state.comparison_start = $('dirComparisonStart').value; state.comparison_end = $('dirComparisonEnd').value;
         if (!validDate(state.start) || !validDate(state.end) || state.start > state.end) { alertMessage('Choose valid reporting dates, with From no later than To.'); return; }
         if (state.comparison === 'custom' && (!validDate(state.comparison_start) || !validDate(state.comparison_end) || state.comparison_start > state.comparison_end)) { alertMessage('Choose valid custom comparison dates.'); return; }
-        state.page = 1; exploration = null; writeState(false); load(true);
+        state.page = 1; state.month = ''; exploration = null; closePopover(); writeState(false); load(true);
     }
     function previewPreset() {
         var preset = $('dirPreset').value; if (preset === 'custom') { return; }
@@ -359,9 +413,7 @@
     }
     function chooseMonth(period) {
         if (!validDate(period)) { return; }
-        var d = dateUTC(period), last = iso(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)));
-        state.start = period > state.start ? period : state.start; state.end = last < state.end ? last : state.end;
-        state.preset = 'custom'; state.page = 1; syncControls(); writeState(false); load(true);
+        state.month = period; state.page = 1; syncControls(); writeState(false); load(false);
     }
     function exportReport(action, button) {
         var previousText = button.textContent; button.disabled = true; button.textContent = 'Preparing workbook…'; alertMessage('');
@@ -376,9 +428,12 @@
         }).catch(function (error) { alertMessage(error.message); }).then(function () { button.disabled = false; button.textContent = previousText; });
     }
     $('dirFilters').addEventListener('submit', applyPeriod);
-    $('dirPreset').addEventListener('change', previewPreset);
+    $('dirPreset').addEventListener('change', function () { previewPreset(); if (this.value !== 'custom') { submitFilters(); } });
     ['dirStart', 'dirEnd'].forEach(function (id) { $(id).addEventListener('change', function () { $('dirPreset').value = 'custom'; }); });
-    $('dirComparison').addEventListener('change', function () { var custom = this.value === 'custom'; $('dirCustomStartWrap').hidden = !custom; $('dirCustomEndWrap').hidden = !custom; $('dirComparisonStart').required = custom; $('dirComparisonEnd').required = custom; });
+    $('dirComparison').addEventListener('change', function () { var custom = this.value === 'custom'; $('dirCustomStartWrap').hidden = !custom; $('dirCustomEndWrap').hidden = !custom; $('dirComparisonStart').required = custom; $('dirComparisonEnd').required = custom; if (!custom) { submitFilters(); } });
+    $('dirPeriodChip').addEventListener('click', function (event) { event.stopPropagation(); var open = $('dirFilters').hidden; $('dirFilters').hidden = !open; this.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) { $('dirPreset').focus(); } });
+    document.addEventListener('click', function (event) { if (!$('dirFilters').hidden && !$('dirFilters').contains(event.target) && event.target !== $('dirPeriodChip')) { closePopover(); } });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !$('dirFilters').hidden) { closePopover(); $('dirPeriodChip').focus(); } });
     $('dirRefresh').addEventListener('click', function () { load(true); });
     $('dirBack').addEventListener('click', function () { changeView('overview'); });
     $('dirExportSummary').addEventListener('click', function () { exportReport('export_summary', this); });
@@ -391,18 +446,23 @@
     $('dirPrevious').addEventListener('click', function () { if (state.page > 1) { state.page--; writeState(false); load(false); } });
     $('dirNext').addEventListener('click', function () { state.page++; writeState(false); load(false); });
     root.addEventListener('click', function (event) {
-        var button = event.target.closest('[data-view],[data-metric],[data-risk],[data-health],[data-remove-filter],[data-month],[data-breakdown],[data-sort]');
+        var button = event.target.closest('[data-view],[data-metric],[data-risk],[data-health],[data-remove-month],[data-remove-filter],[data-month],[data-breakdown],[data-sort]');
         if (!button || !root.contains(button) || button.disabled) { return; }
         if (button.hasAttribute('data-view')) { changeView(button.getAttribute('data-view')); }
         if (button.hasAttribute('data-metric')) { investigate(button.getAttribute('data-metric')); }
         if (button.hasAttribute('data-health')) { var item = healthItems[Number(button.getAttribute('data-health'))]; if (item) { investigate(item.dataset, item.filters, item.group_by); } }
         if (button.hasAttribute('data-risk')) { var risk = risks[Number(button.getAttribute('data-risk'))]; if (risk) { investigate(risk.dataset, risk.filters, risk.group_by); } }
         if (button.hasAttribute('data-remove-filter')) { delete state.filters[button.getAttribute('data-remove-filter')]; state.page = 1; syncControls(); writeState(false); load(false); }
+        if (button.hasAttribute('data-remove-month')) { state.month = ''; state.page = 1; syncControls(); writeState(false); load(false); }
         if (button.hasAttribute('data-month')) { chooseMonth(button.getAttribute('data-month')); }
         if (button.hasAttribute('data-breakdown')) { var row = ($('dirBreakdown')._rows || [])[Number(button.getAttribute('data-breakdown'))]; if (row && state.group_by) { state.filters[state.group_by] = String(row.key == null ? '' : row.key); state.page = 1; syncControls(); writeState(false); load(false); } }
         if (button.hasAttribute('data-sort')) { var sort = button.getAttribute('data-sort'); state.direction = state.sort === sort && state.direction === 'desc' ? 'asc' : 'desc'; state.sort = sort; state.page = 1; writeState(false); load(false); }
     });
     root.addEventListener('keydown', function (event) { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('g[data-month]')) { event.preventDefault(); chooseMonth(event.target.getAttribute('data-month')); } });
+    $('dirTrend').addEventListener('mousemove', function (event) { var t = event.target.closest('.dir-chart-month'); if (t) { showTip(t, event.clientX, event.clientY); } else { hideTip(); } });
+    $('dirTrend').addEventListener('mouseleave', hideTip);
+    $('dirTrend').addEventListener('focusin', function (event) { var t = event.target.closest('.dir-chart-month'); if (t) { var r = t.getBoundingClientRect(); showTip(t, r.left + r.width / 2, r.top); } });
+    $('dirTrend').addEventListener('focusout', hideTip);
     window.addEventListener('popstate', function () { state = readState(); exploration = null; syncControls(); load(true); });
     syncControls(); load(true);
 }());

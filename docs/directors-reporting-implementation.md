@@ -89,3 +89,5 @@ Audit, reconciliation and findings: `docs/directors-reporting-gap-audit.md`. Run
 **Snapshots:** `migrations/directors_balance_snapshots.sql` plus `bi/tools/directors_snapshot.php` (CLI, idempotent per day, explicit `BI_DB_*` target). Nothing in the UI reads the history yet. Any reader must check access to the source measure first, because the capture is company-wide.
 
 **Tests added:** `directors_reconcile.php`, `directors_pair.php` (read-only, explicit target). The UI fixture checks look tiles up by measure id, not position.
+
+**Layout (second pass, part 2):** one sticky bar holds the title, a period chip (opens the period and comparison popover; presets apply immediately), refresh and export. The investigation view has a hover/focus tooltip on the monthly chart, hatched partial months, contributors split into increases and decreases (top 10 each, an Other row, and a line showing how they add to the total change), and a month focus chip (`month=` in the URL) that narrows the investigation without changing the global period. The chart stays hand-drawn SVG: the repository's bundled Chart.js is v1.0.2 and the only newer copy is loaded from a CDN.

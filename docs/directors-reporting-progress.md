@@ -24,9 +24,9 @@ Read-only access note: audit queries against the local `sahamid` database ran wi
 | 11 Missing measures | partly: PO received, posted invoices, outstanding, pending DC value, gross margin | reconcile test passes on 2 periods. **Not built:** DSO, AP due in 7/30 days, closing bank balance, cycle times, slow movers, top-10 supplier share |
 | 12 Comparison logic | default yoy; server period logic reused; JS still pairs trend months by position | `directors_run.php` 30/30 |
 | 13 Snapshot history | table + capture job done and idempotent on the fixture DB; **UI does not read it yet** | 5 rows after two runs |
-| 14 Compact header | **not done** | |
+| 14 Compact header | done: one sticky bar, period chip opens a popover, presets and comparison apply at once, the investigation's own Apply button is still there | `docs/directors-ux/after/fold-desktop.png`. Verified on a mock page only; the sticky offset (50px) matches the AdminLTE fixed header but was not seen in the real shell |
 | 15 Overview | done: headline tiles, ranked attention, data health, colours, lakh/crore, unavailable list | `docs/directors-ux/after/` (3 widths, synthetic data) |
-| 16 Investigation view | **not done** (Chart.js, increases/decreases columns, month chip) | |
+| 16 Investigation view | done except Chart.js: readable labels, hover/focus tooltip with both values and change, hatched partial months, increases/decreases with share of change and an "Other" row, month focus chip that leaves the global period alone | 60 UI checks pass at 2 widths. **Chart.js not used:** the bundled build is 1.0.2 (2015) and the only newer copy in the repo loads from a CDN; the SVG chart keeps keyboard and screen-reader support |
 | 17 Records table / record page | **not done** | |
 | 18 Skeleton / error / a11y | **not done** | |
 | 19 Exports | **not done** for new sections | |

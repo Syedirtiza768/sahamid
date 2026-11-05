@@ -19,17 +19,14 @@ include_once(dirname(__DIR__) . '/includes/sidebar.php');
 ?>
 <link rel="stylesheet" href="<?php echo $NewRootPath; ?>v2/bi/directors.css">
 <div class="content-wrapper directors-page" id="directorsRoot" aria-busy="true">
-    <section class="content-header dir-hero">
-        <div class="dir-eyebrow">BUSINESS INTELLIGENCE <span>/</span> DIRECTORS</div>
-        <div class="dir-hero-row">
-            <div><h1>Directors’ Reporting Dashboard</h1><p>Performance, exposure and the records behind every number.</p></div>
+    <section class="content-header dir-hero dir-bar">
+        <div class="dir-bar-row">
+            <div class="dir-bar-title"><div class="dir-eyebrow">BUSINESS INTELLIGENCE <span>/</span> DIRECTORS</div><h1>Directors’ Dashboard</h1></div>
+            <button type="button" id="dirPeriodChip" class="dir-period-chip" aria-expanded="false" aria-controls="dirFilters" title="Change the reporting period and comparison"><i class="fa fa-calendar" aria-hidden="true"></i><span id="dirPeriodChipText">Loading period…</span><i class="fa fa-caret-down" aria-hidden="true"></i></button>
             <div class="dir-actions"><a class="dir-button" href="<?php echo $NewRootPath; ?>v2/bi/reports.php"><i class="fa fa-files-o" aria-hidden="true"></i> Report library</a><button class="dir-button" id="dirRefresh" type="button"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button><button class="dir-button dir-primary" id="dirExportSummary" type="button" title="Export the authorized company overview for the applied reporting period"><i class="fa fa-download" aria-hidden="true"></i> Export overview</button></div>
         </div>
         <div class="dir-context"><strong id="dirCompany">Resolving company…</strong><span id="dirScope">Authorized company data</span><span id="dirFreshness">Live source · awaiting refresh</span></div>
-    </section>
-    <section class="content dir-content">
-        <div id="dirAlert" class="dir-alert" role="alert" hidden></div>
-        <form id="dirFilters" class="dir-panel dir-filter-panel">
+        <form id="dirFilters" class="dir-panel dir-filter-panel dir-popover" hidden>
             <div class="dir-filter-grid">
                 <label>Reporting period<select id="dirPreset"><option value="ytd">Fiscal year to date</option><option value="month">Month to date</option><option value="quarter">Quarter to date</option><option value="last_month">Last month</option><option value="last_quarter">Last quarter</option><option value="last_year">Last fiscal year</option><option value="custom">Custom dates</option></select></label>
                 <label>From<input id="dirStart" type="date" required></label>
@@ -40,8 +37,11 @@ include_once(dirname(__DIR__) . '/includes/sidebar.php');
                 <button class="dir-button dir-primary dir-apply" type="submit"><i class="fa fa-filter" aria-hidden="true"></i> Apply</button>
             </div>
             <div id="dirPeriodContext" class="dir-period-context" aria-live="polite">Loading reporting periods…</div>
-            <div id="dirChips" class="dir-chips" aria-label="Active investigation filters"></div>
         </form>
+    </section>
+    <section class="content dir-content">
+        <div id="dirAlert" class="dir-alert" role="alert" hidden></div>
+        <div id="dirChips" class="dir-chips dir-chips-bar" aria-label="Active investigation filters"></div>
         <nav class="dir-tabs" aria-label="Directors dashboard views"><button type="button" data-view="overview" class="is-active">Executive overview</button><button type="button" data-view="explore">Investigate</button><button type="button" data-view="coverage">Definitions &amp; coverage</button></nav>
 
         <section id="dirOverview" aria-label="Executive overview">
