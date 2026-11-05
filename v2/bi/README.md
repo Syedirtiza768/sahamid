@@ -1,5 +1,19 @@
 # Embedded governed BI screen
 
+## Directors’ Reporting Dashboard
+
+`directors.php` consolidates 22 company-scoped financial, working-capital, sales,
+purchasing, inventory, expense and operational measures. Its shared read-only API
+supports comparisons, source definitions, data-quality exceptions, cross-filtered
+drill-down, paginated records and bounded XLSX exports. Entry requires directors
+reporting access; delegated source-page, bank-account and expense-tab restrictions
+apply. Current snapshots and estimates are explicitly labeled.
+
+See `docs/directors-reporting-implementation.md` for the coverage map, audit
+inventories, validation results, deployment/index instructions and limitations.
+This dashboard does not certify production reconciliation or fabricate historical
+balances, costs, target versions or forecasts.
+
 `index.php` is the first native BI frontend slice. It uses the existing ERP
 session, shell, and `sales_dashboard` permission. It does not replace
 `v2/salesMainDashboard.php`; that page remains the rollback path while metric

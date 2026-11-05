@@ -21,4 +21,9 @@ localhost*.sql
 
 # Editor / local notes (not part of the app)
 .obsidian/
-docs/
+docs/*
+!docs/directors-reporting-*.md
+!docs/directors-reporting-*.csv
+
+# Isolated directors reporting verification runtimes and fixture database
+/tmp/directors-*

@@ -60,6 +60,9 @@
         'Sale Teams Group'				=> '../v2/salesTeamGroup.php'
 	];
 	// Directors only for now ('*' holders pass too); same check as the page and the sidebar link.
+	if (userHasPermission($db, 'directorreports') || userHasPermission($db, 'directors_dashboard')) {
+		$links['Sales'] = ['Directors’ Reporting Dashboard' => '../v2/bi/directors.php'] + $links['Sales'];
+	}
 	if (userHasPermission($db, 'directorreports')) {
 		$links['Sales'] = ['Sales Executive Report' => '../v2/salesReportsExecutive.php'] + $links['Sales'];
 	}

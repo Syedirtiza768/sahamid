@@ -843,6 +843,13 @@
         </a>
       </li>
       <?php } ?>
+      <?php if (userHasPermission($db, 'directorreports') || userHasPermission($db, 'directors_dashboard')) { ?>
+      <li class="<?php ecif($active == "bi_directors", "active") ?>">
+        <a href="<?php echo $NewRootPath; ?>v2/bi/directors.php">
+          <i class="fa fa-dashboard"></i> <span>Directors’ Dashboard</span>
+        </a>
+      </li>
+      <?php } ?>
       <?php if (userHasPermission($db, 'directorreports')) { ?>
       <li class="<?php ecif($active == "sales_executive", "active") ?>">
         <a href="<?php echo $NewRootPath; ?>v2/salesReportsExecutive.php">
