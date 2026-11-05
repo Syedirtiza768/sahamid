@@ -46,12 +46,12 @@
         if (metric.comparison_complete === false && (Number(metric.invalid_amounts) > 0 || Number(metric.comparison_invalid_amounts) > 0)) { return 'Comparison incomplete · review excluded amounts'; }
         if (!isNumber(metric.previous)) { return 'Comparison unavailable'; }
         if (!isNumber(metric.delta)) { return 'Comparison unavailable'; }
-        var delta = Number(metric.delta), points = metric.unit === '%';
+        var delta = Number(metric.delta), points = metric.unit === '%', inDays = metric.unit === 'days';
         var good = metric.polarity ? ((delta > 0) === (Number(metric.polarity) > 0)) : null;
         var cls = delta === 0 || good === null ? 'dir-change-neutral' : (good ? 'dir-change-good' : 'dir-change-bad');
         var arrow = delta > 0 ? '▲ ' : (delta < 0 ? '▼ ' : '');
-        var text = points ? (delta > 0 ? '+' : '') + number(delta, 1) + ' pts' : (delta > 0 ? '+' : '') + shortNumber(delta);
-        var percent = points ? '' : (isNumber(metric.percent) ? (Math.abs(Number(metric.percent)) > 1000 ? ' <span>(not meaningful: very small base)</span>' : ' <span>(' + esc((Number(metric.percent) > 0 ? '+' : '') + number(metric.percent, 1)) + '%)</span>') : ' <span>· no percentage baseline</span>');
+        var text = points ? (delta > 0 ? '+' : '') + number(delta, 1) + ' pts' : inDays ? (delta > 0 ? '+' : '') + number(delta, 0) + ' days' : (delta > 0 ? '+' : '') + shortNumber(delta);
+        var percent = (points || inDays) ? '' : (isNumber(metric.percent) ? (Math.abs(Number(metric.percent)) > 1000 ? ' <span>(not meaningful: very small base)</span>' : ' <span>(' + esc((Number(metric.percent) > 0 ? '+' : '') + number(metric.percent, 1)) + '%)</span>') : ' <span>· no percentage baseline</span>');
         return '<span class="' + cls + '">' + arrow + esc(text) + '</span>' + percent + ' <small>' + esc(comparisonLabels[state.comparison] || 'vs comparison period') + '</small>';
     }
     function readState() {
@@ -162,7 +162,7 @@
     function tileValue(m) {
         if (m.available === false) { return '—'; }
         if (m.unit === '%') { return number(m.value, 1) + '%'; }
-        if (m.unit === 'count') { return number(m.value, 0); }
+        if (m.unit === 'count' || m.unit === 'days') { return number(m.value, 0); }
         return shortNumber(m.value);
     }
     function tileHtml(m, large) {

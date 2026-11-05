@@ -65,7 +65,7 @@ class DatasetCatalog
     private function section($id)
     {
         if (strpos($id, 'gl_') === 0) { return 'Financial performance'; }
-        if (in_array($id, array('receivables', 'payables', 'cash_movement'), true)) { return 'Cash & working capital'; }
+        if (in_array($id, array('receivables', 'payables', 'cash_movement', 'payables_due_soon', 'bank_balance'), true)) { return 'Cash & working capital'; }
         if (strpos($id, 'purchas') === 0 || in_array($id, array('legacy_po_commitments', 'procurement_pipeline'), true)) { return 'Purchasing & suppliers'; }
         if (in_array($id, array('inventory', 'stock_exceptions'), true)) { return 'Inventory'; }
         if (in_array($id, array('invoice_value', 'shop_sales', 'posted_invoices', 'po_received', 'outstanding_invoices', 'pending_deliveries', 'open_cases', 'pipeline'), true)) { return 'Sales & customers'; }

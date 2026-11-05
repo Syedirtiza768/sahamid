@@ -134,6 +134,8 @@ Local `sahamid` DB, 2026-11-05. Sep 2026 is a closed month. FY YTD = 1 Apr – 5
 - **New N3:** "Open sales cases" (68,801) and "Open enquiry value" (99.9% unvalued) are not usable as headline figures as built.
 - **New N4:** the overview runs one query per measure plus an "undated rows" scan per flow measure, one after another. There is no per-measure timeout or caching.
 - **New N6 (access, found by `directors_roles.php`):** a user who holds `directorreports` but is not an administrator (the real role-27 director on the local copy) can read only 1 of 25 measures (petty cash), because every other source page's security token is missing from that role. The Sales Executive Report gates on `directorreports` alone, so the same user sees full company sales there but a nearly empty Directors dashboard. Administrators (access levels 8, 10, 22, or the `*` permission) see everything. **Resolved 2026-11-05:** directors-permission holders now read all company-level measures; bank and expense scopes stay per user.
+- **New N7 (found while building the bank balance):** on the local copy the bank book total for one user's 20 accounts is 1,357.5M, while the posted general-ledger balance for the same account codes is 845.6M (a 511.9M gap, +60%). Not explained here. The measure is labelled Estimated until the two are reconciled.
+- **New N8:** none of the 3,071 open supplier balances has a recorded due date or usable payment terms, so "payments due in 7/30 days" cannot be produced from this data. The tile says so instead of showing 0.
 - **New N5:** `executive_listing` is not referenced anywhere in `bi/Directors`. Access is `directorreports` or `directors_dashboard`, plus each source page's security token.
 
 ## 7. Verification of the counts

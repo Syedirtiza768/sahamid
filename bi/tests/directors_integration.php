@@ -80,7 +80,7 @@ try {
     }
     $overview = $service->overview(DirectorsRequest::fromArray($base));
     $composites = count(array_filter($overview['metrics'], function ($metric) { return isset($metric['components']); }));
-    directorsIntegrationCheck(count($overview['metrics']) === count($catalog->all()) + $composites && $composites === 2, 'Overview lost source coverage');
+    directorsIntegrationCheck(count($overview['metrics']) === count($catalog->all()) + $composites, 'Overview lost source coverage');
     echo 'Checked ' . count($catalog->all()) . ' datasets in ' . (int) round((microtime(true) - $started) * 1000) . " ms.\n";
     echo "This verifies the explicit target only; it does not establish historical completeness or production-volume performance.\n";
     exit($errors ? 1 : 0);

@@ -149,6 +149,55 @@ class FinanceDatasetCatalog
             'source_route' => 'SupplierInquiry.php', 'source_param' => 'SupplierID',
         );
 
+        $definitions['payables_due_soon'] = array(
+            'title' => 'Supplier payments due in the next 30 days', 'unit' => 'base', 'kind' => 'snapshot', 'status' => 'estimated',
+            'source' => 'supptrans; suppliers; paymentterms',
+            'definition' => 'Open positive supplier balances (the same rule as Current net payables) whose due date falls from today up to 30 days ahead, split into due in 0-7 days and due in 8-30 days. Amount = open balance / transaction rate.',
+            'caveat' => 'Estimated where the due date comes from current payment terms instead of a recorded due date (see the due basis). Balances with no due date are in no window. Overdue balances are not included; they are in Current net payables. Credits and unallocated payments are not netted, so this is gross money to pay.',
+            'route' => 'AgedSuppliers.php',
+            'dimensions' => array('supplier' => 'Supplier', 'due_window' => 'Due window', 'due_basis' => 'Due-date basis'),
+            'sql' => "SELECT t.id, DATE(t.trandate) AS date,
+                CONCAT(t.type, '-', t.transno, ' / ', t.suppreference) AS reference,
+                " . $apAmount . " AS amount, 1 AS quantity, t.supplierno AS source_key,
+                CONCAT(t.supplierno, ' · ', COALESCE(s.suppname, 'Missing supplier')) AS supplier,
+                " . $apDue . " AS due_date,
+                CASE WHEN " . $apDue . " <= DATE_ADD(CURRENT_DATE, INTERVAL 7 DAY) THEN 'Due in 0-7 days' ELSE 'Due in 8-30 days' END AS due_window,
+                CASE WHEN t.duedate >= '1000-01-01' THEN 'Recorded'
+                    WHEN pt.daysbeforedue > 0 OR pt.dayinfollowingmonth BETWEEN 1 AND 31 THEN 'Estimated from current terms'
+                    ELSE 'Unavailable' END AS due_basis,
+                'Due soon' AS status, CASE WHEN s.supplierid IS NULL THEN 1 ELSE 0 END AS quality_issue,
+                t.type AS source_type, t.transno AS transaction_number
+                FROM supptrans t
+                LEFT JOIN suppliers s ON s.supplierid = t.supplierno
+                LEFT JOIN paymentterms pt ON pt.termsindicator = s.paymentterms
+                WHERE COALESCE(t.reversed, 0) = 0 AND " . $apBalance . " > 0.000001
+                    AND " . $apDue . " >= CURRENT_DATE AND " . $apDue . " <= DATE_ADD(CURRENT_DATE, INTERVAL 30 DAY)",
+            'params' => array(), 'types' => '',
+            'source_route' => 'SupplierInquiry.php', 'source_param' => 'SupplierID',
+        );
+
+        $definitions['bank_balance'] = array(
+            'title' => 'Bank book balance (your bank accounts)', 'unit' => 'base', 'kind' => 'snapshot', 'status' => 'estimated',
+            'source' => 'banktrans; bankaccounts; bankaccountusers',
+            'definition' => 'Sum of recorded bank transactions to date on the bank accounts assigned to the signed-in user, converted at the recorded rates: amount / exrate / functionalexrate.',
+            'caveat' => 'Estimated: not reconciled to the general-ledger balance of the same accounts, which can differ (rates, opening balances, accounts not linked to the ledger); compare with the ledger before relying on it. Bank-book balance from recorded transactions, not a bank-statement balance; uncleared items are included. Transactions dated in the future are left out. Only accounts assigned to the signed-in user are included, so two users can see different totals. Both rates must be positive; a transaction with an invalid rate is excluded from the total and counted.',
+            'route' => 'DailyBankTransactions.php',
+            'dimensions' => array('bank' => 'Authorized bank account', 'currency' => 'Transaction currency'),
+            'sql' => "SELECT t.banktransid AS id, t.transdate AS date,
+                CONCAT(t.type, '-', t.transno, ' / ', t.ref) AS reference,
+                CASE WHEN t.exrate > 0 AND t.functionalexrate > 0
+                    THEN t.amount / t.exrate / t.functionalexrate ELSE NULL END AS amount,
+                1 AS quantity, t.bankact AS source_key,
+                CONCAT(t.bankact, ' · ', b.bankaccountname) AS bank,
+                COALESCE(NULLIF(t.currcode, ''), 'Unknown') AS currency,
+                'actual' AS status, t.type AS source_type, t.transno AS transaction_number
+                FROM banktrans t INNER JOIN bankaccounts b ON b.accountcode = t.bankact
+                WHERE t.transdate <= CURRENT_DATE AND EXISTS (SELECT 1 FROM bankaccountusers bu
+                    WHERE bu.accountcode = t.bankact AND bu.userid = ?)",
+            'params' => array((string) $userId), 'types' => 's',
+            'source_route' => 'GLTransInquiry.php', 'source_param' => 'TransNo',
+        );
+
         $definitions['cash_movement'] = array(
             'title' => 'Authorized bank net movement', 'unit' => 'base', 'kind' => 'flow', 'status' => 'actual',
             'source' => 'banktrans; bankaccounts; bankaccountusers',

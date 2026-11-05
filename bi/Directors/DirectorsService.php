@@ -27,7 +27,8 @@ class DirectorsService
     /** 1 = a rise is favourable, -1 = a rise is unfavourable, 0 = neither. */
     private static $polarity = array('gl_revenue' => 1, 'gl_result' => 1, 'gl_cost_of_sales' => -1, 'gl_expenses' => -1,
         'petty_cash' => -1, 'posted_invoices' => 1, 'shop_sales' => 1, 'invoice_value' => 1, 'po_received' => 1,
-        'cash_movement' => 1, 'sales_revenue' => 1, 'gross_margin_pct' => 1);
+        'cash_movement' => 1, 'sales_revenue' => 1, 'gross_margin_pct' => 1, 'dso_days' => -1, 'customer_concentration_pct' => -1,
+        'supplier_concentration_pct' => -1, 'order_to_invoice_days' => -1, 'bank_balance' => 1);
 
     public function __construct($db, AuthorizationContext $context, array $session, $currency = 'PKR', ?callable $runner = null, $rootPath = '/sahamid/')
     {
@@ -107,7 +108,20 @@ class DirectorsService
             } catch (\Throwable $e) { $this->logFailure('ledger_diagnostic', $e); }
         }
         $byId = array_column($metrics, null, 'id');
-        $metrics = array_merge($this->compositeMetrics($byId), $metrics);
+        // Supplier payments cannot be scheduled for balances with no due date. Never show that as "0 due".
+        if (isset($byId['payables_due_soon'], $byId['payables']) && (int) $byId['payables']['unknown_due'] > 0) {
+            foreach ($metrics as $index => $metric) {
+                if ($metric['id'] !== 'payables_due_soon') { continue; }
+                $unknown = (int) $byId['payables']['unknown_due'];
+                if ($metric['rows'] === 0) {
+                    $metrics[$index] = $this->metric($this->catalog->get('payables_due_soon'), null, null, number_format($unknown) . ' open supplier balances have no recorded due date and no usable payment terms, so payments due cannot be scheduled. Record due dates or payment terms to enable this.');
+                } else {
+                    $metrics[$index]['caveat'] .= ' ' . number_format($unknown) . ' open balances have no due date and are in no window.';
+                }
+            }
+            $byId = array_column($metrics, null, 'id');
+        }
+        $metrics = array_merge($this->compositeMetrics($byId, $request), $metrics);
         $byId = array_column($metrics, null, 'id');
         $attention = $this->attentionItems($risks, $byId, $request);
         $dataHealth = array();
@@ -467,7 +481,7 @@ class DirectorsService
     }
 
     /** Headline measures built only from other measures that are already available. */
-    private function compositeMetrics(array $byId)
+    private function compositeMetrics(array $byId, DirectorsRequest $request)
     {
         $template = function ($id, $title, $unit, $status, $definition, $caveat, $value, $previous, $movement, array $components, $error) {
             return array_merge(array('id' => $id, 'title' => $title, 'unit' => $unit, 'kind' => 'flow', 'status' => $status,
@@ -517,7 +531,90 @@ class DirectorsService
             $out[] = $template('gross_margin_pct', 'Gross margin', '%', 'unavailable', '(GL revenue − cost of sales) ÷ GL revenue.', '', null, null,
                 array('delta' => null, 'percent' => null), array(), 'General-ledger revenue or cost of sales is unavailable for this period.');
         }
+
+        $place = function (array $metric, $section) { $metric['section'] = $section; return $metric; };
+        $none = array('delta' => null, 'percent' => null);
+
+        // Days sales outstanding: invoices still outstanding, as days of invoiced sales in the selected period.
+        if ($usable('outstanding_invoices') && $usable('posted_invoices') && $byId['posted_invoices']['value'] > 0) {
+            $days = (int) $request->period['days'];
+            $value = $byId['outstanding_invoices']['value'] / $byId['posted_invoices']['value'] * $days;
+            $out[] = $place($template('dso_days', 'Days sales outstanding', 'days', 'estimated',
+                'Outstanding invoices today ÷ posted invoices in the selected period × days in the period (' . $days . ').',
+                'Estimated. The numerator is today\'s outstanding balance and the denominator is the selected period, so it is a current-state ratio with no historical comparison. Use a period of at least a month; short periods swing widely. Outstanding follows the Outstanding Invoices rule (invoices on a sales case and invoice group).',
+                $value, null, $none, array(array('id' => 'outstanding_invoices', 'title' => 'Outstanding', 'value' => $byId['outstanding_invoices']['value']),
+                    array('id' => 'posted_invoices', 'title' => 'Invoiced in period', 'value' => $byId['posted_invoices']['value'])), null), 'Cash & working capital');
+        } else {
+            $out[] = $place($template('dso_days', 'Days sales outstanding', 'days', 'unavailable', 'Outstanding invoices ÷ posted invoices × days.', '', null, null, $none, array(), 'Outstanding invoices or posted invoices are unavailable for this period.'), 'Cash & working capital');
+        }
+
+        // Concentration: share of the period's value held by the 10 largest customers / suppliers.
+        foreach (array(array('customer_concentration_pct', 'Top-10 customers: share of invoiced sales', 'posted_invoices', 'customer', 'customers'),
+                       array('supplier_concentration_pct', 'Top-10 suppliers: share of purchases received', 'purchasing', 'supplier', 'suppliers')) as $spec) {
+            list($id, $title, $dataset, $dimension, $noun) = $spec;
+            try {
+                $current = $this->topShare($dataset, $dimension, $request->period['start'], $request->period['end']);
+                $previous = $request->period['comparison_start'] !== null ? $this->topShare($dataset, $dimension, $request->period['comparison_start'], $request->period['comparison_end']) : null;
+                if ($current === null) { throw new \RuntimeException('No valid amounts in this period.'); }
+                $movement = $previous !== null ? array('delta' => $current['share'] - $previous['share'], 'percent' => null) : $none;
+                $out[] = $place($template($id, $title, '%', 'actual',
+                    'The 10 largest ' . $noun . ' by value in the period, as a percentage of all valid amounts in the period. Source: ' . $dataset . '.',
+                    'A high share means dependence on a few ' . $noun . '. Only valid amounts count; excluded amounts are not in either side. The change is in percentage points.',
+                    $current['share'], $previous !== null ? $previous['share'] : null, $movement,
+                    array(array('id' => $dataset, 'title' => 'Top 10 ' . $noun, 'value' => $current['top']), array('title' => 'All ' . $noun, 'value' => $current['total'])), null),
+                    $dimension === 'customer' ? 'Sales & customers' : 'Purchasing & suppliers');
+            } catch (\Throwable $e) {
+                $this->logFailure($id, $e);
+                $out[] = $place($template($id, $title, '%', 'unavailable', $title . '.', '', null, null, $none, array(), 'The source for this measure is unavailable for this period.'), $dimension === 'customer' ? 'Sales & customers' : 'Purchasing & suppliers');
+            }
+        }
+
+        // Order-to-invoice time: days from the first order confirmation (OC) on a sales case to each posted invoice on it.
+        try {
+            $current = $this->cycleTimes($request->period['start'], $request->period['end']);
+            $previous = $request->period['comparison_start'] !== null ? $this->cycleTimes($request->period['comparison_start'], $request->period['comparison_end']) : null;
+            if ($current === null) { throw new \RuntimeException('No invoices with an order date in this period.'); }
+            $movement = $previous !== null ? array('delta' => $current['median'] - $previous['median'], 'percent' => null) : $none;
+            $out[] = $place($template('order_to_invoice_days', 'Order to invoice: median days', 'days', 'estimated',
+                'For posted invoices dated in the period: days from the first order confirmation (OC) on the invoice\'s sales case to the invoice date. The median is shown; the 90th percentile is in the tile detail.',
+                'Estimated. Uses the earliest OC on the case, so a case invoiced in several deliveries counts each invoice from that first OC. Invoices without a sales case or OC are left out. The change is in days.',
+                $current['median'], $previous !== null ? $previous['median'] : null, $movement,
+                array(array('id' => 'posted_invoices', 'title' => 'Invoices measured', 'value' => $current['n']), array('title' => '90th percentile (days)', 'value' => $current['p90'])), null), 'Sales & customers');
+        } catch (\Throwable $e) {
+            $this->logFailure('order_to_invoice_days', $e);
+            $out[] = $place($template('order_to_invoice_days', 'Order to invoice: median days', 'days', 'unavailable', 'Median days from the first order confirmation to the invoice.', '', null, null, $none, array(), 'No invoices with an order date are available for this period.'), 'Sales & customers');
+        }
         return $out;
+    }
+
+    /** Share of valid value held by the 10 largest groups of one dimension in a date range; null without valid amounts. */
+    private function topShare($datasetId, $dimension, $start, $end)
+    {
+        $definition = $this->resolveDefinition($this->catalog->get($datasetId));
+        if (!$this->authorization->canRead($definition) || !isset($definition['dimensions'][$dimension])) { return null; }
+        $rows = $this->query('SELECT SUM(q.amount) AS v FROM (' . $definition['sql'] . ') q WHERE q.date >= ? AND q.date < ? AND q.amount IS NOT NULL GROUP BY q.`' . $dimension . '` ORDER BY v DESC',
+            $definition['types'] . 'ss', array_merge($definition['params'], array($start, (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d'))));
+        $values = array_map('floatval', array_column($rows, 'v'));
+        $total = array_sum(array_filter($values, function ($v) { return $v > 0; }));
+        if ($total <= 0) { return null; }
+        $top = array_sum(array_slice(array_filter($values, function ($v) { return $v > 0; }), 0, 10));
+        return array('share' => $top / $total * 100, 'top' => $top, 'total' => $total);
+    }
+
+    /** Median and 90th percentile of days from first OC to each posted invoice dated in the range. */
+    private function cycleTimes($start, $end)
+    {
+        $definition = $this->catalog->get('posted_invoices');
+        if (!$this->authorization->canRead($definition)) { return null; }
+        $rows = $this->query("SELECT DATEDIFF(q.date, o.first_oc) AS d FROM (" . $definition['sql'] . ") q
+            INNER JOIN (SELECT salescaseref, MIN(orddate) AS first_oc FROM ocs WHERE orddate > '1900-01-01' GROUP BY salescaseref) o ON o.salescaseref = q.project
+            WHERE q.date >= ? AND q.date < ? AND DATEDIFF(q.date, o.first_oc) >= 0 ORDER BY d",
+            $definition['types'] . 'ss', array_merge($definition['params'], array($start, (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d'))));
+        $days = array_map('intval', array_column($rows, 'd'));
+        $n = count($days);
+        if ($n === 0) { return null; }
+        $median = $n % 2 ? $days[intdiv($n, 2)] : ($days[$n / 2 - 1] + $days[$n / 2]) / 2;
+        return array('median' => (float) $median, 'p90' => (float) $days[(int) max(0, ceil(0.9 * $n) - 1)], 'n' => $n);
     }
 
     /** Ranked business items for the executive "Needs attention" list. Largest money at risk first. */
@@ -571,6 +668,17 @@ class DirectorsService
                 }
             }
         } catch (\Throwable $e) { $this->logFailure('attention_concentration', $e); }
+        if (isset($byId['payables_due_soon']) && $byId['payables_due_soon']['available']) {
+            try {
+                $due = $this->catalog->get('payables_due_soon');
+                $rows = $this->query("SELECT COUNT(*) AS n, COALESCE(SUM(q.amount),0) AS v FROM (" . $due['sql'] . ") q WHERE q.due_window = 'Due in 0-7 days'", $due['types'], $due['params']);
+                if ((int) $rows[0]['n'] > 0 && (float) $rows[0]['v'] > 0) {
+                    $items[] = array('id' => 'payables_due_7', 'title' => 'Supplier payments due within 7 days', 'amount' => (float) $rows[0]['v'], 'unit' => $this->currency,
+                        'severity' => 'medium', 'favourable' => false, 'message' => $rows[0]['n'] . ' supplier balances fall due in the next 7 days.',
+                        'dataset' => 'payables_due_soon', 'group_by' => 'due_window', 'filters' => array('due_window' => 'Due in 0-7 days'));
+                }
+            } catch (\Throwable $e) { $this->logFailure('attention_payables_due', $e); }
+        }
         usort($items, function ($a, $b) { return $b['amount'] <=> $a['amount']; });
         return array_slice($items, 0, 8);
     }

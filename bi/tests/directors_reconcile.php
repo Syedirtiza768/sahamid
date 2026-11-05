@@ -32,7 +32,7 @@ try {
     if ($db->connect_errno) { throw new RuntimeException('Cannot connect to the explicit target.'); }
     $db->set_charset('utf8mb4');
     $db->query('SET SESSION TRANSACTION READ ONLY');
-    $context = new AuthorizationContext('reconcile', getenv('BI_TEST_DB_NAME'), 'Explicit verification target', 8, true, array('*'), array(0), null);
+    $context = new AuthorizationContext(getenv('BI_TEST_USER_ID') ?: 'reconcile', getenv('BI_TEST_DB_NAME'), 'Explicit verification target', 8, true, array('*'), array(0), null);
     $service = new DirectorsService($db, $context, array(), 'PKR');
     $periods = getenv('BI_RECON_PERIODS') ?: date('Y-m-01', strtotime('first day of previous month')) . ':' . date('Y-m-t', strtotime('first day of previous month'));
     foreach (explode(',', $periods) as $range) {
@@ -63,6 +63,36 @@ try {
     reconcileCheck('Outstanding value', $s['value'], $kpi['outstanding']['v'], 0.01, $failures);
     reconcileCheck('Outstanding count', $s['rows'], $kpi['outstanding']['n'], 0, $failures);
     reconcileCheck('Outstanding overdue value', $s['overdue'], $kpi['outstanding']['overdueV'], 0.01, $failures);
+    // ---- derived measures, each against independently written SQL on the last period above ---------------------
+    $overview = $service->overview(DirectorsRequest::fromArray(array('start' => $start, 'end' => $end, 'comparison' => 'yoy')));
+    $byId = array_column($overview['metrics'], null, 'id');
+    $days = $overview['metadata']['period']['days'];
+    reconcileCheck('DSO = outstanding / invoiced x days', $byId['dso_days']['value'], $kpi['outstanding']['v'] / $kpi['invoiced']['v'] * $days, 0.0001, $failures);
+    $posted = "(SELECT inv.invoiceno, MIN(inv.debtorno) debtorno, MIN(inv.invoicesdate) invoicesdate, MIN(inv.salescaseref) ref FROM invoice inv
+        WHERE inv.returned = 0 AND inv.inprogress = 0 AND EXISTS (SELECT 1 FROM debtortrans pt WHERE pt.type = 10 AND pt.transno = inv.invoiceno AND pt.reversed = 0) GROUP BY inv.invoiceno)";
+    $sums = array();
+    $result = $db->query("SELECT SUM(dt.ovamount) v FROM $posted i JOIN debtortrans dt ON dt.type = 10 AND dt.transno = i.invoiceno AND dt.reversed = 0
+        WHERE i.invoicesdate BETWEEN '$start' AND '$end' GROUP BY i.debtorno ORDER BY v DESC");
+    while ($row = $result->fetch_assoc()) { $sums[] = (float) $row['v']; }
+    $positive = array_filter($sums, function ($v) { return $v > 0; });
+    reconcileCheck('Top-10 customer share', $byId['customer_concentration_pct']['value'], array_sum(array_slice($positive, 0, 10)) / array_sum($positive) * 100, 0.0001, $failures);
+    $result = $db->query("SELECT DATEDIFF(i.invoicesdate, o.first_oc) d FROM $posted i
+        JOIN (SELECT salescaseref, MIN(orddate) first_oc FROM ocs WHERE orddate > '1900-01-01' GROUP BY salescaseref) o ON o.salescaseref = i.ref
+        WHERE i.invoicesdate BETWEEN '$start' AND '$end' AND DATEDIFF(i.invoicesdate, o.first_oc) >= 0 ORDER BY d");
+    $d = array();
+    while ($row = $result->fetch_assoc()) { $d[] = (int) $row['d']; }
+    $n = count($d);
+    reconcileCheck('Order-to-invoice median days', $byId['order_to_invoice_days']['value'], $n % 2 ? $d[intdiv($n, 2)] : ($d[$n / 2 - 1] + $d[$n / 2]) / 2, 0.0001, $failures);
+    $userId = $context->getUserId();
+    $bank = $db->prepare('SELECT SUM(t.amount / t.exrate / t.functionalexrate) v, COUNT(*) n FROM banktrans t WHERE t.exrate > 0 AND t.functionalexrate > 0 AND t.transdate <= CURDATE() AND t.bankact IN (SELECT accountcode FROM bankaccountusers WHERE userid = ?)');
+    $bank->bind_param('s', $userId);
+    $bank->execute();
+    $bankRow = $bank->get_result()->fetch_assoc();
+    if ((int) $bankRow['n'] > 0) { reconcileCheck('Bank book balance for the user accounts', $byId['bank_balance']['value'], $bankRow['v'], 0.01, $failures); }
+    if ((int) $byId['payables']['unknown_due'] > 0 && $byId['payables_due_soon']['rows'] === 0) {
+        $unavailable = $byId['payables_due_soon']['available'] === false && strpos((string) $byId['payables_due_soon']['error'], 'no recorded due date') !== false;
+        reconcileCheck('Payments due is unavailable, not zero, when no balance has a due date', $unavailable ? 1 : 0, 1, 0, $failures);
+    }
     echo $failures ? 'FAILED: ' . implode('; ', $failures) . "\n" : "All sales measures reconcile with the approved report rules.\n";
     exit($failures ? 1 : 0);
 } catch (Throwable $e) {
