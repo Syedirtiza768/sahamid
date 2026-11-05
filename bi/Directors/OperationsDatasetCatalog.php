@@ -108,10 +108,10 @@ SQL;
        COALESCE(NULLIF(m.manufacturers_name,''),'[Unassigned]') AS brand
 SQL;
         $datasets['purchasing'] = array(
-            'title' => 'MPIW received value by slip cohort', 'unit' => 'PKR', 'kind' => 'flow', 'status' => 'actual',
+            'title' => 'Market purchases received (MPIW), by slip date', 'unit' => 'PKR', 'kind' => 'flow', 'status' => 'actual',
             'source' => 'Completed active bazar_parchi type 601 + non-deleted bpitems',
-            'definition' => 'Current cumulative received quantity × entered unit price on completed, non-discarded, non-returned inward market slips, grouped into cohorts by slip creation date.',
-            'caveat' => 'Restated slip-cohort analysis, not receipts occurring in the selected period, expense, supplier balance or paid cash. Later receipts change older cohorts because quantity_received is a current cumulative counter. Dated receiving events are required for acquisition-period trends. No supplier-ledger/IGP join is added to value. Only positive priced received lines with current supplier currency PKR are valued; missing/foreign currency and nonpositive prices remain excluded quality rows.',
+            'definition' => 'Current cumulative received quantity × entered unit price on completed, non-discarded, non-returned inward market slips, dated by the slip creation date.',
+            'caveat' => 'Dated by slip creation, not by when goods were received, so it is not receipts occurring in the selected period, expense, supplier balance or paid cash. Later receipts change older slips because quantity_received is a current cumulative counter. Dated receiving events are required for acquisition-period trends. No supplier-ledger/IGP join is added to value. Only positive priced received lines with current supplier currency PKR are valued; missing/foreign currency and nonpositive prices remain excluded quality rows.',
             'route' => 'SupplierInquiry.php', 'source_route' => 'shop/parchi/inward/inwardParchiPrint.php', 'source_param' => 'parchi',
             'dimensions' => $receiptDimensions,
             'sql' => "SELECT CAST(b.id AS CHAR) AS id, DATE(p.created_at) AS date, CONCAT(p.parchino,' / item ',b.id) AS reference,
@@ -244,34 +244,37 @@ SQL
         );
 
         $datasets['pending_deliveries'] = array(
-            'title' => 'Pending delivery challans', 'unit' => 'count', 'kind' => 'snapshot', 'status' => 'actual',
-            'source' => 'dcs + dcgroups; canonical Sales Executive / Pending DC List status rules',
-            'definition' => 'DCs with zero courier, invoice and GRB dates, no invoice group, and no membership in a dcgroups comma-separated DC list; one unique DC number.',
-            'caveat' => 'Current operational pending state; not an unfulfilled customer order or additional sale. Mirrors existing status rules without inventing a completion meaning from inprogress. Duplicate DC numbers retain unknown count. Group-list lookup normalizes spaces. No historical status snapshots exist; date filters and prior comparisons do not apply.',
+            'title' => 'Pending DC List value', 'unit' => 'PKR', 'kind' => 'snapshot', 'status' => 'actual',
+            'source' => 'dcs + dcdetails/dcoptions (first option) + dcgroups; same rule as the Pending DC List',
+            'definition' => 'Value of delivery challans with no courier, invoice or GRB date and no invoice group, that are not listed in a DC group. Value = unit price × (1 − discount) × quantity × option quantity on the first option, as in the Pending DC List. The count of DCs is the number of supporting records.',
+            'caveat' => 'Current operational state; not an additional sale. A DC with no first-option line, no sales case or no customer is not part of the Pending DC List and is left out, as the list does. Duplicate DC numbers have an unknown value. No historical pending state is kept.',
             'route' => 'SalesGraph.php', 'source_route' => 'dc/previewDC.php', 'source_param' => 'DCNo',
-            'dimensions' => array('customer' => 'Customer', 'branch' => 'Customer branch', 'salesperson' => 'Case owner', 'location' => 'Dispatch location', 'project' => 'Sales case'),
+            'dimensions' => array('customer' => 'Customer', 'branch' => 'Customer branch', 'salesperson' => 'Case owner', 'location' => 'Dispatch location', 'project' => 'Sales case', 'age_bucket' => 'Age of DC'),
             'sql' => <<<'SQL'
-SELECT CAST(d.dcindex AS CHAR) AS id, d.orddate AS date, CONCAT('DC ',d.orderno) AS reference,
-       CASE WHEN d.header_count=1 THEN 1 ELSE NULL END AS amount, NULL AS quantity,
+SELECT CAST(d.orderno AS CHAR) AS id, DATE(d.orddate) AS date, CONCAT('DC ',d.orderno) AS reference,
+       CASE WHEN d.header_count=1 THEN v.dc_value ELSE NULL END AS amount, 1 AS quantity,
        CASE WHEN d.header_count=1 THEN 'Pending' ELSE 'Ambiguous DC number' END AS status,
        CASE WHEN d.header_count<>1 THEN 1 ELSE 0 END AS quality_issue,
        CAST(d.orderno AS CHAR) AS source_key,
-       CONCAT(d.debtorno,' · ',COALESCE(NULLIF(dm.name,''),'[Missing customer]')) AS customer,
-       CONCAT(d.debtorno,' / ',COALESCE(NULLIF(d.branchcode,''),'[Unassigned]')) AS branch,
+       CONCAT(sc.debtorno,' · ',COALESCE(NULLIF(dm.name,''),'[Missing customer]')) AS customer,
+       CONCAT(sc.debtorno,' / ',COALESCE(NULLIF(d.branchcode,''),'[Unassigned]')) AS branch,
        COALESCE(NULLIF(sc.salesman,''),'[Unassigned]') AS salesperson,
        COALESCE(NULLIF(d.fromstkloc,''),'[Unassigned]') AS location,
-       COALESCE(NULLIF(d.salescaseref,''),'[Unassigned]') AS project
-FROM (SELECT orderno,COUNT(*) AS header_count,MIN(dcindex) AS dcindex,MIN(orddate) AS orddate,
-             MIN(debtorno) AS debtorno,MIN(branchcode) AS branchcode,MIN(salescaseref) AS salescaseref,
-             MIN(fromstkloc) AS fromstkloc,MIN(courierslipdate) AS courierslipdate,MIN(invoicedate) AS invoicedate,
-             MIN(grbdate) AS grbdate,MAX(invoicegroupid) AS invoicegroupid
-      FROM dcs GROUP BY orderno) d
-LEFT JOIN debtorsmaster dm ON dm.debtorno=d.debtorno
-LEFT JOIN (SELECT salescaseref,CASE WHEN COUNT(*)=1 THEN MIN(salesman) ELSE '[Ambiguous case]' END AS salesman
-           FROM salescase GROUP BY salescaseref) sc ON sc.salescaseref=d.salescaseref
-WHERE d.courierslipdate='0000-00-00 00:00:00' AND d.invoicedate='0000-00-00 00:00:00'
-  AND d.grbdate='0000-00-00 00:00:00' AND d.invoicegroupid IS NULL
-  AND NOT EXISTS (SELECT 1 FROM dcgroups g WHERE FIND_IN_SET(CAST(d.orderno AS CHAR), REPLACE(g.dcnos,' ',''))>0)
+       COALESCE(NULLIF(d.salescaseref,''),'[Unassigned]') AS project,
+       CASE WHEN DATEDIFF(CURRENT_DATE(), d.orddate)<=30 THEN '0-30 days' WHEN DATEDIFF(CURRENT_DATE(), d.orddate)<=60 THEN '31-60 days'
+            WHEN DATEDIFF(CURRENT_DATE(), d.orddate)<=90 THEN '61-90 days' ELSE 'Over 90 days' END AS age_bucket
+FROM (SELECT orderno, COUNT(*) AS header_count, MIN(salescaseref) AS salescaseref, MIN(orddate) AS orddate,
+             MIN(branchcode) AS branchcode, MIN(fromstkloc) AS fromstkloc
+      FROM dcs
+      WHERE courierslipdate='0000-00-00 00:00:00' AND invoicedate='0000-00-00 00:00:00'
+        AND grbdate='0000-00-00 00:00:00' AND invoicegroupid IS NULL
+      GROUP BY orderno) d
+INNER JOIN (SELECT dd.orderno, SUM(dd.unitprice*(1-dd.discountpercent)*dd.quantity*dop.quantity) AS dc_value
+            FROM dcdetails dd INNER JOIN dcoptions dop ON dop.orderno=dd.orderno AND dop.lineno=dd.orderlineno
+            WHERE dd.lineoptionno=0 AND dop.optionno=0 GROUP BY dd.orderno) v ON v.orderno=d.orderno
+INNER JOIN (SELECT salescaseref, MIN(debtorno) AS debtorno, MIN(salesman) AS salesman FROM salescase GROUP BY salescaseref) sc ON sc.salescaseref=d.salescaseref
+INNER JOIN debtorsmaster dm ON dm.debtorno=sc.debtorno
+WHERE NOT EXISTS (SELECT 1 FROM dcgroups g WHERE FIND_IN_SET(CAST(d.orderno AS CHAR), REPLACE(g.dcnos,' ',''))>0)
 SQL
         );
 
@@ -314,6 +317,111 @@ SQL
                 FROM procurement_document_details d INNER JOIN procurement_document p ON p.id=d.pdid
                 LEFT JOIN suppliers s ON s.supplierid=p.supplierid LEFT JOIN stockmaster sm ON sm.stockid=d.stockid
                 WHERE p.canceled_date IS NULL AND p.received_date IS NULL",
+        );
+
+        $datasets['posted_invoices'] = array(
+            'title' => 'Posted invoices', 'unit' => 'PKR', 'kind' => 'flow', 'status' => 'actual',
+            'source' => 'invoice + non-reversed debtortrans type 10; custbranch; salesman',
+            'definition' => 'Posted invoice amount (debtortrans type 10, not reversed) for invoices dated in the period that are not returned and not in progress. Same rule as SalesPerson Monthly Invoices and "Invoiced" in the Sales Executive Report.',
+            'caveat' => 'The posted amount includes tax, so it is higher than invoice line value. Salesperson is the customer-branch salesman, as in the Sales Executive Report. Customers whose master currency is not PKR are flagged for review; their posted amount is still counted, as in the source report.',
+            'route' => 'SalesGraph.php', 'source_route' => 'PDFInvoice.php', 'source_param' => 'InvoiceNo',
+            'dimensions' => array('customer' => 'Customer', 'branch' => 'Customer branch', 'salesperson' => 'Salesperson', 'project' => 'Sales case'),
+            'sql' => <<<'SQL'
+SELECT CAST(i.invoiceno AS CHAR) AS id, i.invoicesdate AS date, CONCAT('Invoice ', i.invoiceno) AS reference,
+       dt.ovamount AS amount, 1 AS quantity, 'Posted' AS status,
+       CASE WHEN COALESCE(dm.currcode,'')<>'PKR' THEN 1 ELSE 0 END AS quality_issue,
+       CAST(i.invoiceno AS CHAR) AS source_key,
+       CONCAT(i.debtorno,' · ',COALESCE(NULLIF(dm.name,''),'[Missing customer]')) AS customer,
+       CONCAT(i.debtorno,' / ',COALESCE(NULLIF(i.branchcode,''),'[Unassigned]')) AS branch,
+       CASE WHEN COALESCE(cb.salesman,'')='' THEN '[Unassigned]' ELSE CONCAT(cb.salesman,' · ',COALESCE(NULLIF(sm.salesmanname,''),'[Unknown salesman]')) END AS salesperson,
+       COALESCE(NULLIF(i.salescaseref,''),'[Unassigned]') AS project
+FROM (SELECT inv.invoiceno, MIN(inv.debtorno) AS debtorno, MIN(inv.branchcode) AS branchcode,
+             MIN(inv.invoicesdate) AS invoicesdate, MIN(inv.salescaseref) AS salescaseref
+      FROM invoice inv
+      WHERE inv.returned=0 AND inv.inprogress=0
+        AND EXISTS (SELECT 1 FROM debtortrans pt WHERE pt.type=10 AND pt.transno=inv.invoiceno AND pt.reversed=0)
+      GROUP BY inv.invoiceno) i
+INNER JOIN debtortrans dt ON dt.type=10 AND dt.transno=i.invoiceno AND dt.reversed=0
+LEFT JOIN debtorsmaster dm ON dm.debtorno=i.debtorno
+LEFT JOIN custbranch cb ON cb.branchcode=i.branchcode AND cb.debtorno=i.debtorno
+LEFT JOIN salesman sm ON sm.salesmancode=cb.salesman
+SQL
+        );
+
+        $datasets['po_received'] = array(
+            'title' => 'PO received (order value)', 'unit' => 'PKR', 'kind' => 'flow', 'status' => 'actual',
+            'source' => 'salescase (PO file date) or first active sales_performance_po_receipts row; OC first-option lines',
+            'definition' => 'Sales cases whose customer PO arrived in the period: the PO file date on the case, else the first active recorded PO receipt, as used in My Sales Activity and the Sales Executive Report. Value = order-confirmation (OC) value of the case: unit price × (1 − discount) × quantity × option quantity, first option.',
+            'caveat' => 'Dated by the PO date, not the invoice or delivery date. A case with a PO but no OC lines has an unknown value, which is excluded from the total and counted. salesorders.poplaced is a supplier-PO flag and is not used.',
+            'route' => 'SalesGraph.php', 'source_route' => 'salescase/salescaseview.php', 'source_param' => 'salescaseref',
+            'dimensions' => array('customer' => 'Customer', 'branch' => 'Customer branch', 'salesperson' => 'Case owner', 'project' => 'Sales case'),
+            'sql' => <<<'SQL'
+SELECT CAST(sc.salescaseindex AS CHAR) AS id, DATE(COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received)) AS date,
+       sc.salescaseref AS reference, ov.v AS amount, 1 AS quantity,
+       CASE WHEN NULLIF(sc.podate,'0000-00-00 00:00:00') IS NOT NULL THEN 'PO file on case' ELSE 'Recorded PO receipt' END AS status,
+       CASE WHEN ov.v IS NULL THEN 1 ELSE 0 END AS quality_issue,
+       sc.salescaseref AS source_key,
+       CONCAT(sc.debtorno,' · ',COALESCE(NULLIF(dm.name,''),'[Missing customer]')) AS customer,
+       CONCAT(sc.debtorno,' / ',COALESCE(NULLIF(sc.branchcode,''),'[Unassigned]')) AS branch,
+       COALESCE(NULLIF(sc.salesman,''),'[Unassigned]') AS salesperson,
+       sc.salescaseref AS project
+FROM salescase sc
+LEFT JOIN debtorsmaster dm ON dm.debtorno=sc.debtorno
+LEFT JOIN (SELECT salescaseref, MIN(received_at) AS first_received FROM sales_performance_po_receipts
+           WHERE receipt_status='active' GROUP BY salescaseref) rc ON rc.salescaseref=sc.salescaseref
+LEFT JOIN (SELECT o.salescaseref, SUM(od.unitprice*(1-od.discountpercent)*od.quantity*oo.quantity) AS v
+           FROM (SELECT orderno, MIN(salescaseref) AS salescaseref FROM ocs GROUP BY orderno) o
+           INNER JOIN ocdetails od ON od.orderno=o.orderno
+           INNER JOIN ocoptions oo ON oo.orderno=od.orderno AND oo.lineno=od.orderlineno
+           WHERE od.lineoptionno=0 AND oo.optionno=0 GROUP BY o.salescaseref) ov ON ov.salescaseref=sc.salescaseref
+WHERE COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received) IS NOT NULL
+SQL
+        );
+
+        $datasets['outstanding_invoices'] = array(
+            'title' => 'Outstanding invoices', 'unit' => 'PKR', 'kind' => 'snapshot', 'status' => 'actual',
+            'source' => 'invoice + debtortrans type 10 (unsettled) + dcgroups + salescase',
+            'definition' => 'Unsettled, unreversed type-10 postings for invoices on a sales case and an invoice group, less GST and WHT withheld by the customer. Same rule as Outstanding Invoices and "Outstanding" in the Sales Executive Report. Overdue = invoices whose due date has passed.',
+            'caveat' => 'Current snapshot. This is the sales-case view of what customers owe. It is not the same figure as "Current net receivables", which nets every customer ledger row including credits and unapplied receipts. Both are shown and labelled; do not add them.',
+            'route' => 'SalesGraph.php', 'source_route' => 'PDFInvoice.php', 'source_param' => 'InvoiceNo',
+            'dimensions' => array('customer' => 'Customer', 'salesperson' => 'Case owner', 'project' => 'Sales case', 'age_bucket' => 'Overdue age', 'due_status' => 'Due status'),
+            'sql' => <<<'SQL'
+SELECT CAST(i.invoiceindex AS CHAR) AS id, i.invoicesdate AS date, CONCAT('Invoice ', i.invoiceno) AS reference,
+       CASE WHEN t.GSTwithhold=0 AND t.WHT=0 THEN t.ovamount-t.alloc
+            WHEN t.GSTwithhold=0 AND t.WHT=1 THEN t.ovamount-t.alloc-t.WHTamt
+            WHEN t.GSTwithhold=1 AND t.WHT=0 THEN t.ovamount-t.alloc-t.GSTamt
+            WHEN t.GSTwithhold=1 AND t.WHT=1 THEN t.ovamount-t.alloc-t.GSTamt-t.WHTamt ELSE NULL END AS amount,
+       1 AS quantity,
+       CASE WHEN i.due>'0000-00-00' AND i.due<CURRENT_DATE() THEN 'Overdue' WHEN i.due>'0000-00-00' THEN 'Not yet due' ELSE 'Unknown due date' END AS status,
+       CASE WHEN i.due>'0000-00-00' THEN 0 ELSE 1 END AS quality_issue,
+       CAST(i.invoiceno AS CHAR) AS source_key,
+       i.due AS due_date,
+       CASE WHEN i.due>'0000-00-00' AND i.due<CURRENT_DATE() THEN
+            CASE WHEN CASE WHEN t.GSTwithhold=0 AND t.WHT=0 THEN t.ovamount-t.alloc
+                 WHEN t.GSTwithhold=0 AND t.WHT=1 THEN t.ovamount-t.alloc-t.WHTamt
+                 WHEN t.GSTwithhold=1 AND t.WHT=0 THEN t.ovamount-t.alloc-t.GSTamt
+                 WHEN t.GSTwithhold=1 AND t.WHT=1 THEN t.ovamount-t.alloc-t.GSTamt-t.WHTamt ELSE 0 END > 0 THEN
+                 CASE WHEN DATEDIFF(CURRENT_DATE(), i.due)<=30 THEN '1-30 days' WHEN DATEDIFF(CURRENT_DATE(), i.due)<=60 THEN '31-60 days'
+                      WHEN DATEDIFF(CURRENT_DATE(), i.due)<=90 THEN '61-90 days' ELSE 'Over 90 days' END
+            ELSE 'Not overdue' END
+            ELSE 'Not overdue' END AS age_bucket,
+       CASE WHEN i.due>'0000-00-00' AND i.due<CURRENT_DATE() THEN 'overdue' WHEN i.due>'0000-00-00' THEN 'not_due' ELSE 'unknown_due' END AS due_status,
+       CASE WHEN i.due>'0000-00-00' AND i.due<CURRENT_DATE() THEN
+            CASE WHEN t.GSTwithhold=0 AND t.WHT=0 THEN t.ovamount-t.alloc
+                 WHEN t.GSTwithhold=0 AND t.WHT=1 THEN t.ovamount-t.alloc-t.WHTamt
+                 WHEN t.GSTwithhold=1 AND t.WHT=0 THEN t.ovamount-t.alloc-t.GSTamt
+                 WHEN t.GSTwithhold=1 AND t.WHT=1 THEN t.ovamount-t.alloc-t.GSTamt-t.WHTamt ELSE 0 END
+            ELSE 0 END AS overdue_amount,
+       CONCAT(i.debtorno,' · ',COALESCE(NULLIF(dm.name,''),'[Missing customer]')) AS customer,
+       COALESCE(NULLIF(sc.salesman,''),'[Unassigned]') AS salesperson,
+       COALESCE(NULLIF(i.salescaseref,''),'[Unassigned]') AS project
+FROM invoice i
+INNER JOIN debtorsmaster dm ON dm.debtorno=i.debtorno
+INNER JOIN salescase sc ON sc.salescaseref=i.salescaseref
+INNER JOIN dcgroups gr ON gr.id=i.groupid
+INNER JOIN debtortrans t ON t.transno=i.invoiceno AND t.type=10 AND t.reversed=0 AND t.settled=0
+WHERE i.returned=0
+SQL
         );
         return $datasets;
     }

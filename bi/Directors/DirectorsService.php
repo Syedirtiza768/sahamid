@@ -19,6 +19,16 @@ class DirectorsService
     private $companyRecord;
     private $resolvedDefinitions = array();
 
+    /** Screening thresholds for the "Needs attention" list. Rules, not statistical tests. */
+    const MATERIAL_CHANGE_PERCENT = 20;
+    const OVERDUE_SHARE_PERCENT = 30;
+    const CONCENTRATION_SHARE_PERCENT = 25;
+    const STUCK_DC_DAYS = 90;
+    /** 1 = a rise is favourable, -1 = a rise is unfavourable, 0 = neither. */
+    private static $polarity = array('gl_revenue' => 1, 'gl_result' => 1, 'gl_cost_of_sales' => -1, 'gl_expenses' => -1,
+        'petty_cash' => -1, 'posted_invoices' => 1, 'shop_sales' => 1, 'invoice_value' => 1, 'po_received' => 1,
+        'cash_movement' => 1, 'sales_revenue' => 1, 'gross_margin_pct' => 1);
+
     public function __construct($db, AuthorizationContext $context, array $session, $currency = 'PKR', ?callable $runner = null, $rootPath = '/sahamid/')
     {
         $this->db = $db;
@@ -47,14 +57,12 @@ class DirectorsService
             }
             try {
                 $definition = $this->resolveDefinition($definition);
-                $current = $this->summary($definition, $request, false);
-                $previous = $this->canCompare($definition, $request) ? $this->summary($definition, $request, true) : null;
+                $pair = $this->summaryPair($definition, $request, $this->canCompare($definition, $request));
+                $current = $pair['current'];
+                $previous = $pair['previous'];
                 $metric = $this->metric($definition, $current, $previous);
-                if ($definition['kind'] === 'flow') {
-                    $undated = $this->query("SELECT COUNT(*) AS undated FROM (" . $definition['sql'] . ") q WHERE q.date IS NULL OR q.date < '1900-01-01'", $definition['types'], $definition['params']);
-                    if ((int) $undated[0]['undated'] > 0) {
-                        $risks[] = array('title' => $definition['title'] . ': missing business dates', 'message' => $undated[0]['undated'] . ' source rows across all dates cannot be assigned to a reporting period and are omitted from dated totals.', 'dataset' => $id);
-                    }
+                if ($definition['kind'] === 'flow' && $pair['undated'] > 0) {
+                    $risks[] = array('title' => $definition['title'] . ': missing business dates', 'message' => $pair['undated'] . ' source rows across all dates cannot be assigned to a reporting period and are omitted from dated totals.', 'dataset' => $id);
                 }
                 if ($current['invalid_amounts'] > 0) {
                     $risks[] = array('title' => $definition['title'] . ': incomplete value', 'message' => $current['invalid_amounts'] . ' source rows have invalid amounts or ambiguous joins and are excluded from the total.', 'dataset' => $id, 'group_by' => 'status');
@@ -94,6 +102,13 @@ class DirectorsService
             } catch (\Throwable $e) { $this->logFailure('ledger_diagnostic', $e); }
         }
         $byId = array_column($metrics, null, 'id');
+        $metrics = array_merge($this->compositeMetrics($byId), $metrics);
+        $byId = array_column($metrics, null, 'id');
+        $attention = $this->attentionItems($risks, $byId, $request);
+        $dataHealth = array();
+        foreach ($risks as $risk) {
+            if (!preg_match('/overdue exposure|material movement/', $risk['title'])) { $dataHealth[] = $risk; }
+        }
         $budgetComparison = null;
         if (isset($byId['gl_budget'], $byId['gl_budget_actual']) && $byId['gl_budget']['available'] && $byId['gl_budget_actual']['available']) {
             $budget = $byId['gl_budget']['value'];
@@ -102,6 +117,7 @@ class DirectorsService
                 'caveat' => 'Same complete accounting periods and P&L accounts from chartdetails; no daily proration. A recorded budget is not evidence of approval.'), DirectorsRequest::change($actual, $budget));
         }
         return array('metadata' => $this->metadata($request), 'metrics' => $metrics, 'risks' => $risks,
+            'attention' => $attention, 'data_health' => $dataHealth,
             'budget_comparison' => $budgetComparison, 'limitations' => self::limitations());
     }
 
@@ -156,6 +172,19 @@ class DirectorsService
         }
         $this->groupBy($definition, $request);
         return $this->resolveDefinition($definition);
+    }
+
+    /** Current summaries of snapshot measures, for the daily capture job. Unreadable measures are skipped. */
+    public function snapshotSummaries(array $ids)
+    {
+        $request = DirectorsRequest::fromArray(array('comparison' => 'none'));
+        $out = array();
+        foreach ($ids as $id) {
+            $definition = $this->catalog->get($id);
+            if ($definition['kind'] !== 'snapshot' || !$this->authorization->canRead($definition)) { continue; }
+            $out[$id] = $this->summaryPair($this->resolveDefinition($definition), $request, false)['current'];
+        }
+        return $out;
     }
 
     public function record($dataset, $id)
@@ -227,6 +256,61 @@ class DirectorsService
         // No valid facts must never become a reliable zero.
         if ($row['rows'] > 0 && $row['invalid_amounts'] === $row['rows']) { $row['value'] = null; }
         return $row;
+    }
+
+    /**
+     * Current and comparison summaries and the undated-row count in ONE pass over the
+     * dataset. Equivalent to two summary() calls plus an undated scan (checked by
+     * bi/tests/directors_pair.php); the overview calls it once per measure.
+     */
+    private function summaryPair(array $definition, DirectorsRequest $request, $withPrevious)
+    {
+        $snapshot = $definition['kind'] === 'snapshot';
+        $budget = $definition['kind'] === 'budget';
+        $flagSql = array();
+        $params = array();
+        $types = '';
+        foreach (array('in_current' => false, 'in_previous' => true) as $alias => $previous) {
+            if ($snapshot) { $flagSql[] = ($previous ? '0' : '1') . ' AS ' . $alias; continue; }
+            if ($previous && !$withPrevious) { $flagSql[] = '0 AS ' . $alias; continue; }
+            $start = $request->period[$previous ? 'comparison_start' : 'start'];
+            $end = $request->period[$previous ? 'comparison_end' : 'end'];
+            $flagSql[] = '(q.date >= ? AND q.date < ?' . ($budget ? ' AND q.period_start >= ?' : '') . ') AS ' . $alias;
+            $params[] = $start;
+            $params[] = (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d');
+            $types .= 'ss';
+            if ($budget) { $params[] = $start; $types .= 's'; }
+        }
+        $overdue = $definition['has_overdue'] ? 'x.overdue_amount' : 'NULL';
+        $quality = $definition['has_quality'] ? 'x.quality_issue' : 'NULL';
+        $unknown = isset($definition['dimensions']['due_status']) ? "(x.due_status = 'unknown_due')" : 'NULL';
+        $estimated = isset($definition['dimensions']['due_basis']) ? "(x.due_basis LIKE 'Estimated%')" : 'NULL';
+        $aggregates = function ($flag, $p) use ($overdue, $quality, $unknown, $estimated) {
+            return 'SUM(CASE WHEN ' . $flag . ' THEN 1 ELSE 0 END) AS ' . $p . '_rows,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' THEN x.amount END), 0) AS ' . $p . '_value,
+                SUM(CASE WHEN ' . $flag . ' AND x.amount IS NULL THEN 1 ELSE 0 END) AS ' . $p . '_invalid,
+                MIN(CASE WHEN ' . $flag . ' THEN x.date END) AS ' . $p . '_first, MAX(CASE WHEN ' . $flag . ' THEN x.date END) AS ' . $p . '_last,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' AND x.amount > 0 THEN x.amount ELSE 0 END), 0) AS ' . $p . '_inflow,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' AND x.amount < 0 THEN -x.amount ELSE 0 END), 0) AS ' . $p . '_outflow,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' THEN ABS(x.amount) END), 0) AS ' . $p . '_absolute,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' THEN ' . $overdue . ' END), 0) AS ' . $p . '_overdue,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' THEN ' . $quality . ' END), 0) AS ' . $p . '_quality,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' THEN ' . $unknown . ' END), 0) AS ' . $p . '_unknown,
+                COALESCE(SUM(CASE WHEN ' . $flag . ' THEN ' . $estimated . ' END), 0) AS ' . $p . '_estimated';
+        };
+        $sql = 'SELECT ' . $aggregates('x.in_current = 1', 'c') . ', ' . $aggregates('x.in_previous = 1', 'p')
+            . ", SUM(CASE WHEN x.date IS NULL OR x.date < '1900-01-01' THEN 1 ELSE 0 END) AS undated
+            FROM (SELECT q.*, " . implode(', ', $flagSql) . ' FROM (' . $definition['sql'] . ') q) x';
+        $r = $this->query($sql, $types . $definition['types'], array_merge($params, $definition['params']))[0];
+        $build = function ($p) use ($r) {
+            $row = array('rows' => (int) $r[$p . '_rows'], 'value' => (float) $r[$p . '_value'], 'invalid_amounts' => (int) $r[$p . '_invalid'],
+                'first_record_date' => $r[$p . '_first'], 'last_record_date' => $r[$p . '_last'], 'inflow' => (float) $r[$p . '_inflow'],
+                'outflow' => (float) $r[$p . '_outflow'], 'absolute_value' => (float) $r[$p . '_absolute'], 'overdue' => (float) $r[$p . '_overdue'],
+                'quality_issues' => (int) $r[$p . '_quality'], 'unknown_due' => (int) $r[$p . '_unknown'], 'estimated_due' => (int) $r[$p . '_estimated']);
+            if ($row['rows'] > 0 && $row['invalid_amounts'] === $row['rows']) { $row['value'] = null; }
+            return $row;
+        };
+        return array('current' => $build('c'), 'previous' => $withPrevious ? $build('p') : null, 'undated' => (int) $r['undated']);
     }
 
     private function where(array $definition, DirectorsRequest $request, $previous)
@@ -362,11 +446,121 @@ class DirectorsService
             array('unit' => $this->unit($definition), 'value' => $value, 'previous' => $prior, 'rows' => $current ? $current['rows'] : 0,
                 'available' => $error === null && $value !== null, 'can_investigate' => $current !== null, 'error' => $error,
                 'overdue' => $current ? $current['overdue'] : null, 'invalid_amounts' => $current ? $current['invalid_amounts'] : null,
+                'polarity' => isset(self::$polarity[$definition['id']]) ? self::$polarity[$definition['id']] : 0,
                 'completeness' => $current && $current['invalid_amounts'] > 0 ? 'partial' : 'available_source_rows',
                 'comparison_complete' => (bool) $comparisonComplete, 'comparison_invalid_amounts' => $previous ? $previous['invalid_amounts'] : null,
                 'first_record_date' => $current ? $current['first_record_date'] : null, 'last_record_date' => $current ? $current['last_record_date'] : null,
                 'quality_issues' => $current ? $current['quality_issues'] : null, 'unknown_due' => $current ? $current['unknown_due'] : null,
                 'estimated_due' => $current ? $current['estimated_due'] : null), $movement);
+    }
+
+    /** Headline measures built only from other measures that are already available. */
+    private function compositeMetrics(array $byId)
+    {
+        $template = function ($id, $title, $unit, $status, $definition, $caveat, $value, $previous, $movement, array $components, $error) {
+            return array_merge(array('id' => $id, 'title' => $title, 'unit' => $unit, 'kind' => 'flow', 'status' => $status,
+                'source' => 'Combined from: ' . implode(', ', array_column($components, 'title')), 'definition' => $definition, 'caveat' => $caveat,
+                'dimensions' => array(), 'section' => 'Headline', 'value' => $value, 'previous' => $previous, 'rows' => 0,
+                'available' => $error === null && $value !== null, 'can_investigate' => false, 'error' => $error, 'overdue' => null,
+                'invalid_amounts' => 0, 'polarity' => isset(self::$polarity[$id]) ? self::$polarity[$id] : 0, 'completeness' => 'available_source_rows',
+                'comparison_complete' => $previous !== null, 'comparison_invalid_amounts' => 0, 'first_record_date' => null, 'last_record_date' => null,
+                'quality_issues' => null, 'unknown_due' => null, 'estimated_due' => null, 'components' => $components), $movement);
+        };
+        $usable = function ($id) use ($byId) { return isset($byId[$id]) && $byId[$id]['available'] && (int) $byId[$id]['invalid_amounts'] === 0; };
+        $out = array();
+
+        // Sales revenue = posted invoices + completed shop sales (decision of 2026-11-05).
+        $parts = array('posted_invoices', 'shop_sales');
+        $components = array();
+        foreach ($parts as $id) { if (isset($byId[$id])) { $components[] = array('id' => $id, 'title' => $byId[$id]['title'], 'value' => $byId[$id]['value']); } }
+        if (count($components) === count($parts) && $usable('posted_invoices') && $usable('shop_sales')) {
+            $value = $byId['posted_invoices']['value'] + $byId['shop_sales']['value'];
+            $priorOk = $byId['posted_invoices']['previous'] !== null && $byId['shop_sales']['previous'] !== null
+                && $byId['posted_invoices']['comparison_complete'] && $byId['shop_sales']['comparison_complete'];
+            $prior = $priorOk ? $byId['posted_invoices']['previous'] + $byId['shop_sales']['previous'] : null;
+            $movement = $priorOk ? DirectorsRequest::change($value, $prior) : array('delta' => null, 'percent' => null);
+            $out[] = $template('sales_revenue', 'Sales revenue', $this->currency, 'actual',
+                'Posted invoices (debtortrans type 10, not reversed) plus completed shop sales (type 750, not reversed), dated by invoice or shop-sale date.',
+                'Includes tax, as posted. Invoices and shop sales are different documents and are not counted twice. This is an operational sales figure; general-ledger revenue is shown separately and is not expected to equal it.',
+                $value, $prior, $movement, $components, null);
+        } else {
+            $out[] = $template('sales_revenue', 'Sales revenue', $this->currency, 'unavailable', 'Posted invoices plus completed shop sales.', '', null, null,
+                array('delta' => null, 'percent' => null), $components, 'One of its source measures is unavailable or has excluded amounts.');
+        }
+
+        // Gross margin % from the general ledger. Estimated: depends on GL postings being complete.
+        if ($usable('gl_revenue') && $usable('gl_cost_of_sales') && $byId['gl_revenue']['value'] > 0) {
+            $margin = function ($revenue, $cost) { return $revenue > 0 ? ($revenue - $cost) / $revenue * 100 : null; };
+            $value = $margin($byId['gl_revenue']['value'], $byId['gl_cost_of_sales']['value']);
+            $prior = $byId['gl_revenue']['previous'] !== null && $byId['gl_cost_of_sales']['previous'] !== null
+                ? $margin($byId['gl_revenue']['previous'], $byId['gl_cost_of_sales']['previous']) : null;
+            $movement = $prior !== null && $value !== null ? array('delta' => $value - $prior, 'percent' => null) : array('delta' => null, 'percent' => null);
+            $components = array(array('id' => 'gl_revenue', 'title' => $byId['gl_revenue']['title'], 'value' => $byId['gl_revenue']['value']),
+                array('id' => 'gl_cost_of_sales', 'title' => $byId['gl_cost_of_sales']['title'], 'value' => $byId['gl_cost_of_sales']['value']));
+            $out[] = $template('gross_margin_pct', 'Gross margin', '%', 'estimated',
+                '(GL revenue − cost of sales) ÷ GL revenue × 100, from posted general-ledger journals in the period.',
+                'Estimated: it is only as complete as ledger posting and stock-cost postings. The change is in percentage points, not a percentage of a percentage.',
+                $value, $prior, $movement, $components, null);
+        } else {
+            $out[] = $template('gross_margin_pct', 'Gross margin', '%', 'unavailable', '(GL revenue − cost of sales) ÷ GL revenue.', '', null, null,
+                array('delta' => null, 'percent' => null), array(), 'General-ledger revenue or cost of sales is unavailable for this period.');
+        }
+        return $out;
+    }
+
+    /** Ranked business items for the executive "Needs attention" list. Largest money at risk first. */
+    private function attentionItems(array $risks, array $byId, DirectorsRequest $request)
+    {
+        $items = array();
+        foreach ($risks as $risk) {
+            if (!preg_match('/material movement/', $risk['title']) || !isset($risk['dataset'], $byId[$risk['dataset']])) { continue; }
+            $metric = $byId[$risk['dataset']];
+            if ($metric['percent'] === null || $metric['delta'] === null) { continue; }
+            // Only moves with a known unfavourable direction need attention; neutral and favourable moves stay on the tiles.
+            if ($metric['polarity'] === 0 || (($metric['delta'] > 0) === ($metric['polarity'] > 0))) { continue; }
+            $items[] = array('id' => 'move_' . $risk['dataset'], 'title' => $metric['title'] . ($metric['delta'] > 0 ? ' is up' : ' is down'),
+                'amount' => abs($metric['delta']), 'unit' => $metric['unit'], 'severity' => abs($metric['percent']) >= 40 ? 'high' : 'medium', 'favourable' => false,
+                'message' => number_format(abs($metric['percent']), 1) . '% ' . ($metric['delta'] > 0 ? 'higher' : 'lower') . ' than the comparison period.',
+                'dataset' => $risk['dataset']);
+        }
+        if (isset($byId['outstanding_invoices']) && $byId['outstanding_invoices']['available']) {
+            $m = $byId['outstanding_invoices'];
+            $share = $m['value'] > 0 ? $m['overdue'] / $m['value'] * 100 : 0;
+            if ($m['overdue'] > 0 && $share >= self::OVERDUE_SHARE_PERCENT) {
+                $items[] = array('id' => 'overdue_invoices', 'title' => 'Overdue customer invoices', 'amount' => $m['overdue'], 'unit' => $m['unit'],
+                    'severity' => $share >= 50 ? 'high' : 'medium', 'favourable' => false,
+                    'message' => number_format($share, 0) . '% of outstanding invoices are past their due date.', 'dataset' => 'outstanding_invoices',
+                    'group_by' => 'age_bucket', 'filters' => array('due_status' => 'overdue'));
+            }
+        }
+        try {
+            $pending = $this->catalog->get('pending_deliveries');
+            if ($this->authorization->canRead($pending)) {
+                $pending = $this->resolveDefinition($pending);
+                $rows = $this->query("SELECT COUNT(*) AS n, COALESCE(SUM(q.amount),0) AS v FROM (" . $pending['sql'] . ") q WHERE q.age_bucket = 'Over 90 days'", $pending['types'], $pending['params']);
+                if ((int) $rows[0]['n'] > 0) {
+                    $items[] = array('id' => 'stuck_dcs', 'title' => 'Delivery challans waiting over ' . self::STUCK_DC_DAYS . ' days', 'amount' => (float) $rows[0]['v'], 'unit' => 'PKR',
+                        'severity' => 'medium', 'favourable' => false, 'message' => $rows[0]['n'] . ' DCs are on the Pending DC List and still not invoiced.',
+                        'dataset' => 'pending_deliveries', 'group_by' => 'age_bucket', 'filters' => array('age_bucket' => 'Over 90 days'));
+                }
+            }
+        } catch (\Throwable $e) { $this->logFailure('attention_pending_dc', $e); }
+        try {
+            $invoices = $this->catalog->get('posted_invoices');
+            if ($this->authorization->canRead($invoices)) {
+                $where = $this->where($invoices, $request, false);
+                $rows = $this->query("SELECT q.customer AS customer, SUM(q.amount) AS v FROM (" . $invoices['sql'] . ") q" . $where['sql'] . " GROUP BY q.customer ORDER BY v DESC LIMIT 1", $where['types'], $where['params']);
+                $total = isset($byId['posted_invoices']['value']) ? $byId['posted_invoices']['value'] : 0;
+                if ($rows && $total > 0 && (float) $rows[0]['v'] / $total * 100 >= self::CONCENTRATION_SHARE_PERCENT) {
+                    $share = (float) $rows[0]['v'] / $total * 100;
+                    $items[] = array('id' => 'customer_concentration', 'title' => 'One customer is ' . number_format($share, 0) . '% of invoiced sales', 'amount' => (float) $rows[0]['v'], 'unit' => 'PKR',
+                        'severity' => $share >= 40 ? 'high' : 'medium', 'favourable' => false, 'message' => $rows[0]['customer'] . ' in the selected period.',
+                        'dataset' => 'posted_invoices', 'group_by' => 'customer');
+                }
+            }
+        } catch (\Throwable $e) { $this->logFailure('attention_concentration', $e); }
+        usort($items, function ($a, $b) { return $b['amount'] <=> $a['amount']; });
+        return array_slice($items, 0, 8);
     }
 
     private function unit(array $definition) { return $definition['unit'] === 'base' ? $this->currency : $definition['unit']; }
@@ -375,6 +569,7 @@ class DirectorsService
     private function metadata(DirectorsRequest $request)
     {
         return array('company' => $this->context->getCompanyName(), 'currency' => $this->currency, 'generated_at_utc' => gmdate('Y-m-d H:i:s'),
+            'generated_local' => date('Y-m-d H:i:s'), 'time_zone' => date_default_timezone_get(),
             'server_ms' => (int) round((microtime(true) - $this->started) * 1000), 'period' => $request->period,
             'scope' => 'Active ERP company only; source page permissions, assigned expense tabs and authorized bank accounts apply.',
             'comparison_definition' => 'Percentage change = (current − previous) / absolute(previous). Zero or missing baselines have no percentage. Snapshots do not have historical comparisons.');

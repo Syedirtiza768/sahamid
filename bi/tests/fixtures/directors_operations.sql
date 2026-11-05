@@ -46,6 +46,8 @@ INSERT INTO dcs (dcindex,orderno,salescaseref,debtorno,branchcode,orddate,courie
  (4,4,'SC1','C1','B1','2024-01-01','0000-00-00','0000-00-00','0000-00-00'),
  (5,4,'SC1','C1','B1','2024-01-01','0000-00-00','0000-00-00','0000-00-00');
 INSERT INTO dcgroups (dcnos) VALUES ('2, 99');
+INSERT INTO dcdetails (orderlineno,orderno,lineoptionno,unitprice,quantity,discountpercent) VALUES (1,1,0,500,2,0),(1,2,0,100,1,0),(1,3,0,100,1,0);
+INSERT INTO dcoptions (orderno,lineno,optionno,quantity) VALUES (1,1,0,1),(2,1,0,1),(3,1,0,1);
 INSERT INTO pcexpenses (codeexpense,description,glaccount) VALUES ('FUEL','Fuel','6000');
 INSERT INTO pctabs (tabcode,usercode,typetabcode,currency) VALUES ('T1','User A','OPS','PKR'),('T2','User B','OPS','PKR'),('T3','User C','OPS','USD');
 INSERT INTO pcashdetails (counterindex,tabcode,date,codeexpense,amount,authorized,posted,receipt,receiptimage,notes) VALUES

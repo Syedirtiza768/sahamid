@@ -34,7 +34,7 @@ include_once(dirname(__DIR__) . '/includes/sidebar.php');
                 <label>Reporting period<select id="dirPreset"><option value="ytd">Fiscal year to date</option><option value="month">Month to date</option><option value="quarter">Quarter to date</option><option value="last_month">Last month</option><option value="last_quarter">Last quarter</option><option value="last_year">Last fiscal year</option><option value="custom">Custom dates</option></select></label>
                 <label>From<input id="dirStart" type="date" required></label>
                 <label>To<input id="dirEnd" type="date" required></label>
-                <label>Compare with<select id="dirComparison"><option value="previous">Previous equal period</option><option value="mom">Previous month</option><option value="qoq">Previous quarter</option><option value="yoy">Previous year</option><option value="custom">Custom comparison</option><option value="none">No comparison</option></select></label>
+                <label>Compare with<select id="dirComparison"><option value="yoy">Same period last year</option><option value="previous">Previous equal period</option><option value="mom">Previous month</option><option value="qoq">Previous quarter</option><option value="custom">Custom comparison</option><option value="none">No comparison</option></select></label>
                 <label id="dirCustomStartWrap" hidden>Comparison from<input id="dirComparisonStart" type="date"></label>
                 <label id="dirCustomEndWrap" hidden>Comparison to<input id="dirComparisonEnd" type="date"></label>
                 <button class="dir-button dir-primary dir-apply" type="submit"><i class="fa fa-filter" aria-hidden="true"></i> Apply</button>
@@ -45,11 +45,14 @@ include_once(dirname(__DIR__) . '/includes/sidebar.php');
         <nav class="dir-tabs" aria-label="Directors dashboard views"><button type="button" data-view="overview" class="is-active">Executive overview</button><button type="button" data-view="explore">Investigate</button><button type="button" data-view="coverage">Definitions &amp; coverage</button></nav>
 
         <section id="dirOverview" aria-label="Executive overview">
-            <div class="dir-section-heading"><div><div class="dir-eyebrow">THE BUSINESS AT A GLANCE</div><h2>Results &amp; exposure</h2><p>Period flows and current balances are labeled separately. Select a measure to investigate.</p></div><span id="dirCoverageStatus" class="dir-tag">Loading coverage…</span></div>
-            <div id="dirMetricGroups" class="dir-metric-groups"><div class="dir-placeholder">Loading authorized business measures…</div></div>
-            <section id="dirBudgetComparison" class="dir-panel" aria-label="Recorded budget versus actual" hidden></section>
-            <div class="dir-section-heading"><div><div class="dir-eyebrow">FOCUS YOUR ATTENTION</div><h2>Risks &amp; opportunities</h2><p>Deterministic exceptions from the selected records, with a path to the evidence.</p></div></div>
+            <div class="dir-section-heading"><div><div class="dir-eyebrow">THE BUSINESS AT A GLANCE</div><h2>Key results</h2><p>The selected period compared with the comparison period. Select a result to see what is behind it.</p></div><span id="dirCoverageStatus" class="dir-tag">Loading coverage…</span></div>
+            <div id="dirHeadline" class="dir-headline-grid"><div class="dir-placeholder">Loading key results…</div></div>
+            <div class="dir-section-heading"><div><div class="dir-eyebrow">NEEDS ATTENTION</div><h2>Where to look first</h2><p>Largest amounts first. Only unfavourable changes and exposures above the screening thresholds appear here.</p></div></div>
             <div id="dirRisks" class="dir-risk-grid"><div class="dir-placeholder">Checking changes and exceptions…</div></div>
+            <details id="dirDataHealth" class="dir-panel dir-health" hidden><summary>Data health <span id="dirHealthCount" class="dir-tag"></span><span class="dir-health-hint">Records the figures leave out or cannot place in a period</span></summary><ul id="dirHealthList"></ul></details>
+            <section id="dirBudgetComparison" class="dir-panel" aria-label="Recorded budget versus actual" hidden></section>
+            <div class="dir-section-heading"><div><div class="dir-eyebrow">MORE MEASURES</div><h2>Results &amp; exposure by area</h2><p>Period measures and current balances are labelled separately.</p></div></div>
+            <div id="dirMetricGroups" class="dir-metric-groups"><div class="dir-placeholder">Loading authorized business measures…</div></div>
         </section>
 
         <section id="dirExplore" aria-label="Investigate a business measure" hidden>

@@ -27,3 +27,7 @@ docs/*
 
 # Isolated directors reporting verification runtimes and fixture database
 /tmp/directors-*
+
+!docs/directors-dashboard-runbook.md
+!docs/directors-ux/
+!docs/directors-ux/**

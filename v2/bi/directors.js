@@ -4,7 +4,7 @@
     var root = document.getElementById('directorsRoot');
     if (!root) { return; }
     var overview = null, exploration = null, controller = null, requestNumber = 0;
-    var fiscalStart = 1, state = readState(), risks = [], periodDays = null, comparisonDays = null;
+    var fiscalStart = 1, state = readState(), risks = [], healthItems = [], periodDays = null, comparisonDays = null;
     var $ = function (id) { return document.getElementById(id); };
     var esc = function (value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
     var own = function (o, key) { return Object.prototype.hasOwnProperty.call(o || {}, key); };
@@ -13,10 +13,9 @@
     var shortNumber = function (v) {
         if (!isNumber(v)) { return '—'; }
         var a = Math.abs(Number(v)), sign = Number(v) < 0 ? '−' : '';
-        if (a >= 1e9) { return sign + number(a / 1e9, 2) + 'bn'; }
-        if (a >= 1e6) { return sign + number(a / 1e6, 2) + 'm'; }
-        if (a >= 1e3) { return sign + number(a / 1e3, 1) + 'k'; }
-        return number(v, 2);
+        if (a >= 1e7) { return sign + number(a / 1e7, 2) + ' Cr'; }
+        if (a >= 1e5) { return sign + number(a / 1e5, 2) + ' Lakh'; }
+        return number(v, a >= 1000 ? 0 : 2);
     };
     function validDate(v) { return /^\d{4}-\d{2}-\d{2}$/.test(v || '') && !isNaN(new Date(v + 'T00:00:00Z').getTime()); }
     function dateUTC(value) { return new Date(value + 'T00:00:00Z'); }
@@ -29,9 +28,15 @@
     function canInvestigate(metric) { return metric && (metric.available !== false || metric.can_investigate === true); }
     function dimsFor(metric) { return metric && metric.dimensions && !Array.isArray(metric.dimensions) ? metric.dimensions : {}; }
     function basis(metric) { return isSnapshot(metric) ? 'Current snapshot' : (metric.kind === 'budget' ? (metric.status === 'actual' ? 'Accounting-period actual' : 'Recorded budget') : 'Selected period'); }
+    var plainTitles = { receivables: 'Receivables (net customer ledger)', payables: 'Payables (net supplier ledger)', cash_movement: 'Bank movement',
+        pipeline: 'Open enquiry value (as entered)', inventory: 'Stock value (at standard cost)', purchase_commitments: 'Unreceived market-slip purchases',
+        legacy_po_commitments: 'Unreceived purchase orders', procurement_pipeline: 'Planned procurement', stock_exceptions: 'Stock positions to review',
+        pending_deliveries: 'Pending DC List (value)', gl_result: 'Net profit', gl_revenue: 'Revenue in the ledger (GL)' };
+    function plainTitle(metric) { return plainTitles[metric.id] || metric.title; }
+    var comparisonLabels = { yoy: 'vs same period last year', previous: 'vs previous equal period', mom: 'vs previous month', qoq: 'vs previous quarter', custom: 'vs comparison period' };
     function tag(metric) {
         var status = metric.available === false ? 'unavailable' : (metric.status || 'actual');
-        var label = status === 'actual' ? 'Actual source' : status === 'estimated' ? 'Estimated' : status === 'unavailable' ? 'Unavailable' : status;
+        var label = status === 'actual' ? 'Actual' : status === 'estimated' ? 'Estimated' : status === 'unavailable' ? 'Unavailable' : status;
         return '<span class="dir-tag dir-tag-' + esc(status.replace(/[^a-z]/g, '')) + '">' + esc(label) + '</span>';
     }
     function changeText(metric) {
@@ -41,9 +46,13 @@
         if (metric.comparison_complete === false && (Number(metric.invalid_amounts) > 0 || Number(metric.comparison_invalid_amounts) > 0)) { return 'Comparison incomplete · review excluded amounts'; }
         if (!isNumber(metric.previous)) { return 'Comparison unavailable'; }
         if (!isNumber(metric.delta)) { return 'Comparison unavailable'; }
-        var delta = Number(metric.delta);
-        var text = (delta > 0 ? '+' : '') + number(delta);
-        return esc(text) + (isNumber(metric.percent) ? ' <span>(' + esc((Number(metric.percent) > 0 ? '+' : '') + number(metric.percent, 1)) + '%)</span>' : ' <span>· no percentage baseline</span>');
+        var delta = Number(metric.delta), points = metric.unit === '%';
+        var good = metric.polarity ? ((delta > 0) === (Number(metric.polarity) > 0)) : null;
+        var cls = delta === 0 || good === null ? 'dir-change-neutral' : (good ? 'dir-change-good' : 'dir-change-bad');
+        var arrow = delta > 0 ? '▲ ' : (delta < 0 ? '▼ ' : '');
+        var text = points ? (delta > 0 ? '+' : '') + number(delta, 1) + ' pts' : (delta > 0 ? '+' : '') + shortNumber(delta);
+        var percent = points ? '' : (isNumber(metric.percent) ? (Math.abs(Number(metric.percent)) > 1000 ? ' <span>(not meaningful: very small base)</span>' : ' <span>(' + esc((Number(metric.percent) > 0 ? '+' : '') + number(metric.percent, 1)) + '%)</span>') : ' <span>· no percentage baseline</span>');
+        return '<span class="' + cls + '">' + arrow + esc(text) + '</span>' + percent + ' <small>' + esc(comparisonLabels[state.comparison] || 'vs comparison period') + '</small>';
     }
     function readState() {
         var p = new URLSearchParams(window.location.search), filters = {};
@@ -52,7 +61,7 @@
         return {
             view: ['overview', 'explore', 'coverage'].indexOf(view) >= 0 ? view : 'overview',
             preset: p.get('preset') || (p.has('start') ? 'custom' : 'ytd'), start: p.get('start') || '', end: p.get('end') || '',
-            comparison: p.get('comparison') || 'previous', comparison_start: p.get('comparison_start') || '', comparison_end: p.get('comparison_end') || '',
+            comparison: p.get('comparison') || 'yoy', comparison_start: p.get('comparison_start') || '', comparison_end: p.get('comparison_end') || '',
             dataset: p.get('dataset') || '', group_by: p.get('group_by') || '', search: p.get('search') || '',
             sort: p.get('sort') || 'date', direction: p.get('direction') === 'asc' ? 'asc' : 'desc', page: Math.max(1, parseInt(p.get('page'), 10) || 1),
             page_size: [25, 50, 100].indexOf(Number(p.get('page_size'))) >= 0 ? Number(p.get('page_size')) : 50, filters: filters
@@ -101,7 +110,7 @@
         periodDays = period.days; comparisonDays = period.comparison_days;
         $('dirCompany').textContent = metadata.company || 'Current company';
         $('dirScope').textContent = typeof metadata.scope === 'string' ? metadata.scope : 'Authorized company · ' + (metadata.currency || 'source units');
-        $('dirFreshness').textContent = 'Live source · ' + (metadata.generated_at_utc ? metadata.generated_at_utc + ' UTC' : 'just refreshed');
+        $('dirFreshness').textContent = 'Live source · ' + (metadata.generated_local ? 'updated ' + metadata.generated_local + (metadata.time_zone ? ' (' + metadata.time_zone + ')' : '') : (metadata.generated_at_utc ? metadata.generated_at_utc + ' UTC' : 'just refreshed'));
         $('dirStatus').textContent = 'Live source refreshed' + (isNumber(metadata.server_ms) ? ' · ' + number(metadata.server_ms, 0) + ' ms server time' : '') + ' · ' + (state.view === 'explore' ? 'Investigation filters applied' : 'Company overview');
         syncControls();
     }
@@ -131,19 +140,40 @@
         if (/expense|claim/.test(id)) { return 'Expense control'; }
         return 'Commercial & operational performance';
     }
+    var headlineIds = ['sales_revenue', 'gross_margin_pct', 'gl_result', 'cash_movement', 'receivables', 'payables'];
+    function tileValue(m) {
+        if (m.available === false) { return '—'; }
+        if (m.unit === '%') { return number(m.value, 1) + '%'; }
+        if (m.unit === 'count') { return number(m.value, 0); }
+        return shortNumber(m.value);
+    }
+    function tileHtml(m, large) {
+        var sub = '';
+        if (m.components && m.available !== false) { sub = '<span class="dir-metric-sub">' + m.components.map(function (c) { return esc(c.title) + ' ' + esc(shortNumber(c.value)); }).join(' · ') + '</span>'; }
+        else if (isNumber(m.overdue) && Number(m.overdue) > 0 && m.available !== false) { sub = '<span class="dir-metric-sub">Past-due balances ' + esc(shortNumber(m.overdue)) + ' ' + esc(unit(m)) + ', before credits and unapplied receipts</span>'; }
+        return '<button type="button" class="dir-metric' + (large ? ' dir-metric-large' : '') + '" data-metric="' + esc(m.id) + '"' + (!canInvestigate(m) ? ' disabled' : '') + ' title="' + esc(m.definition || m.title) + '"><span class="dir-metric-title">' + esc(plainTitle(m)) + (Number(m.invalid_amounts) > 0 ? ' · known subtotal' : '') + '</span><strong class="dir-metric-value" title="' + esc(number(m.value) + ' ' + unit(m)) + '">' + esc(tileValue(m)) + (m.unit === '%' ? '' : '<span class="dir-unit">' + esc(unit(m)) + '</span>') + '</strong><span class="dir-metric-change">' + changeText(m) + '</span>' + sub + '<span class="dir-metric-bottom">' + tag(m) + '<span>' + esc(Number(m.invalid_amounts) > 0 ? number(m.invalid_amounts, 0) + ' excluded amounts' : basis(m)) + '</span></span></button>';
+    }
     function renderOverview(data) {
         overview = data;
-        var groups = {};
-        data.metrics.forEach(function (metric) { var group = sectionFor(metric); if (!groups[group]) { groups[group] = []; } groups[group].push(metric); });
+        var groups = {}, unavailable = [], headline = headlineIds.map(function (id) { return metricById(id); }).filter(Boolean);
+        $('dirHeadline').innerHTML = headline.length ? headline.map(function (m) { return tileHtml(m, true); }).join('') : '<div class="dir-placeholder">No headline measures are available in this company scope.</div>';
+        data.metrics.forEach(function (metric) {
+            if (headlineIds.indexOf(metric.id) >= 0) { return; }
+            if (metric.available === false && !canInvestigate(metric)) { unavailable.push(metric); return; }
+            var group = sectionFor(metric); if (!groups[group]) { groups[group] = []; } groups[group].push(metric);
+        });
         $('dirMetricGroups').innerHTML = Object.keys(groups).map(function (group) {
-            return '<section><h3 class="dir-group-heading">' + esc(group) + '</h3><div class="dir-card-grid">' + groups[group].map(function (m) {
-                return '<button type="button" class="dir-metric" data-metric="' + esc(m.id) + '"' + (!canInvestigate(m) ? ' disabled' : '') + ' title="' + esc(m.definition || m.title) + '"><span class="dir-metric-title">' + esc(m.title) + (Number(m.invalid_amounts) > 0 ? ' · known subtotal' : '') + '</span><strong class="dir-metric-value" title="' + esc(number(m.value) + ' ' + unit(m)) + '">' + (m.available === false ? '—' : esc(shortNumber(m.value))) + '<span class="dir-unit">' + esc(unit(m)) + '</span></strong><span class="dir-metric-change">' + changeText(m) + '</span><span class="dir-metric-bottom">' + tag(m) + '<span>' + esc(Number(m.invalid_amounts) > 0 ? number(m.invalid_amounts, 0) + ' excluded amounts' : basis(m)) + '</span></span></button>';
-            }).join('') + '</div></section>';
-        }).join('') || '<div class="dir-placeholder">No report measures are available in this company scope.</div>';
+            return '<section><h3 class="dir-group-heading">' + esc(group) + '</h3><div class="dir-card-grid">' + groups[group].map(function (m) { return tileHtml(m, false); }).join('') + '</div></section>';
+        }).join('') + (unavailable.length ? '<section><h3 class="dir-group-heading">Not available for this selection</h3><ul class="dir-unavailable">' + unavailable.map(function (m) { return '<li><strong>' + esc(plainTitle(m)) + '</strong> — ' + esc(m.error || 'Source unavailable') + '</li>'; }).join('') + '</ul></section>' : '') || '<div class="dir-placeholder">No report measures are available in this company scope.</div>';
         var available = data.metrics.filter(function (m) { return m.available !== false; }).length;
         $('dirCoverageStatus').textContent = available + ' of ' + data.metrics.length + ' measures available';
-        risks = data.risks || [];
-        $('dirRisks').innerHTML = risks.length ? risks.map(function (risk, index) { return '<article class="dir-risk"><h3>' + esc(risk.title) + '</h3><p>' + esc(risk.message) + '</p>' + (risk.dataset && canInvestigate(metricById(risk.dataset)) ? '<button type="button" data-risk="' + index + '">Investigate records →</button>' : '') + '</article>'; }).join('') : '<div class="dir-placeholder">No configured exception thresholds were triggered. Review the reporting limitations before interpreting this as an absence of business risk.</div>';
+        risks = data.attention || data.risks || [];
+        $('dirRisks').innerHTML = risks.length ? risks.map(function (risk, index) { return '<article class="dir-risk dir-risk-' + esc(risk.severity || 'medium') + '"><h3>' + esc(risk.title) + '</h3>' + (isNumber(risk.amount) ? '<strong class="dir-risk-amount">' + esc(shortNumber(risk.amount)) + ' <span class="dir-unit">' + esc(risk.unit || '') + '</span></strong>' : '') + '<p>' + esc(risk.message) + '</p>' + (risk.dataset && canInvestigate(metricById(risk.dataset)) ? '<button type="button" data-risk="' + index + '">See the records →</button>' : '') + '</article>'; }).join('') : '<div class="dir-placeholder">Nothing crossed the attention thresholds for this selection. This does not rule out risks the data cannot show; see Definitions &amp; coverage.</div>';
+        var health = data.attention ? (data.data_health || []) : [];
+        healthItems = health;
+        $('dirDataHealth').hidden = !health.length;
+        $('dirHealthCount').textContent = health.length + (health.length === 1 ? ' item' : ' items');
+        $('dirHealthList').innerHTML = health.map(function (item, index) { return '<li><strong>' + esc(item.title) + '</strong> — ' + esc(item.message) + (item.dataset && canInvestigate(metricById(item.dataset)) ? ' <button type="button" class="dir-link" data-health="' + index + '">See the records</button>' : '') + '</li>'; }).join('');
         var selected = state.dataset;
         $('dirDataset').innerHTML = '<option value="">Choose a measure</option>' + data.metrics.map(function (m) { return '<option value="' + esc(m.id) + '"' + (!canInvestigate(m) ? ' disabled' : '') + '>' + esc(m.title) + (m.available === false ? ' — unavailable' : '') + '</option>'; }).join('');
         if (selected && metricById(selected)) { $('dirDataset').value = selected; }
@@ -273,7 +303,8 @@
     }
     function changeView(view) { state.view = view; syncControls(); writeState(false); if (view === 'explore' && state.dataset && (!exploration || exploration.metric.id !== state.dataset)) { load(false); } }
     function investigate(id, filters, groupBy) {
-        var m = metricById(id); if (!canInvestigate(m)) { return; }
+        var m = metricById(id); if (m && m.components && m.components.length) { id = m.components[0].id; m = metricById(id); }
+        if (!canInvestigate(m)) { return; }
         if (state.dataset !== id) { state.filters = {}; state.group_by = ''; state.search = ''; }
         state.dataset = id; state.view = 'explore'; state.page = 1;
         if (filters) { Object.keys(filters).forEach(function (key) { if (own(dimsFor(m), key)) { state.filters[key] = String(filters[key]); } }); }
@@ -360,10 +391,11 @@
     $('dirPrevious').addEventListener('click', function () { if (state.page > 1) { state.page--; writeState(false); load(false); } });
     $('dirNext').addEventListener('click', function () { state.page++; writeState(false); load(false); });
     root.addEventListener('click', function (event) {
-        var button = event.target.closest('[data-view],[data-metric],[data-risk],[data-remove-filter],[data-month],[data-breakdown],[data-sort]');
+        var button = event.target.closest('[data-view],[data-metric],[data-risk],[data-health],[data-remove-filter],[data-month],[data-breakdown],[data-sort]');
         if (!button || !root.contains(button) || button.disabled) { return; }
         if (button.hasAttribute('data-view')) { changeView(button.getAttribute('data-view')); }
         if (button.hasAttribute('data-metric')) { investigate(button.getAttribute('data-metric')); }
+        if (button.hasAttribute('data-health')) { var item = healthItems[Number(button.getAttribute('data-health'))]; if (item) { investigate(item.dataset, item.filters, item.group_by); } }
         if (button.hasAttribute('data-risk')) { var risk = risks[Number(button.getAttribute('data-risk'))]; if (risk) { investigate(risk.dataset, risk.filters, risk.group_by); } }
         if (button.hasAttribute('data-remove-filter')) { delete state.filters[button.getAttribute('data-remove-filter')]; state.page = 1; syncControls(); writeState(false); load(false); }
         if (button.hasAttribute('data-month')) { chooseMonth(button.getAttribute('data-month')); }

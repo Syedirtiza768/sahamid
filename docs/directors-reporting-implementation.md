@@ -21,7 +21,7 @@ This is an implemented dashboard with explicit coverage limits, not a claim that
 | Working capital | `receivables`, `payables` | Current signed non-reversed ledger residuals / recorded positive FX rate; includes credits and residuals despite stored settled flags. Overdue, unknown due, estimated AP due, hold, settlement, customer/supplier and aging breakdowns. |
 | Cash movement | `cash_movement` | Authorized bank transaction rows, both FX factors, signed inflow/outflow. Not available cash, reconciled balance or statutory cash flow. |
 | Sales | `invoice_value`, `shop_sales` | Published raw invoice option/detail formula and unique completed CSV/CRV posted values remain separate. Ambiguous documents/options/postings and invalid currency/rates retain unknown amounts. |
-| Purchasing | `purchasing`, `purchase_commitments`, `legacy_po_commitments`, `procurement_pipeline` | MPIW cumulative received value by slip-creation cohort; estimated unreceived market slips; authorized/printed incomplete legacy PO lines; active procurement-plan lines by stage/publication/ETA. These streams are never added together. |
+| Purchasing | `purchasing`, `purchase_commitments`, `legacy_po_commitments`, `procurement_pipeline` | MPIW received value, dated by slip creation date; estimated unreceived market slips; authorized/printed incomplete legacy PO lines; active procurement-plan lines by stage/publication/ETA. These streams are never added together. |
 | Inventory | `inventory`, `stock_exceptions` | Current item/location standard-cost estimate including material, labour and overhead; negative/missing cost/master/reorder exceptions. Unlike stock units are not added to a headline quantity. |
 | Expenses | `petty_cash` | Signed PKR claims excluding ASSIGNCASH, including local purchases and credits; assigned-tab scope, approval/posting/receipt/currency-mismatch investigation. Separate from GL expense and MPIW spend. |
 | Operational backlog | `open_cases`, `pipeline`, `work_orders`, `pending_deliveries` | Unique current cases/enquiry estimates, open manufacturing orders and canonical ungrouped/uninvoiced/uncouriered/unreturned DC state. No invented historical funnel or delivery service level. |
@@ -54,7 +54,7 @@ All checks below used an isolated local fixture, never production credentials/da
 
 - `php bi/tests/directors_run.php`: 30 date, comparison, input-validation and permission-boundary checks.
 - `php bi/tests/directors_finance.php`: full supplied structural schema plus adversarial finance data. GL revenue 1,000 − COGS 400 − other costs 150 = result 450; full-period budget 550 versus actual 450; AR 65 and AP 40; excluded invalid FX; credit signs; duplicate due-date joins; corrected month-end AP due dates; bank authorization and both FX factors; export/detail parity; permission denial.
-- `php bi/tests/directors_operations.php`: adversarial operational data. Invoice known subtotal 740 with three excluded amounts; shop posted value 60; MPIW received cohort 100; market residual estimate 170; stock 45 with unknown-cost rows; stock exceptions 4; unweighted enquiry estimate 15,000; canonical pending DC and case/work-order duplicate handling; legacy PO 30; procurement plan 90; claims 170, scoped claims 80; exact record URL denial across tab boundaries.
+- `php bi/tests/directors_operations.php`: adversarial operational data. Invoice known subtotal 740 with three excluded amounts; shop posted value 60; MPIW received by slip date 100; market residual estimate 170; stock 45 with unknown-cost rows; stock exceptions 4; unweighted enquiry estimate 15,000; canonical pending DC and case/work-order duplicate handling; legacy PO 30; procurement plan 90; claims 170, scoped claims 80; exact record URL denial across tab boundaries.
 - `php bi/tests/directors_integration.php`: all 22 source SQL definitions, plans, summaries, monthly/breakdown/detail reconciliation, pagination and bounded export paths on the populated fixture; approximately 191 ms for the small synthetic fixture on this machine.
 - `python bi/tests/directors_ui.py --chrome <chromium-path>`: real production JS and markup with explicit synthetic fetch fixtures, at 1440px and 390px. 23 assertions at each width cover navigation, escaping, unsafe-link blocking, cross-filter/API/URL context, sorting, removal, snapshots, budgets, definitions, partial/unknown amounts, loading, source failure, stale-export prevention and empty state. Restricted local environments can pass `--no-sandbox` for this local fixture only.
 - `python bi/tests/directors_export.py --php <php-path> [--ext-dir <portable-extension-directory>]`: real XLSX package, numeric value preservation and literal formula-like source text.
@@ -68,7 +68,24 @@ The optional `bi/tests/directors_volume.php` adds only guarded synthetic data wh
 
 - Production reconciliation, realistic production distribution/concurrency, actual authenticated browser sessions and deployment were not exercised. Per-company permissions, GL configuration and source schema must be checked in the target environment.
 - No certified full balance sheet/equity rollover, bank availability, statutory cash flow, cross-company elimination/translation, historical inventory valuation, immutable historical aging, product gross-margin history, approved forecast or effective-dated target achievement is claimed. These remain visible limitations; the original source reports remain available in the report library.
-- Reliable receiving-period purchasing needs dated receipt events linked to the line; current quantity_received supports restated cohort analysis only. Current master currency/ownership/terms can restate historical classifications.
+- Reliable receiving-period purchasing needs dated receipt events linked to the line; current quantity_received supports analysis dated by slip creation only. Current master currency/ownership/terms can restate historical classifications.
 - Historical AR/AP allocations can be changed/deleted. Historical snapshot comparison requires immutable snapshots or validated audit reconstruction. No historical records were fabricated.
 - Department is exposed only as an explicitly labeled petty-cash cost-center proxy; company branch, fully attributed project profitability, service levels, asset roll-forwards and forecast probabilities require additional validated capture/integrations.
 - Approved budget versions and target currency/measure/owner/effective periods are unavailable. The existing unversioned budget can be investigated but cannot establish approval.
+
+## Second pass (2026-11-05, branch `directors-dashboard-v2`)
+
+Audit, reconciliation and findings: `docs/directors-reporting-gap-audit.md`. Runbook: `docs/directors-dashboard-runbook.md`.
+
+**Decisions (2026-11-05):** headline Revenue is posted invoices plus completed shop sales; the default comparison is the same period last year; amounts show in lakh / crore; a daily balance snapshot is approved.
+
+**Added measures** (each reconciles exactly with the Sales Executive Report rule, `bi/tests/directors_reconcile.php`):
+`posted_invoices`, `po_received`, `outstanding_invoices`, and `pending_deliveries`, which is now the valued Pending DC List rule (first-option lines only; 308 DCs, not 1,805). Composite headline measures `sales_revenue` and `gross_margin_pct` (Estimated) are built in `DirectorsService::compositeMetrics()` from other measures. They carry no records of their own and open their first component.
+
+**Overview response** now also returns `attention` (ranked, unfavourable changes and exposures above the thresholds in `DirectorsService` constants), `data_health` (records the figures leave out), `polarity` on each metric, and company-time metadata. Default comparison is `yoy`.
+
+**Performance:** the overview reads each measure once (`summaryPair()`: current, comparison and undated rows in one pass). `bi/tests/directors_pair.php` proves it equals the old two-call path on every measure.
+
+**Snapshots:** `migrations/directors_balance_snapshots.sql` plus `bi/tools/directors_snapshot.php` (CLI, idempotent per day, explicit `BI_DB_*` target). Nothing in the UI reads the history yet. Any reader must check access to the source measure first, because the capture is company-wide.
+
+**Tests added:** `directors_reconcile.php`, `directors_pair.php` (read-only, explicit target). The UI fixture checks look tiles up by measure id, not position.

@@ -40,14 +40,15 @@ try {
     operationCheck($unknown['summary']['value'] === null && $unknown['breakdown'][0]['value'] === null, 'All-invalid group never turns into a zero');
     operationNear($get('shop_sales')['summary']['value'], 60, 'Shop sale unique posted value and FX');
     operationCheck($get('shop_sales')['summary']['invalid_amounts'] === 2, 'Duplicate and missing shop postings stay visible');
-    operationNear($get('purchasing')['summary']['value'], 100, 'MPIW cumulative received cohort value excludes discarded and returned slips');
+    operationNear($get('purchasing')['summary']['value'], 100, 'MPIW received value by slip date excludes discarded and returned slips');
     operationNear($get('purchase_commitments')['summary']['value'], 170, 'Unreceived market-slip estimate includes draft separately');
     operationNear($get('inventory')['summary']['value'], 45, 'Inventory uses material plus labour plus overhead and signed negatives');
     operationNear($get('stock_exceptions')['summary']['value'], 4, 'Stock exceptions count positions once');
     operationNear($get('open_cases')['summary']['value'], 3, 'Duplicate case references remain unknown counts');
     operationNear($get('pipeline')['summary']['value'], 15000, 'Pipeline remains entered unweighted estimate');
     operationNear($get('work_orders')['summary']['value'], 1, 'Duplicate work orders cannot inflate backlog');
-    operationNear($get('pending_deliveries')['summary']['value'], 1, 'Pending DC excludes grouped and invoiced documents');
+    operationNear($get('pending_deliveries')['summary']['value'], 1000, 'Pending DC List value: first-option lines only, excludes grouped and invoiced documents');
+    operationCheck($get('pending_deliveries')['summary']['rows'] === 1, 'Pending DC List counts one DC; a DC with no first-option lines is not on the list');
     operationNear($get('petty_cash')['summary']['value'], 170, 'Petty cash separates funding, retains signed credits and PKR policy');
     operationNear($get('legacy_po_commitments')['summary']['value'], 30, 'Legacy PO lifecycle, residual quantity and recorded FX');
     operationNear($get('procurement_pipeline')['summary']['value'], 90, 'Procurement plan lifecycle and unknown prices');

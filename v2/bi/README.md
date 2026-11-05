@@ -2,7 +2,7 @@
 
 ## Directors’ Reporting Dashboard
 
-`directors.php` consolidates 22 company-scoped financial, working-capital, sales,
+`directors.php` consolidates 25 company-scoped (plus two headline measures built from them) financial, working-capital, sales,
 purchasing, inventory, expense and operational measures. Its shared read-only API
 supports comparisons, source definitions, data-quality exceptions, cross-filtered
 drill-down, paginated records and bounded XLSX exports. Entry requires directors

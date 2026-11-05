@@ -43,7 +43,7 @@ class DirectorsRequest
                 break;
         }
         self::range($start, $end, $now);
-        $comparison = self::choice($input, 'comparison', array('previous', 'mom', 'qoq', 'yoy', 'custom', 'none'), 'previous');
+        $comparison = self::choice($input, 'comparison', array('previous', 'mom', 'qoq', 'yoy', 'custom', 'none'), 'yoy');
         $cs = $ce = null;
         $days = (int) $start->diff($end)->days + 1;
         if ($comparison === 'previous') {
