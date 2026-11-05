@@ -1,6 +1,11 @@
 -- Additive, idempotent Directors Dashboard indexes. Apply once per company.
 -- Does not alter business records, source status or financial definitions.
 -- Check plans and index-build scheduling against the target company first.
+-- The ERP's legacy tables carry zero-date defaults (for example gltrans.trandate). A server running a strict
+-- SQL mode (NO_ZERO_DATE) refuses to rebuild such a table definition: "#1067 Invalid default value".
+-- Relax the mode for THIS SESSION only while the indexes are added, then put it back. No data is touched.
+SET @directors_saved_sql_mode := @@SESSION.sql_mode;
+SET SESSION sql_mode = '';
 
 SET @directors_index_sql := (SELECT IF(COUNT(*)=0,'ALTER TABLE `invoice` ADD INDEX `idx_directors_invoice_number` (invoiceno)','SELECT 1') FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='invoice' AND index_name='idx_directors_invoice_number');
 PREPARE directors_index_stmt FROM @directors_index_sql;
@@ -46,3 +51,5 @@ SET @directors_index_sql := (SELECT IF(COUNT(*)=0,'ALTER TABLE `gltrans` ADD IND
 PREPARE directors_index_stmt FROM @directors_index_sql;
 EXECUTE directors_index_stmt;
 DEALLOCATE PREPARE directors_index_stmt;
+
+SET SESSION sql_mode = @directors_saved_sql_mode;
