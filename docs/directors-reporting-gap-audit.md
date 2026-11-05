@@ -133,6 +133,7 @@ Local `sahamid` DB, 2026-11-05. Sep 2026 is a closed month. FY YTD = 1 Apr – 5
 - **New N2:** the cash card shows 0 as "Actual" when the user has no bank rows (R9). It also differs between users and is not labelled as per-user.
 - **New N3:** "Open sales cases" (68,801) and "Open enquiry value" (99.9% unvalued) are not usable as headline figures as built.
 - **New N4:** the overview runs one query per measure plus an "undated rows" scan per flow measure, one after another. There is no per-measure timeout or caching.
+- **New N6 (access, found by `directors_roles.php`):** a user who holds `directorreports` but is not an administrator (the real role-27 director on the local copy) can read only 1 of 25 measures (petty cash), because every other source page's security token is missing from that role. The Sales Executive Report gates on `directorreports` alone, so the same user sees full company sales there but a nearly empty Directors dashboard. Administrators (access levels 8, 10, 22, or the `*` permission) see everything. A decision is needed (see the progress log).
 - **New N5:** `executive_listing` is not referenced anywhere in `bi/Directors`. Access is `directorreports` or `directors_dashboard`, plus each source page's security token.
 
 ## 7. Verification of the counts
