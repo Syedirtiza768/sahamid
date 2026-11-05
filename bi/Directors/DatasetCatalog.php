@@ -38,7 +38,7 @@ class DatasetCatalog
                     THEN 'pending_authorization' ELSE 'authorized_unposted' END AS status
                 FROM pcashdetails d LEFT JOIN pctabs t ON t.tabcode = d.tabcode
                 LEFT JOIN pcexpenses e ON e.codeexpense = d.codeexpense
-                WHERE UPPER(TRIM(d.codeexpense)) <> 'ASSIGNCASH'" . $restricted,
+                WHERE UPPER(TRIM(d.codeexpense)) <> 'ASSIGNCASH' AND {{RANGE:d.date}}" . $restricted,
             'params' => $context->isAdministrator() ? array() : array($context->getUserId()),
             'types' => $context->isAdministrator() ? '' : 's',
             'source_route' => 'v2/bi/expenses.php', 'source_param' => 'transaction',
@@ -47,11 +47,28 @@ class DatasetCatalog
             $definition['id'] = $id;
             $definition += array('params' => array(), 'types' => '', 'section' => $this->section($id));
             $definition['dimensions']['status'] = 'Source status';
+            // {{RANGE:column}} marks where a date window may be pushed into the source query. The default
+            // SQL has no window (1=1), so every caller that does not know the period stays correct;
+            // DirectorsService::scoped() fills the template in for the overview and investigations.
+            $definition = self::resolveMarkers($definition);
             // These are code-owned SQL contracts, never identifiers from a request.
             $definition['has_overdue'] = (bool) preg_match('/\bAS\s+overdue_amount\b/i', $definition['sql']);
             $definition['has_quality'] = (bool) preg_match('/\bAS\s+quality_issue\b/i', $definition['sql']);
         }
         unset($definition);
+    }
+
+    /**
+     * Keep the marked SQL as sql_template and leave `sql` window-free (1=1), so a caller that does not
+     * know the period always gets a correct query. Idempotent. Catalogs call this before returning.
+     */
+    public static function resolveMarkers(array $definition)
+    {
+        if (isset($definition['sql']) && strpos($definition['sql'], '{{RANGE:') !== false) {
+            $definition['sql_template'] = $definition['sql'];
+            $definition['sql'] = preg_replace('/\{\{RANGE:[^}]*\}\}/', '1=1', $definition['sql']);
+        }
+        return $definition;
     }
 
     public function all() { return $this->definitions; }

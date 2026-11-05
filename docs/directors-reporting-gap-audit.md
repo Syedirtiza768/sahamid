@@ -130,7 +130,7 @@ Local `sahamid` DB, 2026-11-05. Sep 2026 is a closed month. FY YTD = 1 Apr – 5
 - **F4** confirmed in code (`previous` is the default). The fiscal start in this database is April, not July.
 - **F8 corrected:** aging buckets do exist as the `age_bucket` dimension. They are missing only from the overview.
 - **F9** confirmed. **F10** confirmed. **F11** confirmed.
-- **Performance changed:** the overview took **0.85 s** for Sep. It took **4.5 s** for FY YTD, above the 3 s target. The Sales Executive report already caches in its own table (`sales_executive_cache`, 15 minutes); that pattern can be reused.
+- **Performance (corrected 2026-11-06):** the figures first recorded here (0.85 s and 4.5 s) were measured with the database query cache on and were wrong. Uncached, the original overview cost about 24-27 s. See the performance pass in the progress log for causes, fixes and what was measured.
 - **New N1:** net receivables 125.6M sits next to overdue 321.5M. A director will read this as an error.
 - **New N2:** the cash card showed 0 as "Actual" when the user has no bank rows (R9). **Fixed:** it now shows unavailable with the reason. It still differs between users because bank scope is per user; the tile does not yet say so.
 - **New N3:** "Open sales cases" (68,801) and "Open enquiry value" (99.9% unvalued) are not usable as headline figures as built.

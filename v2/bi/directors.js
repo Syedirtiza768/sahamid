@@ -99,14 +99,38 @@
         }
         return p;
     }
-    function api(action, signal) {
-        return fetch(config.apiUrl + '?' + parameters(action).toString(), { credentials: 'same-origin', cache: 'no-store', signal: signal, headers: { 'Accept': 'application/json' } }).then(function (response) {
+    function api(action, signal, extra) {
+        var query = parameters(action);
+        if (extra) { Object.keys(extra).forEach(function (key) { query.set(key, extra[key]); }); }
+        return fetch(config.apiUrl + '?' + query.toString(), { credentials: 'same-origin', cache: 'no-store', signal: signal, headers: { 'Accept': 'application/json' } }).then(function (response) {
             return response.json().catch(function () { throw new Error('The report server did not return a readable response. Refresh or sign in again.'); }).then(function (payload) {
                 if (!response.ok || !payload.ok) { throw new Error(payload.error && payload.error.message ? payload.error.message : 'This report could not be loaded.'); }
                 return payload.data;
             });
         });
     }
+    var PARTS = ['finance', 'sales', 'operations'], partsPending = 0, forceRefresh = false;
+    /** Combine the slices received so far into the same shape as one whole overview (repeats are collapsed). */
+    function mergeParts(collected) {
+        var byId = {}, order = [], seen = {}, attention = [], health = [], risks = [], hasAttention = false, meta = null, budget = null, limitations = null, hit = true, age = 0, ms = 0, any = false;
+        function once(list, item, key) { var k = key(item); if (!own(seen, k)) { seen[k] = true; list.push(item); } }
+        PARTS.forEach(function (part) {
+            var d = collected[part]; if (!d) { return; }
+            any = true; meta = meta || d.metadata; limitations = limitations || d.limitations; budget = budget || d.budget_comparison;
+            if (d.metadata) { ms = Math.max(ms, Number(d.metadata.server_ms) || 0); hit = hit && !!(d.metadata.cache && d.metadata.cache.hit); age = Math.max(age, d.metadata.cache ? Number(d.metadata.cache.age_seconds) || 0 : 0); }
+            (d.metrics || []).forEach(function (m) { if (!own(byId, m.id)) { order.push(m.id); } byId[m.id] = m; });
+            if (d.attention) { hasAttention = true; d.attention.forEach(function (item) { once(attention, item, function (i) { return 'a|' + (i.id || i.title); }); }); }
+            (d.data_health || []).forEach(function (item) { once(health, item, function (i) { return 'h|' + i.title; }); });
+            (d.risks || []).forEach(function (item) { once(risks, item, function (i) { return 'r|' + i.title; }); });
+        });
+        if (!any) { return null; }
+        attention.sort(function (a, b) { return Number(b.amount) - Number(a.amount); });
+        var metadata = meta ? JSON.parse(JSON.stringify(meta)) : {};
+        metadata.server_ms = ms; metadata.cache = { hit: hit, age_seconds: age };
+        return { metadata: metadata, metrics: order.map(function (id) { return byId[id]; }), attention: hasAttention ? attention.slice(0, 8) : undefined,
+            data_health: health, risks: risks, budget_comparison: budget, limitations: limitations || [] };
+    }
+    function applyMerged(collected) { var merged = mergeParts(collected); if (merged) { renderOverview(merged); useMetadata(merged.metadata); } }
     function useMetadata(metadata, keepPeriod) {
         metadata = metadata || {};
         var period = metadata.period || {};
@@ -122,7 +146,7 @@
         periodDays = period.days; comparisonDays = period.comparison_days;
         $('dirCompany').textContent = metadata.company || 'Current company';
         $('dirScope').textContent = typeof metadata.scope === 'string' ? metadata.scope : 'Authorized company · ' + (metadata.currency || 'source units');
-        $('dirFreshness').textContent = 'Live source · ' + (metadata.generated_local ? 'updated ' + metadata.generated_local + (metadata.time_zone ? ' (' + metadata.time_zone + ')' : '') : (metadata.generated_at_utc ? metadata.generated_at_utc + ' UTC' : 'just refreshed'));
+        $('dirFreshness').textContent = (metadata.cache && metadata.cache.hit ? 'Saved result' : 'Live source') + ' · ' + (metadata.generated_local ? 'updated ' + metadata.generated_local + (metadata.time_zone ? ' (' + metadata.time_zone + ')' : '') : (metadata.generated_at_utc ? metadata.generated_at_utc + ' UTC' : 'just refreshed')) + (metadata.cache && metadata.cache.hit ? ' · ' + (Number(metadata.cache.age_seconds) >= 60 ? Math.round(Number(metadata.cache.age_seconds) / 60) + ' min old; Refresh for the latest' : 'moments old') : '');
         $('dirStatus').textContent = 'Live source refreshed' + (isNumber(metadata.server_ms) ? ' · ' + number(metadata.server_ms, 0) + ' ms server time' : '') + ' · ' + (state.view === 'explore' ? 'Investigation filters applied' : 'Company overview');
         syncControls();
     }
@@ -177,8 +201,8 @@
     }
     function renderOverview(data) {
         overview = data;
-        var groups = {}, unavailable = [], headline = headlineIds.map(function (id) { return metricById(id); }).filter(Boolean);
-        $('dirHeadline').innerHTML = headline.length ? headline.map(function (m) { return tileHtml(m, true); }).join('') : '<div class="dir-placeholder">No headline measures are available in this company scope.</div>';
+        var groups = {}, unavailable = [], skeleton = '<div class="dir-skel dir-skel-tile" aria-hidden="true"></div>';
+        $('dirHeadline').innerHTML = headlineIds.map(function (id) { var m = metricById(id); return m ? tileHtml(m, true) : (partsPending > 0 ? skeleton : ''); }).join('') || '<div class="dir-placeholder">No headline measures are available in this company scope.</div>';
         data.metrics.forEach(function (metric) {
             if (headlineIds.indexOf(metric.id) >= 0) { return; }
             if (metric.available === false && !canInvestigate(metric)) { unavailable.push(metric); return; }
@@ -186,11 +210,12 @@
         });
         $('dirMetricGroups').innerHTML = Object.keys(groups).map(function (group) {
             return '<section><h3 class="dir-group-heading">' + esc(group) + '</h3><div class="dir-card-grid">' + groups[group].map(function (m) { return tileHtml(m, false); }).join('') + '</div></section>';
-        }).join('') + (unavailable.length ? '<section><h3 class="dir-group-heading">Not available for this selection</h3><ul class="dir-unavailable">' + unavailable.map(function (m) { return '<li><strong>' + esc(plainTitle(m)) + '</strong> — ' + esc(m.error || 'Source unavailable') + '</li>'; }).join('') + '</ul></section>' : '') || '<div class="dir-placeholder">No report measures are available in this company scope.</div>';
+        }).join('') + (partsPending > 0 ? '<div class="dir-card-grid">' + skeleton + skeleton + '</div>' : '') + (unavailable.length ? '<section><h3 class="dir-group-heading">Not available for this selection</h3><ul class="dir-unavailable">' + unavailable.map(function (m) { return '<li><strong>' + esc(plainTitle(m)) + '</strong> — ' + esc(m.error || 'Source unavailable') + '</li>'; }).join('') + '</ul></section>' : '') || '<div class="dir-placeholder">No report measures are available in this company scope.</div>';
         var available = data.metrics.filter(function (m) { return m.available !== false; }).length;
-        $('dirCoverageStatus').textContent = available + ' of ' + data.metrics.length + ' measures available';
+        $('dirCoverageStatus').textContent = partsPending > 0 ? 'Loading measures…' : available + ' of ' + data.metrics.length + ' measures available';
         risks = data.attention || data.risks || [];
-        $('dirRisks').innerHTML = risks.length ? risks.map(function (risk, index) { return '<article class="dir-risk dir-risk-' + esc(risk.severity || 'medium') + '"><h3>' + esc(risk.title) + '</h3>' + (isNumber(risk.amount) ? '<strong class="dir-risk-amount">' + esc(shortNumber(risk.amount)) + ' <span class="dir-unit">' + esc(risk.unit || '') + '</span></strong>' : '') + '<p>' + esc(risk.message) + '</p>' + (risk.dataset && canInvestigate(metricById(risk.dataset)) ? '<button type="button" data-risk="' + index + '">See the records →</button>' : '') + '</article>'; }).join('') : '<div class="dir-placeholder">Nothing crossed the attention thresholds for this selection. This does not rule out risks the data cannot show; see Definitions &amp; coverage.</div>';
+        var attentionSkeleton = partsPending > 0 ? '<div class="dir-skel dir-skel-card" aria-hidden="true"></div>' : '';
+        $('dirRisks').innerHTML = (risks.length ? risks.map(function (risk, index) { return '<article class="dir-risk dir-risk-' + esc(risk.severity || 'medium') + '"><h3>' + esc(risk.title) + '</h3>' + (isNumber(risk.amount) ? '<strong class="dir-risk-amount">' + esc(shortNumber(risk.amount)) + ' <span class="dir-unit">' + esc(risk.unit || '') + '</span></strong>' : '') + '<p>' + esc(risk.message) + '</p>' + (risk.dataset && canInvestigate(metricById(risk.dataset)) ? '<button type="button" data-risk="' + index + '">See the records →</button>' : '') + '</article>'; }).join('') : (partsPending > 0 ? '' : '<div class="dir-placeholder">Nothing crossed the attention thresholds for this selection. This does not rule out risks the data cannot show; see Definitions &amp; coverage.</div>')) + attentionSkeleton;
         var health = data.attention ? (data.data_health || []) : [];
         healthItems = health;
         $('dirDataHealth').hidden = !health.length;
@@ -372,20 +397,35 @@
     function load(withOverview) {
         if (controller) { controller.abort(); }
         controller = new AbortController(); var signal = controller.signal, run = ++requestNumber;
+        var bypass = forceRefresh; forceRefresh = false;
+        var extra = bypass ? { refresh: '1' } : {};
         loading(true); alertMessage('');
-        var task = withOverview || !overview ? api('overview', signal).then(function (data) { if (run !== requestNumber) { return; } renderOverview(data); useMetadata(data.metadata); }) : Promise.resolve();
-        task.then(function () {
+        var needOverview = withOverview || !overview, wantExplore = state.view === 'explore' && !!state.dataset, collected = {}, failures = [];
+        partsPending = needOverview ? PARTS.length : 0;
+        // The three slices and the investigation are independent requests, so the wait is the slowest one, not their sum.
+        var tasks = needOverview ? PARTS.map(function (part) {
+            return api('overview', signal, Object.assign({ part: part }, extra)).then(function (data) {
+                if (run !== requestNumber) { return; }
+                collected[part] = data; partsPending--; applyMerged(collected);
+            }, function (error) {
+                if (error.name === 'AbortError') { throw error; }
+                partsPending--; failures.push({ part: part, error: error });
+            });
+        }) : [];
+        if (wantExplore) {
+            tasks.push(api('explore', signal, extra).then(function (data) { if (run !== requestNumber) { return; } renderExploration(data); useMetadata(data.metadata, !!state.month); }));
+        }
+        Promise.all(tasks).then(function () {
             if (run !== requestNumber) { return; }
-            if (state.view === 'explore' && state.dataset) {
-                if (!canInvestigate(metricById(state.dataset))) { throw new Error('This measure is unavailable or outside your current access. Choose an available measure from the overview.'); }
-                return api('explore', signal).then(function (data) { if (run !== requestNumber) { return; } renderExploration(data); useMetadata(data.metadata, !!state.month); });
-            }
-            if (state.view === 'explore') { $('dirInvestigationEmpty').hidden = false; $('dirInvestigation').hidden = true; }
-        }).then(function () {
-            if (run !== requestNumber) { return; }
+            if (needOverview && failures.length === PARTS.length) { throw failures[0].error; }
+            if (needOverview) { partsPending = 0; applyMerged(collected); }
+            if (wantExplore && metricById(state.dataset) && !canInvestigate(metricById(state.dataset))) { throw new Error('This measure is unavailable or outside your current access. Choose an available measure from the overview.'); }
+            if (state.view === 'explore' && !state.dataset) { $('dirInvestigationEmpty').hidden = false; $('dirInvestigation').hidden = true; }
             loading(false); syncControls(); writeState(true);
+            if (failures.length) { alertMessage('Some measures could not be loaded (' + failures.map(function (f) { return f.part; }).join(', ') + '). The rest are shown. ' + failures[0].error.message, true); }
         }).catch(function (error) {
             if (error.name === 'AbortError' || run !== requestNumber) { return; }
+            partsPending = 0;
             loading(false); alertMessage(overview ? error.message : '', true); $('dirStatus').textContent = 'Refresh failed · displayed data may be from the previous refresh';
             $('dirExport').disabled = true; $('dirExportSummary').disabled = true;
             if (state.view === 'explore') { $('dirInvestigation').hidden = true; $('dirInvestigationEmpty').hidden = false; $('dirInvestigationEmpty').innerHTML = errorPanel('This investigation could not be loaded', 'Nothing from an earlier load is shown, so you never read figures that do not match the selection.'); }
@@ -438,7 +478,7 @@
     $('dirPeriodChip').addEventListener('click', function (event) { event.stopPropagation(); var open = $('dirFilters').hidden; $('dirFilters').hidden = !open; this.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) { $('dirPreset').focus(); } });
     document.addEventListener('click', function (event) { if (!$('dirFilters').hidden && !$('dirFilters').contains(event.target) && event.target !== $('dirPeriodChip')) { closePopover(); } });
     document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !$('dirFilters').hidden) { closePopover(); $('dirPeriodChip').focus(); } });
-    $('dirRefresh').addEventListener('click', function () { load(true); });
+    $('dirRefresh').addEventListener('click', function () { forceRefresh = true; load(true); });
     $('dirBack').addEventListener('click', function () { changeView('overview'); });
     $('dirExportSummary').addEventListener('click', function () { exportReport('export_summary', this); });
     $('dirExport').addEventListener('click', function () { if (state.dataset) { exportReport('export', this); } });

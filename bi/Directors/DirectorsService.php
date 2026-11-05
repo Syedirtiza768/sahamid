@@ -18,6 +18,96 @@ class DirectorsService
     private $rootPath;
     private $companyRecord;
     private $resolvedDefinitions = array();
+    private $cache = null;
+    private $refresh = false;
+    private $scoping = true;
+
+    /** Bump when a change could alter any cached result. */
+    const CACHE_VERSION = '2026-11-06-1';
+    /** Which independent slice of the overview each measure belongs to. */
+    private static $parts = array(
+        'gl_result' => 'finance', 'gl_revenue' => 'finance', 'gl_cost_of_sales' => 'finance', 'gl_expenses' => 'finance', 'gl_budget' => 'finance',
+        'gl_budget_actual' => 'finance', 'cash_movement' => 'finance', 'bank_balance' => 'finance', 'receivables' => 'finance', 'payables' => 'finance',
+        'payables_due_soon' => 'finance',
+        'invoice_value' => 'sales', 'shop_sales' => 'sales', 'posted_invoices' => 'sales', 'po_received' => 'sales', 'outstanding_invoices' => 'sales',
+        'pending_deliveries' => 'sales', 'open_cases' => 'sales', 'pipeline' => 'sales',
+    );
+    const OVERVIEW_TTL = 300;
+    const EXPLORE_TTL = 120;
+    const SNAPSHOT_TTL = 300;
+
+    /** Opt in to result caching (web endpoint only). $refresh bypasses reading but still writes. */
+    public function useCache(ResultCache $cache, $refresh = false)
+    {
+        $this->cache = $cache;
+        $this->refresh = (bool) $refresh;
+    }
+
+    /** Tests switch window pushdown off to prove it never changes a result. */
+    public function setScoping($enabled)
+    {
+        $this->scoping = (bool) $enabled;
+    }
+
+    /** Cache key bound to the database, user, permissions and request. */
+    private function cacheKey($kind, array $parts)
+    {
+        $permissions = $this->context->getPermissions();
+        sort($permissions);
+        return md5(json_encode(array(self::CACHE_VERSION, $kind, $this->context->getDatabaseName(), $this->context->getUserId(),
+            $this->context->isAdministrator(), $permissions, $parts)));
+    }
+
+    private function requestParts(DirectorsRequest $r)
+    {
+        return array($r->part, $r->period, $r->dataset, $r->filters, $r->groupBy, $r->search, $r->sort, $r->direction, $r->page, $r->pageSize);
+    }
+
+    /** True when the requested slice includes $part (the whole overview includes every slice). */
+    private function inPart(DirectorsRequest $request, $part)
+    {
+        return $request->part === '' || $request->part === $part;
+    }
+
+    private function partOf($id)
+    {
+        return isset(self::$parts[$id]) ? self::$parts[$id] : 'operations';
+    }
+
+    /** Date windows [start, end+1day) for the current period and, when compared, the comparison period. */
+    private function windows(DirectorsRequest $request, $withPrevious)
+    {
+        $next = function ($end) { return (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d'); };
+        $windows = array(array($request->period['start'], $next($request->period['end'])));
+        if ($withPrevious && $request->period['comparison_start'] !== null) {
+            $windows[] = array($request->period['comparison_start'], $next($request->period['comparison_end']));
+        }
+        return $windows;
+    }
+
+    /**
+     * Push the reporting window into the source query at its {{RANGE:column}} marker, so a flow measure
+     * reads only the periods asked for instead of its whole history. The window is a superset of what the
+     * outer date filter keeps, so results are identical (directors_pair.php / directors_scope.php prove it).
+     * Dates are validated YYYY-MM-DD values from DirectorsRequest, never request text.
+     */
+    private function scoped(array $definition, array $windows, $withUndated = false)
+    {
+        if (!$this->scoping || !isset($definition['sql_template']) || $definition['kind'] === 'snapshot' || !$windows) { return $definition; }
+        $definition['sql'] = preg_replace_callback('/\{\{RANGE:([^}]*)\}\}/', function ($m) use ($windows, $withUndated) {
+            $expression = $m[1];
+            $parts = array();
+            foreach ($windows as $window) {
+                foreach ($window as $date) {
+                    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) { throw new \LogicException('Unsafe date window.'); }
+                }
+                $parts[] = '(' . $expression . " >= '" . $window[0] . "' AND " . $expression . " < '" . $window[1] . "')";
+            }
+            if ($withUndated) { $parts[] = '(' . $expression . ' IS NULL OR ' . $expression . " < '1900-01-01')"; }
+            return '(' . implode(' OR ', $parts) . ')';
+        }, $definition['sql_template']);
+        return $definition;
+    }
 
     /** Screening thresholds for the "Needs attention" list. Rules, not statistical tests. */
     const MATERIAL_CHANGE_PERCENT = 20;
@@ -46,12 +136,27 @@ class DirectorsService
 
     public function overview(DirectorsRequest $request)
     {
+        if (!$this->cache) { return $this->buildOverview($request); }
+        $key = $this->cacheKey('overview', $this->requestParts($request));
+        if (!$this->refresh && !$request->filters && $request->search === '') {
+            $hit = $this->cache->get($key, self::OVERVIEW_TTL);
+            if ($hit !== null) { $hit['data']['metadata']['cache'] = array('hit' => true, 'age_seconds' => $hit['age']); return $hit['data']; }
+        }
+        $data = $this->buildOverview($request);
+        $this->cache->put($key, $data);
+        $data['metadata']['cache'] = array('hit' => false, 'age_seconds' => 0);
+        return $data;
+    }
+
+    private function buildOverview(DirectorsRequest $request)
+    {
         if ($request->filters || $request->search !== '') {
             throw new BIException('invalid_filters', 'Open a reporting area to apply its supported dimensions or search.', 400);
         }
         $metrics = array();
         $risks = array();
         foreach ($this->catalog->all() as $id => $definition) {
+            if (!$this->inPart($request, $this->partOf($id))) { continue; }
             if (!$this->authorization->canRead($definition)) {
                 $metrics[] = $this->metric($definition, null, null, 'Your role does not have access to this source report.');
                 continue;
@@ -89,7 +194,7 @@ class DirectorsService
             }
         }
         $gl = $this->catalog->get('gl_result');
-        if ($this->authorization->canRead($gl)) {
+        if ($this->inPart($request, 'finance') && $this->authorization->canRead($gl)) {
             try {
                 $diagnostic = $this->query("SELECT
                     COALESCE(SUM(g.posted<>1 AND ag.pandl=1),0) AS unposted,
@@ -135,14 +240,96 @@ class DirectorsService
             $budgetComparison = array_merge(array('budget' => $budget, 'actual' => $actual, 'status' => 'Recorded, unversioned',
                 'caveat' => 'Same complete accounting periods and P&L accounts from chartdetails; no daily proration. A recorded budget is not evidence of approval.'), DirectorsRequest::change($actual, $budget));
         }
-        return array('metadata' => $this->metadata($request), 'metrics' => $metrics, 'risks' => $risks,
+        return array('part' => $request->part, 'metadata' => $this->metadata($request), 'metrics' => $metrics, 'risks' => $risks,
             'attention' => $attention, 'data_health' => $dataHealth,
             'budget_comparison' => $budgetComparison, 'limitations' => self::limitations());
     }
 
     public function explore(DirectorsRequest $request, $forExport = false)
     {
+        if (!$this->cache || $forExport) { return $this->buildExploration($request, $forExport); }
+        $key = $this->cacheKey('explore', $this->requestParts($request));
+        if (!$this->refresh) {
+            $hit = $this->cache->get($key, self::EXPLORE_TTL);
+            if ($hit !== null) { $hit['data']['metadata']['cache'] = array('hit' => true, 'age_seconds' => $hit['age']); return $hit['data']; }
+        }
+        $data = $this->buildExploration($request, false);
+        $this->cache->put($key, $data);
+        $data['metadata']['cache'] = array('hit' => false, 'age_seconds' => 0);
+        return $data;
+    }
+
+    private function buildExploration(DirectorsRequest $request, $forExport)
+    {
         $definition = $this->authorizedDefinition($request);
+        $definition = $this->scoped($definition, $this->windows($request, $this->canCompare($definition, $request)));
+        // One investigation runs the source query many times (summary, trend and breakdown for each period,
+        // the record page). Read it once into a session-scoped working table and run those on it.
+        $tables = array();
+        try { $definition = $this->materialize($definition, $request, $tables); } catch (\Throwable $e) {
+            // Log once per process, then stop trying (for example when the account may not create temporary tables).
+            if (!self::$workingTablesUnavailable) { $this->logFailure('working_table', $e); }
+            self::$workingTablesUnavailable = true;
+        }
+        try {
+            return $this->exploreRows($definition, $request, $forExport);
+        } finally {
+            foreach ($tables as $table) { @mysqli_query($this->db, 'DROP TEMPORARY TABLE IF EXISTS `' . $table . '`'); }
+        }
+    }
+
+    private static $workingTables = 0;
+    private static $workingTablesUnavailable = false;
+
+    /**
+     * Copy the windowed source rows into two temporary tables (a statement may not name a temporary
+     * table twice, and the breakdown compares two periods in one statement). Returns the definition
+     * pointing at them; on any failure the caller keeps the original query, which gives the same result.
+     */
+    private function materialize(array $definition, DirectorsRequest $request, array &$tables)
+    {
+        if (!$this->scoping || $this->runner || !$this->db || self::$workingTablesUnavailable) { return $definition; }
+        $name = 'directors_x_' . getmypid() . '_' . (++self::$workingTables);
+        $sql = 'CREATE TEMPORARY TABLE `' . $name . '` AS SELECT q.* FROM (' . $definition['sql'] . ') q';
+        $params = $definition['params'];
+        $types = $definition['types'];
+        if ($definition['kind'] !== 'snapshot') {
+            $parts = array();
+            foreach ($this->windows($request, $this->canCompare($definition, $request)) as $window) {
+                $parts[] = '(q.date >= ? AND q.date < ?)';
+                $params[] = $window[0];
+                $params[] = $window[1];
+                $types .= 'ss';
+            }
+            $sql .= ' WHERE ' . implode(' OR ', $parts);
+        }
+        $this->execute($sql, $types, $params);
+        $tables[] = $name;
+        $this->execute('CREATE TEMPORARY TABLE `' . $name . 'b` AS SELECT * FROM `' . $name . '`', '', array());
+        $tables[] = $name . 'b';
+        $definition['sql'] = 'SELECT * FROM `' . $name . '`';
+        $definition['sql_alt'] = 'SELECT * FROM `' . $name . 'b`';
+        $definition['params'] = array();
+        $definition['types'] = '';
+        return $definition;
+    }
+
+    private function execute($sql, $types, array $params)
+    {
+        $stmt = @mysqli_prepare($this->db, $sql);
+        if (!$stmt) { throw new \RuntimeException('Could not prepare a working table: ' . mysqli_error($this->db)); }
+        try {
+            if ($types !== '') {
+                $bindings = array($stmt, $types);
+                foreach ($params as $key => $value) { $bindings[] = &$params[$key]; }
+                call_user_func_array('mysqli_stmt_bind_param', $bindings);
+            }
+            if (!@mysqli_stmt_execute($stmt)) { throw new \RuntimeException('Could not fill a working table: ' . mysqli_stmt_error($stmt)); }
+        } finally { mysqli_stmt_close($stmt); }
+    }
+
+    private function exploreRows(array $definition, DirectorsRequest $request, $forExport)
+    {
         $current = $this->summary($definition, $request, false);
         $previous = $this->canCompare($definition, $request) ? $this->summary($definition, $request, true) : null;
         $metric = $this->metric($definition, $current, $previous);
@@ -285,6 +472,13 @@ class DirectorsService
     private function summaryPair(array $definition, DirectorsRequest $request, $withPrevious)
     {
         $snapshot = $definition['kind'] === 'snapshot';
+        $snapshotKey = null;
+        if ($snapshot && $this->cache) {
+            // A balance does not depend on the reporting period, so a period change never re-reads it.
+            $snapshotKey = $this->cacheKey('snapshot', array($definition['id']));
+            if (!$this->refresh) { $hit = $this->cache->get($snapshotKey, self::SNAPSHOT_TTL); if ($hit !== null) { return $hit['data']; } }
+        }
+        $definition = $this->scoped($definition, $this->windows($request, $withPrevious), true);
         $budget = $definition['kind'] === 'budget';
         $flagSql = array();
         $params = array();
@@ -329,7 +523,9 @@ class DirectorsService
             if ($row['rows'] > 0 && $row['invalid_amounts'] === $row['rows']) { $row['value'] = null; }
             return $row;
         };
-        return array('current' => $build('c'), 'previous' => $withPrevious ? $build('p') : null, 'undated' => (int) $r['undated']);
+        $result = array('current' => $build('c'), 'previous' => $withPrevious ? $build('p') : null, 'undated' => (int) $r['undated']);
+        if ($snapshotKey !== null) { $this->cache->put($snapshotKey, $result); }
+        return $result;
     }
 
     private function where(array $definition, DirectorsRequest $request, $previous)
@@ -401,7 +597,7 @@ class DirectorsService
         $types = $where['types'];
         if ($this->canCompare($definition, $request)) {
             $pw = $this->where($definition, $request, true);
-            $sub .= ' UNION ALL SELECT ' . $groupSql . ', 0, q.amount, 0, 1, 0, (q.amount IS NOT NULL) FROM (' . $definition['sql'] . ') q' . $pw['sql'];
+            $sub .= ' UNION ALL SELECT ' . $groupSql . ', 0, q.amount, 0, 1, 0, (q.amount IS NOT NULL) FROM (' . (isset($definition['sql_alt']) ? $definition['sql_alt'] : $definition['sql']) . ') q' . $pw['sql'];
             $params = array_merge($params, $pw['params']);
             $types .= $pw['types'];
         }
@@ -497,6 +693,7 @@ class DirectorsService
 
         // Sales revenue = posted invoices + completed shop sales (decision of 2026-11-05).
         $parts = array('posted_invoices', 'shop_sales');
+        if ($this->inPart($request, 'sales')) {
         $components = array();
         foreach ($parts as $id) { if (isset($byId[$id])) { $components[] = array('id' => $id, 'title' => $byId[$id]['title'], 'value' => $byId[$id]['value']); } }
         if (count($components) === count($parts) && $usable('posted_invoices') && $usable('shop_sales')) {
@@ -514,8 +711,12 @@ class DirectorsService
                 array('delta' => null, 'percent' => null), $components, 'One of its source measures is unavailable or has excluded amounts.');
         }
 
+        }
+
         // Gross margin % from the general ledger. Estimated: depends on GL postings being complete.
-        if ($usable('gl_revenue') && $usable('gl_cost_of_sales') && $byId['gl_revenue']['value'] > 0) {
+        if (!$this->inPart($request, 'finance')) {
+            // belongs to the finance slice
+        } elseif ($usable('gl_revenue') && $usable('gl_cost_of_sales') && $byId['gl_revenue']['value'] > 0) {
             $margin = function ($revenue, $cost) { return $revenue > 0 ? ($revenue - $cost) / $revenue * 100 : null; };
             $value = $margin($byId['gl_revenue']['value'], $byId['gl_cost_of_sales']['value']);
             $prior = $byId['gl_revenue']['previous'] !== null && $byId['gl_cost_of_sales']['previous'] !== null
@@ -536,7 +737,9 @@ class DirectorsService
         $none = array('delta' => null, 'percent' => null);
 
         // Days sales outstanding: invoices still outstanding, as days of invoiced sales in the selected period.
-        if ($usable('outstanding_invoices') && $usable('posted_invoices') && $byId['posted_invoices']['value'] > 0) {
+        if (!$this->inPart($request, 'sales')) {
+            // belongs to the sales slice
+        } elseif ($usable('outstanding_invoices') && $usable('posted_invoices') && $byId['posted_invoices']['value'] > 0) {
             $days = (int) $request->period['days'];
             $value = $byId['outstanding_invoices']['value'] / $byId['posted_invoices']['value'] * $days;
             $out[] = $place($template('dso_days', 'Days sales outstanding', 'days', 'estimated',
@@ -552,6 +755,7 @@ class DirectorsService
         foreach (array(array('customer_concentration_pct', 'Top-10 customers: share of invoiced sales', 'posted_invoices', 'customer', 'customers'),
                        array('supplier_concentration_pct', 'Top-10 suppliers: share of purchases received', 'purchasing', 'supplier', 'suppliers')) as $spec) {
             list($id, $title, $dataset, $dimension, $noun) = $spec;
+            if (!$this->inPart($request, $dimension === 'customer' ? 'sales' : 'operations')) { continue; }
             try {
                 $current = $this->topShare($dataset, $dimension, $request->period['start'], $request->period['end']);
                 $previous = $request->period['comparison_start'] !== null ? $this->topShare($dataset, $dimension, $request->period['comparison_start'], $request->period['comparison_end']) : null;
@@ -570,7 +774,7 @@ class DirectorsService
         }
 
         // Order-to-invoice time: days from the first order confirmation (OC) on a sales case to each posted invoice on it.
-        try {
+        if ($this->inPart($request, 'sales')) { try {
             $current = $this->cycleTimes($request->period['start'], $request->period['end']);
             $previous = $request->period['comparison_start'] !== null ? $this->cycleTimes($request->period['comparison_start'], $request->period['comparison_end']) : null;
             if ($current === null) { throw new \RuntimeException('No invoices with an order date in this period.'); }
@@ -583,7 +787,7 @@ class DirectorsService
         } catch (\Throwable $e) {
             $this->logFailure('order_to_invoice_days', $e);
             $out[] = $place($template('order_to_invoice_days', 'Order to invoice: median days', 'days', 'unavailable', 'Median days from the first order confirmation to the invoice.', '', null, null, $none, array(), 'No invoices with an order date are available for this period.'), 'Sales & customers');
-        }
+        } }
         return $out;
     }
 
@@ -592,6 +796,7 @@ class DirectorsService
     {
         $definition = $this->resolveDefinition($this->catalog->get($datasetId));
         if (!$this->authorization->canRead($definition) || !isset($definition['dimensions'][$dimension])) { return null; }
+        $definition = $this->scoped($definition, array(array($start, (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d'))));
         $rows = $this->query('SELECT SUM(q.amount) AS v FROM (' . $definition['sql'] . ') q WHERE q.date >= ? AND q.date < ? AND q.amount IS NOT NULL GROUP BY q.`' . $dimension . '` ORDER BY v DESC',
             $definition['types'] . 'ss', array_merge($definition['params'], array($start, (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d'))));
         $values = array_map('floatval', array_column($rows, 'v'));
@@ -606,6 +811,7 @@ class DirectorsService
     {
         $definition = $this->catalog->get('posted_invoices');
         if (!$this->authorization->canRead($definition)) { return null; }
+        $definition = $this->scoped($definition, array(array($start, (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d'))));
         $rows = $this->query("SELECT DATEDIFF(q.date, o.first_oc) AS d FROM (" . $definition['sql'] . ") q
             INNER JOIN (SELECT salescaseref, MIN(orddate) AS first_oc FROM ocs WHERE orddate > '1900-01-01' GROUP BY salescaseref) o ON o.salescaseref = q.project
             WHERE q.date >= ? AND q.date < ? AND DATEDIFF(q.date, o.first_oc) >= 0 ORDER BY d",
@@ -632,7 +838,7 @@ class DirectorsService
                 'message' => number_format(abs($metric['percent']), 1) . '% ' . ($metric['delta'] > 0 ? 'higher' : 'lower') . ' than the comparison period.',
                 'dataset' => $risk['dataset']);
         }
-        if (isset($byId['outstanding_invoices']) && $byId['outstanding_invoices']['available']) {
+        if ($this->inPart($request, 'sales') && isset($byId['outstanding_invoices']) && $byId['outstanding_invoices']['available']) {
             $m = $byId['outstanding_invoices'];
             $share = $m['value'] > 0 ? $m['overdue'] / $m['value'] * 100 : 0;
             if ($m['overdue'] > 0 && $share >= self::OVERDUE_SHARE_PERCENT) {
@@ -644,7 +850,7 @@ class DirectorsService
         }
         try {
             $pending = $this->catalog->get('pending_deliveries');
-            if ($this->authorization->canRead($pending)) {
+            if ($this->inPart($request, 'sales') && $this->authorization->canRead($pending)) {
                 $pending = $this->resolveDefinition($pending);
                 $rows = $this->query("SELECT COUNT(*) AS n, COALESCE(SUM(q.amount),0) AS v FROM (" . $pending['sql'] . ") q WHERE q.age_bucket = 'Over 90 days'", $pending['types'], $pending['params']);
                 if ((int) $rows[0]['n'] > 0) {
@@ -656,7 +862,8 @@ class DirectorsService
         } catch (\Throwable $e) { $this->logFailure('attention_pending_dc', $e); }
         try {
             $invoices = $this->catalog->get('posted_invoices');
-            if ($this->authorization->canRead($invoices)) {
+            if ($this->inPart($request, 'sales') && $this->authorization->canRead($invoices)) {
+                $invoices = $this->scoped($invoices, $this->windows($request, false));
                 $where = $this->where($invoices, $request, false);
                 $rows = $this->query("SELECT q.customer AS customer, SUM(q.amount) AS v FROM (" . $invoices['sql'] . ") q" . $where['sql'] . " GROUP BY q.customer ORDER BY v DESC LIMIT 1", $where['types'], $where['params']);
                 $total = isset($byId['posted_invoices']['value']) ? $byId['posted_invoices']['value'] : 0;
@@ -668,7 +875,7 @@ class DirectorsService
                 }
             }
         } catch (\Throwable $e) { $this->logFailure('attention_concentration', $e); }
-        if (isset($byId['payables_due_soon']) && $byId['payables_due_soon']['available']) {
+        if ($this->inPart($request, 'finance') && isset($byId['payables_due_soon']) && $byId['payables_due_soon']['available']) {
             try {
                 $due = $this->catalog->get('payables_due_soon');
                 $rows = $this->query("SELECT COUNT(*) AS n, COALESCE(SUM(q.amount),0) AS v FROM (" . $due['sql'] . ") q WHERE q.due_window = 'Due in 0-7 days'", $due['types'], $due['params']);

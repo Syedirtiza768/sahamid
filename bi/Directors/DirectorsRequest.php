@@ -7,6 +7,8 @@ use SAHamid\BI\Exception\BIException;
 class DirectorsRequest
 {
     public $action;
+    /** '' = whole overview; finance / sales / operations = one independent slice of it. */
+    public $part;
     public $dataset;
     public $period;
     public $filters;
@@ -25,6 +27,8 @@ class DirectorsRequest
         $fiscal = new \DateTimeImmutable($now->format('Y') . '-' . sprintf('%02d', $fiscalMonth) . '-01');
         if ($fiscal > $now) { $fiscal = $fiscal->modify('-1 year'); }
         $r->action = self::choice($input, 'action', array('overview', 'explore', 'export', 'export_summary'), 'overview');
+        $r->part = self::scalar($input, 'part', 20, '');
+        if ($r->part !== '' && !in_array($r->part, array('finance', 'sales', 'operations'), true)) { self::invalid('Unsupported part.'); }
         $r->dataset = self::scalar($input, 'dataset', 50, 'invoice_value');
         if (!preg_match('/^[a-z_]+$/', $r->dataset)) { self::invalid('Invalid dataset.'); }
         $preset = self::choice($input, 'preset', array('custom', 'month', 'quarter', 'ytd', 'last_month', 'last_quarter', 'last_year'), 'custom');

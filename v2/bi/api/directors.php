@@ -12,6 +12,7 @@ header('X-Content-Type-Options: nosniff');
 
 function directorsResponse(array $payload, $status = 200)
 {
+    if (function_exists('ob_gzhandler') && !ini_get('zlib.output_compression') && isset($_SERVER['HTTP_ACCEPT_ENCODING']) && strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false) { ob_start('ob_gzhandler'); }
     header('Content-Type: application/json; charset=utf-8');
     http_response_code($status);
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
@@ -43,6 +44,7 @@ try {
     $currency = isset($_SESSION['CompanyRecord']['currencydefault']) ? $_SESSION['CompanyRecord']['currencydefault'] : 'Unknown';
     $reportRoot = substr($_SERVER['SCRIPT_NAME'], 0, -strlen('/v2/bi/api/directors.php')) . '/';
     $service = new \SAHamid\BI\Directors\DirectorsService($db, $context, $_SESSION, $currency, null, $reportRoot);
+    $service->useCache(new \SAHamid\BI\Directors\ResultCache(), !empty($input['refresh']));
 
     if ($request->action === 'export' || $request->action === 'export_summary') {
         $isSummary = $request->action === 'export_summary';

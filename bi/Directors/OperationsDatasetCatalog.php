@@ -49,7 +49,7 @@ FROM invoicedetails d
 INNER JOIN (SELECT invoiceno, COUNT(*) AS header_count, MIN(invoicesdate) AS invoicesdate,
                    MIN(debtorno) AS debtorno, MIN(branchcode) AS branchcode, MIN(salescaseref) AS salescaseref,
                    MIN(fromstkloc) AS fromstkloc, MIN(returned) AS returned, MIN(inprogress) AS inprogress
-            FROM invoice GROUP BY invoiceno) i ON i.invoiceno=d.invoiceno
+            FROM invoice WHERE invoiceno IN (SELECT invoiceno FROM invoice WHERE {{RANGE:invoicesdate}}) GROUP BY invoiceno) i ON i.invoiceno=d.invoiceno
 LEFT JOIN (SELECT invoiceno,invoicelineno,invoiceoptionno,COUNT(*) AS option_count,MIN(quantity) AS quantity
            FROM invoiceoptions GROUP BY invoiceno,invoicelineno,invoiceoptionno) o
        ON o.invoiceno=d.invoiceno AND o.invoicelineno=d.invoicelineno AND o.invoiceoptionno=d.invoiceoptionno
@@ -83,9 +83,9 @@ SELECT CAST(ss.id AS CHAR) AS id, ss.orddate AS date, CONCAT(UPPER(ss.payment),'
        COALESCE(NULLIF(ss.salesman,''),'[Unassigned]') AS salesperson, UPPER(ss.payment) AS channel
 FROM (SELECT orderno,COUNT(*) AS header_count,MIN(id) AS id,MIN(orddate) AS orddate,MIN(payment) AS payment,
              MIN(debtorno) AS debtorno,MIN(branchcode) AS branchcode,MIN(salesman) AS salesman,MIN(complete) AS complete
-      FROM shopsale GROUP BY orderno) ss
+      FROM shopsale WHERE orderno IN (SELECT orderno FROM shopsale WHERE {{RANGE:orddate}}) GROUP BY orderno) ss
 LEFT JOIN (SELECT transno,COUNT(*) AS posting_count,MIN(ovamount) AS ovamount,MIN(rate) AS rate
-           FROM debtortrans WHERE type=750 AND reversed=0 GROUP BY transno) dt ON dt.transno=ss.orderno
+           FROM debtortrans WHERE type=750 AND reversed=0 AND transno IN (SELECT orderno FROM shopsale WHERE {{RANGE:orddate}}) GROUP BY transno) dt ON dt.transno=ss.orderno
 LEFT JOIN debtorsmaster dm ON dm.debtorno=ss.debtorno
 WHERE ss.complete=1 AND LOWER(ss.payment) IN ('csv','crv')
 SQL
@@ -118,7 +118,7 @@ SQL;
        CASE WHEN b.price>0 AND s.currcode='PKR' THEN b.quantity_received*b.price ELSE NULL END AS amount,
        b.quantity_received AS quantity,
        CASE WHEN b.price<=0 THEN 'Unpriced receipt' WHEN COALESCE(s.currcode,'')<>'PKR' THEN 'Unsupported currency' ELSE 'Received' END AS status,
-       CASE WHEN b.price<=0 OR COALESCE(s.currcode,'')<>'PKR' THEN 1 ELSE 0 END AS quality_issue,\n" . $receiptFields . "\n" . $receiptFrom . "\nWHERE p.type=601 AND p.inprogress=0 AND p.discarded=0 AND p.returned=0 AND b.deleted_at IS NULL AND b.quantity_received>0",
+       CASE WHEN b.price<=0 OR COALESCE(s.currcode,'')<>'PKR' THEN 1 ELSE 0 END AS quality_issue,\n" . $receiptFields . "\n" . $receiptFrom . "\nWHERE p.type=601 AND p.inprogress=0 AND p.discarded=0 AND p.returned=0 AND b.deleted_at IS NULL AND b.quantity_received>0 AND {{RANGE:p.created_at}}",
         );
 
         $datasets['purchase_commitments'] = array(
@@ -338,7 +338,7 @@ SELECT CAST(i.invoiceno AS CHAR) AS id, i.invoicesdate AS date, CONCAT('Invoice 
 FROM (SELECT inv.invoiceno, MIN(inv.debtorno) AS debtorno, MIN(inv.branchcode) AS branchcode,
              MIN(inv.invoicesdate) AS invoicesdate, MIN(inv.salescaseref) AS salescaseref
       FROM invoice inv
-      WHERE inv.returned=0 AND inv.inprogress=0
+      WHERE inv.returned=0 AND inv.inprogress=0 AND {{RANGE:inv.invoicesdate}}
         AND EXISTS (SELECT 1 FROM debtortrans pt WHERE pt.type=10 AND pt.transno=inv.invoiceno AND pt.reversed=0)
       GROUP BY inv.invoiceno) i
 INNER JOIN debtortrans dt ON dt.type=10 AND dt.transno=i.invoiceno AND dt.reversed=0
@@ -356,7 +356,7 @@ SQL
             'route' => 'SalesGraph.php', 'source_route' => 'salescase/salescaseview.php', 'source_param' => 'salescaseref',
             'dimensions' => array('customer' => 'Customer', 'branch' => 'Customer branch', 'salesperson' => 'Case owner', 'project' => 'Sales case'),
             'sql' => <<<'SQL'
-SELECT CAST(sc.salescaseindex AS CHAR) AS id, DATE(COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received)) AS date,
+SELECT CAST(sc.salescaseindex AS CHAR) AS id, DATE(sc.po_at) AS date,
        sc.salescaseref AS reference, ov.v AS amount, 1 AS quantity,
        CASE WHEN NULLIF(sc.podate,'0000-00-00 00:00:00') IS NOT NULL THEN 'PO file on case' ELSE 'Recorded PO receipt' END AS status,
        CASE WHEN ov.v IS NULL THEN 1 ELSE 0 END AS quality_issue,
@@ -365,16 +365,19 @@ SELECT CAST(sc.salescaseindex AS CHAR) AS id, DATE(COALESCE(NULLIF(sc.podate,'00
        CONCAT(sc.debtorno,' / ',COALESCE(NULLIF(sc.branchcode,''),'[Unassigned]')) AS branch,
        COALESCE(NULLIF(sc.salesman,''),'[Unassigned]') AS salesperson,
        sc.salescaseref AS project
-FROM salescase sc
+FROM (SELECT sc.salescaseindex, sc.salescaseref, sc.debtorno, sc.branchcode, sc.salesman, sc.podate, COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received) AS po_at
+      FROM salescase sc LEFT JOIN (SELECT salescaseref, MIN(received_at) AS first_received FROM sales_performance_po_receipts WHERE receipt_status='active' GROUP BY salescaseref) rc ON rc.salescaseref=sc.salescaseref
+      WHERE COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received) IS NOT NULL AND {{RANGE:COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received)}}) sc
 LEFT JOIN debtorsmaster dm ON dm.debtorno=sc.debtorno
-LEFT JOIN (SELECT salescaseref, MIN(received_at) AS first_received FROM sales_performance_po_receipts
-           WHERE receipt_status='active' GROUP BY salescaseref) rc ON rc.salescaseref=sc.salescaseref
-LEFT JOIN (SELECT o.salescaseref, SUM(od.unitprice*(1-od.discountpercent)*od.quantity*oo.quantity) AS v
-           FROM (SELECT orderno, MIN(salescaseref) AS salescaseref FROM ocs GROUP BY orderno) o
+LEFT JOIN (SELECT pc.salescaseref, SUM(od.unitprice*(1-od.discountpercent)*od.quantity*oo.quantity) AS v
+           FROM (SELECT DISTINCT sc.salescaseref
+                 FROM salescase sc LEFT JOIN (SELECT salescaseref, MIN(received_at) AS first_received FROM sales_performance_po_receipts WHERE receipt_status='active' GROUP BY salescaseref) rc ON rc.salescaseref=sc.salescaseref
+                 WHERE COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received) IS NOT NULL AND {{RANGE:COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received)}}) pc
+           INNER JOIN (SELECT orderno, MIN(salescaseref) AS ref FROM ocs GROUP BY orderno) o ON o.ref=pc.salescaseref
            INNER JOIN ocdetails od ON od.orderno=o.orderno
            INNER JOIN ocoptions oo ON oo.orderno=od.orderno AND oo.lineno=od.orderlineno
-           WHERE od.lineoptionno=0 AND oo.optionno=0 GROUP BY o.salescaseref) ov ON ov.salescaseref=sc.salescaseref
-WHERE COALESCE(NULLIF(sc.podate,'0000-00-00 00:00:00'), rc.first_received) IS NOT NULL
+           WHERE od.lineoptionno=0 AND oo.optionno=0
+           GROUP BY pc.salescaseref) ov ON ov.salescaseref=sc.salescaseref
 SQL
         );
 
@@ -423,6 +426,6 @@ INNER JOIN debtortrans t ON t.transno=i.invoiceno AND t.type=10 AND t.reversed=0
 WHERE i.returned=0
 SQL
         );
-        return $datasets;
+        return array_map(array('SAHamid\BI\Directors\DatasetCatalog', 'resolveMarkers'), $datasets);
     }
 }

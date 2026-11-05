@@ -101,3 +101,11 @@ Audit, reconciliation and findings: `docs/directors-reporting-gap-audit.md`. Run
 **More measures (second pass, part 3):** datasets `payables_due_soon` and `bank_balance`; derived measures `dso_days`, `customer_concentration_pct`, `supplier_concentration_pct`, `order_to_invoice_days` (built in `DirectorsService::compositeMetrics()`); an attention item for supplier payments due within 7 days. A measure that cannot be scheduled for lack of due dates shows as unavailable with the reason, never as zero.
 
 **States and accessibility:** first load shows skeletons in the final layout; refreshes keep the old content under a slim progress bar (no fade). A failed load shows an error panel with Try again and never stale figures; a failed refresh keeps the old overview with an alert and Try again. View tabs use `tablist`/`tab`/`tabpanel` with arrow, Home and End keys. The page prints on A4 landscape with the period shown.
+
+**Performance design (2026-11-06):**
+- `{{RANGE:column}}` in a dataset's SQL marks where the reporting window may be pushed into the source query. `DatasetCatalog::resolveMarkers()` keeps the marked text as `sql_template` and leaves `sql` window-free (`1=1`), so any caller that does not know the period is still correct. `DirectorsService::scoped()` fills the window in (validated dates only) for the overview and investigations.
+- The overview can be requested whole (exports, tests) or as `part=finance|sales|operations`; the page requests the three parts together and merges them.
+- `ResultCache` (file cache in the system temp directory, opt-in from the web endpoint only): 5 minutes for the overview and balances, 2 minutes for investigations; keys include the database, user, permissions, request and `CACHE_VERSION`. Bump `CACHE_VERSION` when a change could alter any result. Refresh sends `refresh=1`.
+- Investigations copy the windowed rows once into two session-scoped temporary tables (two because the breakdown compares two periods in one statement) and drop them afterwards. If the account may not create temporary tables the original query runs instead.
+- Responses are gzip-compressed when the client accepts it.
+- Tests: `directors_scope.php`, `directors_parts.php`, `directors_cache.php`, plus the existing pair and reconcile tests.

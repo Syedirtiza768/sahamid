@@ -34,7 +34,7 @@ class FinanceDatasetCatalog
             INNER JOIN chartmaster cm ON cm.accountcode = g.account
             INNER JOIN accountgroups ag ON ag.groupname = cm.group_
             LEFT JOIN accountsection ac ON ac.sectionid = ag.sectioninaccounts
-            WHERE g.posted = 1 AND ag.pandl = 1';
+            WHERE g.posted = 1 AND ag.pandl = 1 AND {{RANGE:g.trandate}}';
         $glMeasures = array(
             'gl_result' => array('Net profit / loss', '-g.amount', '', 'Negative sum of posted P&L journal amounts; a positive value is profit.'),
             'gl_revenue' => array('GL revenue', '-g.amount', ' AND ag.sectioninaccounts = 1', 'Negative sum of posted income-section journal amounts (section 1).'),
@@ -217,7 +217,7 @@ class FinanceDatasetCatalog
                 CASE WHEN ABS(t.amount - t.amountcleared) < 0.000001 THEN 'Cleared' ELSE 'Uncleared / partial' END AS clearance,
                 'actual' AS status, t.type AS source_type, t.transno AS transaction_number
                 FROM banktrans t INNER JOIN bankaccounts b ON b.accountcode = t.bankact
-                WHERE EXISTS (SELECT 1 FROM bankaccountusers bu
+                WHERE {{RANGE:t.transdate}} AND EXISTS (SELECT 1 FROM bankaccountusers bu
                     WHERE bu.accountcode = t.bankact AND bu.userid = ?)",
             'params' => array((string) $userId), 'types' => 's',
             'source_route' => 'GLTransInquiry.php', 'source_param' => 'TransNo',
@@ -232,8 +232,7 @@ class FinanceDatasetCatalog
             'dimensions' => array('account' => 'GL account', 'category' => 'Account group', 'section' => 'Account section'),
             'sql' => "SELECT CONCAT(cd.accountcode, ':', cd.period) AS id,
                 p.lastdate_in_period AS date,
-                (SELECT DATE_ADD(MAX(previous.lastdate_in_period), INTERVAL 1 DAY)
-                    FROM periods previous WHERE previous.lastdate_in_period < p.lastdate_in_period) AS period_start,
+                ps.period_start AS period_start,
                 CONCAT('Budget ', cd.period, ' / ', cd.accountcode) AS reference,
                 -cd.budget AS amount, 1 AS quantity, cd.accountcode AS source_key,
                 CONCAT(cd.accountcode, ' · ', cm.accountname) AS account,
@@ -242,10 +241,12 @@ class FinanceDatasetCatalog
                 cd.period AS accounting_period, 'estimated' AS status
                 FROM chartdetails cd
                 INNER JOIN periods p ON p.periodno = cd.period
+                INNER JOIN (SELECT p1.periodno, DATE_ADD(MAX(p2.lastdate_in_period), INTERVAL 1 DAY) AS period_start
+                    FROM periods p1 LEFT JOIN periods p2 ON p2.lastdate_in_period < p1.lastdate_in_period GROUP BY p1.periodno) ps ON ps.periodno = p.periodno
                 INNER JOIN chartmaster cm ON cm.accountcode = cd.accountcode
                 INNER JOIN accountgroups ag ON ag.groupname = cm.group_
                 LEFT JOIN accountsection ac ON ac.sectionid = ag.sectioninaccounts
-                WHERE ag.pandl = 1",
+                WHERE ag.pandl = 1 AND {{RANGE:p.lastdate_in_period}}",
             'params' => array(), 'types' => '',
             'source_route' => 'GLBudgets.php', 'source_param' => 'SelectedAccount',
         );
@@ -265,7 +266,7 @@ class FinanceDatasetCatalog
         $definitions['gl_budget_actual']['source_route'] = 'GLProfit_Loss.php';
         $definitions['gl_budget_actual']['source_param'] = '';
 
-        return $definitions;
+        return array_map(array('SAHamid\BI\Directors\DatasetCatalog', 'resolveMarkers'), $definitions);
     }
 
     private static function dueStatusSql($due, $balance)
