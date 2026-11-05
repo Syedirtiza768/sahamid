@@ -42,20 +42,20 @@ include_once(dirname(__DIR__) . '/includes/sidebar.php');
     <section class="content dir-content">
         <div id="dirAlert" class="dir-alert" role="alert" hidden></div>
         <div id="dirChips" class="dir-chips dir-chips-bar" aria-label="Active investigation filters"></div>
-        <nav class="dir-tabs" aria-label="Directors dashboard views"><button type="button" data-view="overview" class="is-active">Executive overview</button><button type="button" data-view="explore">Investigate</button><button type="button" data-view="coverage">Definitions &amp; coverage</button></nav>
+        <nav class="dir-tabs" role="tablist" aria-label="Directors dashboard views"><button type="button" role="tab" id="dirTab-overview" aria-controls="dirOverview" aria-selected="true" data-view="overview" class="is-active">Executive overview</button><button type="button" role="tab" id="dirTab-explore" aria-controls="dirExplore" aria-selected="false" tabindex="-1" data-view="explore">Investigate</button><button type="button" role="tab" id="dirTab-coverage" aria-controls="dirCoverage" aria-selected="false" tabindex="-1" data-view="coverage">Definitions &amp; coverage</button></nav>
 
-        <section id="dirOverview" aria-label="Executive overview">
+        <section id="dirOverview" role="tabpanel" aria-labelledby="dirTab-overview">
             <div class="dir-section-heading"><div><div class="dir-eyebrow">THE BUSINESS AT A GLANCE</div><h2>Key results</h2><p>The selected period compared with the comparison period. Select a result to see what is behind it.</p></div><span id="dirCoverageStatus" class="dir-tag">Loading coverage…</span></div>
-            <div id="dirHeadline" class="dir-headline-grid"><div class="dir-placeholder">Loading key results…</div></div>
+            <div id="dirHeadline" class="dir-headline-grid" aria-live="polite"><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><span class="dir-screenreader">Loading key results…</span></div>
             <div class="dir-section-heading"><div><div class="dir-eyebrow">NEEDS ATTENTION</div><h2>Where to look first</h2><p>Largest amounts first. Only unfavourable changes and exposures above the screening thresholds appear here.</p></div></div>
-            <div id="dirRisks" class="dir-risk-grid"><div class="dir-placeholder">Checking changes and exceptions…</div></div>
+            <div id="dirRisks" class="dir-risk-grid" aria-live="polite"><div class="dir-skel dir-skel-card" aria-hidden="true"></div><div class="dir-skel dir-skel-card" aria-hidden="true"></div><div class="dir-skel dir-skel-card" aria-hidden="true"></div><span class="dir-screenreader">Checking changes and exceptions…</span></div>
             <details id="dirDataHealth" class="dir-panel dir-health" hidden><summary>Data health <span id="dirHealthCount" class="dir-tag"></span><span class="dir-health-hint">Records the figures leave out or cannot place in a period</span></summary><ul id="dirHealthList"></ul></details>
             <section id="dirBudgetComparison" class="dir-panel" aria-label="Recorded budget versus actual" hidden></section>
             <div class="dir-section-heading"><div><div class="dir-eyebrow">MORE MEASURES</div><h2>Results &amp; exposure by area</h2><p>Period measures and current balances are labelled separately.</p></div></div>
-            <div id="dirMetricGroups" class="dir-metric-groups"><div class="dir-placeholder">Loading authorized business measures…</div></div>
+            <div id="dirMetricGroups" class="dir-metric-groups" aria-live="polite"><div class="dir-card-grid"><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div><div class="dir-skel dir-skel-tile" aria-hidden="true"></div></div><span class="dir-screenreader">Loading authorized business measures…</span></div>
         </section>
 
-        <section id="dirExplore" aria-label="Investigate a business measure" hidden>
+        <section id="dirExplore" role="tabpanel" aria-labelledby="dirTab-explore" hidden>
             <div class="dir-section-heading"><div><div class="dir-eyebrow">FROM THE NUMBER TO THE RECORD</div><h2 id="dirExploreTitle">Investigate performance</h2><p id="dirExploreSubtitle">Choose a measure to explore its movements, concentrations and source records.</p></div><button type="button" id="dirBack" class="dir-button">← Executive overview</button></div>
             <div class="dir-panel dir-explore-controls">
                 <label>Business measure<select id="dirDataset"><option value="">Choose a measure</option></select></label>
@@ -75,7 +75,7 @@ include_once(dirname(__DIR__) . '/includes/sidebar.php');
             </div>
         </section>
 
-        <section id="dirCoverage" aria-label="Reporting definitions and limitations" hidden>
+        <section id="dirCoverage" role="tabpanel" aria-labelledby="dirTab-coverage" hidden>
             <div class="dir-section-heading"><div><div class="dir-eyebrow">KNOW WHAT THE NUMBERS MEAN</div><h2>Definitions &amp; reporting coverage</h2><p>Actual source activity, estimates and unavailable measures remain explicit.</p></div></div>
             <section class="dir-panel"><div class="dir-panel-heading"><div><h3>Known limitations &amp; missing evidence</h3><p>These limitations apply to interpretation and comparison.</p></div></div><ul id="dirLimitations" class="dir-limitations"><li>Loading coverage…</li></ul></section>
             <section class="dir-panel"><div class="dir-panel-heading"><div><h3>Business questions &amp; metric definitions</h3><p>Each measure can be investigated using its supported dimensions. Measures from different grains are never added into a single business-volume total.</p></div></div><div class="dir-table-wrap"><table class="dir-table dir-coverage-table"><thead><tr><th>Measure / business question</th><th>Basis &amp; coverage</th><th>Definition &amp; limitations</th><th>Available dimensions</th></tr></thead><tbody id="dirDefinitions"></tbody></table></div></section>

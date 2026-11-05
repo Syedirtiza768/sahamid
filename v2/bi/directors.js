@@ -77,7 +77,11 @@
         window.history[replace ? 'replaceState' : 'pushState']({}, '', window.location.pathname + '?' + p.toString());
     }
     function metricById(id) { return overview && overview.metrics.filter(function (m) { return m.id === id; })[0]; }
-    function alertMessage(message) { $('dirAlert').textContent = message || ''; $('dirAlert').hidden = !message; }
+    function alertMessage(message, retry) {
+        $('dirAlert').textContent = message || ''; $('dirAlert').hidden = !message;
+        if (message && retry) { var again = document.createElement('button'); again.type = 'button'; again.className = 'dir-link'; again.setAttribute('data-retry', '1'); again.textContent = 'Try again'; $('dirAlert').appendChild(again); }
+    }
+    function errorPanel(title, message) { return '<div class="dir-error" role="alert"><strong>' + esc(title) + '</strong>' + esc(message) + '<br><button type="button" class="dir-button" data-retry="1"><i class="fa fa-refresh" aria-hidden="true"></i> Try again</button></div>'; }
     function loading(active) { root.classList.toggle('is-loading', active); root.setAttribute('aria-busy', active ? 'true' : 'false'); $('dirRefresh').disabled = active; $('dirExportSummary').disabled = active || !overview; $('dirExport').disabled = active || !exploration || !exploration.details.total; if (active) { $('dirStatus').textContent = 'Loading live source data…'; } }
     function parameters(action) {
         var p = new URLSearchParams();
@@ -144,7 +148,7 @@
         updateChip();
         var dimensions = dimsFor(metricById(state.dataset));
         $('dirChips').innerHTML = (state.view === 'explore' && state.month ? '<button class="dir-chip" type="button" data-remove-month="1" title="Back to the whole period">Month: ' + esc(monthLabel(state.month)) + ' ×</button>' : '') + (state.view === 'explore' ? Object.keys(state.filters).map(function (key) { return '<button class="dir-chip" type="button" data-remove-filter="' + esc(key) + '" title="Remove this filter">' + esc(dimensions[key] || key) + ': ' + esc(state.filters[key]) + ' ×</button>'; }).join('') : '');
-        ['overview', 'explore', 'coverage'].forEach(function (view) { document.querySelector('[data-view="' + view + '"]').classList.toggle('is-active', state.view === view); $('dir' + view.charAt(0).toUpperCase() + view.slice(1)).hidden = state.view !== view; });
+        ['overview', 'explore', 'coverage'].forEach(function (view) { var tab = document.querySelector('[data-view="' + view + '"]'); tab.setAttribute('aria-selected', state.view === view ? 'true' : 'false'); tab.tabIndex = state.view === view ? 0 : -1; document.querySelector('[data-view="' + view + '"]').classList.toggle('is-active', state.view === view); $('dir' + view.charAt(0).toUpperCase() + view.slice(1)).hidden = state.view !== view; });
     }
     function sectionFor(metric) {
         if (metric.section) { return metric.section; }
@@ -347,7 +351,7 @@
             if (c.key === 'date' || c.key === 'due_date') { content = esc(showDate(value)); }
             if (c.key === 'reference') { var link = safeRecordLink(row.source_url); if (link) { content = '<a target="_blank" rel="noopener" href="' + esc(link) + '" aria-label="Open source record ' + esc(value || row.id) + ' in a separate tab">' + esc(value || row.id) + ' ↗</a>'; } }
             return '<td' + (c.numeric ? ' class="dir-number"' : '') + '>' + content + '</td>';
-        }).join('') + '</tr>'; }).join('') : '<tr><td class="dir-empty-cell" colspan="' + columns.length + '">No source records match this investigation. Remove filters or choose another period.</td></tr>';
+        }).join('') + '</tr>'; }).join('') : '<tr><td class="dir-empty-cell" colspan="' + columns.length + '">No source records match this investigation. ' + (Object.keys(state.filters).length || state.search || state.month ? 'Remove a filter chip above' + (state.search ? ', clear the search' : '') + ' or choose another period.' : 'Choose another period.') + '</td></tr>';
         var total = Number(details.total || 0), page = Number(details.page || state.page), size = Number(details.page_size || state.page_size);
         state.page = page; state.page_size = size;
         $('dirPageStatus').textContent = total ? number((page - 1) * size + 1, 0) + '–' + number(Math.min(page * size, total), 0) + ' of ' + number(total, 0) + ' records' : '0 matching records';
@@ -382,10 +386,10 @@
             loading(false); syncControls(); writeState(true);
         }).catch(function (error) {
             if (error.name === 'AbortError' || run !== requestNumber) { return; }
-            loading(false); alertMessage(error.message); $('dirStatus').textContent = 'Refresh failed · displayed data may be from the previous refresh';
+            loading(false); alertMessage(overview ? error.message : '', true); $('dirStatus').textContent = 'Refresh failed · displayed data may be from the previous refresh';
             $('dirExport').disabled = true; $('dirExportSummary').disabled = true;
-            if (state.view === 'explore') { $('dirInvestigation').hidden = true; }
-            if (!overview) { $('dirMetricGroups').innerHTML = '<div class="dir-placeholder">The dashboard could not load. Use Refresh to retry after the source or access issue is resolved.</div>'; $('dirRisks').innerHTML = ''; }
+            if (state.view === 'explore') { $('dirInvestigation').hidden = true; $('dirInvestigationEmpty').hidden = false; $('dirInvestigationEmpty').innerHTML = errorPanel('This investigation could not be loaded', 'Nothing from an earlier load is shown, so you never read figures that do not match the selection.'); }
+            if (!overview) { $('dirCoverageStatus').textContent = 'Not loaded'; $('dirHeadline').innerHTML = errorPanel('The dashboard could not load', error.message); $('dirMetricGroups').innerHTML = ''; $('dirRisks').innerHTML = ''; }
         });
     }
     function applyPeriod(event) {
@@ -446,19 +450,25 @@
     $('dirPrevious').addEventListener('click', function () { if (state.page > 1) { state.page--; writeState(false); load(false); } });
     $('dirNext').addEventListener('click', function () { state.page++; writeState(false); load(false); });
     root.addEventListener('click', function (event) {
-        var button = event.target.closest('[data-view],[data-metric],[data-risk],[data-health],[data-remove-month],[data-remove-filter],[data-month],[data-breakdown],[data-sort]');
+        var button = event.target.closest('[data-view],[data-metric],[data-risk],[data-health],[data-remove-month],[data-retry],[data-remove-filter],[data-month],[data-breakdown],[data-sort]');
         if (!button || !root.contains(button) || button.disabled) { return; }
         if (button.hasAttribute('data-view')) { changeView(button.getAttribute('data-view')); }
         if (button.hasAttribute('data-metric')) { investigate(button.getAttribute('data-metric')); }
         if (button.hasAttribute('data-health')) { var item = healthItems[Number(button.getAttribute('data-health'))]; if (item) { investigate(item.dataset, item.filters, item.group_by); } }
         if (button.hasAttribute('data-risk')) { var risk = risks[Number(button.getAttribute('data-risk'))]; if (risk) { investigate(risk.dataset, risk.filters, risk.group_by); } }
         if (button.hasAttribute('data-remove-filter')) { delete state.filters[button.getAttribute('data-remove-filter')]; state.page = 1; syncControls(); writeState(false); load(false); }
+        if (button.hasAttribute('data-retry')) { load(true); return; }
         if (button.hasAttribute('data-remove-month')) { state.month = ''; state.page = 1; syncControls(); writeState(false); load(false); }
         if (button.hasAttribute('data-month')) { chooseMonth(button.getAttribute('data-month')); }
         if (button.hasAttribute('data-breakdown')) { var row = ($('dirBreakdown')._rows || [])[Number(button.getAttribute('data-breakdown'))]; if (row && state.group_by) { state.filters[state.group_by] = String(row.key == null ? '' : row.key); state.page = 1; syncControls(); writeState(false); load(false); } }
         if (button.hasAttribute('data-sort')) { var sort = button.getAttribute('data-sort'); state.direction = state.sort === sort && state.direction === 'desc' ? 'asc' : 'desc'; state.sort = sort; state.page = 1; writeState(false); load(false); }
     });
     root.addEventListener('keydown', function (event) { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('g[data-month]')) { event.preventDefault(); chooseMonth(event.target.getAttribute('data-month')); } });
+    document.querySelector('.dir-tabs').addEventListener('keydown', function (event) {
+        var order = ['overview', 'explore', 'coverage'], at = order.indexOf(state.view), next = event.key === 'ArrowRight' ? at + 1 : event.key === 'ArrowLeft' ? at - 1 : event.key === 'Home' ? 0 : event.key === 'End' ? order.length - 1 : null;
+        if (next === null) { return; }
+        event.preventDefault(); next = (next + order.length) % order.length; changeView(order[next]); document.querySelector('[data-view="' + order[next] + '"]').focus();
+    });
     $('dirTrend').addEventListener('mousemove', function (event) { var t = event.target.closest('.dir-chart-month'); if (t) { showTip(t, event.clientX, event.clientY); } else { hideTip(); } });
     $('dirTrend').addEventListener('mouseleave', hideTip);
     $('dirTrend').addEventListener('focusin', function (event) { var t = event.target.closest('.dir-chart-month'); if (t) { var r = t.getBoundingClientRect(); showTip(t, r.left + r.width / 2, r.top); } });
