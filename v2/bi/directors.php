@@ -17,7 +17,7 @@ try {
 include_once(dirname(__DIR__) . '/includes/header.php');
 include_once(dirname(__DIR__) . '/includes/sidebar.php');
 ?>
-<link rel="stylesheet" href="<?php echo $NewRootPath; ?>v2/bi/directors.css">
+<link rel="stylesheet" href="<?php echo $NewRootPath; ?>v2/bi/directors.css?v=<?php echo (int) @filemtime(__DIR__ . '/directors.css'); ?>">
 <div class="content-wrapper directors-page" id="directorsRoot" aria-busy="true">
     <section class="content-header dir-hero dir-bar">
         <div class="dir-bar-row">
@@ -90,7 +90,7 @@ window.SAHAMID_DIRECTORS = {
     today: <?php echo json_encode(date('Y-m-d')); ?>
 };
 </script>
-<script src="<?php echo $NewRootPath; ?>v2/bi/directors.js"></script>
+<script src="<?php echo $NewRootPath; ?>v2/bi/directors.js?v=<?php echo (int) @filemtime(__DIR__ . '/directors.js'); ?>"></script>
 <?php
 include_once(dirname(__DIR__) . '/includes/footer.php');
 include_once(dirname(__DIR__) . '/includes/foot.php');

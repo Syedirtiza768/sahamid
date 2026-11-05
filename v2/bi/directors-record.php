@@ -25,7 +25,7 @@ try {
 require_once dirname(__DIR__) . '/includes/header.php';
 require_once dirname(__DIR__) . '/includes/sidebar.php';
 ?>
-<link rel="stylesheet" href="<?php echo directorsH($NewRootPath); ?>v2/bi/directors.css">
+<link rel="stylesheet" href="<?php echo directorsH($NewRootPath); ?>v2/bi/directors.css?v=<?php echo (int) @filemtime(__DIR__ . '/directors.css'); ?>">
 <?php
 $dashboardPath = $NewRootPath . 'v2/bi/directors.php';
 $return = \SAHamid\BI\Directors\RecordPresenter::safeReturn(isset($_GET['directors_return']) ? $_GET['directors_return'] : '', $dashboardPath);
