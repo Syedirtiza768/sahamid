@@ -333,6 +333,8 @@
 			$customer['curr'] = 0;
 		else
 			$customer['curr'] = round($customer['curr'],2);
+		if ((float)$customer['curr'] <= 0.009)
+			continue;
 
 		$res = [];
 
