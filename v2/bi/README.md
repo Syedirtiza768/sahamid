@@ -6,7 +6,7 @@
 purchasing, inventory, expense and operational measures. Its shared read-only API
 supports comparisons, source definitions, data-quality exceptions, cross-filtered
 drill-down, paginated records and bounded XLSX exports. Entry requires directors
-reporting access; delegated source-page, bank-account and expense-tab restrictions
+reporting access (directorreports or directors_dashboard); bank-account and expense-tab restrictions
 apply. Current snapshots and estimates are explicitly labeled.
 
 See `docs/directors-reporting-implementation.md` for the coverage map, audit

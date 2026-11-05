@@ -130,10 +130,10 @@ Local `sahamid` DB, 2026-11-05. Sep 2026 is a closed month. FY YTD = 1 Apr – 5
 - **F9** confirmed. **F10** confirmed. **F11** confirmed.
 - **Performance changed:** the overview took **0.85 s** for Sep. It took **4.5 s** for FY YTD, above the 3 s target. The Sales Executive report already caches in its own table (`sales_executive_cache`, 15 minutes); that pattern can be reused.
 - **New N1:** net receivables 125.6M sits next to overdue 321.5M. A director will read this as an error.
-- **New N2:** the cash card shows 0 as "Actual" when the user has no bank rows (R9). It also differs between users and is not labelled as per-user.
+- **New N2:** the cash card showed 0 as "Actual" when the user has no bank rows (R9). **Fixed:** it now shows unavailable with the reason. It still differs between users because bank scope is per user; the tile does not yet say so.
 - **New N3:** "Open sales cases" (68,801) and "Open enquiry value" (99.9% unvalued) are not usable as headline figures as built.
 - **New N4:** the overview runs one query per measure plus an "undated rows" scan per flow measure, one after another. There is no per-measure timeout or caching.
-- **New N6 (access, found by `directors_roles.php`):** a user who holds `directorreports` but is not an administrator (the real role-27 director on the local copy) can read only 1 of 25 measures (petty cash), because every other source page's security token is missing from that role. The Sales Executive Report gates on `directorreports` alone, so the same user sees full company sales there but a nearly empty Directors dashboard. Administrators (access levels 8, 10, 22, or the `*` permission) see everything. A decision is needed (see the progress log).
+- **New N6 (access, found by `directors_roles.php`):** a user who holds `directorreports` but is not an administrator (the real role-27 director on the local copy) can read only 1 of 25 measures (petty cash), because every other source page's security token is missing from that role. The Sales Executive Report gates on `directorreports` alone, so the same user sees full company sales there but a nearly empty Directors dashboard. Administrators (access levels 8, 10, 22, or the `*` permission) see everything. **Resolved 2026-11-05:** directors-permission holders now read all company-level measures; bank and expense scopes stay per user.
 - **New N5:** `executive_listing` is not referenced anywhere in `bi/Directors`. Access is `directorreports` or `directors_dashboard`, plus each source page's security token.
 
 ## 7. Verification of the counts

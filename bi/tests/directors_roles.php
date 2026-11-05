@@ -88,7 +88,7 @@ try {
     $blocked = array_filter($overview['metrics'], function ($m) { return isset($m['error']) && strpos((string) $m['error'], 'does not have access') !== false; });
     roleCheck(count($blocked) === 0, 'administrator: no measure is withheld for access', $failures);
 
-    // ---- delegated director ----------------------------------------------------------------------------
+    // ---- delegated director: directors permission, not an administrator ------------------------------------
     list($session, $context) = $resolve('BI_ROLE_DIRECTOR');
     roleCheck(!$context->isAdministrator(), 'director principal is NOT an administrator (otherwise this proves nothing)', $failures);
     (new DirectorsAuthorization($context, $session))->assertAccess();
@@ -99,42 +99,34 @@ try {
     $overview = $service->overview(DirectorsRequest::fromArray($period));
     $byId = array_column($overview['metrics'], null, 'id');
     $tokens = $context->getPageSecurityTokens();
-    $readable = $withheld = 0;
+    $withoutToken = 0;
     foreach ($catalog->all() as $id => $definition) {
         $route = basename($definition['route']);
-        $expected = isset($session['PageSecurityArray'][$route]) && in_array((int) $session['PageSecurityArray'][$route], $tokens, true);
-        roleCheck($authorization->canRead($definition) === $expected, "director: $id readable=" . ($expected ? 'yes' : 'no') . " follows the source page token ($route)", $failures);
-        if ($expected) {
-            $readable++;
-            continue;
-        }
-        $withheld++;
-        roleCheck($byId[$id]['value'] === null && $byId[$id]['can_investigate'] === false && $byId[$id]['rows'] === 0, "director: $id is withheld in the overview with no value or rows", $failures);
-        roleRejects(function () use ($service, $id, $period) { $service->explore(DirectorsRequest::fromArray($period + array('dataset' => $id))); }, 403, "director: $id drill-down refused", $failures);
-        roleRejects(function () use ($service, $id, $period) { $service->explore(DirectorsRequest::fromArray($period + array('dataset' => $id)), true); }, 403, "director: $id export refused", $failures);
-        roleRejects(function () use ($service, $id) { $service->record($id, '1'); }, 403, "director: $id record page refused", $failures);
+        if (!(isset($session['PageSecurityArray'][$route]) && in_array((int) $session['PageSecurityArray'][$route], $tokens, true))) { $withoutToken++; }
+        roleCheck($authorization->canRead($definition), "director: $id is readable on the directors permission alone", $failures);
+        roleCheck(!isset($byId[$id]['error']) || strpos((string) $byId[$id]['error'], 'does not have access') === false, "director: $id is not withheld in the overview", $failures);
     }
-    roleCheck($readable > 0 && $withheld > 0, "director: role is partial ($readable readable, $withheld withheld), so both sides were exercised", $failures);
-    $leak = false;
-    foreach ($overview['metrics'] as $metric) { if (isset($metric['components'])) { continue; } if (!$authorization->canRead($catalog->get($metric['id'])) && ($metric['value'] !== null || $metric['rows'] > 0)) { $leak = true; } }
-    roleCheck(!$leak, 'director: no withheld measure carries a value or row count anywhere in the overview', $failures);
-    $attentionIds = array_column($overview['attention'], 'dataset');
-    $badAttention = array_filter($attentionIds, function ($id) use ($authorization, $catalog) { return $id && !$authorization->canRead($catalog->get($id)); });
-    roleCheck(count($badAttention) === 0, 'director: "Needs attention" never points at a withheld measure', $failures);
+    roleCheck($withoutToken > 0, "director: the role lacks the page token for $withoutToken source pages, so the result does not depend on role tokens", $failures);
+    $unknown = null;
+    try { $service->explore(DirectorsRequest::fromArray($period + array('dataset' => 'no_such_measure'))); } catch (BIException $e) { $unknown = $e; }
+    roleCheck($unknown !== null && $unknown->getHttpStatus() === 404 && $unknown->getErrorCode() === 'unknown_dataset', 'director: an unknown measure is refused with 404', $failures);
 
-    // ---- scope filters that apply even when a dataset is readable --------------------------------------------
+    // ---- user-level scopes still apply, whatever the page gate allows ---------------------------------------------
     $userId = $context->getUserId();
     $range = array($start, date('Y-m-d', strtotime($today . ' +1 day')));
-    if ($authorization->canRead($catalog->get('cash_movement'))) {
+    $accounts = (int) roleRows($db, 'SELECT COUNT(*) n FROM bankaccountusers WHERE userid = ?', array($userId), 's')[0]['n'];
+    if ($accounts === 0) {
+        roleCheck($byId['cash_movement']['available'] === false && strpos((string) $byId['cash_movement']['error'], 'No bank accounts are assigned') !== false, 'director: no assigned bank accounts shows "unavailable", never a reliable zero', $failures);
+    } else {
         $expected = (int) roleRows($db, 'SELECT COUNT(*) n FROM banktrans t INNER JOIN bankaccounts b ON b.accountcode = t.bankact WHERE t.transdate >= ? AND t.transdate < ? AND EXISTS (SELECT 1 FROM bankaccountusers bu WHERE bu.accountcode = t.bankact AND bu.userid = ?)', array($range[0], $range[1], $userId), 'sss')[0]['n'];
         $rows = $service->explore(DirectorsRequest::fromArray($period + array('dataset' => 'cash_movement')))['summary']['rows'];
         roleCheck($rows === $expected, "director: bank movement rows ($rows) equal rows on the user's own bank accounts ($expected)", $failures);
     }
-    if ($authorization->canRead($catalog->get('petty_cash'))) {
-        $expected = (int) roleRows($db, "SELECT COUNT(*) n FROM pcashdetails d WHERE UPPER(TRIM(d.codeexpense)) <> 'ASSIGNCASH' AND d.date >= ? AND d.date < ? AND EXISTS (SELECT 1 FROM expense_listing_access a WHERE a.user = ? AND a.can_access = d.tabcode)", array($range[0], $range[1], $userId), 'sss')[0]['n'];
-        $rows = $service->explore(DirectorsRequest::fromArray($period + array('dataset' => 'petty_cash')))['summary']['rows'];
-        roleCheck($rows === $expected, "director: petty-cash rows ($rows) equal rows on the user's assigned expense tabs ($expected)", $failures);
-    }
+    $expected = (int) roleRows($db, "SELECT COUNT(*) n FROM pcashdetails d WHERE UPPER(TRIM(d.codeexpense)) <> 'ASSIGNCASH' AND d.date >= ? AND d.date < ? AND EXISTS (SELECT 1 FROM expense_listing_access a WHERE a.user = ? AND a.can_access = d.tabcode)", array($range[0], $range[1], $userId), 'sss')[0]['n'];
+    $rows = $service->explore(DirectorsRequest::fromArray($period + array('dataset' => 'petty_cash')))['summary']['rows'];
+    roleCheck($rows === $expected, "director: petty-cash rows ($rows) equal rows on the user's assigned expense tabs ($expected)", $failures);
+    $allRows = (int) roleRows($db, "SELECT COUNT(*) n FROM pcashdetails d WHERE UPPER(TRIM(d.codeexpense)) <> 'ASSIGNCASH' AND d.date >= ? AND d.date < ?", array($range[0], $range[1]), 'ss')[0]['n'];
+    roleCheck($rows < $allRows, "director: petty cash is narrower than the company total ($rows of $allRows), so the scope really filters", $failures);
     echo $failures ? 'FAILED: ' . count($failures) . " check(s)\n" : "All role checks pass.\n";
     exit($failures ? 1 : 0);
 } catch (Throwable $e) {

@@ -42,11 +42,12 @@ try {
     directorsReject(function () use ($regular) { (new DirectorsAuthorization($regular, array()))->assertAccess(); }, 'forbidden', 'Sales dashboard access cannot grant directors data');
     $director = new AuthorizationContext('director', 'company_a', 'Company A', 1, false, array('directorreports'), array(2));
     $auth = new DirectorsAuthorization($director, array('PageSecurityArray' => array('AgedDebtors.php' => 2, 'GLProfit_Loss.php' => 8)));
-    directorsCheck($auth->canRead(array('route' => 'AgedDebtors.php')), 'Delegated director retains allowed module');
-    directorsCheck(!$auth->canRead(array('route' => 'GLProfit_Loss.php')), 'Delegated director cannot bypass module token');
-    directorsCheck(!$auth->canRead(array('route' => 'Unmapped.php')), 'Missing module security mapping fails closed');
-    $service = new DirectorsService(null, $director, array(), 'PKR', function () { throw new RuntimeException('No query should run'); });
-    directorsReject(function () use ($service) { $service->explore(DirectorsRequest::fromArray(array('dataset' => 'gl_result'),12,'2026-11-05')); }, 'forbidden', 'Drill-through checks access before querying');
+    directorsCheck($auth->canRead(array('route' => 'AgedDebtors.php')) && $auth->canRead(array('route' => 'GLProfit_Loss.php')), 'Directors permission reads every company-level source, as the Sales Executive Report does');
+    directorsCheck($auth->canRead(array('route' => 'Unmapped.php')), 'A missing page-token mapping no longer hides a measure from a directors-permission holder');
+    directorsReject(function () use ($regular) { (new DirectorsAuthorization($regular, array('PageSecurityArray' => array('AgedDebtors.php' => 2))))->canRead(array('route' => 'AgedDebtors.php')); }, 'forbidden', 'Without the directors permission no source is readable, whatever page tokens the role holds');
+    $service = new DirectorsService(null, $director, array(), 'PKR', function () { return array(); });
+    directorsCheck(true, 'Delegated director can construct the service');
+    directorsReject(function () use ($regular) { new DirectorsService(null, $regular, array(), 'PKR', function () { throw new RuntimeException('No query should run'); }); }, 'forbidden', 'Service refuses a user without the directors permission before any query');
     $admin = new AuthorizationContext('admin', 'company_a', 'Company A', 8, true, array('*'), array());
     $service = new DirectorsService(null, $admin, array(), 'PKR', function () { throw new RuntimeException('No query should run'); });
     directorsReject(function () use ($service) { $service->explore(DirectorsRequest::fromArray(array('dataset' => 'inventory','filters' => array('customer' => 'C1')),12,'2026-11-05')); }, 'invalid_dimension', 'Inapplicable dimension cannot silently filter unrelated source');

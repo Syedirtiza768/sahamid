@@ -116,12 +116,17 @@ try {
     $account = $revenue['details']['rows'][0]['account'];
     $filtered = $explore('gl_result', array('filters' => array('account' => $account)));
     directorsFinanceNear($filtered['summary']['value'], 1000, 'Drill-down filter scope');
-    $denied = new AuthorizationContext('fixture-director', $database, 'Fixture company', 1, false, array('directors_dashboard'), array(2), null);
-    $restricted = new DirectorsService($db, $denied, array('PageSecurityArray' => array('AgedDebtors.php' => 2)), 'PKR');
+    // A directors-permission holder reads company-level sources without per-page tokens (decision 2026-11-05).
+    $delegated = new AuthorizationContext('fixture-director', $database, 'Fixture company', 1, false, array('directors_dashboard'), array(2), null);
+    $delegatedService = new DirectorsService($db, $delegated, array('PageSecurityArray' => array('AgedDebtors.php' => 2)), 'PKR');
+    $delegatedResult = $delegatedService->explore(DirectorsRequest::fromArray(array('dataset' => 'gl_result', 'start' => '2024-01-01', 'end' => '2024-01-31', 'comparison' => 'none'), 12, '2026-11-05'));
+    directorsFinanceAssert($delegatedResult['summary']['rows'] > 0, 'Delegated director could not read a company-level source');
+    // Without the directors permission nothing is readable, whatever page tokens the role holds.
+    $plain = new AuthorizationContext('fixture-sales', $database, 'Fixture company', 1, false, array('sales_dashboard'), array(2, 8), null);
     $forbidden = false;
-    try { $restricted->explore(DirectorsRequest::fromArray(array('dataset' => 'gl_result'), 12, '2026-11-05')); }
+    try { new DirectorsService($db, $plain, array('PageSecurityArray' => array('GLProfit_Loss.php' => 8)), 'PKR'); }
     catch (\SAHamid\BI\Exception\BIException $exception) { $forbidden = $exception->getErrorCode() === 'forbidden'; }
-    directorsFinanceAssert($forbidden, 'Delegated director bypassed financial page token');
+    directorsFinanceAssert($forbidden, 'A user without the directors permission was admitted');
     echo "PASS: native MariaDB schema, GL/AR/AP/FX/budget/aging/authorization/drill-through/export fixture checks\n";
     echo 'Fixture database retained for further verification: ' . $database . "\n";
 } catch (Throwable $exception) {

@@ -60,6 +60,11 @@ class DirectorsService
                 $pair = $this->summaryPair($definition, $request, $this->canCompare($definition, $request));
                 $current = $pair['current'];
                 $previous = $pair['previous'];
+                if ($id === 'cash_movement' && $current['rows'] === 0 && !$this->hasBankAccess()) {
+                    // No assigned bank accounts is not "no cash movement": never show a reliable-looking zero.
+                    $metrics[] = $this->metric($definition, null, null, 'No bank accounts are assigned to your user, so bank movement cannot be shown.');
+                    continue;
+                }
                 $metric = $this->metric($definition, $current, $previous);
                 if ($definition['kind'] === 'flow' && $pair['undated'] > 0) {
                     $risks[] = array('title' => $definition['title'] . ': missing business dates', 'message' => $pair['undated'] . ' source rows across all dates cannot be assigned to a reporting period and are omitted from dated totals.', 'dataset' => $id);
@@ -452,6 +457,13 @@ class DirectorsService
                 'first_record_date' => $current ? $current['first_record_date'] : null, 'last_record_date' => $current ? $current['last_record_date'] : null,
                 'quality_issues' => $current ? $current['quality_issues'] : null, 'unknown_due' => $current ? $current['unknown_due'] : null,
                 'estimated_due' => $current ? $current['estimated_due'] : null), $movement);
+    }
+
+    /** Bank movement is always limited to the signed-in user's assigned bank accounts. */
+    private function hasBankAccess()
+    {
+        $rows = $this->query('SELECT COUNT(*) AS n FROM bankaccountusers WHERE userid = ?', 's', array($this->context->getUserId()));
+        return (int) $rows[0]['n'] > 0;
     }
 
     /** Headline measures built only from other measures that are already available. */

@@ -27,16 +27,16 @@ class DirectorsAuthorization
         }
     }
 
+    /**
+     * A holder of the directors permission (or an administrator) reads every company-level
+     * measure, as in the Sales Executive Report, which is gated on the same permission.
+     * User-level scopes are NOT relaxed: bank movement is always limited to the signed-in
+     * user's bankaccountusers rows and petty cash to their expense_listing_access tabs.
+     * Those filters live in the dataset queries themselves.
+     */
     public function canRead(array $definition)
     {
         $this->assertAccess();
-        // Match the ERP script token when registered. Missing mappings fail closed
-        // for delegated directors; administrators retain existing BI admin access.
-        if ($this->context->isAdministrator()) {
-            return true;
-        }
-        $route = basename($definition['route']);
-        $map = isset($this->session['PageSecurityArray']) ? $this->session['PageSecurityArray'] : array();
-        return isset($map[$route]) && in_array((int) $map[$route], $this->context->getPageSecurityTokens(), true);
+        return true;
     }
 }
