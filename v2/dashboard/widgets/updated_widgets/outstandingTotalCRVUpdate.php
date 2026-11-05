@@ -41,7 +41,7 @@ if ($salesmanWhere === null) {
 	          AND debtortrans.settled = 0
 	          AND debtortrans.reversed = 0
 	          AND shopsale.payment = 'crv'
-	          AND ABS(debtortrans.ovamount - debtortrans.alloc) > 0.009
+	          AND debtortrans.ovamount - debtortrans.alloc > 0.009
 	          $salesmanWhere
 	        ORDER BY shopsale.orddate, shopsale.orderno";
 	$result = mysqli_query($db, $sql);

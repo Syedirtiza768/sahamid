@@ -26,7 +26,9 @@
 			INNER JOIN debtorsmaster ON debtorsmaster.debtorno = debtortrans.debtorno
 			INNER JOIN custbranch ON (debtorsmaster.debtorno = custbranch.debtorno AND custbranch.branchcode=(SELECT MAX(branchcode) as branchcode FROM custbranch WHERE debtorno=debtorsmaster.debtorno))
 			WHERE debtortrans.type=750 
-			AND debtortrans.settled=0 
+			AND debtortrans.settled=0
+			AND debtortrans.reversed=0
+			AND ovamount-alloc > 0.009
 			AND shopsale.payment="crv"';
             if (!$canViewAllSalesmen) {
                 $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
@@ -58,7 +60,9 @@
 			INNER JOIN custbranch ON (debtorsmaster.debtorno = custbranch.debtorno AND custbranch.branchcode=(SELECT MAX(branchcode) as branchcode FROM custbranch WHERE debtorno=debtorsmaster.debtorno))
 			INNER JOIN salesman ON salesman.salesmancode = custbranch.salesman
 			WHERE debtortrans.type=750 
-			AND debtortrans.settled=0 
+			AND debtortrans.settled=0
+			AND debtortrans.reversed=0
+			AND ovamount-alloc > 0.009
 			AND shopsale.payment="crv"';
             if (!$canViewAllSalesmen) {
                 $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
@@ -95,7 +99,9 @@
 			INNER JOIN debtorsmaster ON debtorsmaster.debtorno = debtortrans.debtorno 
 			INNER JOIN custbranch ON (debtorsmaster.debtorno = custbranch.debtorno AND custbranch.branchcode=(SELECT MAX(branchcode) as branchcode FROM custbranch WHERE debtorno=debtorsmaster.debtorno))
 			WHERE debtortrans.type=750 
-			AND debtortrans.settled=0 
+			AND debtortrans.settled=0
+			AND debtortrans.reversed=0
+			AND ovamount-alloc > 0.009
 			AND shopsale.payment="crv"';
             if (!$canViewAllSalesmen) {
                 $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
@@ -132,7 +138,9 @@
 			INNER JOIN debtorsmaster ON debtorsmaster.debtorno = debtortrans.debtorno 
 			INNER JOIN custbranch ON (debtorsmaster.debtorno = custbranch.debtorno AND custbranch.branchcode=(SELECT MAX(branchcode) as branchcode FROM custbranch WHERE debtorno=debtorsmaster.debtorno))
 			WHERE debtortrans.type=750 
-			AND debtortrans.settled=0 
+			AND debtortrans.settled=0
+			AND debtortrans.reversed=0
+			AND ovamount-alloc > 0.009
 			AND shopsale.payment="crv"';
             if (!$canViewAllSalesmen) {
                 $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
@@ -167,7 +175,9 @@
 			INNER JOIN debtorsmaster ON debtorsmaster.debtorno = debtortrans.debtorno
 			INNER JOIN custbranch ON (debtorsmaster.debtorno = custbranch.debtorno AND custbranch.branchcode=(SELECT MAX(branchcode) as branchcode FROM custbranch WHERE debtorno=debtorsmaster.debtorno))
 			WHERE debtortrans.type=750 
-			AND debtortrans.settled=0 
+			AND debtortrans.settled=0
+			AND debtortrans.reversed=0
+			AND ovamount-alloc > 0.009
 			AND shopsale.payment="crv"';
             if (!$canViewAllSalesmen) {
                 $SQL .= ' AND shopsale.salesman ="' . $currentSalesman . '"';
@@ -199,6 +209,8 @@
 	foreach ($data as $customer) {
 
 		if($customer['debtorno'] == "" || $customer['debtorno'] == null)
+			continue;
+		if ((float)$customer['curr'] <= 0.009)
 			continue;
 		
 		if(!isset($customer['30daysdue']))

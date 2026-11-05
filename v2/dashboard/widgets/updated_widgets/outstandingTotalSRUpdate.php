@@ -53,7 +53,7 @@ if ($salesmanWhere === null) {
 	          AND debtortrans.settled = 0
 	          AND debtortrans.reversed = 0
 	          AND debtortrans.debtorno LIKE 'SR%'
-	          AND ABS($remainingExpression) > 0.009
+	          AND ($remainingExpression) > 0.009
 	          $salesmanWhere
 	        ORDER BY invoice.invoicesdate, invoice.invoiceno";
 	$result = mysqli_query($db, $sql);
