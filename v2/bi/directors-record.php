@@ -26,16 +26,28 @@ require_once dirname(__DIR__) . '/includes/header.php';
 require_once dirname(__DIR__) . '/includes/sidebar.php';
 ?>
 <link rel="stylesheet" href="<?php echo directorsH($NewRootPath); ?>v2/bi/directors.css">
+<?php
+$dashboardPath = $NewRootPath . 'v2/bi/directors.php';
+$return = \SAHamid\BI\Directors\RecordPresenter::safeReturn(isset($_GET['directors_return']) ? $_GET['directors_return'] : '', $dashboardPath);
+$groups = \SAHamid\BI\Directors\RecordPresenter::present($evidence['row'], $evidence['unit']);
+?>
 <div class="content-wrapper directors-page"><section class="content dir-content">
-<div class="dir-section-heading"><div><h1><?php echo directorsH($evidence['title']); ?> — source evidence</h1>
-<p><?php echo directorsH($evidence['company']); ?> · <?php echo directorsH($evidence['generated_at_utc']); ?> UTC · <?php echo directorsH($evidence['unit']); ?></p></div>
-<a class="dir-button" href="<?php echo directorsH($NewRootPath); ?>v2/bi/directors.php">Directors’ Dashboard</a></div>
-<div class="dir-definition"><strong>Definition:</strong> <?php echo directorsH($evidence['definition']); ?><br><?php echo directorsH($evidence['caveat']); ?></div>
-<section class="dir-panel"><div class="dir-table-wrap"><table class="dir-table"><thead><tr><th>Source field</th><th>Recorded value</th></tr></thead><tbody>
-<?php foreach ($evidence['row'] as $field => $value) { ?>
-<tr><th scope="row"><?php echo directorsH(str_replace('_', ' ', $field)); ?></th><td><?php echo $value === null ? 'Unavailable' : directorsH($value); ?></td></tr>
+<div class="dir-section-heading"><div><div class="dir-eyebrow">SOURCE EVIDENCE</div><h1><?php echo directorsH($evidence['title']); ?></h1>
+<p><?php echo directorsH($evidence['company']); ?> · row <?php echo directorsH(isset($evidence['row']['id']) ? $evidence['row']['id'] : ''); ?> · read <?php echo directorsH($evidence['generated_at_utc']); ?> UTC · <?php echo directorsH($evidence['unit']); ?></p></div>
+<div class="dir-actions"><?php if ($return !== null) { ?><a class="dir-button dir-primary" href="<?php echo directorsH($return); ?>">← Back to the investigation</a><?php } ?><a class="dir-button" href="<?php echo directorsH($dashboardPath); ?>">Directors’ Dashboard</a><button class="dir-button" type="button" onclick="window.print()"><i class="fa fa-print" aria-hidden="true"></i> Print</button></div></div>
+<div class="dir-definition"><strong>What this figure means:</strong> <?php echo directorsH($evidence['definition']); ?><br><strong>Limits:</strong> <?php echo directorsH($evidence['caveat']); ?></div>
+<div class="dir-record-grid">
+<?php foreach ($groups as $group) { ?>
+<section class="dir-panel dir-record-group"><div class="dir-panel-heading"><div><h3><?php echo directorsH($group['title']); ?></h3></div></div>
+<dl class="dir-kv">
+<?php foreach ($group['fields'] as $field) { ?>
+<div class="dir-kv-row"><dt><?php echo directorsH($field['label']); ?></dt><dd class="dir-kv-<?php echo directorsH($field['kind']); ?>"><?php echo directorsH($field['value']); ?></dd></div>
 <?php } ?>
-</tbody></table></div></section></section></div>
+</dl></section>
+<?php } ?>
+</div>
+<p class="dir-record-note">Values are shown as recorded in the source row. "Not recorded" means the source field is empty or a zero date; it does not mean zero.</p>
+</section></div>
 <?php
 require_once dirname(__DIR__) . '/includes/footer.php';
 require_once dirname(__DIR__) . '/includes/foot.php';

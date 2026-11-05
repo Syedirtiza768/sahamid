@@ -60,11 +60,11 @@ try {
                 'delta' => 'Absolute change', 'percent' => 'Change %', 'kind' => 'Period / snapshot / budget', 'status' => 'Actual / estimated',
                 'rows' => 'Source rows', 'invalid_amounts' => 'Excluded amounts', 'overdue' => 'Overdue exposure', 'error' => 'Unavailable reason',
                 'definition' => 'Definition', 'caveat' => 'Caveat');
-            $rows = $data['metrics'];
+            $rows = \SAHamid\BI\Directors\ExportRows::summary($data);
         } else {
             $columns = array('id' => 'Source row ID', 'date' => 'Source date', 'reference' => 'Reference', 'amount' => 'Amount (' . $data['metric']['unit'] . ')', 'quantity' => 'Source quantity', 'status' => 'Source status');
             $columns = array_merge($columns, $data['dimensions'], array('source_url' => 'Source record'));
-            $rows = $data['details']['rows'];
+            $rows = \SAHamid\BI\Directors\ExportRows::records($data);
             foreach (array('due_date' => 'Due date', 'accounting_period' => 'Accounting period', 'transaction_number' => 'Transaction number', 'quality_issue' => 'Quality exception', 'product_label' => 'Product description') as $field => $label) {
                 if ($rows && array_key_exists($field, $rows[0])) { $columns[$field] = $label; }
             }
