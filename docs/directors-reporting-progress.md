@@ -21,7 +21,7 @@ Read-only access note: audit queries against the local `sahamid` database ran wi
 | Step | Status | Evidence |
 |---|---|---|
 | 10 Fix definitions | done | cohort wording removed; Pending DC now 308 / 68.67M |
-| 11 Missing measures | partly: PO received, posted invoices, outstanding, pending DC value, gross margin | reconcile test passes on 2 periods. **Not built:** DSO, AP due in 7/30 days, closing bank balance, cycle times, slow movers, top-10 supplier share |
+| 11 Missing measures | done where the data allows: PO received, posted invoices, outstanding, pending DC value, gross margin, DSO, top-10 customer and supplier share, order-to-invoice median days, bank book balance (Estimated), payments due in 30 days | each checked against independently written SQL (`directors_reconcile.php`, 2 periods). **Blocked by data:** payments due (no supplier balance has a due date or usable terms: shown as unavailable), slow movers and collection time. **Not built:** sales target vs achievement |
 | 12 Comparison logic | default yoy; server period logic reused; JS still pairs trend months by position | `directors_run.php` 30/30 |
 | 13 Snapshot history | table + capture job done and idempotent on the fixture DB; **UI does not read it yet** | 5 rows after two runs |
 | 14 Compact header | done: one sticky bar, period chip opens a popover, presets and comparison apply at once, the investigation's own Apply button is still there | `docs/directors-ux/after/fold-desktop.png`. Verified on a mock page only; the sticky offset (50px) matches the AdminLTE fixed header but was not seen in the real shell |
